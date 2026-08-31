@@ -7,10 +7,15 @@ import {
 } from "react"
 
 import {
+  latestWeekMonday,
+  nextMondayAfter,
+} from "@/lib/week-clone"
+import {
   DEFAULT_WEEK_MONDAY,
   type WeekDocument,
 } from "@/lib/week-document"
 import {
+  createWeekFromPrevious,
   listWeekFiles,
   loadWeekDocument,
   saveWeekDocument,
@@ -30,6 +35,10 @@ type UseWeekEditorResult = {
   saveError: string | null
   saveMessage: string | null
   saveWeek: () => Promise<void>
+  creating: boolean
+  createError: string | null
+  suggestedMonday: string
+  createWeek: (monday: string) => Promise<void>
 }
 
 async function fetchWeekBundle(monday: string) {
@@ -53,8 +62,14 @@ export function useWeekEditor(
   const [error, setError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const loading = loadedMonday !== selectedMonday
+  const latestMonday = latestWeekMonday(weeks)
+  const suggestedMonday = latestMonday
+    ? nextMondayAfter(latestMonday)
+    : nextMondayAfter(DEFAULT_WEEK_MONDAY)
 
   useEffect(() => {
     let cancelled = false
@@ -113,6 +128,30 @@ export function useWeekEditor(
     }
   }, [selectedMonday, week])
 
+  const createWeek = useCallback(
+    async (monday: string) => {
+      setCreating(true)
+      setCreateError(null)
+      setSaveMessage(null)
+
+      try {
+        await createWeekFromPrevious(monday)
+        const weekList = await listWeekFiles()
+        setWeeks(weekList)
+        setSelectedMonday(monday)
+        setSelectedPageIndex(0)
+        setLoadedMonday(null)
+      } catch (cause: unknown) {
+        const message =
+          cause instanceof Error ? cause.message : "Failed to create week file"
+        setCreateError(message)
+      } finally {
+        setCreating(false)
+      }
+    },
+    []
+  )
+
   return {
     weeks,
     selectedMonday,
@@ -127,5 +166,9 @@ export function useWeekEditor(
     saveError,
     saveMessage,
     saveWeek,
+    creating,
+    createError,
+    suggestedMonday,
+    createWeek,
   }
 }

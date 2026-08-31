@@ -96,11 +96,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function readString(value: unknown, field: string): string {
-  if (typeof value !== "string" || value.trim() === "") {
-    throw new Error(`Invalid week document: ${field} must be a non-empty string`)
+  if (typeof value !== "string") {
+    throw new Error(`Invalid week document: ${field} must be a string`)
   }
 
   return value
+}
+
+function readNonEmptyString(value: unknown, field: string): string {
+  const text = readString(value, field)
+  if (text.trim() === "") {
+    throw new Error(`Invalid week document: ${field} must be a non-empty string`)
+  }
+
+  return text
 }
 
 function parseSlideItem(value: unknown, index: number): SlideItem {
@@ -167,7 +176,7 @@ function parsePanel(value: unknown): Panel {
     throw new Error("Invalid week document: panel must be an object")
   }
 
-  const kind = readString(value.kind, "panel.kind")
+  const kind = readNonEmptyString(value.kind, "panel.kind")
   if (!V1_PANEL_KINDS.has(kind)) {
     throw new Error(`Invalid week document: unknown panel kind "${kind}"`)
   }
@@ -274,8 +283,8 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
   }
 
   return {
-    id: readString(value.id, `pages[${index}].id`),
-    layout: readString(value.layout, `pages[${index}].layout`),
+    id: readNonEmptyString(value.id, `pages[${index}].id`),
+    layout: readNonEmptyString(value.layout, `pages[${index}].layout`),
     title: readString(value.title, `pages[${index}].title`),
     items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
     panel: parsePanel(value.panel),
@@ -295,8 +304,8 @@ export function parseWeekDocument(value: unknown): WeekDocument {
   }
 
   return {
-    start: readString(value.start, "start"),
-    end: readString(value.end, "end"),
+    start: readNonEmptyString(value.start, "start"),
+    end: readNonEmptyString(value.end, "end"),
     pages: pages.map((page, index) => parseWeekPage(page, index)),
   }
 }

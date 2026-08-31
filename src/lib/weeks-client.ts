@@ -47,3 +47,28 @@ export async function saveWeekDocument(
     throw new Error(`Failed to save week file: ${monday}.json (${response.status})`)
   }
 }
+
+export async function createWeekFromPrevious(
+  monday: string
+): Promise<WeekDocument> {
+  const response = await fetch(`/api/weeks/${monday}`, {
+    method: "POST",
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to create week file: ${monday}.json (${response.status})`)
+  }
+
+  const json: unknown = await response.json()
+  if (
+    typeof json !== "object" ||
+    json === null ||
+    !("week" in json) ||
+    typeof json.week !== "object" ||
+    json.week === null
+  ) {
+    throw new Error("Invalid create week response")
+  }
+
+  return parseWeekDocument(json.week)
+}
