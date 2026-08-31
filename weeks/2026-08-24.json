@@ -8,30 +8,30 @@
       "title": "Platform · Eval Gate",
       "items": [
         {
-          "heading": "評估指標依任務設定",
-          "body": "晉升比較不再全管道綁死單一誤差。不同預測任務可以選自己的指標，前後端與帳本一起對齊。"
+          "heading": "Task-scoped evaluation metrics",
+          "body": "Promotion comparison is no longer locked to one error metric across every pipeline. Each forecasting task can choose its own metric with frontend, backend, and ledger aligned."
         },
         {
-          "heading": "可從歷史版本手動晉升",
-          "body": "不必等排程自動過關。可指定某個已註冊版本強制升為正式版，並通過與匯入相同的契約檢查；失敗則不動現況。"
+          "heading": "Manual promote from history",
+          "body": "No need to wait for scheduled auto-promotion. Pin a registered version as production after the same contract checks as import; on failure, production stays unchanged."
         },
         {
-          "heading": "正式版可釘住、可解除",
-          "body": "釘住期間排程評估仍會跑，但不做晉升；新訓練也不會自動解除。前端可看到釘住橫幅、選歷史版、手動解除。"
+          "heading": "Production pin and unpin",
+          "body": "While pinned, scheduled eval still runs but does not promote; new training does not auto-unpin. The UI shows a pin banner, history picker, and manual unpin."
         }
       ],
       "panel": {
         "kind": "table",
         "title": "Loaded model",
-        "columns": ["動作", "對正式版", "結果"],
+        "columns": ["Action", "Production", "Outcome"],
         "rows": [
-          { "cells": ["排程評估", "釘住中", "skip 晉升"], "emphasis": [1] },
-          { "cells": ["手動晉升", "指定歷史版", "契約通過才寫"], "emphasis": [1] },
-          { "cells": ["新訓練", "只寫候選", "不自動 unpin"], "emphasis": [1] },
-          { "cells": ["Unpin", "只刪釘住", "不回滾 alias"], "emphasis": [1] }
+          { "cells": ["Scheduled eval", "Pinned", "Skip promote"], "emphasis": [1] },
+          { "cells": ["Manual promote", "Chosen version", "Write if contract passes"], "emphasis": [1] },
+          { "cells": ["New training", "Candidate only", "No auto-unpin"], "emphasis": [1] },
+          { "cells": ["Unpin", "Remove pin only", "Alias unchanged"], "emphasis": [1] }
         ]
       },
-      "notes": "Eval Gate 口播重點"
+      "notes": "Eval Gate talking points"
     }
   ]
 }

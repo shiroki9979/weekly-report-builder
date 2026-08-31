@@ -1,5 +1,15 @@
 # AGENTS.md
 
+## Language
+
+- **Workshop chrome** (shadcn shell): English UI strings.
+- **In-app copy**: English — placeholders, labels, errors, empty states.
+- **16:9 stage**: no shadcn; slide content comes from `weeks/*.json` and may be any language.
+- **Code comments**: Traditional Chinese (why, not what).
+- **README / agent docs**: English unless the user asks otherwise.
+
+See `.cursor/rules/language.mdc`.
+
 ## Agent skills
 
 ### Issue tracker
