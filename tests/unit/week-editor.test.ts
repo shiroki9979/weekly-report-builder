@@ -26,18 +26,18 @@ function loadFixture() {
 describe("week-editor", () => {
   it("maps title edits onto the week document", () => {
     const week = loadFixture()
-    const next = setPageTitle(week, 0, "Platform · Eval Gate (edited)")
+    const next = setPageTitle(week, 1, "Platform · Eval Gate (edited)")
 
-    expect(next.pages[0].title).toBe("Platform · Eval Gate (edited)")
-    expect(week.pages[0].title).toBe("Platform · Eval Gate")
+    expect(next.pages[1].title).toBe("Platform · Eval Gate (edited)")
+    expect(week.pages[1].title).toBe("Platform · Eval Gate")
   })
 
   it("maps item heading and body edits onto the week document", () => {
     const week = loadFixture()
-    const withHeading = setPageItem(week, 0, 1, "heading", "Manual promote")
-    const withBody = setPageItem(withHeading, 0, 1, "body", "Updated body copy")
+    const withHeading = setPageItem(week, 1, 1, "heading", "Manual promote")
+    const withBody = setPageItem(withHeading, 1, 1, "body", "Updated body copy")
 
-    expect(withBody.pages[0].items[1]).toEqual({
+    expect(withBody.pages[1].items[1]).toEqual({
       heading: "Manual promote",
       body: "Updated body copy",
     })
@@ -45,10 +45,10 @@ describe("week-editor", () => {
 
   it("maps table panel edits onto the week document", () => {
     const week = loadFixture()
-    const withTitle = setTablePanelTitle(week, 0, "Loaded model (edited)")
-    const withCell = setTablePanelCell(withTitle, 0, 0, 1, "Unpinned")
+    const withTitle = setTablePanelTitle(week, 1, "Loaded model (edited)")
+    const withCell = setTablePanelCell(withTitle, 1, 0, 1, "Unpinned")
 
-    const panel = withCell.pages[0].panel
+    const panel = withCell.pages[1].panel
     if (panel.kind !== "table") {
       throw new Error("expected table panel")
     }
@@ -59,17 +59,17 @@ describe("week-editor", () => {
 
   it("persists hide flag on the page", () => {
     const week = loadFixture()
-    const hidden = setPageHidden(week, 0, true)
-    const visible = setPageHidden(hidden, 0, false)
+    const hidden = setPageHidden(week, 1, true)
+    const visible = setPageHidden(hidden, 1, false)
 
-    expect(hidden.pages[0].hidden).toBe(true)
-    expect(visible.pages[0].hidden).toBeUndefined()
+    expect(hidden.pages[1].hidden).toBe(true)
+    expect(visible.pages[1].hidden).toBeUndefined()
   })
 
   it("maps speaker notes onto the week document", () => {
     const week = loadFixture()
-    const next = setPageNotes(week, 0, "Updated talking points")
+    const next = setPageNotes(week, 1, "Updated talking points")
 
-    expect(next.pages[0].notes).toBe("Updated talking points")
+    expect(next.pages[1].notes).toBe("Updated talking points")
   })
 })

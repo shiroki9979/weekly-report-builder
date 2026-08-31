@@ -3,6 +3,36 @@
   "end": "2026-08-28",
   "pages": [
     {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Weekly Report 2026.08.24–08.28",
+      "items": [
+        {
+          "heading": "Platform focus",
+          "body": "Model archive upload and download across environments."
+        },
+        {
+          "heading": "SolarDB",
+          "body": "Pretrain base iterated from v2.0 to v2.2."
+        },
+        {
+          "heading": "Detroit",
+          "body": "Day-1 evaluation baseline is locked."
+        }
+      ],
+      "panel": {
+        "kind": "chart",
+        "title": "Commits this week",
+        "categories": ["24", "25", "26", "27", "28"],
+        "series": [
+          { "name": "Platform", "color": "#2e75b6", "values": [16, 34, 57, 18, 39] },
+          { "name": "SolarDB", "color": "#7eb0d6", "values": [27, 23, 36, 45, 11] },
+          { "name": "Detroit", "color": "#c5d9ed", "values": [5, 27, 0, 36, 39] }
+        ]
+      },
+      "notes": "Overview chart uses example commit counts only"
+    },
+    {
       "id": "p04",
       "layout": "two-column",
       "title": "Platform · Eval Gate",

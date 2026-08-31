@@ -7,8 +7,8 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 ## Status
 
 - **Scaffold**: Vite + React + shadcn (`base-nova`) workshop shell is in place (edit placeholder left, 16:9 stage right).
-- **Preview & edit**: Ticket 01–02 load `weeks/*.json`, render on the stage, and edit/save from the workshop shell.
-- **Next**: [Tickets](.scratch/weekly-workshop/issues/) — frontier: `03`.
+- **Preview & edit**: Tickets 01–03 — load/edit/save weeks; chart and table panels on stage.
+- **Next**: [Tickets](.scratch/weekly-workshop/issues/) — frontier: `04` (or `05`–`07` in parallel).
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
