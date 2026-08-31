@@ -1,3 +1,5 @@
+import { useRef } from "react"
+
 import { StageSlide } from "@/components/stage/stage-slide"
 import { StageFrame } from "@/components/stage/stage-frame"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -7,11 +9,16 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import {
+  ExportControls,
+  StageCaptureHost,
+} from "@/components/workshop/export-controls"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import {
   PagePicker,
   WorkshopToolbar,
 } from "@/components/workshop/week-picker"
+import { useStageExport } from "@/hooks/use-stage-export"
 import { useWeekEditor } from "@/hooks/use-week-editor"
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
@@ -35,6 +42,23 @@ export function WorkshopShell() {
     suggestedMonday,
     createWeek,
   } = useWeekEditor()
+
+  const previewStageRef = useRef<HTMLDivElement>(null)
+  const captureHostRef = useRef<HTMLDivElement>(null)
+  const {
+    capturePage,
+    exporting,
+    copying,
+    exportError,
+    clipboardError,
+    downloadVisiblePages,
+    copyCurrentPage,
+  } = useStageExport({
+    monday: selectedMonday,
+    week,
+    previewStageRef,
+    captureHostRef,
+  })
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
 
@@ -97,14 +121,23 @@ export function WorkshopShell() {
 
         <ResizablePanel defaultSize={58} minSize={40}>
           <div className="flex h-full min-h-0 flex-col p-4">
-            <div className="mb-3 shrink-0">
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
               <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 16:9 preview
               </h2>
+              <ExportControls
+                onDownloadAll={() => void downloadVisiblePages()}
+                onCopy={() => void copyCurrentPage()}
+                exporting={exporting}
+                copying={copying}
+                exportError={exportError}
+                clipboardError={clipboardError}
+                disabled={loading || !week}
+              />
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <div className="w-full max-w-5xl">
-                <StageFrame>
+                <StageFrame ref={previewStageRef}>
                   {loading ? (
                     <div className="stage-placeholder">Loading week…</div>
                   ) : null}
@@ -122,6 +155,7 @@ export function WorkshopShell() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+      <StageCaptureHost page={capturePage} hostRef={captureHostRef} />
     </div>
   )
 }

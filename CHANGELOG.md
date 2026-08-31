@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `flow` panel：有序步驟（title + caption）；工坊可增刪、編輯與 reorder
 - `checklist` panel：右側核取清單；工坊可增刪、編輯項目與勾選狀態
 - 新週次：自最新週次 clone 結構（頁數、panel kind、hidden），清空標題與內文；`POST /api/weeks/:monday`
+- PNG 匯出：略過 hidden 頁；批次下載 `YYYY-MM-DD-p02.png`；預覽頁 copy-to-clipboard（失敗時仍保留下載）
 - 工坊編輯：週次列表、頁面選擇、標題／三點／表格或圖表／speaker notes、hide page
 - 開發時透過 `GET/PUT /api/weeks` 讀寫 `weeks/*.json`
 - Agent 設定（`AGENTS.md`）、`.scratch/weekly-workshop` spec 與 tickets
