@@ -4,12 +4,12 @@
 
 **Blocked by:** 01: Preview a week JSON on the 16:9 stage
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] User can list week files and open one
-- [ ] Form changes to title, items, table, and notes update the preview without a reload
-- [ ] Hide-page persists in the week JSON; hidden pages still appear in the editor
-- [ ] Saving writes `weeks/YYYY-MM-DD.json` and a reload shows the same content
-- [ ] Tests cover form → document mapping and hide persistence
+- [x] User can list week files and open one
+- [x] Form changes to title, items, table, and notes update the preview without a reload
+- [x] Hide-page persists in the week JSON; hidden pages still appear in the editor
+- [x] Saving writes `weeks/YYYY-MM-DD.json` and a reload shows the same content
+- [x] Tests cover form → document mapping and hide persistence
 
 ## Comments

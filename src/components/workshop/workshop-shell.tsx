@@ -1,4 +1,5 @@
 import { StageSlide } from "@/components/stage/stage-slide"
+import { StageFrame } from "@/components/stage/stage-frame"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -6,15 +7,32 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { useWeek } from "@/hooks/use-week"
-import { getPreviewPage } from "@/lib/preview-page"
-
-import { StageFrame } from "@/components/stage/stage-frame"
+import { PageEditorForm } from "@/components/workshop/page-editor-form"
+import {
+  PagePicker,
+  WorkshopToolbar,
+} from "@/components/workshop/week-picker"
+import { useWeekEditor } from "@/hooks/use-week-editor"
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
-  const { week, error, loading } = useWeek()
-  const previewPage = week ? getPreviewPage(week) : null
+  const {
+    weeks,
+    selectedMonday,
+    setSelectedMonday,
+    week,
+    setWeek,
+    selectedPageIndex,
+    setSelectedPageIndex,
+    loading,
+    saving,
+    error,
+    saveError,
+    saveMessage,
+    saveWeek,
+  } = useWeekEditor()
+
+  const selectedPage = week?.pages[selectedPageIndex] ?? null
 
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
@@ -36,23 +54,32 @@ export function WorkshopShell() {
         <ResizablePanel defaultSize={42} minSize={28} maxSize={60}>
           <ScrollArea className="h-full">
             <div className="space-y-4 p-4">
-              <section className="space-y-2">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Editor
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Week picker and form (ticket 02)
-                </p>
-              </section>
-              <Separator />
-              <section className="space-y-2">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Notes
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {previewPage?.notes ?? "Speaker notes (ticket 02)"}
-                </p>
-              </section>
+              <WorkshopToolbar
+                weeks={weeks.length > 0 ? weeks : [selectedMonday]}
+                selectedMonday={selectedMonday}
+                onWeekChange={setSelectedMonday}
+                onSave={() => void saveWeek()}
+                saving={saving}
+                saveMessage={saveMessage}
+                saveError={saveError}
+                disabled={loading || !week}
+              />
+
+              {week ? (
+                <>
+                  <PagePicker
+                    week={week}
+                    selectedPageIndex={selectedPageIndex}
+                    onSelect={setSelectedPageIndex}
+                  />
+                  <Separator />
+                  <PageEditorForm
+                    week={week}
+                    pageIndex={selectedPageIndex}
+                    onChange={setWeek}
+                  />
+                </>
+              ) : null}
             </div>
           </ScrollArea>
         </ResizablePanel>
@@ -77,8 +104,8 @@ export function WorkshopShell() {
                       {error}
                     </div>
                   ) : null}
-                  {!loading && previewPage ? (
-                    <StageSlide page={previewPage} />
+                  {!loading && selectedPage ? (
+                    <StageSlide page={selectedPage} />
                   ) : null}
                 </StageFrame>
               </div>
