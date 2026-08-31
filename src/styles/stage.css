@@ -1,0 +1,38 @@
+/* 16:9 預覽畫布專用 token；不套用 shadcn 元件 */
+.stage-root {
+  --blue: #2e75b6;
+  --blue-deep: #1f5a8f;
+  --blue-soft: #c5d9ed;
+  --blue-wash: #eef4fa;
+  --ink: #2d2d2d;
+  --mute: #5c5c5c;
+  --ok: #2f9e6b;
+  --warn: #c47b16;
+
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #fff;
+  color: var(--ink);
+  font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  overflow: hidden;
+}
+
+.stage-root *,
+.stage-root *::before,
+.stage-root *::after {
+  box-sizing: inherit;
+}
+
+.stage-placeholder {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-wash);
+  border: 1px dashed var(--blue-soft);
+  color: var(--mute);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1.5rem;
+}
