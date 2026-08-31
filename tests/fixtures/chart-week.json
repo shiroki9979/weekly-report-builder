@@ -1,0 +1,36 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Weekly Report 2026.01.05–01.09",
+      "items": [
+        {
+          "heading": "Platform focus",
+          "body": "Model archive upload and download across environments."
+        },
+        {
+          "heading": "Atlas",
+          "body": "Base model iterated from v1.0 to v1.2."
+        },
+        {
+          "heading": "Harbor",
+          "body": "Day-1 evaluation baseline is locked."
+        }
+      ],
+      "panel": {
+        "kind": "chart",
+        "title": "Commits this week",
+        "categories": ["24", "25", "26", "27", "28"],
+        "series": [
+          { "name": "Platform", "color": "#2e75b6", "values": [16, 34, 57, 18, 39] },
+          { "name": "Atlas", "color": "#7eb0d6", "values": [27, 23, 36, 45, 11] },
+          { "name": "Harbor", "color": "#c5d9ed", "values": [5, 27, 0, 36, 39] }
+        ]
+      },
+      "notes": "Overview chart is example data only"
+    }
+  ]
+}

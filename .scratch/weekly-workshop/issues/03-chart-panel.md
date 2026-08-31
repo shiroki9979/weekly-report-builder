@@ -4,11 +4,11 @@
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `panel.kind: "chart"` renders a stacked bar from categories and series
-- [ ] Form can add/edit category labels and series name/color/values
-- [ ] A commits-style fixture is only example data, not a special layout
-- [ ] Tests cover the public chart panel render from sample series
+- [x] `panel.kind: "chart"` renders a stacked bar from categories and series
+- [x] Form can add/edit category labels and series name/color/values
+- [x] A commits-style fixture is only example data, not a special layout
+- [x] Tests cover the public chart panel render from sample series
 
 ## Comments

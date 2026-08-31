@@ -15,7 +15,7 @@ describe("TwoColumnSlide", () => {
   it("renders title, three left items, and a right table on the stage", () => {
     const raw = readFileSync(fixturePath, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
-    const page = week.pages[0]
+    const page = week.pages[1]
 
     render(<TwoColumnSlide page={page} />)
 

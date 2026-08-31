@@ -152,3 +152,59 @@
   font-size: clamp(10px, 1.2cqw, 16px);
   color: var(--warn);
 }
+
+.stage-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-bottom: 0.8em;
+  font-size: clamp(9px, 1cqw, 13px);
+  color: var(--mute);
+}
+
+.stage-chart-legend i {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.28em;
+  vertical-align: -0.08em;
+}
+
+.stage-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65em;
+  height: 18em;
+  min-height: 18em;
+  flex: none;
+  padding: 0.2em 0.15em 0;
+}
+
+.stage-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.stage-chart-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  min-height: 0;
+}
+
+.stage-chart-bar {
+  width: 100%;
+  min-height: 2px;
+}
+
+.stage-chart-col > span {
+  display: block;
+  text-align: center;
+  margin-top: 0.4em;
+  font-size: clamp(9px, 1cqw, 13px);
+  color: var(--mute);
+}

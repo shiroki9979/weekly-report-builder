@@ -2,6 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import {
   setPageHidden,
   setPageItem,
@@ -159,11 +160,22 @@ export function PageEditorForm({
             </div>
           ))}
         </fieldset>
-      ) : (
+      ) : null}
+
+      {panel.kind === "chart" ? (
+        <ChartEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+        />
+      ) : null}
+
+      {panel.kind !== "table" && panel.kind !== "chart" ? (
         <p className="text-sm text-muted-foreground">
-          Only table panels are editable in this version.
+          This panel kind is not editable yet.
         </p>
-      )}
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="speaker-notes">Speaker notes</Label>
