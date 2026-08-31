@@ -1,8 +1,10 @@
-import { useRef, useState } from "react"
+import { useRef, useState, type Dispatch, type SetStateAction } from "react"
 import {
+  LockIcon,
   MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  PencilIcon,
   SunIcon,
 } from "lucide-react"
 import { usePanelRef } from "react-resizable-panels"
@@ -31,6 +33,112 @@ import {
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
+import type { WeekDocument } from "@/lib/week-document"
+
+type EditorSidebarProps = {
+  weeks: string[]
+  selectedMonday: string
+  onWeekChange: (monday: string) => void
+  week: WeekDocument | null
+  setWeek: Dispatch<SetStateAction<WeekDocument | null>>
+  selectedPageIndex: number
+  onPageSelect: (index: number) => void
+  loading: boolean
+  saving: boolean
+  saveError: string | null
+  saveMessage: string | null
+  onSave: () => void
+  creating: boolean
+  createError: string | null
+  suggestedMonday: string
+  onCreateWeek: (monday: string) => void
+}
+
+/** 週次切換時以 key remount，editMode 自動回到鎖定 */
+function EditorSidebar({
+  weeks,
+  selectedMonday,
+  onWeekChange,
+  week,
+  setWeek,
+  selectedPageIndex,
+  onPageSelect,
+  loading,
+  saving,
+  saveError,
+  saveMessage,
+  onSave,
+  creating,
+  createError,
+  suggestedMonday,
+  onCreateWeek,
+}: EditorSidebarProps) {
+  const [editMode, setEditMode] = useState(false)
+
+  return (
+    <ScrollArea className="h-full min-w-0">
+      <div className="space-y-4 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Sidebar
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {editMode
+                ? "Edit mode — forms are writable"
+                : "Locked — browse only; unlock to edit"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant={editMode ? "outline" : "default"}
+            size="sm"
+            disabled={loading || !week}
+            aria-pressed={editMode}
+            onClick={() => setEditMode((current) => !current)}
+          >
+            {editMode ? <LockIcon /> : <PencilIcon />}
+            {editMode ? "Lock" : "Edit"}
+          </Button>
+        </div>
+
+        <WorkshopToolbar
+          weeks={weeks}
+          selectedMonday={selectedMonday}
+          onWeekChange={onWeekChange}
+          onSave={onSave}
+          saving={saving}
+          saveMessage={saveMessage}
+          saveError={saveError}
+          suggestedMonday={suggestedMonday}
+          onCreateWeek={onCreateWeek}
+          creating={creating}
+          createError={createError}
+          weekSelectDisabled={loading}
+          saveDisabled={loading || !week || !editMode}
+          createDisabled={loading || creating || !editMode}
+        />
+
+        {week ? (
+          <>
+            <PagePicker
+              week={week}
+              selectedPageIndex={selectedPageIndex}
+              onSelect={onPageSelect}
+            />
+            <Separator />
+            <PageEditorForm
+              week={week}
+              pageIndex={selectedPageIndex}
+              onChange={setWeek}
+              readOnly={!editMode}
+            />
+          </>
+        ) : null}
+      </div>
+    </ScrollArea>
+  )
+}
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
@@ -170,41 +278,25 @@ export function WorkshopShell() {
             setEditorCollapsed(editorPanelRef.current?.isCollapsed() ?? false)
           }}
         >
-          <ScrollArea className="h-full min-w-0">
-            <div className="space-y-4 p-4">
-              <WorkshopToolbar
-                weeks={weeks.length > 0 ? weeks : [selectedMonday]}
-                selectedMonday={selectedMonday}
-                onWeekChange={setSelectedMonday}
-                onSave={() => void saveWeek()}
-                saving={saving}
-                saveMessage={saveMessage}
-                saveError={saveError}
-                suggestedMonday={suggestedMonday}
-                onCreateWeek={(monday) => void createWeek(monday)}
-                creating={creating}
-                createError={createError}
-                saveDisabled={loading || !week}
-                createDisabled={loading || creating}
-              />
-
-              {week ? (
-                <>
-                  <PagePicker
-                    week={week}
-                    selectedPageIndex={selectedPageIndex}
-                    onSelect={setSelectedPageIndex}
-                  />
-                  <Separator />
-                  <PageEditorForm
-                    week={week}
-                    pageIndex={selectedPageIndex}
-                    onChange={setWeek}
-                  />
-                </>
-              ) : null}
-            </div>
-          </ScrollArea>
+          <EditorSidebar
+            key={selectedMonday}
+            weeks={weeks.length > 0 ? weeks : [selectedMonday]}
+            selectedMonday={selectedMonday}
+            onWeekChange={setSelectedMonday}
+            week={week}
+            setWeek={setWeek}
+            selectedPageIndex={selectedPageIndex}
+            onPageSelect={setSelectedPageIndex}
+            loading={loading}
+            saving={saving}
+            saveError={saveError}
+            saveMessage={saveMessage}
+            onSave={() => void saveWeek()}
+            creating={creating}
+            createError={createError}
+            suggestedMonday={suggestedMonday}
+            onCreateWeek={(monday) => void createWeek(monday)}
+          />
         </ResizablePanel>
 
         <ResizableHandle withHandle disabled={editorCollapsed} />

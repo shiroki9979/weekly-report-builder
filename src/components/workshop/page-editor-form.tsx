@@ -20,12 +20,14 @@ type PageEditorFormProps = {
   week: WeekDocument
   pageIndex: number
   onChange: (week: WeekDocument) => void
+  readOnly?: boolean
 }
 
 export function PageEditorForm({
   week,
   pageIndex,
   onChange,
+  readOnly = false,
 }: PageEditorFormProps) {
   const page = week.pages[pageIndex]
 
@@ -40,6 +42,10 @@ export function PageEditorForm({
       className="space-y-4"
       onSubmit={(event) => event.preventDefault()}
     >
+      <fieldset
+        disabled={readOnly}
+        className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
+      >
       <div className="space-y-2">
         <Label htmlFor="page-title">Title</Label>
         <Input
@@ -221,6 +227,7 @@ export function PageEditorForm({
         />
         <Label htmlFor="page-hidden">Hide page from export</Label>
       </div>
+      </fieldset>
     </form>
   )
 }
