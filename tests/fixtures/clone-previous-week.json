@@ -1,0 +1,82 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Weekly Report 2026.08.24–08.28",
+      "items": [
+        { "heading": "Platform focus", "body": "Model archive upload." },
+        { "heading": "SolarDB", "body": "Pretrain base v2.2." },
+        { "heading": "Detroit", "body": "Day-1 baseline locked." }
+      ],
+      "panel": {
+        "kind": "chart",
+        "title": "Commits this week",
+        "categories": ["24", "25", "26"],
+        "series": [
+          { "name": "Platform", "color": "#2e75b6", "values": [16, 34, 57] },
+          { "name": "SolarDB", "color": "#7eb0d6", "values": [27, 23, 36] }
+        ]
+      },
+      "notes": "Overview notes"
+    },
+    {
+      "id": "p02",
+      "layout": "two-column",
+      "title": "Platform · Model Download",
+      "hidden": true,
+      "items": [
+        { "heading": "Pack the model", "body": "Export tar.gz." },
+        { "heading": "Import on target", "body": "Upload archive." },
+        { "heading": "Keep stable", "body": "Failed imports unchanged." }
+      ],
+      "panel": {
+        "kind": "flow",
+        "title": "Cross-environment path",
+        "steps": [
+          { "label": "Source env", "caption": "@production", "variant": "default" },
+          { "label": "Target env", "caption": "New version", "variant": "ok" }
+        ]
+      }
+    },
+    {
+      "id": "p03",
+      "layout": "two-column",
+      "title": "Next Week",
+      "items": [
+        { "heading": "Detroit", "body": "Run diagnostics." },
+        { "heading": "SolarDB", "body": "Compare LPO vs M2." },
+        { "heading": "No blockers", "body": "Both tracks can start." }
+      ],
+      "panel": {
+        "kind": "checklist",
+        "title": "Next checks",
+        "items": [
+          { "label": "Scale diagnostics", "checked": false },
+          { "label": "Compile baseline", "checked": true }
+        ]
+      }
+    },
+    {
+      "id": "p04",
+      "layout": "two-column",
+      "title": "Platform · Eval Gate",
+      "items": [
+        { "heading": "Task-scoped metrics", "body": "Per-task promotion metric." },
+        { "heading": "Manual promote", "body": "Pin from history." },
+        { "heading": "Production pin", "body": "Scheduled eval still runs." }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Loaded model",
+        "columns": ["Action", "Production", "Outcome"],
+        "rows": [
+          { "cells": ["Scheduled eval", "Pinned", "Skip promote"], "emphasis": [1] },
+          { "cells": ["Manual promote", "Chosen version", "Write if valid"], "emphasis": [1] }
+        ]
+      }
+    }
+  ]
+}

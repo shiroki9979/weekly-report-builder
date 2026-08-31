@@ -30,6 +30,10 @@ export function WorkshopShell() {
     saveError,
     saveMessage,
     saveWeek,
+    creating,
+    createError,
+    suggestedMonday,
+    createWeek,
   } = useWeekEditor()
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
@@ -62,7 +66,12 @@ export function WorkshopShell() {
                 saving={saving}
                 saveMessage={saveMessage}
                 saveError={saveError}
-                disabled={loading || !week}
+                suggestedMonday={suggestedMonday}
+                onCreateWeek={(monday) => void createWeek(monday)}
+                creating={creating}
+                createError={createError}
+                saveDisabled={loading || !week}
+                createDisabled={loading || creating}
               />
 
               {week ? (

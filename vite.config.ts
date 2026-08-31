@@ -11,6 +11,7 @@ import { parseWeekDocument } from "./src/lib/week-document"
 import {
   listWeeksInDirectory,
   writeWeekFile,
+  createWeekFromPrevious,
 } from "./server/weeks-store"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
@@ -79,6 +80,19 @@ function weeksApiMiddleware(
           error instanceof Error ? error.message : "Failed to save week file"
         sendJson(res, 400, { error: message })
       })
+    return
+  }
+
+  if (req.method === "POST") {
+    try {
+      const week = createWeekFromPrevious(weeksDir, monday)
+      sendJson(res, 201, { week })
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create week file"
+      const status = message.includes("already exists") ? 409 : 400
+      sendJson(res, status, { error: message })
+    }
     return
   }
 

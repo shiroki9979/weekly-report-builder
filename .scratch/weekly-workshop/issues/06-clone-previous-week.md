@@ -4,11 +4,11 @@
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] New week file name is the Monday date
-- [ ] Structure (pages, `panel.kind`, hidden) matches the previous week
-- [ ] Titles, items, panel bodies, and notes are empty
-- [ ] Tests cover clone-from-previous with a two-week fixture
+- [x] New week file name is the Monday date
+- [x] Structure (pages, `panel.kind`, hidden) matches the previous week
+- [x] Titles, items, panel bodies, and notes are empty
+- [x] Tests cover clone-from-previous with a two-week fixture
 
 ## Comments

@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 
+import { cloneWeekFromPrevious } from "../src/lib/week-clone"
 import { parseWeekDocument, type WeekDocument } from "../src/lib/week-document"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 
@@ -45,4 +46,31 @@ export function writeWeekFile(
   const validated = parseWeekDocument(week)
   fs.mkdirSync(weeksDir, { recursive: true })
   fs.writeFileSync(filePath, serializeWeekDocument(validated), "utf-8")
+}
+
+export function createWeekFromPrevious(
+  weeksDir: string,
+  monday: string
+): WeekDocument {
+  if (!MONDAY_PATTERN.test(monday)) {
+    throw new Error(`Invalid week id: ${monday}`)
+  }
+
+  const weeks = listWeeksInDirectory(weeksDir)
+  const latestMonday = weeks.at(-1)
+
+  if (!latestMonday) {
+    throw new Error("No previous week to clone")
+  }
+
+  const filePath = path.resolve(weeksDir, `${monday}.json`)
+  if (fs.existsSync(filePath)) {
+    throw new Error(`Week already exists: ${monday}`)
+  }
+
+  const previous = readWeekFile(weeksDir, latestMonday)
+  const cloned = cloneWeekFromPrevious(previous, monday)
+
+  writeWeekFile(weeksDir, monday, cloned)
+  return cloned
 }
