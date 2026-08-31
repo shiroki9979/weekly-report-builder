@@ -2,6 +2,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   addFlowStep,
   moveFlowStep,
   removeFlowStep,
@@ -99,25 +106,35 @@ export function FlowEditorForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor={`flow-step-variant-${stepIndex}`}>Variant</Label>
-              <select
-                id={`flow-step-variant-${stepIndex}`}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              <Select
                 value={step.variant ?? ""}
-                onChange={(event) =>
+                onValueChange={(next) => {
+                  if (next === null) {
+                    return
+                  }
+
                   onChange(
                     setFlowStepVariant(
                       week,
                       pageIndex,
                       stepIndex,
-                      event.target.value as "default" | "ok" | ""
+                      next as "default" | "ok" | ""
                     )
                   )
-                }
+                }}
               >
-                <option value="">Default styling</option>
-                <option value="default">Default</option>
-                <option value="ok">OK</option>
-              </select>
+                <SelectTrigger
+                  id={`flow-step-variant-${stepIndex}`}
+                  className="w-full"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Default styling</SelectItem>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="ok">OK</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
