@@ -26,6 +26,7 @@ import {
 } from "@/components/workshop/export-controls"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageNavigator } from "@/components/workshop/page-navigator"
+import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
 import {
   PagePicker,
   WorkshopToolbar,
@@ -339,6 +340,9 @@ export function WorkshopShell() {
                 </StageFrame>
               </div>
             </div>
+            {week && selectedPage ? (
+              <SpeakerNotesCue notes={selectedPage.notes} />
+            ) : null}
             {week ? (
               <PageNavigator
                 pages={week.pages}

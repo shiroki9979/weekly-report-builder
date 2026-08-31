@@ -13,7 +13,7 @@
    - **Title**：投影片主標
    - **Item 1–3**：左欄三點（heading + body）
    - 右側 panel 區塊（依 `chart` / `table` / `flow` / `checklist` 顯示對應表單）
-   - **Speaker notes**：備忘，不顯示於 stage
+   - **Speaker notes**：備忘，不顯示於 stage；右側 preview 在投影片下方有可收合的 **Speaker notes** 小抄（唯讀，與表單同源）
 4. 點 **Save**
 
 ## 驗證
