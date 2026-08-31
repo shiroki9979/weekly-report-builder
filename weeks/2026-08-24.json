@@ -33,6 +33,36 @@
       "notes": "Overview chart uses example commit counts only"
     },
     {
+      "id": "p02",
+      "layout": "two-column",
+      "title": "Platform · Model Download",
+      "items": [
+        {
+          "heading": "Pack the production model",
+          "body": "Export alias tar.gz from the source environment."
+        },
+        {
+          "heading": "Import on target",
+          "body": "Upload archive and run contract checks before promotion."
+        },
+        {
+          "heading": "Keep production stable",
+          "body": "Failed imports leave the current alias unchanged."
+        }
+      ],
+      "panel": {
+        "kind": "flow",
+        "title": "Cross-environment path",
+        "steps": [
+          { "label": "Source env", "caption": "@production", "variant": "default" },
+          { "label": "Download tar.gz", "caption": "Model archive" },
+          { "label": "Target env", "caption": "New version", "variant": "ok" },
+          { "label": "Upload + contract check", "caption": "Promote if valid" }
+        ]
+      },
+      "notes": "Model download flow"
+    },
+    {
       "id": "p04",
       "layout": "two-column",
       "title": "Platform · Eval Gate",

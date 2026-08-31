@@ -1,4 +1,5 @@
 import { ChartPanelView } from "@/components/stage/panels/chart-panel"
+import { FlowPanelView } from "@/components/stage/panels/flow-panel"
 import { TablePanelView } from "@/components/stage/panels/table-panel"
 import type { Panel } from "@/lib/week-document"
 
@@ -21,6 +22,7 @@ export function StagePanel({ panel }: StagePanelProps) {
     case "chart":
       return <ChartPanelView panel={panel} />
     case "flow":
+      return <FlowPanelView panel={panel} />
     case "checklist":
     case "fields":
       return <UnsupportedPanel kind={panel.kind} />

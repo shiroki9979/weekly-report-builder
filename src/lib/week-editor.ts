@@ -1,5 +1,6 @@
 import type {
   ChartPanel,
+  FlowPanel,
   TablePanel,
   WeekDocument,
   WeekPage,
@@ -50,6 +51,36 @@ function updateChartPanel(
     ...page,
     panel: updater(requireChartPanel(page, pageIndex)),
   }))
+}
+
+function requireFlowPanel(page: WeekPage, pageIndex: number): FlowPanel {
+  if (page.panel.kind !== "flow") {
+    throw new Error(`Page ${pageIndex} does not have a flow panel`)
+  }
+
+  return page.panel
+}
+
+function updateFlowPanel(
+  week: WeekDocument,
+  pageIndex: number,
+  updater: (panel: FlowPanel) => FlowPanel
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => ({
+    ...page,
+    panel: updater(requireFlowPanel(page, pageIndex)),
+  }))
+}
+
+function moveItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+  if (fromIndex === toIndex) {
+    return items
+  }
+
+  const next = [...items]
+  const [item] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, item)
+  return next
 }
 
 export function setPageTitle(
@@ -299,5 +330,99 @@ export function removeChartSeries(
   return updateChartPanel(week, pageIndex, (panel) => ({
     ...panel,
     series: panel.series.filter((_, index) => index !== seriesIndex),
+  }))
+}
+
+export function setFlowPanelTitle(
+  week: WeekDocument,
+  pageIndex: number,
+  title: string
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    title,
+  }))
+}
+
+export function setFlowStepLabel(
+  week: WeekDocument,
+  pageIndex: number,
+  stepIndex: number,
+  label: string
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: panel.steps.map((step, index) =>
+      index === stepIndex ? { ...step, label } : step
+    ),
+  }))
+}
+
+export function setFlowStepCaption(
+  week: WeekDocument,
+  pageIndex: number,
+  stepIndex: number,
+  caption: string
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: panel.steps.map((step, index) =>
+      index === stepIndex
+        ? { ...step, caption: caption === "" ? undefined : caption }
+        : step
+    ),
+  }))
+}
+
+export function setFlowStepVariant(
+  week: WeekDocument,
+  pageIndex: number,
+  stepIndex: number,
+  variant: "default" | "ok" | ""
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: panel.steps.map((step, index) =>
+      index === stepIndex
+        ? {
+            ...step,
+            variant:
+              variant === "default" || variant === "ok" ? variant : undefined,
+          }
+        : step
+    ),
+  }))
+}
+
+export function addFlowStep(
+  week: WeekDocument,
+  pageIndex: number
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: [...panel.steps, { label: "" }],
+  }))
+}
+
+export function removeFlowStep(
+  week: WeekDocument,
+  pageIndex: number,
+  stepIndex: number
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: panel.steps.filter((_, index) => index !== stepIndex),
+  }))
+}
+
+export function moveFlowStep(
+  week: WeekDocument,
+  pageIndex: number,
+  fromIndex: number,
+  toIndex: number
+): WeekDocument {
+  return updateFlowPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    steps: moveItems(panel.steps, fromIndex, toIndex),
   }))
 }
