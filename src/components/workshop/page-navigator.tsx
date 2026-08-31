@@ -32,7 +32,7 @@ export function PageNavigator({
   return (
     <nav
       aria-label="Page navigator"
-      className="flex shrink-0 items-center gap-2 border-t pt-3"
+      className="flex shrink-0 items-center gap-2 pt-3"
     >
       <Button
         type="button"

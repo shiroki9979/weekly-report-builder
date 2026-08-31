@@ -340,9 +340,7 @@ export function WorkshopShell() {
                 </StageFrame>
               </div>
             </div>
-            {week && selectedPage ? (
-              <SpeakerNotesCue notes={selectedPage.notes} />
-            ) : null}
+            {week ? <SpeakerNotesCue notes={selectedPage?.notes} /> : null}
             {week ? (
               <PageNavigator
                 pages={week.pages}
