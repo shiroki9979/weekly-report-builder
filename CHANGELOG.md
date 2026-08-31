@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Preview chrome：可收合的 **Speaker notes** 小抄（stage 下方、navigator 上方；唯讀；不進 PNG）
 - 個人週報工坊：Vite + React + shadcn（`base-nova`）工坊殼，左編輯、右 16:9 預覽
 - `weeks/YYYY-MM-DD.json` 週次檔案格式與解析（`two-column` layout；`table` / `chart` / `flow` / `checklist` panel 型別）
 - 16:9 stage 預覽：`two-column` 雙欄版面與 PPT token（`stage.css`，畫布不用 shadcn）

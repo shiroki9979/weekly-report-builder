@@ -1,6 +1,6 @@
 # 08: Speaker notes cue in the 16:9 preview chrome
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
@@ -84,9 +84,13 @@ Show a collapsible **Speaker notes** cue in the preview panel chrome—below the
 - Grilling consensus (2026-08-31): notes-only source; edit + rehearsal; chrome-only; below stage / above navigator; collapsible default open; empty placeholder; display-only; max-h-36 scroll; not ResizablePanel; no storage; plain `pre-wrap`; label `Speaker notes`; full-row disclosure; show when week + selected page.
 - Product framing: personal workshop for authoring and PNG into the team PPT—not a presenter app. The cue is a reading aid in chrome, not a second canvas.
 - Acceptance checklist for implementers:
-  - [ ] Cue shows selected page `notes` below stage, above page navigator
-  - [ ] Collapsible, default expanded; in-session page changes keep open/closed
-  - [ ] Empty notes → block still visible with `No speaker notes`
-  - [ ] Read-only; left form remains the editor
-  - [ ] Not on stage; export unchanged
-  - [ ] Unit tests on the cue component seam
+  - [x] Cue shows selected page `notes` below stage, above page navigator
+  - [x] Collapsible, default expanded; in-session page changes keep open/closed
+  - [x] Empty notes → block still visible with `No speaker notes`
+  - [x] Read-only; left form remains the editor
+  - [x] Not on stage; export unchanged
+  - [x] Unit tests on the cue component seam
+
+## Comments
+
+- Implemented on `feat/speaker-notes-preview`: `SpeakerNotesCue` + shell wire-up + how-to + unit tests.
