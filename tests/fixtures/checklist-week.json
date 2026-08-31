@@ -1,0 +1,36 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p07",
+      "layout": "two-column",
+      "title": "Next Week",
+      "items": [
+        {
+          "heading": "Harbor scale-then-rollout",
+          "body": "Run diagnostics before opening the rollout."
+        },
+        {
+          "heading": "Atlas Variant A vs Variant B",
+          "body": "Compare after data fix; promote only if it wins."
+        },
+        {
+          "heading": "No blockers",
+          "body": "Both experiment tracks can start on the existing pipeline."
+        }
+      ],
+      "panel": {
+        "kind": "checklist",
+        "title": "Next checks",
+        "items": [
+          { "label": "Scale diagnostics pass before rollout", "checked": false },
+          { "label": "Compile Harbor day-1 baseline table", "checked": false },
+          { "label": "Variant A vs Variant B after data fix", "checked": true },
+          { "label": "Promote only if it beats production champion", "checked": false }
+        ]
+      },
+      "notes": "Next week checklist"
+    }
+  ]
+}

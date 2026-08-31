@@ -1,5 +1,6 @@
 import type {
   ChartPanel,
+  ChecklistPanel,
   FlowPanel,
   TablePanel,
   WeekDocument,
@@ -69,6 +70,28 @@ function updateFlowPanel(
   return updatePage(week, pageIndex, (page) => ({
     ...page,
     panel: updater(requireFlowPanel(page, pageIndex)),
+  }))
+}
+
+function requireChecklistPanel(
+  page: WeekPage,
+  pageIndex: number
+): ChecklistPanel {
+  if (page.panel.kind !== "checklist") {
+    throw new Error(`Page ${pageIndex} does not have a checklist panel`)
+  }
+
+  return page.panel
+}
+
+function updateChecklistPanel(
+  week: WeekDocument,
+  pageIndex: number,
+  updater: (panel: ChecklistPanel) => ChecklistPanel
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => ({
+    ...page,
+    panel: updater(requireChecklistPanel(page, pageIndex)),
   }))
 }
 
@@ -424,5 +447,67 @@ export function moveFlowStep(
   return updateFlowPanel(week, pageIndex, (panel) => ({
     ...panel,
     steps: moveItems(panel.steps, fromIndex, toIndex),
+  }))
+}
+
+export function setChecklistPanelTitle(
+  week: WeekDocument,
+  pageIndex: number,
+  title: string
+): WeekDocument {
+  return updateChecklistPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    title,
+  }))
+}
+
+export function setChecklistItemLabel(
+  week: WeekDocument,
+  pageIndex: number,
+  itemIndex: number,
+  label: string
+): WeekDocument {
+  return updateChecklistPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    items: panel.items.map((item, index) =>
+      index === itemIndex ? { ...item, label } : item
+    ),
+  }))
+}
+
+export function setChecklistItemChecked(
+  week: WeekDocument,
+  pageIndex: number,
+  itemIndex: number,
+  checked: boolean
+): WeekDocument {
+  return updateChecklistPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    items: panel.items.map((item, index) =>
+      index === itemIndex
+        ? { ...item, checked: checked ? true : undefined }
+        : item
+    ),
+  }))
+}
+
+export function addChecklistItem(
+  week: WeekDocument,
+  pageIndex: number
+): WeekDocument {
+  return updateChecklistPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    items: [...panel.items, { label: "", checked: false }],
+  }))
+}
+
+export function removeChecklistItem(
+  week: WeekDocument,
+  pageIndex: number,
+  itemIndex: number
+): WeekDocument {
+  return updateChecklistPanel(week, pageIndex, (panel) => ({
+    ...panel,
+    items: panel.items.filter((_, index) => index !== itemIndex),
   }))
 }
