@@ -1,5 +1,11 @@
-import { useRef } from "react"
-import { MoonIcon, SunIcon } from "lucide-react"
+import { useRef, useState } from "react"
+import {
+  MoonIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  SunIcon,
+} from "lucide-react"
+import { usePanelRef } from "react-resizable-panels"
 
 import { StageSlide } from "@/components/stage/stage-slide"
 import { StageFrame } from "@/components/stage/stage-frame"
@@ -22,6 +28,7 @@ import {
   WorkshopToolbar,
 } from "@/components/workshop/week-picker"
 import { useStageExport } from "@/hooks/use-stage-export"
+import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
@@ -64,6 +71,16 @@ export function WorkshopShell() {
   })
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
+  const editorPanelRef = usePanelRef()
+  const [editorCollapsed, setEditorCollapsed] = useState(false)
+
+  usePageKeyboardNav({
+    pageCount: week?.pages.length ?? 0,
+    selectedPageIndex,
+    onSelect: setSelectedPageIndex,
+    enabled: !loading && week !== null,
+  })
+
   const { theme, setTheme } = useTheme()
   const isDark =
     theme === "dark" ||
@@ -88,9 +105,34 @@ export function WorkshopShell() {
     )
   }
 
+  const toggleEditorPanel = () => {
+    const panel = editorPanelRef.current
+    if (!panel) {
+      return
+    }
+
+    if (panel.isCollapsed()) {
+      panel.expand()
+    } else {
+      panel.collapse()
+    }
+  }
+
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
       <header className="flex shrink-0 items-center gap-3 border-b px-4 py-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={
+            editorCollapsed ? "Expand editor panel" : "Collapse editor panel"
+          }
+          aria-pressed={editorCollapsed}
+          onClick={toggleEditorPanel}
+        >
+          {editorCollapsed ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+        </Button>
         <h1 className="text-sm font-medium">Weekly Report Builder</h1>
         <span className="text-xs text-muted-foreground">Workshop</span>
         {week ? (
@@ -115,7 +157,18 @@ export function WorkshopShell() {
         className="min-h-0 flex-1"
         id="weekly-workshop-panels"
       >
-        <ResizablePanel defaultSize="42" minSize="28" maxSize="60">
+        <ResizablePanel
+          id="editor"
+          panelRef={editorPanelRef}
+          collapsible
+          collapsedSize={0}
+          defaultSize="42"
+          minSize="20"
+          maxSize="60"
+          onResize={() => {
+            setEditorCollapsed(editorPanelRef.current?.isCollapsed() ?? false)
+          }}
+        >
           <ScrollArea className="h-full min-w-0">
             <div className="space-y-4 p-4">
               <WorkshopToolbar
@@ -153,9 +206,14 @@ export function WorkshopShell() {
           </ScrollArea>
         </ResizablePanel>
 
-        <ResizableHandle withHandle />
+        <ResizableHandle withHandle disabled={editorCollapsed} />
 
-        <ResizablePanel defaultSize="58" minSize="40">
+        <ResizablePanel
+          id="preview"
+          defaultSize="58"
+          minSize="40"
+          groupResizeBehavior="preserve-relative-size"
+        >
           <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden p-4">
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
               <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
