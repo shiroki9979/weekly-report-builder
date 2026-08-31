@@ -5,19 +5,19 @@
     {
       "id": "p01",
       "layout": "two-column",
-      "title": "Weekly Report 2026.08.24–08.28",
+      "title": "Weekly Report　2026.08.24–08.28",
       "items": [
         {
-          "heading": "Platform focus",
-          "body": "Model archive upload and download across environments."
+          "heading": "平台重點：模型上傳／下載",
+          "body": "兩套環境之間可以把已上線模型打包帶走、再匯入，不必在目標環境重訓。畫面上是 Model archive：上面下載、下面上傳。"
         },
         {
-          "heading": "SolarDB",
-          "body": "Pretrain base iterated from v2.0 to v2.2."
+          "heading": "SolarDB：預訓練基座完成迭代",
+          "body": "上游從 v2.0 走到 v2.2 切版，生產產物可獨立取用。跨廠驗證鎖定 M2 為冠軍，v2.2 本週不替換。"
         },
         {
-          "heading": "Detroit",
-          "body": "Day-1 evaluation baseline is locked."
+          "heading": "Detroit：日前一天評測可跑",
+          "body": "鎖定日前一天為正式比較基準，預訓練權重已接到 Detroit，日曆切分與尺度檢查後即可開實驗。"
         }
       ],
       "panel": {
@@ -30,7 +30,7 @@
           { "name": "Detroit", "color": "#c5d9ed", "values": [5, 27, 0, 36, 39] }
         ]
       },
-      "notes": "Overview chart uses example commit counts only"
+      "notes": "Platform 72　SolarDB 63　Detroit 47　total ~180"
     },
     {
       "id": "p02",
@@ -38,59 +38,62 @@
       "title": "Platform · Model Download",
       "items": [
         {
-          "heading": "Pack the production model",
-          "body": "Export alias tar.gz from the source environment."
+          "heading": "以前：模型綁在訓練那一套環境",
+          "body": "正式版只活在當時訓練的 Registry。要換機房、給另一套平台、或把實驗室模型送到現場，只能重訓或手動翻檔，沒有官方打包。"
         },
         {
-          "heading": "Import on target",
-          "body": "Upload archive and run contract checks before promotion."
+          "heading": "現在：選任務與別名，直接存壓縮包",
+          "body": "可下載正式版、候選版、上一版。包裡是可上線的一份：推論包裝、標準化器、輸入輸出簽名，以及從哪套環境打出來的來源標記。"
         },
         {
-          "heading": "Keep production stable",
-          "body": "Failed imports leave the current alias unchanged."
+          "heading": "下載是只讀，不會改線上狀態",
+          "body": "不改別名、不寫資料庫、也不做契約檢查。沒有該別名就不能下載。契約留給上傳端把關，避免「下載成功」被當成「目標環境已經能上線」。"
         }
       ],
       "panel": {
-        "kind": "flow",
-        "title": "Cross-environment path",
-        "steps": [
-          { "label": "Source env", "caption": "@production", "variant": "default" },
-          { "label": "Download tar.gz", "caption": "Model archive" },
-          { "label": "Target env", "caption": "New version", "variant": "ok" },
-          { "label": "Upload + contract check", "caption": "Promote if valid" }
+        "kind": "table",
+        "title": "Model archive · Download",
+        "columns": ["Control", "Value"],
+        "rows": [
+          { "cells": ["Task", "選目標任務"], "emphasis": [0] },
+          {
+            "cells": ["Alias", "@production　／　@candidate　／　@previous-production"],
+            "emphasis": [0]
+          },
+          { "cells": ["Action", "Download archive"], "emphasis": [0] }
         ]
       },
-      "notes": "Model download flow"
+      "notes": "瀏覽器存 tar.gz。別名在總覽為空則按鈕不可送。"
     },
     {
       "id": "p03",
       "layout": "two-column",
-      "title": "Next Week",
+      "title": "Platform · Model Upload",
       "items": [
         {
-          "heading": "Detroit scale-then-go",
-          "body": "Run diagnostics before opening the Go campaign."
+          "heading": "對準目標任務，先過契約再收",
+          "body": "選要進的任務、選剛才下載的壓縮包。系統檢查：這個模型能不能服務「目標環境現在這份任務規格」。對不上或載入失敗就拒絕，畫面只顯示錯誤，不說已經晉升。"
         },
         {
-          "heading": "SolarDB LPO vs M2",
-          "body": "Compare after timezone fix; promote only if it wins."
+          "heading": "還沒有正式版：當第一個上線模型",
+          "body": "通過後寫入候選，並走評估閘道冷啟動。適合新任務、或目標環境尚無生產模型。"
         },
         {
-          "heading": "No blockers",
-          "body": "Both experiment tracks can start on the existing pipeline."
+          "heading": "已有正式版：未評估匯入，舊版可回退",
+          "body": "同一動作標成「未評估匯入」後升為正式版。舊正式版改成上一版，需要時可以退回去。失敗則不安別名、不寫晉升帳本，不留半成品。"
         }
       ],
       "panel": {
-        "kind": "checklist",
-        "title": "Next checks",
-        "items": [
-          { "label": "Scale diagnostics pass before Go campaign", "checked": false },
-          { "label": "Compile Detroit day-1 baseline table", "checked": false },
-          { "label": "LPO vs M2 after timezone fix", "checked": true },
-          { "label": "Promote only if it beats production champion", "checked": false }
+        "kind": "flow",
+        "title": "跨環境路徑",
+        "steps": [
+          { "label": "來源環境", "caption": "@production", "variant": "default" },
+          { "label": "下載 tar.gz", "caption": "Model archive" },
+          { "label": "目標環境", "caption": "新 version", "variant": "ok" },
+          { "label": "上傳 + 契約檢查", "caption": "契約失敗則不動現況" }
         ]
       },
-      "notes": "Next week checklist"
+      "notes": "尚無正式版→冷啟動上線；已有正式版→未評估匯入晉升；契約失敗→不動現況"
     },
     {
       "id": "p04",
@@ -98,30 +101,120 @@
       "title": "Platform · Eval Gate",
       "items": [
         {
-          "heading": "Task-scoped evaluation metrics",
-          "body": "Promotion comparison is no longer locked to one error metric across every pipeline. Each forecasting task can choose its own metric with frontend, backend, and ledger aligned."
+          "heading": "評估指標依任務設定",
+          "body": "晉升比較不再全管道綁死單一誤差。不同預測任務可以選自己的指標，前後端與帳本一起對齊。"
         },
         {
-          "heading": "Manual promote from history",
-          "body": "No need to wait for scheduled auto-promotion. Pin a registered version as production after the same contract checks as import; on failure, production stays unchanged."
+          "heading": "可從歷史版本手動晉升",
+          "body": "不必等排程自動過關。可指定某個已註冊版本強制升為正式版，並通過與匯入相同的契約檢查；失敗則不動現況。"
         },
         {
-          "heading": "Production pin and unpin",
-          "body": "While pinned, scheduled eval still runs but does not promote; new training does not auto-unpin. The UI shows a pin banner, history picker, and manual unpin."
+          "heading": "正式版可釘住、可解除",
+          "body": "釘住期間排程評估仍會跑，但不做晉升；新訓練也不會自動解除。前端可看到釘住橫幅、選歷史版、手動解除。"
         }
       ],
       "panel": {
         "kind": "table",
         "title": "Loaded model",
-        "columns": ["Action", "Production", "Outcome"],
+        "columns": ["動作", "對正式版", "結果"],
         "rows": [
-          { "cells": ["Scheduled eval", "Pinned", "Skip promote"], "emphasis": [1] },
-          { "cells": ["Manual promote", "Chosen version", "Write if contract passes"], "emphasis": [1] },
-          { "cells": ["New training", "Candidate only", "No auto-unpin"], "emphasis": [1] },
-          { "cells": ["Unpin", "Remove pin only", "Alias unchanged"], "emphasis": [1] }
+          { "cells": ["排程評估", "釘住中", "skip 晉升"], "emphasis": [1] },
+          { "cells": ["手動晉升", "指定歷史版", "契約通過才寫"], "emphasis": [1] },
+          { "cells": ["新訓練", "只寫候選", "不自動 unpin"], "emphasis": [1] },
+          { "cells": ["Unpin", "只刪釘住", "不回滾 alias"], "emphasis": [1] }
         ]
       },
-      "notes": "Eval Gate talking points"
+      "notes": "task-alias @production · pinned · 排程 Gate 仍跑，晉升已 skip"
+    },
+    {
+      "id": "p05",
+      "layout": "two-column",
+      "title": "Platform · Modules & Docs",
+      "items": [
+        {
+          "heading": "打包與評估閘道收成單一模組",
+          "body": "對外只保留固定操作：打包、匯入、檢查、手動晉升、釘住、總覽。資料庫與實驗追蹤的讀寫往內收，流程編排只負責調度。"
+        },
+        {
+          "heading": "文件依四象限重整",
+          "body": "拆成教學、操作、參考、說明；拿掉舊轉址殘件，活連結改指現行路徑。訓練流程與測試也一併拆小。"
+        },
+        {
+          "heading": "Engine 核心單向移植",
+          "body": "平台 Engine 仍留在本 repo，移植方向只指向 microgrid-ai，避免兩邊互相回寫、邊界變糊。"
+        }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "文件四象限",
+        "columns": ["象限", "用途"],
+        "rows": [
+          { "cells": ["教學", "帶人跑起來"], "emphasis": [0] },
+          { "cells": ["操作", "完成一件具體事"], "emphasis": [0] },
+          { "cells": ["參考", "API、契約、設定"], "emphasis": [0] },
+          { "cells": ["說明", "為什麼這樣設計"], "emphasis": [0] }
+        ]
+      },
+      "notes": "Engine ──單向──► microgrid-ai"
+    },
+    {
+      "id": "p06",
+      "layout": "two-column",
+      "title": "SolarDB & Detroit",
+      "items": [
+        {
+          "heading": "SolarDB 預訓練基座走完一輪迭代",
+          "body": "上游一週內從 v2.0 走到 v2.2 切版，權重與設定可給下游直接取用，不必重跑訓練。"
+        },
+        {
+          "heading": "生產模型維持現任冠軍",
+          "body": "跨廠驗證後，v2.2 尚未贏過現任 M2。本週不換生產骨幹；太陽時區已對齊，對照留給下週。"
+        },
+        {
+          "heading": "Detroit 評測協定鎖定、管線可跑",
+          "body": "正式比較改看日前一天。上游權重已接到 Detroit，4–7 月微調、8 月留出。尺度過了才開實驗，數字下週出。"
+        }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Status",
+        "columns": ["項目", "結果"],
+        "rows": [
+          { "cells": ["SolarDB", "v2.2 已切版"], "emphasis": [1] },
+          { "cells": ["生產骨幹", "M2 維持"], "emphasis": [1] },
+          { "cells": ["Detroit 評測", "日前一天鎖定"], "emphasis": [1] },
+          { "cells": ["遷移實驗", "下週開跑"], "emphasis": [1] }
+        ]
+      }
+    },
+    {
+      "id": "p07",
+      "layout": "two-column",
+      "title": "Next Week",
+      "items": [
+        {
+          "heading": "跑 Detroit 日前一天遷移實驗",
+          "body": "依 4–7 月微調、8 月留出的切分，在尺度檢查通過後開跑。彙整目標廠基準，對照預訓練遷移與本地模型。"
+        },
+        {
+          "heading": "對照時區修正後的跨廠結果",
+          "body": "把太陽欄改對當地時之後的留一廠數字，拿去跟現任 M2 冠軍比。贏過再考慮更新生產模型，否則維持現況。"
+        },
+        {
+          "heading": "目前沒有阻礙",
+          "body": "兩條實驗都可以按現有管線開跑，不另等平台側交付。"
+        }
+      ],
+      "panel": {
+        "kind": "checklist",
+        "title": "Next checks",
+        "items": [
+          { "label": "尺度診斷通過再開 Go campaign", "checked": false },
+          { "label": "彙整 Detroit 日前一天基準表", "checked": false },
+          { "label": "時區修正後 LPO vs M2", "checked": false },
+          { "label": "贏過才換生產骨幹", "checked": false }
+        ]
+      }
     }
   ]
 }
