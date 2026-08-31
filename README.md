@@ -11,6 +11,8 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
+Documentation (Diátaxis): [docs/](docs/README.md).
+
 ## Development
 
 ```bash
@@ -24,10 +26,10 @@ Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename).
 
 ## Architecture
 
-| Area | Stack |
-|------|--------|
-| Workshop chrome (editor, sidebar, resizable panels) | shadcn |
-| 16:9 preview stage | `src/styles/stage.css` tokens — no shadcn on the canvas |
+| Area                                                | Stack                                                   |
+| --------------------------------------------------- | ------------------------------------------------------- |
+| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                  |
+| 16:9 preview stage                                  | `src/styles/stage.css` tokens — no shadcn on the canvas |
 
 ## Language
 
