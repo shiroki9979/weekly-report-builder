@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,32 +17,44 @@ type WeekPickerProps = {
   value: string
   onChange: (monday: string) => void
   disabled?: boolean
+  trailing?: ReactNode
 }
 
-export function WeekPicker({ weeks, value, onChange, disabled }: WeekPickerProps) {
+export function WeekPicker({
+  weeks,
+  value,
+  onChange,
+  disabled,
+  trailing,
+}: WeekPickerProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor="week-picker">Week</Label>
-      <Select
-        value={value}
-        onValueChange={(next) => {
-          if (next) {
-            onChange(next)
-          }
-        }}
-        disabled={disabled}
-      >
-        <SelectTrigger id="week-picker" className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {weeks.map((monday) => (
-            <SelectItem key={monday} value={monday}>
-              {monday}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-40 flex-1">
+          <Select
+            value={value}
+            onValueChange={(next) => {
+              if (next) {
+                onChange(next)
+              }
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger id="week-picker" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {weeks.map((monday) => (
+                <SelectItem key={monday} value={monday}>
+                  {monday}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {trailing}
+      </div>
     </div>
   )
 }
@@ -70,7 +82,20 @@ export function PagePicker({
         }}
       >
         <SelectTrigger id="page-picker" className="w-full">
-          <SelectValue />
+          <SelectValue>
+            {(value: string | null) => {
+              if (value == null) {
+                return null
+              }
+
+              const page = week.pages[Number(value)]
+              if (!page) {
+                return value
+              }
+
+              return page.hidden ? `${page.title} (hidden)` : page.title
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {week.pages.map((page, index) => (
@@ -117,25 +142,29 @@ export function WorkshopToolbar({
 }: WorkshopToolbarProps) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-40 flex-1">
-          <WeekPicker
-            weeks={weeks}
-            value={selectedMonday}
-            onChange={onWeekChange}
-            disabled={saveDisabled}
-          />
-        </div>
-        <Button type="button" onClick={onSave} disabled={saveDisabled || saving}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-        {saveMessage ? (
-          <span className="text-xs text-muted-foreground">{saveMessage}</span>
-        ) : null}
-        {saveError ? (
-          <span className="text-xs text-destructive">{saveError}</span>
-        ) : null}
-      </div>
+      <WeekPicker
+        weeks={weeks}
+        value={selectedMonday}
+        onChange={onWeekChange}
+        disabled={saveDisabled}
+        trailing={
+          <>
+            <Button
+              type="button"
+              onClick={onSave}
+              disabled={saveDisabled || saving}
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
+            {saveMessage ? (
+              <span className="text-xs text-muted-foreground">{saveMessage}</span>
+            ) : null}
+            {saveError ? (
+              <span className="text-xs text-destructive">{saveError}</span>
+            ) : null}
+          </>
+        }
+      />
 
       <NewWeekForm
         suggestedMonday={suggestedMonday}
@@ -185,28 +214,29 @@ function NewWeekFormFields({
   const [monday, setMonday] = useState(suggestedMonday)
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-md border border-dashed p-3">
-      <div className="min-w-40 flex-1 space-y-2">
-        <Label htmlFor="new-week-monday">New week (Monday)</Label>
+    <div className="space-y-2 rounded-md border border-dashed p-3">
+      <Label htmlFor="new-week-monday">New week (Monday)</Label>
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           id="new-week-monday"
           type="date"
+          className="min-w-40 flex-1"
           value={monday}
           onChange={(event) => setMonday(event.target.value)}
           disabled={disabled || creating}
         />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled || creating || monday.trim() === ""}
+          onClick={() => onCreate(monday)}
+        >
+          {creating ? "Creating…" : "Create week"}
+        </Button>
+        {createError ? (
+          <span className="text-xs text-destructive">{createError}</span>
+        ) : null}
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={disabled || creating || monday.trim() === ""}
-        onClick={() => onCreate(monday)}
-      >
-        {creating ? "Creating…" : "Create week"}
-      </Button>
-      {createError ? (
-        <span className="text-xs text-destructive">{createError}</span>
-      ) : null}
     </div>
   )
 }

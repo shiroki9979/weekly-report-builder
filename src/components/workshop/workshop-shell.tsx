@@ -1,7 +1,10 @@
 import { useRef } from "react"
+import { MoonIcon, SunIcon } from "lucide-react"
 
 import { StageSlide } from "@/components/stage/stage-slide"
 import { StageFrame } from "@/components/stage/stage-frame"
+import { useTheme } from "@/components/theme-provider"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -61,6 +64,29 @@ export function WorkshopShell() {
   })
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
+  const { theme, setTheme } = useTheme()
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches)
+
+  const toggleTheme = () => {
+    if (theme === "dark") {
+      setTheme("light")
+      return
+    }
+
+    if (theme === "light") {
+      setTheme("dark")
+      return
+    }
+
+    setTheme(
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "light"
+        : "dark"
+    )
+  }
 
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
@@ -72,6 +98,16 @@ export function WorkshopShell() {
             {week.start} – {week.end}
           </span>
         ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="ml-auto"
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          onClick={toggleTheme}
+        >
+          {isDark ? <SunIcon /> : <MoonIcon />}
+        </Button>
       </header>
 
       <ResizablePanelGroup
