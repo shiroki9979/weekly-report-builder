@@ -6,12 +6,28 @@
 
 ## 現況
 
-App 尚未實作。決策與票在：
-
-- [Spec](.scratch/weekly-workshop/spec.md)
-- [Tickets](.scratch/weekly-workshop/issues/)（frontier：`01`）
+- **骨架**：Vite + React + shadcn（`base-nova`）工坊殼已就緒；左編輯 placeholder、右 16:9 畫布 placeholder
+- **功能**：尚未實作。決策與票在 [Spec](.scratch/weekly-workshop/spec.md)、[Tickets](.scratch/weekly-workshop/issues/)（frontier：`01`）
 
 Agent 設定見 [AGENTS.md](AGENTS.md)。
+
+## 開發
+
+```bash
+pnpm install
+pnpm dev
+```
+
+其他指令：`pnpm build`、`pnpm lint`、`pnpm test`
+
+週次資料目錄：`weeks/YYYY-MM-DD.json`（週一為檔名）
+
+## 架構切線
+
+| 區域 | 技術 |
+|------|------|
+| 工坊殼（編輯、側欄、拖曳分欄） | shadcn |
+| 16:9 預覽畫布 | `src/styles/stage.css` token，不用 shadcn |
 
 ## 做成之後怎麼用
 
@@ -19,8 +35,6 @@ Agent 設定見 [AGENTS.md](AGENTS.md)。
 2. 每頁填標題、左欄三點、右卡（chart／table／flow／checklist）
 3. 不貼進團隊的頁面藏起來
 4. 未隱藏頁逐頁下載 PNG，或複製到剪貼簿
-
-編輯在 shadcn 工坊殼；預覽畫布用固定藍白 PPT 色票，不上 shadcn 元件。
 
 ## 不做
 
