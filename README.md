@@ -7,8 +7,7 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 ## Status
 
 - **Scaffold**: Vite + React + shadcn (`base-nova`) workshop shell is in place (edit placeholder left, 16:9 stage right).
-- **Preview & edit**: Tickets 01–06 — load/edit/save weeks; all v1 panels; clone a new week from the latest structure.
-- **Next**: [Ticket 07](.scratch/weekly-workshop/issues/07-export-png-clipboard.md) — export PNG + clipboard.
+- **Complete**: Tickets 01–07 — workshop authoring, all v1 panels, clone week, PNG export and clipboard.
 
 Agent setup: [AGENTS.md](AGENTS.md).
 

@@ -4,12 +4,12 @@
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Hidden pages are skipped in export
-- [ ] Download produces one PNG per visible page with the agreed filename
-- [ ] Copy-to-clipboard puts the current visible page image on the clipboard
-- [ ] Clipboard failure leaves download available and surfaces an error
-- [ ] Tests cover skip-hidden and filename; clipboard may be stubbed at the seam
+- [x] Hidden pages are skipped in export
+- [x] Download produces one PNG per visible page with the agreed filename
+- [x] Copy-to-clipboard puts the current visible page image on the clipboard
+- [x] Clipboard failure leaves download available and surfaces an error
+- [x] Tests cover skip-hidden and filename; clipboard may be stubbed at the seam
 
 ## Comments
