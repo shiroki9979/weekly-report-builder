@@ -16,9 +16,9 @@ describe("parseWeekDocument", () => {
 
     expect(week.start).toBe("2026-08-24")
     expect(week.end).toBe("2026-08-28")
-    expect(week.pages).toHaveLength(2)
+    expect(week.pages).toHaveLength(4)
 
-    const page = week.pages[1]
+    const page = week.pages[3]
     expect(page.layout).toBe("two-column")
     expect(page.title).toBe("Platform · Eval Gate")
     expect(page.items).toHaveLength(3)

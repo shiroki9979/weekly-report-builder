@@ -4,10 +4,10 @@
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `panel.kind: "checklist"` renders a list of check items on the right card
-- [ ] Form can add, edit, and remove items
-- [ ] Tests cover the public checklist panel render
+- [x] `panel.kind: "checklist"` renders a list of check items on the right card
+- [x] Form can add, edit, and remove items
+- [x] Tests cover the public checklist panel render
 
 ## Comments

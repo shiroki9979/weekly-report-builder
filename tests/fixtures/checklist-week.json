@@ -1,0 +1,36 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p07",
+      "layout": "two-column",
+      "title": "Next Week",
+      "items": [
+        {
+          "heading": "Detroit scale-then-go",
+          "body": "Run diagnostics before opening the Go campaign."
+        },
+        {
+          "heading": "SolarDB LPO vs M2",
+          "body": "Compare after timezone fix; promote only if it wins."
+        },
+        {
+          "heading": "No blockers",
+          "body": "Both experiment tracks can start on the existing pipeline."
+        }
+      ],
+      "panel": {
+        "kind": "checklist",
+        "title": "Next checks",
+        "items": [
+          { "label": "Scale diagnostics pass before Go campaign", "checked": false },
+          { "label": "Compile Detroit day-1 baseline table", "checked": false },
+          { "label": "LPO vs M2 after timezone fix", "checked": true },
+          { "label": "Promote only if it beats production champion", "checked": false }
+        ]
+      },
+      "notes": "Next week checklist"
+    }
+  ]
+}

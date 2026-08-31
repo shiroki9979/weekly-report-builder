@@ -26,18 +26,18 @@ function loadFixture() {
 describe("week-editor", () => {
   it("maps title edits onto the week document", () => {
     const week = loadFixture()
-    const next = setPageTitle(week, 1, "Platform · Eval Gate (edited)")
+    const next = setPageTitle(week, 3, "Platform · Eval Gate (edited)")
 
-    expect(next.pages[1].title).toBe("Platform · Eval Gate (edited)")
-    expect(week.pages[1].title).toBe("Platform · Eval Gate")
+    expect(next.pages[3].title).toBe("Platform · Eval Gate (edited)")
+    expect(week.pages[3].title).toBe("Platform · Eval Gate")
   })
 
   it("maps item heading and body edits onto the week document", () => {
     const week = loadFixture()
-    const withHeading = setPageItem(week, 1, 1, "heading", "Manual promote")
-    const withBody = setPageItem(withHeading, 1, 1, "body", "Updated body copy")
+    const withHeading = setPageItem(week, 3, 1, "heading", "Manual promote")
+    const withBody = setPageItem(withHeading, 3, 1, "body", "Updated body copy")
 
-    expect(withBody.pages[1].items[1]).toEqual({
+    expect(withBody.pages[3].items[1]).toEqual({
       heading: "Manual promote",
       body: "Updated body copy",
     })
@@ -45,10 +45,10 @@ describe("week-editor", () => {
 
   it("maps table panel edits onto the week document", () => {
     const week = loadFixture()
-    const withTitle = setTablePanelTitle(week, 1, "Loaded model (edited)")
-    const withCell = setTablePanelCell(withTitle, 1, 0, 1, "Unpinned")
+    const withTitle = setTablePanelTitle(week, 3, "Loaded model (edited)")
+    const withCell = setTablePanelCell(withTitle, 3, 0, 1, "Unpinned")
 
-    const panel = withCell.pages[1].panel
+    const panel = withCell.pages[3].panel
     if (panel.kind !== "table") {
       throw new Error("expected table panel")
     }
