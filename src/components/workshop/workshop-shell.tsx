@@ -1,4 +1,4 @@
-import { StageFrame } from "@/components/stage/stage-frame"
+import { StageSlide } from "@/components/stage/stage-slide"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -6,14 +6,26 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import { getPreviewPage } from "@/lib/preview-page"
+import { useWeek } from "@/hooks/use-week"
+
+import { StageFrame } from "@/components/stage/stage-frame"
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
+  const { week, error, loading } = useWeek()
+  const previewPage = week ? getPreviewPage(week) : null
+
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
       <header className="flex shrink-0 items-center gap-3 border-b px-4 py-3">
         <h1 className="text-sm font-medium">Weekly Report Builder</h1>
         <span className="text-xs text-muted-foreground">工坊</span>
+        {week ? (
+          <span className="text-xs text-muted-foreground">
+            {week.start} – {week.end}
+          </span>
+        ) : null}
       </header>
 
       <ResizablePanelGroup
@@ -38,7 +50,7 @@ export function WorkshopShell() {
                   備註
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Speaker notes（ticket 02）
+                  {previewPage?.notes ?? "Speaker notes（ticket 02）"}
                 </p>
               </section>
             </div>
@@ -56,7 +68,19 @@ export function WorkshopShell() {
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <div className="w-full max-w-5xl">
-                <StageFrame />
+                <StageFrame>
+                  {loading ? (
+                    <div className="stage-placeholder">載入週次…</div>
+                  ) : null}
+                  {!loading && error ? (
+                    <div className="stage-warning" role="alert">
+                      {error}
+                    </div>
+                  ) : null}
+                  {!loading && previewPage ? (
+                    <StageSlide page={previewPage} />
+                  ) : null}
+                </StageFrame>
               </div>
             </div>
           </div>
