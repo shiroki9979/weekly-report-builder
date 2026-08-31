@@ -3,6 +3,13 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { WeekDocument } from "@/lib/week-document"
 
 type WeekPickerProps = {
@@ -16,19 +23,26 @@ export function WeekPicker({ weeks, value, onChange, disabled }: WeekPickerProps
   return (
     <div className="space-y-2">
       <Label htmlFor="week-picker">Week</Label>
-      <select
-        id="week-picker"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+      <Select
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onValueChange={(next) => {
+          if (next) {
+            onChange(next)
+          }
+        }}
         disabled={disabled}
       >
-        {weeks.map((monday) => (
-          <option key={monday} value={monday}>
-            {monday}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger id="week-picker" className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {weeks.map((monday) => (
+            <SelectItem key={monday} value={monday}>
+              {monday}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
@@ -47,18 +61,25 @@ export function PagePicker({
   return (
     <div className="space-y-2">
       <Label htmlFor="page-picker">Page</Label>
-      <select
-        id="page-picker"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      <Select
         value={String(selectedPageIndex)}
-        onChange={(event) => onSelect(Number(event.target.value))}
+        onValueChange={(next) => {
+          if (next) {
+            onSelect(Number(next))
+          }
+        }}
       >
-        {week.pages.map((page, index) => (
-          <option key={page.id} value={index}>
-            {page.hidden ? `${page.title} (hidden)` : page.title}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger id="page-picker" className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {week.pages.map((page, index) => (
+            <SelectItem key={page.id} value={String(index)}>
+              {page.hidden ? `${page.title} (hidden)` : page.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
