@@ -121,6 +121,7 @@ type WorkshopToolbarProps = {
   onCreateWeek: (monday: string) => void
   creating: boolean
   createError: string | null
+  weekSelectDisabled?: boolean
   saveDisabled?: boolean
   createDisabled?: boolean
 }
@@ -137,6 +138,7 @@ export function WorkshopToolbar({
   onCreateWeek,
   creating,
   createError,
+  weekSelectDisabled,
   saveDisabled,
   createDisabled,
 }: WorkshopToolbarProps) {
@@ -146,7 +148,7 @@ export function WorkshopToolbar({
         weeks={weeks}
         value={selectedMonday}
         onChange={onWeekChange}
-        disabled={saveDisabled}
+        disabled={weekSelectDisabled}
         trailing={
           <>
             <Button
