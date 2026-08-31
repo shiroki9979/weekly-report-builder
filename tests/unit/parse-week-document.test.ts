@@ -16,24 +16,24 @@ describe("parseWeekDocument", () => {
 
     expect(week.start).toBe("2026-08-24")
     expect(week.end).toBe("2026-08-28")
-    expect(week.pages).toHaveLength(4)
+    expect(week.pages).toHaveLength(7)
 
     const page = week.pages[3]
     expect(page.layout).toBe("two-column")
     expect(page.title).toBe("Platform · Eval Gate")
     expect(page.items).toHaveLength(3)
-    expect(page.items[0].heading).toBe("Task-scoped evaluation metrics")
+    expect(page.items[0].heading).toBe("評估指標依任務設定")
     expect(page.panel.kind).toBe("table")
 
     if (page.panel.kind !== "table") {
       throw new Error("expected table panel")
     }
 
-    expect(page.panel.columns).toEqual(["Action", "Production", "Outcome"])
+    expect(page.panel.columns).toEqual(["動作", "對正式版", "結果"])
     expect(page.panel.rows[0].cells).toEqual([
-      "Scheduled eval",
-      "Pinned",
-      "Skip promote",
+      "排程評估",
+      "釘住中",
+      "skip 晉升",
     ])
   })
 
