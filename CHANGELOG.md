@@ -26,3 +26,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 工坊 UI 與 README 改為英文；範例週次 `2026-08-24.json` 含 commits 圖表範例頁
+- 新增 Diátaxis 文件：`docs/`（tutorial、how-to、reference、explanation）
