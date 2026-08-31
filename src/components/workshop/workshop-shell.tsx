@@ -23,6 +23,7 @@ import {
   StageCaptureHost,
 } from "@/components/workshop/export-controls"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
+import { PageNavigator } from "@/components/workshop/page-navigator"
 import {
   PagePicker,
   WorkshopToolbar,
@@ -246,6 +247,14 @@ export function WorkshopShell() {
                 </StageFrame>
               </div>
             </div>
+            {week ? (
+              <PageNavigator
+                pages={week.pages}
+                selectedPageIndex={selectedPageIndex}
+                onSelect={setSelectedPageIndex}
+                disabled={loading}
+              />
+            ) : null}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
