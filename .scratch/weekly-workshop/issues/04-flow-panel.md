@@ -4,10 +4,10 @@
 
 **Blocked by:** 02: Edit a week in the workshop and save
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `panel.kind: "flow"` renders an ordered list of steps with title and caption
-- [ ] Form can add, edit, and reorder steps
-- [ ] Tests cover the public flow panel render
+- [x] `panel.kind: "flow"` renders an ordered list of steps with title and caption
+- [x] Form can add, edit, and reorder steps
+- [x] Tests cover the public flow panel render
 
 ## Comments

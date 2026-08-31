@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
+import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import {
   setPageHidden,
   setPageItem,
@@ -171,7 +172,18 @@ export function PageEditorForm({
         />
       ) : null}
 
-      {panel.kind !== "table" && panel.kind !== "chart" ? (
+      {panel.kind === "flow" ? (
+        <FlowEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+        />
+      ) : null}
+
+      {panel.kind !== "table" &&
+      panel.kind !== "chart" &&
+      panel.kind !== "flow" ? (
         <p className="text-sm text-muted-foreground">
           This panel kind is not editable yet.
         </p>
