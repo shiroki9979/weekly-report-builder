@@ -6,16 +6,19 @@
   --blue-wash: #eef4fa;
   --ink: #2d2d2d;
   --mute: #5c5c5c;
+  --line: #d0d7de;
   --ok: #2f9e6b;
   --warn: #c47b16;
+  --paper: #ffffff;
 
   box-sizing: border-box;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #fff;
+  background: var(--paper);
   color: var(--ink);
   font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .stage-root *,
@@ -24,7 +27,8 @@
   box-sizing: inherit;
 }
 
-.stage-placeholder {
+.stage-placeholder,
+.stage-warning {
   display: flex;
   height: 100%;
   align-items: center;
@@ -35,4 +39,116 @@
   font-size: 0.875rem;
   text-align: center;
   padding: 1.5rem;
+}
+
+.stage-slide {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4.6% 5.2% 6.4%;
+}
+
+.stage-slide h1 {
+  font-size: clamp(18px, 3.6cqw, 52px);
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: 0.01em;
+  margin: 0 0 2.4%;
+  line-height: 1.15;
+}
+
+.stage-cols {
+  display: grid;
+  grid-template-columns: 1.22fr 0.78fr;
+  gap: 3.6%;
+  flex: 1;
+  min-height: 0;
+  align-items: start;
+}
+
+.stage-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.45em;
+}
+
+.stage-item {
+  display: grid;
+  grid-template-columns: 1.15em 1fr;
+  gap: 0.5em;
+  align-items: start;
+}
+
+.stage-dot {
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: var(--blue);
+  margin-top: 0.48em;
+}
+
+.stage-item h3 {
+  font-size: clamp(12px, 2cqw, 28px);
+  font-weight: 700;
+  color: var(--blue);
+  margin: 0 0 0.18em;
+  line-height: 1.28;
+}
+
+.stage-item p {
+  font-size: clamp(11px, 1.7cqw, 23px);
+  color: var(--mute);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.stage-panel {
+  border: 1.5px solid var(--blue-soft);
+  background: var(--paper);
+  padding: 5.5% 6%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stage-panel h4 {
+  font-size: clamp(9px, 1.05cqw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin: 0 0 0.7em;
+}
+
+.stage-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stage-panel th,
+.stage-panel td {
+  text-align: left;
+  padding: 0.42em 0.3em;
+  border-bottom: 1px solid var(--line);
+  font-size: clamp(10px, 1.2cqw, 16px);
+}
+
+.stage-panel th {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.stage-panel td {
+  color: var(--mute);
+}
+
+.stage-panel td.strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.stage-panel-warning {
+  margin: 0;
+  font-size: clamp(10px, 1.2cqw, 16px);
+  color: var(--warn);
 }
