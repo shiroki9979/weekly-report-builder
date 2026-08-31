@@ -12,6 +12,7 @@ Personal weekly-report workshop. Form-edit a week, preview 16:9, export PNG into
 - New week: clone previous structure (page count, panel kinds, hidden); clear titles and body.
 - Chart data: generic categories + named series. Commits chart is an example, not a layout.
 - Export: per visible page PNG download (`YYYY-MM-DD-p02.png`) and copy-to-clipboard; clipboard failure still allows download.
+- **Language**: workshop chrome and in-app UI strings are English; slide copy in `weeks/*.json` is user-authored and may be any language.
 
 ## Deferred: `fields` panel
 

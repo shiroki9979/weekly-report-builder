@@ -9,7 +9,7 @@ export function StageFrame({ children }: StageFrameProps) {
   return (
     <div className="stage-root" data-testid="stage-frame">
       {children ?? (
-        <div className="stage-placeholder">16:9 預覽畫布（ticket 01）</div>
+        <div className="stage-placeholder">16:9 preview stage</div>
       )}
     </div>
   )
