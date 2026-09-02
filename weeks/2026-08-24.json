@@ -23,14 +23,50 @@
       "panel": {
         "kind": "chart",
         "title": "Commits this week",
-        "categories": ["24", "25", "26", "27", "28"],
+        "categories": [
+          "24",
+          "25",
+          "26",
+          "27",
+          "28"
+        ],
         "series": [
-          { "name": "Platform", "color": "#2e75b6", "values": [16, 34, 57, 18, 39] },
-          { "name": "SolarDB", "color": "#7eb0d6", "values": [27, 23, 36, 45, 11] },
-          { "name": "Detroit", "color": "#c5d9ed", "values": [5, 27, 0, 36, 39] }
+          {
+            "name": "Platform",
+            "color": "#2e75b6",
+            "values": [
+              16,
+              34,
+              57,
+              18,
+              39
+            ]
+          },
+          {
+            "name": "SolarDB",
+            "color": "#7eb0d6",
+            "values": [
+              27,
+              23,
+              36,
+              45,
+              11
+            ]
+          },
+          {
+            "name": "Detroit",
+            "color": "#c5d9ed",
+            "values": [
+              5,
+              27,
+              0,
+              36,
+              39
+            ]
+          }
         ]
       },
-      "notes": "Platform 72　SolarDB 63　Detroit 47　total ~180"
+      "notes": "一句話：這週兩條線：平台把模型搬得走；SolarDB 把預訓練迭代完、Detroit 評測協定鎖定。\n\n講法\n- 平台最大進展是 Model archive：已上線模型可以下載、再上傳到另一套環境，不必重訓。\n- SolarDB 上游從 v2.0 走到 v2.2 切版；跨廠驗證後生產模型仍是 M2，v2.2 這週不換。\n- Detroit 鎖定「日前一天」為正式比較基準，管線已接到可跑。\n- 右側柱狀：工作量，不是成果指標。平台 72、預訓練 63、Detroit 47。\n\n可能被問\n- 提交量為什麼拿來說？→ 只說明投入分布，週三平台＋預訓練、週四以後 Detroit 跟上。\n- v2.2 切了為什麼不換？→ 下一頁：跨廠驗證還沒贏過 M2，生產維持現任。"
     },
     {
       "id": "p02",
@@ -53,17 +89,41 @@
       "panel": {
         "kind": "table",
         "title": "Model archive · Download",
-        "columns": ["Control", "Value"],
+        "columns": [
+          "Control",
+          "Value"
+        ],
         "rows": [
-          { "cells": ["Task", "選目標任務"], "emphasis": [0] },
           {
-            "cells": ["Alias", "@production　／　@candidate　／　@previous-production"],
-            "emphasis": [0]
+            "cells": [
+              "Task",
+              "選目標任務"
+            ],
+            "emphasis": [
+              0
+            ]
           },
-          { "cells": ["Action", "Download archive"], "emphasis": [0] }
+          {
+            "cells": [
+              "Alias",
+              "@production　／　@candidate　／　@previous-production"
+            ],
+            "emphasis": [
+              0
+            ]
+          },
+          {
+            "cells": [
+              "Action",
+              "Download archive"
+            ],
+            "emphasis": [
+              0
+            ]
+          }
         ]
       },
-      "notes": "瀏覽器存 tar.gz。別名在總覽為空則按鈕不可送。"
+      "notes": "一句話：以前模型綁在訓練那套環境；現在選任務與別名就能帶走一份可上線的包。下載不改線上狀態。\n\n講法\n- 痛點：換機房、給另一套平台、實驗室送到現場，以前只能重訓或手動翻檔。\n- 做法：選任務 → 選正式／候選／上一版 → 存 tar.gz。\n- 包裡是可服務的一份：推論包裝、標準化器、簽名、來源環境標記。\n- 強調只讀：不改別名、不寫庫。沒有該別名就不能下。契約檢查留給上傳。\n\n可能被問\n- 為什麼下載不過契約？→ 避免「下載成功＝目標環境已能上線」的誤解。來源環境能打出來，不代表目標任務規格一樣。\n- 能下 raw checkpoint 嗎？→ 不行，只打包可服務的 pyfunc 佈局。"
     },
     {
       "id": "p03",
@@ -87,13 +147,27 @@
         "kind": "flow",
         "title": "跨環境路徑",
         "steps": [
-          { "label": "來源環境", "caption": "@production", "variant": "default" },
-          { "label": "下載 tar.gz", "caption": "Model archive" },
-          { "label": "目標環境", "caption": "新 version", "variant": "ok" },
-          { "label": "上傳 + 契約檢查", "caption": "契約失敗則不動現況" }
+          {
+            "label": "來源環境",
+            "caption": "@production",
+            "variant": "default"
+          },
+          {
+            "label": "下載 tar.gz",
+            "caption": "Model archive"
+          },
+          {
+            "label": "目標環境",
+            "caption": "新 version",
+            "variant": "ok"
+          },
+          {
+            "label": "上傳 + 契約檢查",
+            "caption": "契約失敗則不動現況"
+          }
         ]
       },
-      "notes": "尚無正式版→冷啟動上線；已有正式版→未評估匯入晉升；契約失敗→不動現況"
+      "notes": "一句話：上傳要對準目標任務、先過契約。通過後依有沒有正式版，走冷啟動或未評估匯入；失敗不動現況。\n\n講法\n- 選目標任務、選剛下載的包。檢查「能不能服務目標環境現在這份規格」。\n- 對不上或載入失敗：畫面只報錯，不說已晉升。\n- 尚無正式版：寫入候選，走評估閘道冷啟動，當第一個上線模型。\n- 已有正式版：標成未評估匯入後升為正式版；舊正式版改成上一版，可回退。\n- 失敗不安別名、不寫晉升帳本。\n\n可能被問\n- 未評估匯入會不會太猛？→ 這是跨環境搬正式版的刻意路徑；契約過了才動。同環境日常晉升仍走評估閘道。\n- 和下一頁 pin 的關係？→ 上傳解決「搬進來」；pin 解決「搬進來之後不要被排程蓋掉」。"
     },
     {
       "id": "p04",
@@ -116,15 +190,55 @@
       "panel": {
         "kind": "table",
         "title": "Loaded model",
-        "columns": ["動作", "對正式版", "結果"],
+        "columns": [
+          "動作",
+          "對正式版",
+          "結果"
+        ],
         "rows": [
-          { "cells": ["排程評估", "釘住中", "skip 晉升"], "emphasis": [1] },
-          { "cells": ["手動晉升", "指定歷史版", "契約通過才寫"], "emphasis": [1] },
-          { "cells": ["新訓練", "只寫候選", "不自動 unpin"], "emphasis": [1] },
-          { "cells": ["Unpin", "只刪釘住", "不回滾 alias"], "emphasis": [1] }
+          {
+            "cells": [
+              "排程評估",
+              "釘住中",
+              "skip 晉升"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "手動晉升",
+              "指定歷史版",
+              "契約通過才寫"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "新訓練",
+              "只寫候選",
+              "不自動 unpin"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "Unpin",
+              "只刪釘住",
+              "不回滾 alias"
+            ],
+            "emphasis": [
+              1
+            ]
+          }
         ]
       },
-      "notes": "task-alias @production · pinned · 排程 Gate 仍跑，晉升已 skip"
+      "notes": "一句話：指標可依任務設；人可以指定歷史版晉升；正式版可釘住，排程與新訓練都不會自動解開。\n\n講法\n- 以前晉升比較綁死單一誤差，不同任務現在可選自己的指標。\n- 手動晉升：不必等排程。指定歷史版，同樣過契約才寫；失敗不動。\n- 釘住：排程 Gate 仍跑，但 skip 晉升。新訓練只寫候選，不自動 unpin。Unpin 只刪釘住，不回滾別名。\n- 搭配上一頁：匯入後若要穩住現場版本，用 pin。\n\n可能被問\n- pin 期間還評不評？→ 流程會啟動，帳本記 skip／production_pinned，不做晉升比較。\n- Unpin 會回到上一版嗎？→ 不會，只拿掉釘住，別名維持現況。"
     },
     {
       "id": "p05",
@@ -147,15 +261,50 @@
       "panel": {
         "kind": "table",
         "title": "文件四象限",
-        "columns": ["象限", "用途"],
+        "columns": [
+          "象限",
+          "用途"
+        ],
         "rows": [
-          { "cells": ["教學", "帶人跑起來"], "emphasis": [0] },
-          { "cells": ["操作", "完成一件具體事"], "emphasis": [0] },
-          { "cells": ["參考", "API、契約、設定"], "emphasis": [0] },
-          { "cells": ["說明", "為什麼這樣設計"], "emphasis": [0] }
+          {
+            "cells": [
+              "教學",
+              "帶人跑起來"
+            ],
+            "emphasis": [
+              0
+            ]
+          },
+          {
+            "cells": [
+              "操作",
+              "完成一件具體事"
+            ],
+            "emphasis": [
+              0
+            ]
+          },
+          {
+            "cells": [
+              "參考",
+              "API、契約、設定"
+            ],
+            "emphasis": [
+              0
+            ]
+          },
+          {
+            "cells": [
+              "說明",
+              "為什麼這樣設計"
+            ],
+            "emphasis": [
+              0
+            ]
+          }
         ]
       },
-      "notes": "Engine ──單向──► microgrid-ai"
+      "notes": "一句話：打包與閘道收成固定對外介面；文件拆四象限；Engine 只單向移植到 microgrid-ai。\n\n講法\n- 這頁偏收斂，不是新功能。上傳下載與閘道的實作收成單一模組，對外操作固定。\n- 文件：教學／操作／參考／說明，拿掉轉址殘件。\n- ADR：Engine 核心留本平台，移植只指向 microgrid-ai，兩邊不互相回寫。\n\n可能被問\n- 為什麼要講文件？→ 避免之後文件跟程式各寫各的；四象限是給後續接手用的。\n- 會不會雙向同步 microgrid-ai？→ 本週決策是單向，避免邊界糊掉。"
     },
     {
       "id": "p06",
@@ -178,14 +327,50 @@
       "panel": {
         "kind": "table",
         "title": "Status",
-        "columns": ["項目", "結果"],
+        "columns": [
+          "項目",
+          "結果"
+        ],
         "rows": [
-          { "cells": ["SolarDB", "v2.2 已切版"], "emphasis": [1] },
-          { "cells": ["生產骨幹", "M2 維持"], "emphasis": [1] },
-          { "cells": ["Detroit 評測", "日前一天鎖定"], "emphasis": [1] },
-          { "cells": ["遷移實驗", "下週開跑"], "emphasis": [1] }
+          {
+            "cells": [
+              "SolarDB",
+              "v2.2 已切版"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "生產骨幹",
+              "M2 維持"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "Detroit 評測",
+              "日前一天鎖定"
+            ],
+            "emphasis": [
+              1
+            ]
+          },
+          {
+            "cells": [
+              "遷移實驗",
+              "下週開跑"
+            ],
+            "emphasis": [
+              1
+            ]
+          }
         ]
-      }
+      },
+      "notes": "一句話：基座切到 v2.2，但生產仍用 M2；Detroit 日前一天協定鎖定，實驗下週才跑。\n\n講法\n- 上游一週走完迭代並切版，下游可以下載權重，不必重訓。\n- 跨廠驗證後 v2.2 還沒贏過 M2，所以生產骨幹不換。太陽時區已對齊，數字下週再比。\n- Detroit 正式比較看日前一天；權重已接上，4–7 月微調、8 月留出。本週不出基準數字。\n\n可能被問\n- M2 是什麼？→ 現在線上在用的那顆預訓練模型。氣象一路、發電一路，用 Transformer 對齊。不是 v2.2。\n- 切版為什麼不上生產？→ v2.2 比較新、比較複雜，跨廠比過還沒贏 M2，所以先不換。\n- 為什麼沒有誤差數字？→ 這週先把評測規則跟管線鎖定，Detroit 下週才跑出數字。\n- 被追問 M2 數字 → 少樣本一週：#8 約 39%、#6 約 34%、#12 約 45%。三廠不要平均。"
     },
     {
       "id": "p07",
@@ -209,12 +394,25 @@
         "kind": "checklist",
         "title": "Next checks",
         "items": [
-          { "label": "尺度診斷通過再開 Go campaign", "checked": false },
-          { "label": "彙整 Detroit 日前一天基準表", "checked": false },
-          { "label": "時區修正後 LPO vs M2", "checked": false },
-          { "label": "贏過才換生產骨幹", "checked": false }
+          {
+            "label": "尺度診斷通過再開 Go campaign",
+            "checked": false
+          },
+          {
+            "label": "彙整 Detroit 日前一天基準表",
+            "checked": false
+          },
+          {
+            "label": "時區修正後 LPO vs M2",
+            "checked": false
+          },
+          {
+            "label": "贏過才換生產骨幹",
+            "checked": false
+          }
         ]
-      }
+      },
+      "notes": "一句話：跑 Detroit 日前一天遷移；時區修正後的跨廠結果對上 M2。沒有阻礙。\n\n講法\n- 實驗一：尺度通過後開跑，彙整目標廠日前一天基準，對照預訓練遷移與本地模型。\n- 實驗二：太陽欄改當地時之後的跨廠數字 vs M2。贏過才換生產骨幹。\n- 兩條都不另等平台交付。\n\n收尾\n- 平台：模型搬得走、正式版釘得住。\n- SolarDB：基座切版但冠軍不換；Detroit 下週出數字。"
     }
   ]
 }
