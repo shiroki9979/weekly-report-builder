@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react"
 
+import { ScrollArea } from "@/components/ui/scroll-area"
+
 type SpeakerNotesCueProps = {
   notes?: string
 }
@@ -32,9 +34,11 @@ export function SpeakerNotesCue({ notes }: SpeakerNotesCueProps) {
         Speaker notes
       </button>
       {expanded ? (
-        <div className="mt-2 max-h-36 overflow-y-auto text-sm whitespace-pre-wrap text-foreground">
-          {body}
-        </div>
+        <ScrollArea className="mt-2 h-36">
+          <div className="pr-2 text-sm whitespace-pre-wrap text-foreground">
+            {body}
+          </div>
+        </ScrollArea>
       ) : null}
     </div>
   )
