@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   setPageHidden,
+  setPageHtmlFile,
   setPageItem,
   setPageNotes,
   setPageTitle,
@@ -71,5 +72,31 @@ describe("week-editor", () => {
     const next = setPageNotes(week, 1, "Updated talking points")
 
     expect(next.pages[1].notes).toBe("Updated talking points")
+  })
+
+  it("maps htmlFile edits onto html layout pages", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Custom HTML",
+          htmlFile: "p03.html",
+        },
+      ],
+    })
+
+    const next = setPageHtmlFile(week, 0, "p03-v2.html")
+    const page = next.pages[0]
+    if (page.layout !== "html") {
+      throw new Error("expected html page")
+    }
+    expect(page.htmlFile).toBe("p03-v2.html")
+
+    // Attempting to set htmlFile on a two-column page throws
+    const twoColWeek = loadFixture()
+    expect(() => setPageHtmlFile(twoColWeek, 0, "bad.html")).toThrow(/not an HTML page/i)
   })
 })

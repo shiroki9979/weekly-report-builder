@@ -1,7 +1,7 @@
 # 工坊架構
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-03
 
 ---
 
@@ -24,23 +24,26 @@
 
 ```text
 weeks/YYYY-MM-DD.json
+weeks/YYYY-MM-DD/*.html
         │
-        ├─ GET /weeks/{monday}.json  ──► 工坊載入
+        ├─ GET /weeks/{monday}.json        ──► 工坊載入
+        ├─ GET /weeks/{monday}/{htmlFile}  ──► HTML 頁預覽 fetch
         │
         ├─ 表單編輯（React state）
         │
-        ├─ PUT /api/weeks/{monday}   ──► 儲存
+        ├─ PUT /api/weeks/{monday}         ──► 儲存
         │
-        └─ POST /api/weeks/{monday}  ──► clone 新週
+        └─ POST /api/weeks/{monday}        ──► clone 新週（連同 html 檔拷貝）
 ```
 
-匯出時以 off-screen `StageCaptureHost` 逐頁渲染，經 `html-to-image` 產生 PNG；剪貼簿與下載為獨立 seam，clipboard 失敗不阻擋下載。
+匯出時以 off-screen `StageCaptureHost` 逐頁渲染，經 `html-to-image` 產生 PNG；剪貼簿與下載為獨立 seam，clipboard 失敗不阻擋下載。針對 `layout: "html"` 逃生口頁面，預覽於畫布掛載 **Shadow DOM** 達成樣式隔離，但因截圖庫對 Shadow DOM 支援限制，匯出與複製時改注入至 `StageCaptureHost` 的 **Light DOM** 截圖。
 
-## 頁面模型（v1）
+## 頁面模型
 
-- 單一 layout：`two-column`（左三點 + 右 panel）
-- Panel kinds：`chart` | `table` | `flow` | `checklist`
-- `fields` 已 spec、未實作
+工坊支援兩種頁面版面：
+
+- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。
+- `html`：16:9 全幅 HTML 逃生口。整頁由週資料夾獨立 `.html` 片段鋪滿，不渲染三點與 panel。工坊僅編輯相對檔名路徑、標題、講稿與 hidden，不提供線上 HTML 編輯器。
 
 新 layout 以新 `layout` 字串擴充；未知 layout 在 stage 顯示警告。
 

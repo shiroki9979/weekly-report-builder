@@ -1,7 +1,7 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-03
 
 ---
 
@@ -9,10 +9,12 @@
 
 ```
 weeks/YYYY-MM-DD.json
+weeks/YYYY-MM-DD/<htmlFile>
 ```
 
 - `YYYY-MM-DD`：該週**週一**日期
 - 範例：`weeks/2026-08-24.json`
+- HTML 全幅頁檔案放置於該週子目錄，例如 `weeks/2026-08-24/p03.html`
 
 ## WeekDocument（根物件）
 
@@ -22,17 +24,34 @@ weeks/YYYY-MM-DD.json
 | `end` | `string` | 是 | 週五，ISO 日期 `YYYY-MM-DD` |
 | `pages` | `WeekPage[]` | 是 | 至少一頁 |
 
-## WeekPage
+## WeekPage（discriminated union）
+
+以 `layout` 欄位區分版面模式。共同欄位如下：
 
 | 欄位 | 型別 | 必填 | 說明 |
 |------|------|------|------|
 | `id` | `string` | 是 | 頁面識別，如 `p01`；匯出 PNG 檔名之一部分 |
-| `layout` | `string` | 是 | v1 僅 `"two-column"` |
+| `layout` | `string` | 是 | `"two-column"` 或 `"html"` |
 | `title` | `string` | 是 | 投影片主標（可為空字串） |
-| `items` | `SlideItem[]` | 是 | 固定 **3** 筆 |
-| `panel` | `Panel` | 是 | 右側 card，見下表 |
 | `hidden` | `boolean` | 否 | `true` 時略過 PNG 批次匯出 |
 | `notes` | `string` | 否 | Speaker notes，不渲染於 stage |
+
+### `layout: "two-column"`
+
+傳統雙欄版面（左欄三點 + 右側 panel）。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| `items` | `SlideItem[]` | 是 | 固定 **3** 筆 |
+| `panel` | `Panel` | 是 | 右側 card，見下表 |
+
+### `layout: "html"`
+
+16:9 全幅 HTML 逃生口頁面，整頁佔滿，不渲染三點與 panel。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| `htmlFile` | `string` | 是 | 相對該週目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
 
 ### SlideItem
 

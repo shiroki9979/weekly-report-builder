@@ -72,5 +72,18 @@ export function createWeekFromPrevious(
   const cloned = cloneWeekFromPrevious(previous, monday)
 
   writeWeekFile(weeksDir, monday, cloned)
+
+  for (const page of previous.pages) {
+    if (page.layout === "html") {
+      const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
+      if (fs.existsSync(sourceFile)) {
+        const targetDir = path.resolve(weeksDir, monday)
+        const targetFile = path.resolve(targetDir, page.htmlFile)
+        fs.mkdirSync(targetDir, { recursive: true })
+        fs.copyFileSync(sourceFile, targetFile)
+      }
+    }
+  }
+
   return cloned
 }

@@ -100,6 +100,17 @@ function clearPanel(panel: Panel): Panel {
 }
 
 function clearPage(page: WeekPage): WeekPage {
+  if (page.layout === "html") {
+    return {
+      id: page.id,
+      layout: "html",
+      title: "",
+      htmlFile: page.htmlFile,
+      hidden: page.hidden,
+      notes: undefined,
+    }
+  }
+
   return {
     id: page.id,
     layout: page.layout,

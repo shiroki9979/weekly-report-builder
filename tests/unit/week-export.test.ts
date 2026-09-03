@@ -92,4 +92,42 @@ describe("week-export", () => {
     expect(renderedPages).toEqual(["p01", "p04"])
     expect(downloads).toEqual(["2026-08-24-p01.png", "2026-08-24-p04.png"])
   })
+
+  it("handles html layout pages properly in exportable list", () => {
+    const weekWithHtml: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "two-column",
+          title: "Page 1",
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: { kind: "checklist", title: "List", items: [] },
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Visible HTML",
+          htmlFile: "p02.html",
+        },
+        {
+          id: "p03",
+          layout: "html",
+          title: "Hidden HTML",
+          htmlFile: "p03.html",
+          hidden: true,
+        },
+      ],
+    }
+
+    expect(listExportablePages(weekWithHtml).map((p) => p.id)).toEqual([
+      "p01",
+      "p02",
+    ])
+  })
 })

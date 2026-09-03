@@ -28,7 +28,7 @@ function updatePage(
 }
 
 function requireTablePanel(page: WeekPage, pageIndex: number): TablePanel {
-  if (page.panel.kind !== "table") {
+  if (page.layout === "html" || !("panel" in page) || page.panel.kind !== "table") {
     throw new Error(`Page ${pageIndex} does not have a table panel`)
   }
 
@@ -36,7 +36,7 @@ function requireTablePanel(page: WeekPage, pageIndex: number): TablePanel {
 }
 
 function requireChartPanel(page: WeekPage, pageIndex: number): ChartPanel {
-  if (page.panel.kind !== "chart") {
+  if (page.layout === "html" || !("panel" in page) || page.panel.kind !== "chart") {
     throw new Error(`Page ${pageIndex} does not have a chart panel`)
   }
 
@@ -55,7 +55,7 @@ function updateChartPanel(
 }
 
 function requireFlowPanel(page: WeekPage, pageIndex: number): FlowPanel {
-  if (page.panel.kind !== "flow") {
+  if (page.layout === "html" || !("panel" in page) || page.panel.kind !== "flow") {
     throw new Error(`Page ${pageIndex} does not have a flow panel`)
   }
 
@@ -77,7 +77,7 @@ function requireChecklistPanel(
   page: WeekPage,
   pageIndex: number
 ): ChecklistPanel {
-  if (page.panel.kind !== "checklist") {
+  if (page.layout === "html" || !("panel" in page) || page.panel.kind !== "checklist") {
     throw new Error(`Page ${pageIndex} does not have a checklist panel`)
   }
 
@@ -114,6 +114,23 @@ export function setPageTitle(
   return updatePage(week, pageIndex, (page) => ({ ...page, title }))
 }
 
+export function setPageHtmlFile(
+  week: WeekDocument,
+  pageIndex: number,
+  htmlFile: string
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    if (page.layout !== "html") {
+      throw new Error(`Page ${pageIndex} is not an HTML page`)
+    }
+
+    return {
+      ...page,
+      htmlFile,
+    }
+  })
+}
+
 export function setPageItem(
   week: WeekDocument,
   pageIndex: number,
@@ -122,6 +139,10 @@ export function setPageItem(
   value: string
 ): WeekDocument {
   return updatePage(week, pageIndex, (page) => {
+    if (page.layout === "html" || !("items" in page)) {
+      throw new Error(`Page ${pageIndex} does not have items`)
+    }
+
     const items = page.items.map((item, index) =>
       index === itemIndex ? { ...item, [field]: value } : item
     )
