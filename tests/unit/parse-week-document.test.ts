@@ -42,4 +42,100 @@ describe("parseWeekDocument", () => {
       parseWeekDocument({ start: "2026-08-24", end: "2026-08-28", pages: [] })
     ).toThrow(/pages/i)
   })
+
+  it("parses html layout page without items or panel", () => {
+    const doc = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Escape Hatch",
+          htmlFile: "p03.html",
+          hidden: true,
+          notes: "Speaker talking points",
+        },
+      ],
+    })
+
+    expect(doc.pages).toHaveLength(1)
+    const page = doc.pages[0]
+    expect(page.layout).toBe("html")
+    expect(page.id).toBe("p03")
+    expect(page.title).toBe("Escape Hatch")
+    expect(page.hidden).toBe(true)
+    expect(page.notes).toBe("Speaker talking points")
+    if (page.layout !== "html") {
+      throw new Error("expected html page")
+    }
+    expect(page.htmlFile).toBe("p03.html")
+    // @ts-expect-error html page does not have items
+    expect(page.items).toBeUndefined()
+    // @ts-expect-error html page does not have panel
+    expect(page.panel).toBeUndefined()
+  })
+
+  it("rejects html layout page with missing or empty htmlFile", () => {
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p03",
+            layout: "html",
+            title: "Escape Hatch",
+          },
+        ],
+      })
+    ).toThrow(/htmlFile/i)
+
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p03",
+            layout: "html",
+            title: "Escape Hatch",
+            htmlFile: "",
+          },
+        ],
+      })
+    ).toThrow(/htmlFile/i)
+  })
+
+  it("rejects html layout page with invalid htmlFile paths", () => {
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p03",
+            layout: "html",
+            title: "Escape Hatch",
+            htmlFile: "../evil.html",
+          },
+        ],
+      })
+    ).toThrow(/htmlFile|traversal|path/i)
+
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p03",
+            layout: "html",
+            title: "Escape Hatch",
+            htmlFile: "slide.txt",
+          },
+        ],
+      })
+    ).toThrow(/html/i)
+  })
 })

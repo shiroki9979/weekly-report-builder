@@ -7,6 +7,7 @@ import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import {
   setPageHidden,
+  setPageHtmlFile,
   setPageItem,
   setPageNotes,
   setPageTitle,
@@ -33,6 +34,64 @@ export function PageEditorForm({
 
   if (!page) {
     return null
+  }
+
+  if (page.layout === "html") {
+    return (
+      <form
+        className="space-y-4"
+        onSubmit={(event) => event.preventDefault()}
+      >
+        <fieldset
+          disabled={readOnly}
+          className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="page-title">Title</Label>
+            <Input
+              id="page-title"
+              value={page.title}
+              onChange={(event) =>
+                onChange(setPageTitle(week, pageIndex, event.target.value))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="page-html-file">HTML file</Label>
+            <Input
+              id="page-html-file"
+              value={page.htmlFile}
+              onChange={(event) =>
+                onChange(setPageHtmlFile(week, pageIndex, event.target.value))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="speaker-notes">Speaker notes</Label>
+            <Textarea
+              id="speaker-notes"
+              value={page.notes ?? ""}
+              onChange={(event) =>
+                onChange(setPageNotes(week, pageIndex, event.target.value))
+              }
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="page-hidden"
+              checked={page.hidden ?? false}
+              onCheckedChange={(checked) =>
+                onChange(setPageHidden(week, pageIndex, checked === true))
+              }
+            />
+            <Label htmlFor="page-hidden">Hide page from export</Label>
+          </div>
+        </fieldset>
+      </form>
+    )
   }
 
   const panel = page.panel

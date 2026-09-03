@@ -163,6 +163,7 @@ export function WorkshopShell() {
     createWeek,
   } = useWeekEditor()
 
+  const selectedPage = week?.pages[selectedPageIndex] ?? null
   const previewStageRef = useRef<HTMLDivElement>(null)
   const captureHostRef = useRef<HTMLDivElement>(null)
   const {
@@ -176,11 +177,11 @@ export function WorkshopShell() {
   } = useStageExport({
     monday: selectedMonday,
     week,
+    selectedPage,
     previewStageRef,
     captureHostRef,
   })
 
-  const selectedPage = week?.pages[selectedPageIndex] ?? null
   const editorPanelRef = usePanelRef()
   const [editorCollapsed, setEditorCollapsed] = useState(false)
 
@@ -335,7 +336,7 @@ export function WorkshopShell() {
                     </div>
                   ) : null}
                   {!loading && selectedPage ? (
-                    <StageSlide page={selectedPage} />
+                    <StageSlide page={selectedPage} monday={selectedMonday} />
                   ) : null}
                 </StageFrame>
               </div>
@@ -352,7 +353,11 @@ export function WorkshopShell() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      <StageCaptureHost page={capturePage} hostRef={captureHostRef} />
+      <StageCaptureHost
+        page={capturePage}
+        monday={selectedMonday}
+        hostRef={captureHostRef}
+      />
     </div>
   )
 }

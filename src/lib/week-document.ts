@@ -1,3 +1,5 @@
+import { validateHtmlFileName } from "./html-page"
+
 export type SlideItem = {
   heading: string
   body: string
@@ -65,17 +67,28 @@ export type Panel =
   | ChecklistPanel
   | FieldsPanel
 
-export type SlideLayout = "two-column" | (string & {})
+export type SlideLayout = "two-column" | "html"
 
-export type WeekPage = {
+export type TwoColumnWeekPage = {
   id: string
-  layout: SlideLayout
+  layout: "two-column"
   title: string
   items: SlideItem[]
   panel: Panel
   hidden?: boolean
   notes?: string
 }
+
+export type HtmlWeekPage = {
+  id: string
+  layout: "html"
+  title: string
+  htmlFile: string
+  hidden?: boolean
+  notes?: string
+}
+
+export type WeekPage = TwoColumnWeekPage | HtmlWeekPage
 
 export type WeekDocument = {
   start: string
@@ -277,19 +290,52 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
     throw new Error(`Invalid week document: pages[${index}] must be an object`)
   }
 
+  const id = readNonEmptyString(value.id, `pages[${index}].id`)
+  const layout = readNonEmptyString(value.layout, `pages[${index}].layout`)
+  const title = readString(value.title, `pages[${index}].title`)
+  const hidden = typeof value.hidden === "boolean" ? value.hidden : undefined
+  const notes = typeof value.notes === "string" ? value.notes : undefined
+
+  if (layout === "html") {
+    const htmlFile = readNonEmptyString(
+      value.htmlFile,
+      `pages[${index}].htmlFile`
+    )
+
+    try {
+      validateHtmlFileName(htmlFile)
+    } catch (cause: unknown) {
+      const message =
+        cause instanceof Error ? cause.message : "Invalid htmlFile"
+      throw new Error(
+        `Invalid week document: pages[${index}].htmlFile: ${message}`,
+        { cause }
+      )
+    }
+
+    return {
+      id,
+      layout: "html",
+      title,
+      htmlFile,
+      hidden,
+      notes,
+    }
+  }
+
   const items = value.items
   if (!Array.isArray(items) || items.length !== 3) {
     throw new Error(`Invalid week document: pages[${index}].items must have 3 entries`)
   }
 
   return {
-    id: readNonEmptyString(value.id, `pages[${index}].id`),
-    layout: readNonEmptyString(value.layout, `pages[${index}].layout`),
-    title: readString(value.title, `pages[${index}].title`),
+    id,
+    layout: layout as "two-column",
+    title,
     items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
     panel: parsePanel(value.panel),
-    hidden: typeof value.hidden === "boolean" ? value.hidden : undefined,
-    notes: typeof value.notes === "string" ? value.notes : undefined,
+    hidden,
+    notes,
   }
 }
 

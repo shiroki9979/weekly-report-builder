@@ -8,6 +8,7 @@ import { flushSync } from "react-dom"
 
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
+import { preloadHtmlFragment } from "@/lib/html-page"
 import { captureStageToPng } from "@/lib/stage-capture"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import { exportVisiblePages } from "@/lib/week-export"
@@ -15,6 +16,7 @@ import { exportVisiblePages } from "@/lib/week-export"
 type UseStageExportOptions = {
   monday: string
   week: WeekDocument | null
+  selectedPage?: WeekPage | null
   previewStageRef: RefObject<HTMLElement | null>
   captureHostRef: RefObject<HTMLElement | null>
 }
@@ -30,6 +32,7 @@ function waitForPaint(): Promise<void> {
 export function useStageExport({
   monday,
   week,
+  selectedPage,
   previewStageRef,
   captureHostRef,
 }: UseStageExportOptions) {
@@ -65,6 +68,16 @@ export function useStageExport({
     setExportError(null)
 
     try {
+      for (const page of week.pages) {
+        if (page.layout === "html" && !page.hidden) {
+          try {
+            await preloadHtmlFragment(monday, page.htmlFile)
+          } catch {
+            // Let renderPageForCapture show the stage-warning
+          }
+        }
+      }
+
       await exportVisiblePages(monday, week, {
         renderPage: renderPageForCapture,
         capture: captureStageToPng,
@@ -81,30 +94,54 @@ export function useStageExport({
     }
   }, [monday, renderPageForCapture, week])
 
-  const copyCurrentPage = useCallback(async () => {
-    if (!week) {
-      return
-    }
-
-    setCopying(true)
-    setClipboardError(null)
-
-    try {
-      const stageRoot = previewStageRef.current
-      if (!(stageRoot instanceof HTMLElement)) {
-        throw new Error("Preview stage not ready")
+  const copyCurrentPage = useCallback(
+    async (pageToCopy?: WeekPage | null) => {
+      if (!week) {
+        return
       }
 
-      const blob = await captureStageToPng(stageRoot)
-      await copyImageToClipboard(blob, navigator.clipboard)
-    } catch (cause: unknown) {
-      const message =
-        cause instanceof Error ? cause.message : "Failed to copy image to clipboard"
-      setClipboardError(message)
-    } finally {
-      setCopying(false)
-    }
-  }, [previewStageRef, week])
+      const targetPage = pageToCopy ?? selectedPage
+
+      setCopying(true)
+      setClipboardError(null)
+
+      try {
+        let stageRoot: HTMLElement
+
+        if (targetPage) {
+          if (targetPage.layout === "html") {
+            try {
+              await preloadHtmlFragment(monday, targetPage.htmlFile)
+            } catch {
+              // Let renderPageForCapture show the stage-warning
+            }
+          }
+          stageRoot = await renderPageForCapture(targetPage)
+        } else {
+          const previewRoot = previewStageRef.current
+          if (!(previewRoot instanceof HTMLElement)) {
+            throw new Error("Preview stage not ready")
+          }
+          stageRoot = previewRoot
+        }
+
+        const blob = await captureStageToPng(stageRoot)
+        await copyImageToClipboard(blob, navigator.clipboard)
+      } catch (cause: unknown) {
+        const message =
+          cause instanceof Error
+            ? cause.message
+            : "Failed to copy image to clipboard"
+        setClipboardError(message)
+      } finally {
+        if (targetPage) {
+          flushSync(() => setCapturePage(null))
+        }
+        setCopying(false)
+      }
+    },
+    [monday, previewStageRef, renderPageForCapture, selectedPage, week]
+  )
 
   return {
     capturePage,

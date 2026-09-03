@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -86,6 +86,47 @@ describe("weeks-store", () => {
 
       const reloaded = readWeekFile(tempDir, "2026-08-31")
       expect(reloaded).toEqual(created)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("copies referenced html files into the new week directory during cloning", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const sourceWeek = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "HTML escape hatch",
+          htmlFile: "p03.html",
+          notes: "Speaker talking points",
+        },
+      ],
+    })
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+      const sourceHtmlDir = join(tempDir, "2026-08-24")
+      mkdirSync(sourceHtmlDir, { recursive: true })
+      const htmlContent = '<div class="custom-chart">Content</div>'
+      writeFileSync(join(sourceHtmlDir, "p03.html"), htmlContent, "utf-8")
+
+      const created = createWeekFromPrevious(tempDir, "2026-08-31")
+      expect(created.pages).toHaveLength(1)
+      const clonedPage = created.pages[0]
+      expect(clonedPage.layout).toBe("html")
+      expect(clonedPage.title).toBe("")
+      expect(clonedPage.notes).toBeUndefined()
+      if (clonedPage.layout !== "html") {
+        throw new Error("expected html page")
+      }
+      expect(clonedPage.htmlFile).toBe("p03.html")
+
+      const targetHtmlFile = join(tempDir, "2026-08-31", "p03.html")
+      expect(readFileSync(targetHtmlFile, "utf-8")).toBe(htmlContent)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }
