@@ -7,7 +7,7 @@ import type { WeekPage } from "@/lib/week-document"
 
 type StageCaptureHostProps = {
   page: WeekPage | null
-  monday?: string
+  monday: string
   hostRef: RefObject<HTMLDivElement | null>
 }
 

@@ -1,11 +1,9 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import {
-  clearHtmlCache,
-  getCachedHtml,
+  preloadHtmlFragment,
   resolveHtmlUrl,
   sanitizeHtmlFragment,
-  setCachedHtml,
   validateHtmlFileName,
 } from "@/lib/html-page"
 
@@ -106,22 +104,36 @@ describe("html-page", () => {
       expect(sanitized).toContain("Hello World")
     })
 
+    it("preserves body style and class attributes on a root wrapper div", () => {
+      // 驗證既有 HTML 週報中的整頁 body 樣式與 class 會轉換至 wrapper div 保留，不被 DOMParser 丟棄
+      const raw =
+        '<body class="theme-dark report-root" style="background-color: #121212; color: #ffffff;"><main>Content</main></body>'
+      const sanitized = sanitizeHtmlFragment(raw)
+      expect(sanitized).toContain('class="theme-dark report-root"')
+      expect(sanitized).toContain('style="background-color: #121212; color: #ffffff;"')
+      expect(sanitized).toContain("<main>Content</main>")
+      expect(sanitized.startsWith("<div")).toBe(true)
+    })
+
     it("handles plain text or empty strings gracefully", () => {
       expect(sanitizeHtmlFragment("")).toBe("")
       expect(sanitizeHtmlFragment("Plain text only")).toBe("Plain text only")
     })
   })
 
-  describe("HTML caching", () => {
-    it("sets, gets, and clears cached HTML fragments", () => {
-      clearHtmlCache()
-      expect(getCachedHtml("2026-08-24", "p03.html")).toBeNull()
+  describe("preloadHtmlFragment", () => {
+    it("fetches with cache: no-cache and returns sanitized html", async () => {
+      // 驗證擷取 HTML 時帶有 no-cache 標頭，防止瀏覽器或快取層提供過期內容
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        text: async () => "<p>Fresh</p>",
+      } as Response)
 
-      setCachedHtml("2026-08-24", "p03.html", "<div>Cached</div>")
-      expect(getCachedHtml("2026-08-24", "p03.html")).toBe("<div>Cached</div>")
-
-      clearHtmlCache()
-      expect(getCachedHtml("2026-08-24", "p03.html")).toBeNull()
+      const result = await preloadHtmlFragment("2026-08-24", "p03.html")
+      expect(result).toBe("<p>Fresh</p>")
+      expect(fetchSpy).toHaveBeenCalledWith("/weeks/2026-08-24/p03.html", {
+        cache: "no-cache",
+      })
     })
   })
 })
