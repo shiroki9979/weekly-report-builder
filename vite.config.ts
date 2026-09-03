@@ -104,6 +104,14 @@ function weeksStaticPlugin(): Plugin {
   return {
     name: "weeks-static",
     configureServer(server) {
+      // 監聽週報目錄中的 HTML 檔案變更，使外部編輯器存檔時能立即觸發瀏覽器完整重新載入更新預覽
+      server.watcher.add(path.resolve(weeksDir, "**/*.html"))
+      server.watcher.on("change", (file) => {
+        if (file.startsWith(weeksDir) && file.endsWith(".html")) {
+          server.ws.send({ type: "full-reload" })
+        }
+      })
+
       server.middlewares.use("/api/weeks", weeksApiMiddleware)
       server.middlewares.use("/weeks", (req, res, next) => {
         const requestPath = req.url?.split("?")[0] ?? ""

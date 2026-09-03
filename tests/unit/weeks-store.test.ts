@@ -131,4 +131,31 @@ describe("weeks-store", () => {
       rmSync(tempDir, { recursive: true, force: true })
     }
   })
+
+  it("throws an error when a referenced html file does not exist during cloning", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const sourceWeek = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "HTML escape hatch",
+          htmlFile: "missing.html",
+        },
+      ],
+    })
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+
+      // 驗證當來源週次宣告的 htmlFile 實體檔案不存在時，clone 流程應立即拋出明確錯誤中斷，避免產生無效週次
+      expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
+        /Referenced HTML file does not exist:/
+      )
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
 })

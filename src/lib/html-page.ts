@@ -45,10 +45,10 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
   const parser = new DOMParser()
   const doc = parser.parseFromString(rawHtml, "text/html")
 
-  // Remove script elements
+  // 移除 script 標籤，防止 HTML 片段在預覽或截圖時執行任意 JavaScript 程式碼
   doc.querySelectorAll("script").forEach((el) => el.remove())
 
-  // Strip on* attributes and javascript: URLs from all elements
+  // 移除內嵌事件處理器（如 onclick）與 javascript: 偽協定，阻斷潛在的 XSS 向量
   const allElements = [
     doc.documentElement,
     ...Array.from(doc.querySelectorAll("*")),
@@ -70,12 +70,24 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
     }
   }
 
-  // Preserve styles from head if present
+  // 保留 head 區段內的 style 標籤，使外部匯入之自訂樣式能正確套用於投影片
   const headStyles = Array.from(doc.head.querySelectorAll("style"))
     .map((el) => el.outerHTML)
     .join("\n")
 
-  const bodyContent = doc.body.innerHTML
+  // 保留原 body 標籤上的 class 與 style 屬性，避免整頁背景色或整體排版樣式遺失
+  const rawClass = doc.body.getAttribute("class")
+  const rawStyle = doc.body.getAttribute("style")
+  const bodyClass = rawClass && rawClass.trim() !== "" ? rawClass : null
+  const bodyStyle = rawStyle && rawStyle.trim() !== "" ? rawStyle : null
+
+  let bodyContent = doc.body.innerHTML
+
+  if (bodyClass || bodyStyle) {
+    const classAttr = bodyClass ? ` class="${bodyClass}"` : ""
+    const styleAttr = bodyStyle ? ` style="${bodyStyle}"` : ""
+    bodyContent = `<div${classAttr}${styleAttr}>${bodyContent}</div>`
+  }
 
   if (headStyles.length > 0) {
     return `${headStyles}\n${bodyContent}`
@@ -84,45 +96,16 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
   return bodyContent
 }
 
-const htmlCache = new Map<string, string>()
-
-function cacheKey(monday: string, htmlFile: string): string {
-  return `${monday}:${htmlFile}`
-}
-
-export function getCachedHtml(monday: string, htmlFile: string): string | null {
-  return htmlCache.get(cacheKey(monday, htmlFile)) ?? null
-}
-
-export function setCachedHtml(
-  monday: string,
-  htmlFile: string,
-  html: string
-): void {
-  htmlCache.set(cacheKey(monday, htmlFile), html)
-}
-
-export function clearHtmlCache(): void {
-  htmlCache.clear()
-}
-
 export async function preloadHtmlFragment(
   monday: string,
   htmlFile: string
 ): Promise<string> {
-  const cached = getCachedHtml(monday, htmlFile)
-  if (cached !== null) {
-    return cached
-  }
-
   const url = resolveHtmlUrl(monday, htmlFile)
-  const res = await fetch(url)
+  const res = await fetch(url, { cache: "no-cache" })
   if (!res.ok) {
     throw new Error(`Failed to load HTML file: ${htmlFile} (status ${res.status})`)
   }
 
   const raw = await res.text()
-  const sanitized = sanitizeHtmlFragment(raw)
-  setCachedHtml(monday, htmlFile, sanitized)
-  return sanitized
+  return sanitizeHtmlFragment(raw)
 }
