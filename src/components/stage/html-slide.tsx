@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
 
 import {
-  resolveHtmlUrl,
-  sanitizeHtmlFragment,
+  preloadHtmlFragment,
   validateHtmlFileName,
 } from "@/lib/html-page"
 import type { HtmlWeekPage } from "@/lib/week-document"
@@ -51,24 +50,11 @@ export function HtmlSlide({ page, monday, isCapture = false }: HtmlSlideProps) {
 
     async function load() {
       try {
-        const url = resolveHtmlUrl(monday, page.htmlFile)
-        const res = await fetch(url, {
-          cache: "no-cache",
-          signal: controller.signal,
-        })
-        if (!res.ok) {
-          flushSync(() => {
-            setFetchedState({
-              key: currentKey,
-              html: null,
-              error: `Failed to load HTML file: ${page.htmlFile}`,
-            })
-          })
-          return
-        }
-
-        const raw = await res.text()
-        const sanitized = sanitizeHtmlFragment(raw)
+        const sanitized = await preloadHtmlFragment(
+          monday,
+          page.htmlFile,
+          controller.signal
+        )
         flushSync(() => {
           setFetchedState({
             key: currentKey,

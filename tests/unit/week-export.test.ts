@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import type { WeekDocument } from "@/lib/week-document"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 import {
   exportFileName,
   exportVisiblePages,
@@ -129,5 +129,21 @@ describe("week-export", () => {
       "p01",
       "p02",
     ])
+  })
+
+  it("skips unknown layouts from batch export", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "future-layout",
+          title: "Not yet supported",
+        },
+      ],
+    })
+
+    expect(listExportablePages(week)).toEqual([])
   })
 })

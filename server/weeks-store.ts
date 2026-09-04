@@ -75,27 +75,26 @@ export function createWeekFromPrevious(
   const previous = readWeekFile(weeksDir, latestMonday)
   const cloned = cloneWeekFromPrevious(previous, monday)
 
-  // 驗證來源週次引用的 HTML 檔案皆存在，避免複製到遺失檔案的週次造成靜默失敗
-  for (const page of previous.pages) {
-    if (isHtmlWeekPage(page)) {
-      const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
-      if (!fs.existsSync(sourceFile)) {
-        throw new Error(`Referenced HTML file does not exist: ${sourceFile}`)
-      }
+  const htmlFiles = previous.pages.flatMap((page) => {
+    if (!isHtmlWeekPage(page)) {
+      return []
     }
+
+    const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
+    if (!fs.existsSync(sourceFile) || !fs.statSync(sourceFile).isFile()) {
+      throw new Error(`Referenced HTML file does not exist: ${sourceFile}`)
+    }
+
+    return [{ sourceFile, htmlFile: page.htmlFile }]
+  })
+  const targetDir = path.resolve(weeksDir, monday)
+
+  for (const { sourceFile, htmlFile } of htmlFiles) {
+    fs.mkdirSync(targetDir, { recursive: true })
+    fs.copyFileSync(sourceFile, path.resolve(targetDir, htmlFile))
   }
 
   writeWeekFile(weeksDir, monday, cloned)
-
-  for (const page of previous.pages) {
-    if (isHtmlWeekPage(page)) {
-      const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
-      const targetDir = path.resolve(weeksDir, monday)
-      const targetFile = path.resolve(targetDir, page.htmlFile)
-      fs.mkdirSync(targetDir, { recursive: true })
-      fs.copyFileSync(sourceFile, targetFile)
-    }
-  }
 
   return cloned
 }
