@@ -49,15 +49,13 @@ describe("parseWeekDocument", () => {
     expect(htmlPage.htmlFile).toBe("p08.html")
   })
 
-  it("parses the 2026-08-31 week with seven two-column pages", () => {
+  it("parses the 2026-08-31 week with interleaved html chart pages", () => {
     const raw = readFileSync(fixture20260831Path, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
 
     expect(week.start).toBe("2026-08-31")
     expect(week.end).toBe("2026-09-04")
-    expect(week.pages).toHaveLength(7)
-    expect(week.pages.every((page) => page.layout === "two-column")).toBe(true)
-
+    expect(week.pages).toHaveLength(11)
     expect(week.pages.map((page) => page.id)).toEqual([
       "p01",
       "p02",
@@ -66,17 +64,34 @@ describe("parseWeekDocument", () => {
       "p05",
       "p06",
       "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+    ])
+    expect(week.pages.map((page) => page.layout)).toEqual([
+      "two-column",
+      "two-column",
+      "two-column",
+      "html",
+      "two-column",
+      "html",
+      "two-column",
+      "html",
+      "two-column",
+      "html",
+      "two-column",
     ])
 
-    expect(week.pages.map((page) => page.panel.kind)).toEqual([
-      "chart",
-      "table",
-      "chart",
-      "chart",
-      "chart",
-      "chart",
-      "checklist",
-    ])
+    const htmlFiles = week.pages
+      .filter((page) => page.layout === "html")
+      .map((page) => {
+        if (page.layout !== "html") {
+          throw new Error("expected html page")
+        }
+        return page.htmlFile
+      })
+    expect(htmlFiles).toEqual(["p04.html", "p06.html", "p08.html", "p10.html"])
 
     // Grill 共識：全稿不出現「備援」
     expect(JSON.stringify(week)).not.toMatch(/備援/)
