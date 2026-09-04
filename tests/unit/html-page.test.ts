@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { describe, expect, it, vi } from "vitest"
 
 import {
@@ -102,6 +104,40 @@ describe("html-page", () => {
       expect(sanitized).not.toContain("iframe")
       expect(sanitized).not.toContain("srcdoc")
       expect(sanitized).toContain("<p>Safe</p>")
+    })
+
+    it("preserves inline SVG diagrams used by html layout slides", () => {
+      const raw = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-labelledby="demo-title demo-desc">
+  <title id="demo-title">Demo</title>
+  <desc id="demo-desc">A blue square.</desc>
+  <defs>
+    <marker id="demo-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#5c5c5c"/>
+    </marker>
+  </defs>
+  <rect x="4" y="4" width="32" height="32" fill="#2e75b6"/>
+  <line x1="4" y1="20" x2="28" y2="20" stroke="#2d2d2d" marker-end="url(#demo-arrow)"/>
+</svg>`
+      const sanitized = sanitizeHtmlFragment(raw)
+      expect(sanitized).toContain("<svg")
+      expect(sanitized).toContain("viewBox")
+      expect(sanitized).toContain("<rect")
+      expect(sanitized).toContain("<line")
+      expect(sanitized).toContain("marker-end")
+      expect(sanitized).toContain("#2e75b6")
+    })
+
+    it("keeps a week-dir SVG diagram after whole-document sanitize", () => {
+      const raw = readFileSync(
+        resolve(import.meta.dirname, "../../weeks/2026-08-24/p08.html"),
+        "utf-8"
+      )
+      const sanitized = sanitizeHtmlFragment(raw)
+      expect(sanitized).toContain("<svg")
+      expect(sanitized).toContain("契約檢查")
+      expect(sanitized).toContain("marker-end")
+      expect(sanitized).toContain("<style>")
+      expect(sanitized).not.toContain("<script")
     })
 
     it("preserves valid style elements and safe markup", () => {
