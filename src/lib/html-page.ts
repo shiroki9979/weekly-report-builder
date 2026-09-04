@@ -44,6 +44,8 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
   }
 
   const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+    // 逃生口頁常含 inline SVG；預設 HTML profile 會剝掉 svg，16:9 圖會變成空白投影片
+    USE_PROFILES: { html: true, svg: true, svgFilters: true },
     ADD_TAGS: ["style"],
     FORBID_TAGS: [
       "base",

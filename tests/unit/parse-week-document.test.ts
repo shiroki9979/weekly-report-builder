@@ -16,7 +16,7 @@ describe("parseWeekDocument", () => {
 
     expect(week.start).toBe("2026-08-24")
     expect(week.end).toBe("2026-08-28")
-    expect(week.pages).toHaveLength(7)
+    expect(week.pages).toHaveLength(10)
 
     const page = week.pages[3]
     expect(page.layout).toBe("two-column")
@@ -35,6 +35,13 @@ describe("parseWeekDocument", () => {
       "釘住中",
       "skip 晉升",
     ])
+
+    const htmlPage = week.pages[7]
+    expect(htmlPage.layout).toBe("html")
+    if (htmlPage.layout !== "html") {
+      throw new Error("expected html page")
+    }
+    expect(htmlPage.htmlFile).toBe("p08.html")
   })
 
   it("rejects documents without pages", () => {
