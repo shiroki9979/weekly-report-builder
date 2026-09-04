@@ -2,7 +2,11 @@ import fs from "node:fs"
 import path from "node:path"
 
 import { cloneWeekFromPrevious } from "../src/lib/week-clone"
-import { parseWeekDocument, type WeekDocument } from "../src/lib/week-document"
+import {
+  isHtmlWeekPage,
+  parseWeekDocument,
+  type WeekDocument,
+} from "../src/lib/week-document"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -73,7 +77,7 @@ export function createWeekFromPrevious(
 
   // 驗證來源週次引用的 HTML 檔案皆存在，避免複製到遺失檔案的週次造成靜默失敗
   for (const page of previous.pages) {
-    if (page.layout === "html") {
+    if (isHtmlWeekPage(page)) {
       const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
       if (!fs.existsSync(sourceFile)) {
         throw new Error(`Referenced HTML file does not exist: ${sourceFile}`)
@@ -84,7 +88,7 @@ export function createWeekFromPrevious(
   writeWeekFile(weeksDir, monday, cloned)
 
   for (const page of previous.pages) {
-    if (page.layout === "html") {
+    if (isHtmlWeekPage(page)) {
       const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
       const targetDir = path.resolve(weeksDir, monday)
       const targetFile = path.resolve(targetDir, page.htmlFile)

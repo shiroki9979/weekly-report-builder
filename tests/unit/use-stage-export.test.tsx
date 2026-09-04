@@ -162,4 +162,45 @@ describe("useStageExport", () => {
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
   })
+
+  it("reports an error instead of capturing a slide that never finishes loading", async () => {
+    vi.useFakeTimers()
+    vi.clearAllMocks()
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      () => new Promise<Response>(() => undefined)
+    )
+
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Slow Slide",
+          htmlFile: "slow.html",
+        },
+      ],
+    }
+
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    let downloadPromise: Promise<void> | undefined
+    act(() => {
+      downloadPromise = exportRef.current?.downloadVisiblePages()
+    })
+
+    await act(async () => {
+      await vi.runAllTimersAsync()
+      await downloadPromise
+    })
+
+    expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
+    expect(exportRef.current?.exportError).toBe(
+      "Timed out waiting for HTML slide to load"
+    )
+  })
 })

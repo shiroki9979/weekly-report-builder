@@ -88,12 +88,29 @@ export type HtmlWeekPage = {
   notes?: string
 }
 
-export type WeekPage = TwoColumnWeekPage | HtmlWeekPage
+export type UnknownWeekPage = {
+  id: string
+  layout: string
+  title: string
+  hidden?: boolean
+  notes?: string
+  [key: string]: unknown
+}
+
+export type WeekPage = TwoColumnWeekPage | HtmlWeekPage | UnknownWeekPage
 
 export type WeekDocument = {
   start: string
   end: string
   pages: WeekPage[]
+}
+
+export function isHtmlWeekPage(page: WeekPage): page is HtmlWeekPage {
+  return page.layout === "html" && "htmlFile" in page
+}
+
+export function isTwoColumnWeekPage(page: WeekPage): page is TwoColumnWeekPage {
+  return page.layout === "two-column" && "items" in page && "panel" in page
 }
 
 const V1_PANEL_KINDS = new Set([
@@ -323,6 +340,10 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
     }
   }
 
+  if (layout !== "two-column") {
+    return { ...value, id, layout, title, hidden, notes }
+  }
+
   const items = value.items
   if (!Array.isArray(items) || items.length !== 3) {
     throw new Error(`Invalid week document: pages[${index}].items must have 3 entries`)
@@ -330,7 +351,7 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
 
   return {
     id,
-    layout: layout as "two-column",
+    layout: "two-column",
     title,
     items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
     panel: parsePanel(value.panel),

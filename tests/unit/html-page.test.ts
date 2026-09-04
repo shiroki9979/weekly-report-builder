@@ -19,9 +19,9 @@ describe("html-page", () => {
     it("rejects non-string or empty input", () => {
       expect(() => validateHtmlFileName("")).toThrow(/empty/i)
       expect(() => validateHtmlFileName("   ")).toThrow()
-      // @ts-expect-error test runtime type check
+      // @ts-expect-error 測試執行階段型別檢查
       expect(() => validateHtmlFileName(null)).toThrow()
-      // @ts-expect-error test runtime type check
+      // @ts-expect-error 測試執行階段型別檢查
       expect(() => validateHtmlFileName(undefined)).toThrow()
     })
 
@@ -92,6 +92,16 @@ describe("html-page", () => {
       const sanitized = sanitizeHtmlFragment(raw)
       expect(sanitized).not.toContain("javascript:")
       expect(sanitized).toContain("Link")
+    })
+
+    it("removes nested browsing contexts that can execute scripts through srcdoc", () => {
+      const raw =
+        '<iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe><p>Safe</p>'
+      const sanitized = sanitizeHtmlFragment(raw)
+
+      expect(sanitized).not.toContain("iframe")
+      expect(sanitized).not.toContain("srcdoc")
+      expect(sanitized).toContain("<p>Safe</p>")
     })
 
     it("preserves valid style elements and safe markup", () => {

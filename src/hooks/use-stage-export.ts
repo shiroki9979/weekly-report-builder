@@ -43,7 +43,7 @@ async function waitForSlideSettled(host: HTMLElement): Promise<void> {
 
   while (getStatus() === "loading") {
     if (Date.now() - startTime > maxWaitMs) {
-      break
+      throw new Error("Timed out waiting for HTML slide to load")
     }
     // 釋放執行緒讓 React 調度器能沖刷非同步 fetch 後的 state 更新，並相容真實瀏覽器與測試環境
     await new Promise((resolve) => setTimeout(resolve, 16))
