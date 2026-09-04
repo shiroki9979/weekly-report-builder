@@ -27,19 +27,28 @@ function roundPercent(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+function categoryTotal(
+  chart: ChartStackInput,
+  categoryIndex: number
+): number {
+  return chart.series.reduce((sum, series) => {
+    const value = series.values[categoryIndex] ?? 0
+    return sum + Math.max(value, 0)
+  }, 0)
+}
+
 export function buildStackedBarSegments(
   chart: ChartStackInput
 ): ChartCategoryStack[] {
-  return chart.categories.map((category, categoryIndex) => {
-    const rawValues = chart.series.map(
-      (series) => series.values[categoryIndex] ?? 0
-    )
-    const total = rawValues.reduce((sum, value) => sum + Math.max(value, 0), 0)
+  const scale = chart.categories.reduce((maxTotal, _category, categoryIndex) => {
+    return Math.max(maxTotal, categoryTotal(chart, categoryIndex))
+  }, 0)
 
+  return chart.categories.map((category, categoryIndex) => {
     const bars = chart.series.map((series, seriesIndex) => {
       const value = Math.max(series.values[categoryIndex] ?? 0, 0)
       const heightPercent =
-        total > 0 ? roundPercent((value / total) * 100) : 0
+        scale > 0 ? roundPercent((value / scale) * 100) : 0
 
       return {
         name: series.name,
