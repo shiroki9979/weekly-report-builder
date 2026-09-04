@@ -1,7 +1,7 @@
 # HTML 全幅頁（16:9 逃生口）
 
 建立日期：2026-09-03  
-最後更新：2026-09-03  
+最後更新：2026-09-04
 狀態：ready-for-agent
 
 Grill 共識（2026-09-03）。實作 ticket：`.scratch/weekly-workshop/issues/09-html-page-layout.md`
@@ -65,7 +65,7 @@ Grill 共識（2026-09-03）。實作 ticket：`.scratch/weekly-workshop/issues/
 
 - **路徑**：以週一次（week json 的 monday／`start`）組成 `weeks/<monday>/<htmlFile>`。只允許檔名層級（無 `/`）、禁止 `..`、絕對路徑、空白。超出該週目錄即錯誤。
 - **載入**：預覽與 capture 都 fetch 片段字串，消毒後再掛上。不要把未消毒的檔案直接當 `srcdoc`。
-- **消毒**：掛上前移除 `script` 元素、`on*` 屬性、`javascript:` URL。不必引入完整 sanitizer 套件。
+- **消毒**：掛上前以 DOMPurify 消毒，移除 `script`、事件屬性、危險 URL 與可執行內容的巢狀瀏覽環境（例如 `iframe`／`srcdoc`）；保留片段自帶的 `<style>`。這是防止 DOM XSS 的必要相依。
 - **預覽掛載**：`.stage-root` 內 Shadow DOM；**不要**把 `stage.css` stylesheet adopt 進 shadow。CSS 變數從 `.stage-root` 繼承即可。
 - **匯出掛載**：既有 off-screen capture host 改走 **light DOM 注入**（同一份已消毒字串）。不要為 HTML 頁換截圖庫，也不要用 iframe（現行 capture 拍不到）。
 - **工坊表單**：`layout === "html"` 時顯示 `htmlFile` 與既有 title／notes／hidden；隱藏 items／panel 編輯。受既有 edit lock 約束。沒有 layout 切換控件。

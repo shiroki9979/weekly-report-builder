@@ -8,6 +8,7 @@ import type { Plugin, Connect } from "vite"
 import { defineConfig } from "vite"
 
 import { parseWeekDocument } from "./src/lib/week-document"
+import { validateHtmlFileName } from "./src/lib/html-page"
 import {
   listWeeksInDirectory,
   writeWeekFile,
@@ -103,39 +104,92 @@ function weeksStaticPlugin(): Plugin {
   return {
     name: "weeks-static",
     configureServer(server) {
+      // 監聽週報目錄中的 HTML 檔案變更，使外部編輯器存檔時能立即觸發瀏覽器完整重新載入更新預覽
+      server.watcher.add(path.resolve(weeksDir, "**/*.html"))
+      server.watcher.on("change", (file) => {
+        if (file.startsWith(weeksDir) && file.endsWith(".html")) {
+          server.ws.send({ type: "full-reload" })
+        }
+      })
+
       server.middlewares.use("/api/weeks", weeksApiMiddleware)
       server.middlewares.use("/weeks", (req, res, next) => {
         const requestPath = req.url?.split("?")[0] ?? ""
-        const fileName = path.basename(requestPath)
 
-        if (!fileName.endsWith(".json")) {
-          next()
+        const jsonMatch = /^\/(\d{4}-\d{2}-\d{2}\.json)$/.exec(requestPath)
+        if (jsonMatch) {
+          const fileName = jsonMatch[1]
+          const filePath = path.resolve(weeksDir, fileName)
+          if (!filePath.startsWith(weeksDir) || !fs.existsSync(filePath)) {
+            next()
+            return
+          }
+
+          res.setHeader("Content-Type", "application/json")
+          fs.createReadStream(filePath).pipe(res)
           return
         }
 
-        const filePath = path.resolve(weeksDir, fileName)
-        if (!filePath.startsWith(weeksDir) || !fs.existsSync(filePath)) {
-          next()
+        const htmlMatch = /^\/(\d{4}-\d{2}-\d{2})\/([^/]+)$/.exec(requestPath)
+        if (htmlMatch) {
+          const monday = htmlMatch[1]
+          const htmlFile = htmlMatch[2]
+
+          try {
+            validateHtmlFileName(htmlFile)
+          } catch {
+            res.statusCode = 404
+            res.end("Not found")
+            return
+          }
+
+          const mondayDir = path.resolve(weeksDir, monday)
+          const filePath = path.resolve(mondayDir, htmlFile)
+
+          if (
+            !filePath.startsWith(mondayDir) ||
+            !fs.existsSync(filePath) ||
+            !fs.statSync(filePath).isFile()
+          ) {
+            res.statusCode = 404
+            res.end("Not found")
+            return
+          }
+
+          res.setHeader("Content-Type", "text/html; charset=utf-8")
+          fs.createReadStream(filePath).pipe(res)
           return
         }
 
-        res.setHeader("Content-Type", "application/json")
-        fs.createReadStream(filePath).pipe(res)
+        next()
       })
     },
     closeBundle() {
       const outputDir = path.resolve(rootDir, "dist/weeks")
       fs.mkdirSync(outputDir, { recursive: true })
 
-      for (const fileName of fs.readdirSync(weeksDir)) {
-        if (!fileName.endsWith(".json")) {
-          continue
+      for (const entry of fs.readdirSync(weeksDir, { withFileTypes: true })) {
+        if (entry.isFile() && entry.name.endsWith(".json")) {
+          fs.copyFileSync(
+            path.resolve(weeksDir, entry.name),
+            path.resolve(outputDir, entry.name)
+          )
+        } else if (
+          entry.isDirectory() &&
+          /^\d{4}-\d{2}-\d{2}$/.test(entry.name)
+        ) {
+          const targetSubDir = path.resolve(outputDir, entry.name)
+          fs.mkdirSync(targetSubDir, { recursive: true })
+          const sourceSubDir = path.resolve(weeksDir, entry.name)
+          for (const file of fs.readdirSync(sourceSubDir)) {
+            if (file.endsWith(".html")) {
+              fs.copyFileSync(
+                path.resolve(sourceSubDir, file),
+                path.resolve(targetSubDir, file)
+              )
+            }
+          }
         }
-
-        fs.copyFileSync(
-          path.resolve(weeksDir, fileName),
-          path.resolve(outputDir, fileName)
-        )
       }
     },
   }

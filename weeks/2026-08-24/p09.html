@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Eval gate 釘住與晉升</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="eval-gate-title eval-gate-desc">
+    <title id="eval-gate-title">Eval gate 釘住與晉升</title>
+    <desc id="eval-gate-desc">正式版釘住時略過晉升；未釘住則契約通過才寫入正式版，否則不動現況。</desc>
+    <defs>
+      <marker id="eval-gate-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#5c5c5c"/>
+      </marker>
+      <marker id="eval-gate-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#2e75b6"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <text x="40" y="24" fill="#5c5c5c" font-size="8" font-weight="500" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" letter-spacing="0.18em">FLOWCHART · EVAL GATE</text>
+    <text x="40" y="60" fill="#2e75b6" font-size="32" font-weight="700" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif">釘住就 skip，契約過才寫</text>
+
+    <!-- Arrows first -->
+    <line x1="480" y1="160" x2="480" y2="184" stroke="#5c5c5c" stroke-width="1.2" marker-end="url(#eval-gate-arrow)"/>
+    <line x1="640" y1="264" x2="760" y2="264" stroke="#5c5c5c" stroke-width="1.2" marker-end="url(#eval-gate-arrow)"/>
+    <line x1="480" y1="344" x2="480" y2="376" stroke="#5c5c5c" stroke-width="1.2" marker-end="url(#eval-gate-arrow)"/>
+    <line x1="640" y1="456" x2="760" y2="456" stroke="#5c5c5c" stroke-width="1.2" marker-end="url(#eval-gate-arrow)"/>
+    <line x1="480" y1="536" x2="480" y2="568" stroke="#2e75b6" stroke-width="1.4" marker-end="url(#eval-gate-arrow-accent)"/>
+
+    <!-- Branch labels: 6–10px gap from stroke -->
+    <rect x="684" y="240" width="32" height="16" rx="2" fill="#ffffff"/>
+    <text x="700" y="252" fill="#5c5c5c" font-size="12" font-weight="500" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">是</text>
+
+    <rect x="492" y="348" width="32" height="16" rx="2" fill="#ffffff"/>
+    <text x="508" y="360" fill="#5c5c5c" font-size="12" font-weight="500" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">否</text>
+
+    <rect x="684" y="432" width="32" height="16" rx="2" fill="#ffffff"/>
+    <text x="700" y="444" fill="#5c5c5c" font-size="12" font-weight="500" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">否</text>
+
+    <rect x="492" y="544" width="32" height="16" rx="2" fill="#ffffff"/>
+    <text x="508" y="556" fill="#2e75b6" font-size="12" font-weight="500" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">是</text>
+
+    <!-- Start -->
+    <rect x="360" y="96" width="240" height="64" rx="32" fill="rgba(45,45,45,0.03)" stroke="rgba(45,45,45,0.30)" stroke-width="1"/>
+    <text x="480" y="124" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">評估閘道啟動</text>
+    <text x="480" y="144" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">排程或手動</text>
+
+    <!-- Diamond: pinned? -->
+    <polygon points="480,184 640,264 480,344 320,264" fill="#ffffff" stroke="#2d2d2d" stroke-width="1"/>
+    <text x="480" y="256" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">正式版</text>
+    <text x="480" y="276" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">釘住？</text>
+
+    <!-- Skip promote -->
+    <rect x="760" y="232" width="240" height="64" rx="32" fill="rgba(45,45,45,0.03)" stroke="rgba(45,45,45,0.30)" stroke-width="1"/>
+    <text x="880" y="260" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">略過晉升</text>
+    <text x="880" y="280" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">帳本記 skip</text>
+
+    <!-- Diamond: contract? -->
+    <polygon points="480,376 640,456 480,536 320,456" fill="#ffffff" stroke="#2d2d2d" stroke-width="1"/>
+    <text x="480" y="448" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">契約</text>
+    <text x="480" y="468" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">通過？</text>
+
+    <!-- No change -->
+    <rect x="760" y="424" width="240" height="64" rx="32" fill="rgba(45,45,45,0.03)" stroke="rgba(45,45,45,0.30)" stroke-width="1"/>
+    <text x="880" y="452" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">不動現況</text>
+    <text x="880" y="472" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">不安別名</text>
+
+    <!-- Write production (focal happy path) -->
+    <rect x="360" y="568" width="240" height="64" rx="32" fill="#eef4fa" stroke="#2e75b6" stroke-width="1"/>
+    <text x="480" y="596" fill="#2d2d2d" font-size="16" font-weight="600" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">寫入正式版</text>
+    <text x="480" y="616" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" text-anchor="middle">舊版改上一版</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="656" x2="1240" y2="656" stroke="rgba(45,45,45,0.10)" stroke-width="0.8"/>
+    <text x="40" y="676" fill="#5c5c5c" font-size="8" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif" letter-spacing="0.14em">LEGEND · SHAPE CARRIES TYPE</text>
+
+    <rect x="40" y="692" width="32" height="16" rx="8" fill="rgba(45,45,45,0.03)" stroke="rgba(45,45,45,0.30)" stroke-width="1"/>
+    <text x="80" y="704" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif">起迄</text>
+
+    <polygon points="160,700 172,692 184,700 172,708" fill="#ffffff" stroke="#2d2d2d" stroke-width="1"/>
+    <text x="192" y="704" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif">判斷</text>
+
+    <line x1="268" y1="700" x2="308" y2="700" stroke="#2e75b6" stroke-width="1.4" marker-end="url(#eval-gate-arrow-accent)"/>
+    <text x="316" y="704" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif">可寫入路徑</text>
+
+    <line x1="448" y1="700" x2="488" y2="700" stroke="#5c5c5c" stroke-width="1.2" marker-end="url(#eval-gate-arrow)"/>
+    <text x="496" y="704" fill="#5c5c5c" font-size="12" font-family="Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif">分支</text>
+  </svg>
+</body>
+</html>

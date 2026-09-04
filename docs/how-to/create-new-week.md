@@ -1,7 +1,7 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-03
 
 ---
 
@@ -19,6 +19,7 @@
 ## 結果
 
 - 磁碟新增 `weeks/YYYY-MM-DD.json`（`YYYY-MM-DD` 為所選週一）
+- 若來源週次包含 `layout: "html"` 逃生口頁面，其引用的 `.html` 檔案會原樣拷貝至新週目錄（`weeks/YYYY-MM-DD/<htmlFile>`）；JSON 內的 `htmlFile` 相對檔名維持不變，`title` 與 `notes` 比照雙欄頁清空
 - `start` / `end` 自動設為該週週一至週五
 
 ## 常見問題

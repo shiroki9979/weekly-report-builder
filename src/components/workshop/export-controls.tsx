@@ -7,10 +7,15 @@ import type { WeekPage } from "@/lib/week-document"
 
 type StageCaptureHostProps = {
   page: WeekPage | null
+  monday: string
   hostRef: RefObject<HTMLDivElement | null>
 }
 
-export function StageCaptureHost({ page, hostRef }: StageCaptureHostProps) {
+export function StageCaptureHost({
+  page,
+  monday,
+  hostRef,
+}: StageCaptureHostProps) {
   if (!page) {
     return null
   }
@@ -24,7 +29,7 @@ export function StageCaptureHost({ page, hostRef }: StageCaptureHostProps) {
     >
       <div className="w-[1280px]">
         <StageFrame>
-          <StageSlide page={page} />
+          <StageSlide page={page} monday={monday} isCapture />
         </StageFrame>
       </div>
     </div>
@@ -37,6 +42,7 @@ type ExportControlsProps = {
   exporting: boolean
   copying: boolean
   exportError: string | null
+  exportWarning: string | null
   clipboardError: string | null
   disabled?: boolean
 }
@@ -47,6 +53,7 @@ export function ExportControls({
   exporting,
   copying,
   exportError,
+  exportWarning,
   clipboardError,
   disabled,
 }: ExportControlsProps) {
@@ -75,6 +82,11 @@ export function ExportControls({
       {exportError ? (
         <p className="text-xs text-destructive" role="alert">
           {exportError}
+        </p>
+      ) : null}
+      {exportWarning ? (
+        <p className="text-xs text-muted-foreground" role="status">
+          {exportWarning}
         </p>
       ) : null}
       {clipboardError ? (

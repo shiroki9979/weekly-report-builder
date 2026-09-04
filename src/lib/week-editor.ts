@@ -1,8 +1,13 @@
+import {
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+} from "@/lib/week-document"
 import type {
   ChartPanel,
   ChecklistPanel,
   FlowPanel,
   TablePanel,
+  TwoColumnWeekPage,
   WeekDocument,
   WeekPage,
 } from "@/lib/week-document"
@@ -27,20 +32,34 @@ function updatePage(
   return next
 }
 
+// 統一收斂 two-column 頁面結構的型別防衛，避免各 panel 編輯函式重複撰寫 switch / layout 判斷
+export function assertTwoColumnPage(
+  page: WeekPage,
+  pageIndex: number
+): TwoColumnWeekPage {
+  if (!isTwoColumnWeekPage(page)) {
+    throw new Error(`Page ${pageIndex} is not a two-column page`)
+  }
+
+  return page
+}
+
 function requireTablePanel(page: WeekPage, pageIndex: number): TablePanel {
-  if (page.panel.kind !== "table") {
+  const twoColumnPage = assertTwoColumnPage(page, pageIndex)
+  if (twoColumnPage.panel.kind !== "table") {
     throw new Error(`Page ${pageIndex} does not have a table panel`)
   }
 
-  return page.panel
+  return twoColumnPage.panel
 }
 
 function requireChartPanel(page: WeekPage, pageIndex: number): ChartPanel {
-  if (page.panel.kind !== "chart") {
+  const twoColumnPage = assertTwoColumnPage(page, pageIndex)
+  if (twoColumnPage.panel.kind !== "chart") {
     throw new Error(`Page ${pageIndex} does not have a chart panel`)
   }
 
-  return page.panel
+  return twoColumnPage.panel
 }
 
 function updateChartPanel(
@@ -55,11 +74,12 @@ function updateChartPanel(
 }
 
 function requireFlowPanel(page: WeekPage, pageIndex: number): FlowPanel {
-  if (page.panel.kind !== "flow") {
+  const twoColumnPage = assertTwoColumnPage(page, pageIndex)
+  if (twoColumnPage.panel.kind !== "flow") {
     throw new Error(`Page ${pageIndex} does not have a flow panel`)
   }
 
-  return page.panel
+  return twoColumnPage.panel
 }
 
 function updateFlowPanel(
@@ -77,11 +97,12 @@ function requireChecklistPanel(
   page: WeekPage,
   pageIndex: number
 ): ChecklistPanel {
-  if (page.panel.kind !== "checklist") {
+  const twoColumnPage = assertTwoColumnPage(page, pageIndex)
+  if (twoColumnPage.panel.kind !== "checklist") {
     throw new Error(`Page ${pageIndex} does not have a checklist panel`)
   }
 
-  return page.panel
+  return twoColumnPage.panel
 }
 
 function updateChecklistPanel(
@@ -114,6 +135,23 @@ export function setPageTitle(
   return updatePage(week, pageIndex, (page) => ({ ...page, title }))
 }
 
+export function setPageHtmlFile(
+  week: WeekDocument,
+  pageIndex: number,
+  htmlFile: string
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    if (!isHtmlWeekPage(page)) {
+      throw new Error(`Page ${pageIndex} is not an HTML page`)
+    }
+
+    return {
+      ...page,
+      htmlFile,
+    }
+  })
+}
+
 export function setPageItem(
   week: WeekDocument,
   pageIndex: number,
@@ -122,11 +160,13 @@ export function setPageItem(
   value: string
 ): WeekDocument {
   return updatePage(week, pageIndex, (page) => {
-    const items = page.items.map((item, index) =>
+    const twoColumnPage = assertTwoColumnPage(page, pageIndex)
+
+    const items = twoColumnPage.items.map((item, index) =>
       index === itemIndex ? { ...item, [field]: value } : item
     )
 
-    return { ...page, items }
+    return { ...twoColumnPage, items }
   })
 }
 
