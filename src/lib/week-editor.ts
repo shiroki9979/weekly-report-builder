@@ -1,3 +1,7 @@
+import {
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+} from "@/lib/week-document"
 import type {
   ChartPanel,
   ChecklistPanel,
@@ -33,7 +37,7 @@ export function assertTwoColumnPage(
   page: WeekPage,
   pageIndex: number
 ): TwoColumnWeekPage {
-  if (page.layout !== "two-column") {
+  if (!isTwoColumnWeekPage(page)) {
     throw new Error(`Page ${pageIndex} is not a two-column page`)
   }
 
@@ -137,7 +141,7 @@ export function setPageHtmlFile(
   htmlFile: string
 ): WeekDocument {
   return updatePage(week, pageIndex, (page) => {
-    if (page.layout !== "html") {
+    if (!isHtmlWeekPage(page)) {
       throw new Error(`Page ${pageIndex} is not an HTML page`)
     }
 

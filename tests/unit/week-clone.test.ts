@@ -134,9 +134,9 @@ describe("week-clone", () => {
       throw new Error("expected html page")
     }
     expect(page.htmlFile).toBe("p03.html")
-    // @ts-expect-error html page does not have items
+    // @ts-expect-error HTML 頁面不應具有 items
     expect(page.items).toBeUndefined()
-    // @ts-expect-error html page does not have panel
+    // @ts-expect-error HTML 頁面不應具有 panel
     expect(page.panel).toBeUndefined()
 
     expect(() => parseWeekDocument(cloned)).not.toThrow()

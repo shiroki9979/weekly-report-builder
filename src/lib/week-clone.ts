@@ -1,4 +1,10 @@
-import type { Panel, WeekDocument, WeekPage } from "./week-document"
+import {
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+  type Panel,
+  type WeekDocument,
+  type WeekPage,
+} from "./week-document"
 
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -100,7 +106,7 @@ function clearPanel(panel: Panel): Panel {
 }
 
 function clearPage(page: WeekPage): WeekPage {
-  if (page.layout === "html") {
+  if (isHtmlWeekPage(page)) {
     return {
       id: page.id,
       layout: "html",
@@ -109,6 +115,10 @@ function clearPage(page: WeekPage): WeekPage {
       hidden: page.hidden,
       notes: undefined,
     }
+  }
+
+  if (!isTwoColumnWeekPage(page)) {
+    return { ...page, title: "", notes: undefined }
   }
 
   return {

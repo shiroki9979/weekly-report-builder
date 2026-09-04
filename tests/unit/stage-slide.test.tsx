@@ -2,7 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import type { HtmlWeekPage, TwoColumnWeekPage } from "@/lib/week-document"
+import {
+  parseWeekDocument,
+  type HtmlWeekPage,
+  type TwoColumnWeekPage,
+} from "@/lib/week-document"
 
 describe("StageSlide", () => {
   it("renders two-column layout slide with explicitly passed monday", () => {
@@ -50,5 +54,19 @@ describe("StageSlide", () => {
       expect(captureEl).toHaveAttribute("data-status", "ready")
       expect(captureEl).toHaveTextContent("Custom Content")
     })
+  })
+
+  it("warns for an unknown layout without rendering it as a two-column slide", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [{ id: "p04", layout: "future-layout", title: "Future Slide" }],
+    })
+
+    render(<StageSlide page={week.pages[0]} monday={week.start} />)
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Unknown layout: future-layout"
+    )
   })
 })

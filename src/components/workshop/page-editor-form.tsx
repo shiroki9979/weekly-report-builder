@@ -15,7 +15,11 @@ import {
   setTablePanelColumn,
   setTablePanelTitle,
 } from "@/lib/week-editor"
-import type { WeekDocument } from "@/lib/week-document"
+import {
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+  type WeekDocument,
+} from "@/lib/week-document"
 
 type PageEditorFormProps = {
   week: WeekDocument
@@ -36,7 +40,7 @@ export function PageEditorForm({
     return null
   }
 
-  if (page.layout === "html") {
+  if (isHtmlWeekPage(page)) {
     return (
       <form
         className="space-y-4"
@@ -91,6 +95,14 @@ export function PageEditorForm({
           </div>
         </fieldset>
       </form>
+    )
+  }
+
+  if (!isTwoColumnWeekPage(page)) {
+    return (
+      <p className="text-sm text-muted-foreground" role="status">
+        This layout is not editable yet.
+      </p>
     )
   }
 

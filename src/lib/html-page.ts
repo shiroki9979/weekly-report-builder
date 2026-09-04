@@ -1,5 +1,6 @@
+import DOMPurify from "dompurify"
+
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-const JAVASCRIPT_PROTOCOL_PATTERN = /javascript\s*:/i
 
 export function validateHtmlFileName(fileName: string): void {
   if (typeof fileName !== "string") {
@@ -42,33 +43,24 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
     return ""
   }
 
+  const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+    ADD_TAGS: ["style"],
+    FORBID_TAGS: [
+      "base",
+      "embed",
+      "frame",
+      "frameset",
+      "iframe",
+      "link",
+      "meta",
+      "object",
+      "portal",
+    ],
+    FORBID_ATTR: ["srcdoc"],
+    WHOLE_DOCUMENT: true,
+  })
   const parser = new DOMParser()
-  const doc = parser.parseFromString(rawHtml, "text/html")
-
-  // 移除 script 標籤，防止 HTML 片段在預覽或截圖時執行任意 JavaScript 程式碼
-  doc.querySelectorAll("script").forEach((el) => el.remove())
-
-  // 移除內嵌事件處理器（如 onclick）與 javascript: 偽協定，阻斷潛在的 XSS 向量
-  const allElements = [
-    doc.documentElement,
-    ...Array.from(doc.querySelectorAll("*")),
-  ]
-
-  for (const element of allElements) {
-    for (const attr of Array.from(element.attributes)) {
-      const name = attr.name.toLowerCase()
-      const value = attr.value
-
-      if (name.startsWith("on")) {
-        element.removeAttribute(attr.name)
-        continue
-      }
-
-      if (JAVASCRIPT_PROTOCOL_PATTERN.test(value)) {
-        element.removeAttribute(attr.name)
-      }
-    }
-  }
+  const doc = parser.parseFromString(sanitizedHtml, "text/html")
 
   // 保留 head 區段內的 style 標籤，使外部匯入之自訂樣式能正確套用於投影片
   const headStyles = Array.from(doc.head.querySelectorAll("style"))

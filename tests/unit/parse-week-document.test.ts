@@ -70,10 +70,31 @@ describe("parseWeekDocument", () => {
       throw new Error("expected html page")
     }
     expect(page.htmlFile).toBe("p03.html")
-    // @ts-expect-error html page does not have items
+    // @ts-expect-error HTML 頁面不應具有 items
     expect(page.items).toBeUndefined()
-    // @ts-expect-error html page does not have panel
+    // @ts-expect-error HTML 頁面不應具有 panel
     expect(page.panel).toBeUndefined()
+  })
+
+  it("preserves an unknown layout so the stage can warn and skip it", () => {
+    const doc = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p04",
+          layout: "future-layout",
+          title: "Future Slide",
+          hidden: true,
+          notes: "Not rendered yet",
+        },
+      ],
+    })
+
+    const page = doc.pages[0]
+    expect(page.layout).toBe("future-layout")
+    expect(page).not.toHaveProperty("items")
+    expect(page).not.toHaveProperty("panel")
   })
 
   it("rejects html layout page with missing or empty htmlFile", () => {

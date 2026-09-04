@@ -1,10 +1,12 @@
 # Spec: weekly workshop
 
+Last updated: 2026-09-04
+
 Personal weekly-report workshop. Form-edit a week, preview 16:9, export PNG into the team PPT. Solo. Not a presenter, not multi-user, not a CMS.
 
 ## Decisions
 
-- One `layout`: `two-column` (three left items + right panel). New layouts are a new `layout` string; unknown layouts skip with a warning.
+- Layouts are extensible. v1 supports `two-column` (three left items + right panel) and full-bleed `html`; new layouts use a new `layout` string, and unknown layouts skip with a warning.
 - v1 `panel.kind`: `chart` | `table` | `flow` | `checklist`.
 - `fields` (label + value rows, for mock UI) is specified below and **not built in v1**.
 - Workshop chrome: shadcn. 16:9 canvas: existing CSS tokens (`--blue` `#2e75b6` and siblings), no shadcn on the stage.
