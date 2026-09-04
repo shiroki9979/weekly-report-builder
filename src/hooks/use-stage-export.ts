@@ -10,7 +10,7 @@ import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
 import { captureStageToPng } from "@/lib/stage-capture"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
-import { exportVisiblePages } from "@/lib/week-export"
+import { exportVisiblePages, listSkippedPages } from "@/lib/week-export"
 
 type UseStageExportOptions = {
   monday: string
@@ -61,6 +61,7 @@ export function useStageExport({
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [exportWarning, setExportWarning] = useState<string | null>(null)
   const [clipboardError, setClipboardError] = useState<string | null>(null)
   const exportingRef = useRef(false)
 
@@ -95,6 +96,12 @@ export function useStageExport({
     exportingRef.current = true
     setExporting(true)
     setExportError(null)
+    const skippedPageIds = listSkippedPages(week).map((page) => page.id)
+    setExportWarning(
+      skippedPageIds.length > 0
+        ? `Skipped unsupported layouts: ${skippedPageIds.join(", ")}`
+        : null
+    )
 
     try {
       await exportVisiblePages(monday, week, {
@@ -155,6 +162,7 @@ export function useStageExport({
     exporting,
     copying,
     exportError,
+    exportWarning,
     clipboardError,
     downloadVisiblePages,
     copyCurrentPage,

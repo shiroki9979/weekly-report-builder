@@ -205,4 +205,30 @@ describe("useStageExport", () => {
       "Timed out waiting for HTML slide to load"
     )
   })
+
+  it("warns when batch export skips unsupported layouts", async () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p04",
+          layout: "future-layout",
+          title: "Future Slide",
+        },
+      ],
+    }
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    await act(async () => {
+      await exportRef.current?.downloadVisiblePages()
+    })
+
+    expect(exportRef.current?.exportWarning).toBe(
+      "Skipped unsupported layouts: p04"
+    )
+  })
 })

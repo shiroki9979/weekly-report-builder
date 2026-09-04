@@ -171,6 +171,7 @@ export function WorkshopShell() {
     exporting,
     copying,
     exportError,
+    exportWarning,
     clipboardError,
     downloadVisiblePages,
     copyCurrentPage,
@@ -320,6 +321,7 @@ export function WorkshopShell() {
                 exporting={exporting}
                 copying={copying}
                 exportError={exportError}
+                exportWarning={exportWarning}
                 clipboardError={clipboardError}
                 disabled={loading || !week}
               />
