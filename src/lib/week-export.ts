@@ -1,7 +1,20 @@
-import type { WeekDocument, WeekPage } from "./week-document"
+import {
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+  type WeekDocument,
+  type WeekPage,
+} from "./week-document"
+
+function isExportablePage(page: WeekPage): boolean {
+  return isTwoColumnWeekPage(page) || isHtmlWeekPage(page)
+}
 
 export function listExportablePages(week: WeekDocument): WeekPage[] {
-  return week.pages.filter((page) => !page.hidden)
+  return week.pages.filter((page) => !page.hidden && isExportablePage(page))
+}
+
+export function listSkippedPages(week: WeekDocument): WeekPage[] {
+  return week.pages.filter((page) => !page.hidden && !isExportablePage(page))
 }
 
 export function exportFileName(monday: string, pageId: string): string {

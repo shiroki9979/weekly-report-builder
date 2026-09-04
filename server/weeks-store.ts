@@ -2,7 +2,11 @@ import fs from "node:fs"
 import path from "node:path"
 
 import { cloneWeekFromPrevious } from "../src/lib/week-clone"
-import { parseWeekDocument, type WeekDocument } from "../src/lib/week-document"
+import {
+  isHtmlWeekPage,
+  parseWeekDocument,
+  type WeekDocument,
+} from "../src/lib/week-document"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -71,6 +75,26 @@ export function createWeekFromPrevious(
   const previous = readWeekFile(weeksDir, latestMonday)
   const cloned = cloneWeekFromPrevious(previous, monday)
 
+  const htmlFiles = previous.pages.flatMap((page) => {
+    if (!isHtmlWeekPage(page)) {
+      return []
+    }
+
+    const sourceFile = path.resolve(weeksDir, latestMonday, page.htmlFile)
+    if (!fs.existsSync(sourceFile) || !fs.statSync(sourceFile).isFile()) {
+      throw new Error(`Referenced HTML file does not exist: ${sourceFile}`)
+    }
+
+    return [{ sourceFile, htmlFile: page.htmlFile }]
+  })
+  const targetDir = path.resolve(weeksDir, monday)
+
+  for (const { sourceFile, htmlFile } of htmlFiles) {
+    fs.mkdirSync(targetDir, { recursive: true })
+    fs.copyFileSync(sourceFile, path.resolve(targetDir, htmlFile))
+  }
+
   writeWeekFile(weeksDir, monday, cloned)
+
   return cloned
 }

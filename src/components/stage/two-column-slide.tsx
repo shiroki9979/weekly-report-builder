@@ -1,8 +1,8 @@
 import { StagePanel } from "@/components/stage/panels/stage-panel"
-import type { WeekPage } from "@/lib/week-document"
+import type { TwoColumnWeekPage } from "@/lib/week-document"
 
 type TwoColumnSlideProps = {
-  page: WeekPage
+  page: TwoColumnWeekPage
 }
 
 export function TwoColumnSlide({ page }: TwoColumnSlideProps) {

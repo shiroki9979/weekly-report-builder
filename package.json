@@ -1,7 +1,7 @@
 {
   "name": "weekly-report-builder",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.14",
     "html-to-image": "^1.11.13",
     "lucide-react": "^1.37.0",
     "react": "^19.2.6",

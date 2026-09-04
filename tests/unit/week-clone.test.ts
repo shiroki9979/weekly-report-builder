@@ -105,4 +105,40 @@ describe("week-clone", () => {
 
     expect(() => parseWeekDocument(cloned)).not.toThrow()
   })
+
+  it("clones html layout page with cleared title and notes while preserving htmlFile", () => {
+    const previous = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Previous Title",
+          htmlFile: "p03.html",
+          hidden: true,
+          notes: "Previous notes",
+        },
+      ],
+    })
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    expect(cloned.pages).toHaveLength(1)
+    const page = cloned.pages[0]
+    expect(page.id).toBe("p03")
+    expect(page.layout).toBe("html")
+    expect(page.title).toBe("")
+    expect(page.hidden).toBe(true)
+    expect(page.notes).toBeUndefined()
+    if (page.layout !== "html") {
+      throw new Error("expected html page")
+    }
+    expect(page.htmlFile).toBe("p03.html")
+    // @ts-expect-error HTML 頁面不應具有 items
+    expect(page.items).toBeUndefined()
+    // @ts-expect-error HTML 頁面不應具有 panel
+    expect(page.panel).toBeUndefined()
+
+    expect(() => parseWeekDocument(cloned)).not.toThrow()
+  })
 })

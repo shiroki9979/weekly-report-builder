@@ -1,3 +1,5 @@
+import { validateHtmlFileName } from "./html-page"
+
 export type SlideItem = {
   heading: string
   body: string
@@ -65,11 +67,11 @@ export type Panel =
   | ChecklistPanel
   | FieldsPanel
 
-export type SlideLayout = "two-column" | (string & {})
+export type SlideLayout = "two-column" | "html"
 
-export type WeekPage = {
+export type TwoColumnWeekPage = {
   id: string
-  layout: SlideLayout
+  layout: "two-column"
   title: string
   items: SlideItem[]
   panel: Panel
@@ -77,10 +79,38 @@ export type WeekPage = {
   notes?: string
 }
 
+export type HtmlWeekPage = {
+  id: string
+  layout: "html"
+  title: string
+  htmlFile: string
+  hidden?: boolean
+  notes?: string
+}
+
+export type UnknownWeekPage = {
+  id: string
+  layout: string
+  title: string
+  hidden?: boolean
+  notes?: string
+  [key: string]: unknown
+}
+
+export type WeekPage = TwoColumnWeekPage | HtmlWeekPage | UnknownWeekPage
+
 export type WeekDocument = {
   start: string
   end: string
   pages: WeekPage[]
+}
+
+export function isHtmlWeekPage(page: WeekPage): page is HtmlWeekPage {
+  return page.layout === "html" && "htmlFile" in page
+}
+
+export function isTwoColumnWeekPage(page: WeekPage): page is TwoColumnWeekPage {
+  return page.layout === "two-column" && "items" in page && "panel" in page
 }
 
 const V1_PANEL_KINDS = new Set([
@@ -277,19 +307,56 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
     throw new Error(`Invalid week document: pages[${index}] must be an object`)
   }
 
+  const id = readNonEmptyString(value.id, `pages[${index}].id`)
+  const layout = readNonEmptyString(value.layout, `pages[${index}].layout`)
+  const title = readString(value.title, `pages[${index}].title`)
+  const hidden = typeof value.hidden === "boolean" ? value.hidden : undefined
+  const notes = typeof value.notes === "string" ? value.notes : undefined
+
+  if (layout === "html") {
+    const htmlFile = readNonEmptyString(
+      value.htmlFile,
+      `pages[${index}].htmlFile`
+    )
+
+    try {
+      validateHtmlFileName(htmlFile)
+    } catch (cause: unknown) {
+      const message =
+        cause instanceof Error ? cause.message : "Invalid htmlFile"
+      throw new Error(
+        `Invalid week document: pages[${index}].htmlFile: ${message}`,
+        { cause }
+      )
+    }
+
+    return {
+      id,
+      layout: "html",
+      title,
+      htmlFile,
+      hidden,
+      notes,
+    }
+  }
+
+  if (layout !== "two-column") {
+    return { ...value, id, layout, title, hidden, notes }
+  }
+
   const items = value.items
   if (!Array.isArray(items) || items.length !== 3) {
     throw new Error(`Invalid week document: pages[${index}].items must have 3 entries`)
   }
 
   return {
-    id: readNonEmptyString(value.id, `pages[${index}].id`),
-    layout: readNonEmptyString(value.layout, `pages[${index}].layout`),
-    title: readString(value.title, `pages[${index}].title`),
+    id,
+    layout: "two-column",
+    title,
     items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
     panel: parsePanel(value.panel),
-    hidden: typeof value.hidden === "boolean" ? value.hidden : undefined,
-    notes: typeof value.notes === "string" ? value.notes : undefined,
+    hidden,
+    notes,
   }
 }
 

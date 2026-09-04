@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
 
-import type { WeekDocument } from "@/lib/week-document"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 import {
   exportFileName,
   exportVisiblePages,
   listExportablePages,
+  listSkippedPages,
 } from "@/lib/week-export"
 
 const sampleWeek: WeekDocument = {
@@ -91,5 +92,60 @@ describe("week-export", () => {
 
     expect(renderedPages).toEqual(["p01", "p04"])
     expect(downloads).toEqual(["2026-08-24-p01.png", "2026-08-24-p04.png"])
+  })
+
+  it("handles html layout pages properly in exportable list", () => {
+    const weekWithHtml: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "two-column",
+          title: "Page 1",
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: { kind: "checklist", title: "List", items: [] },
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Visible HTML",
+          htmlFile: "p02.html",
+        },
+        {
+          id: "p03",
+          layout: "html",
+          title: "Hidden HTML",
+          htmlFile: "p03.html",
+          hidden: true,
+        },
+      ],
+    }
+
+    expect(listExportablePages(weekWithHtml).map((p) => p.id)).toEqual([
+      "p01",
+      "p02",
+    ])
+  })
+
+  it("skips unknown layouts from batch export", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "future-layout",
+          title: "Not yet supported",
+        },
+      ],
+    })
+
+    expect(listExportablePages(week)).toEqual([])
+    expect(listSkippedPages(week).map((page) => page.id)).toEqual(["p01"])
   })
 })
