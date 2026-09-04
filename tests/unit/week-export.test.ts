@@ -5,6 +5,7 @@ import {
   exportFileName,
   exportVisiblePages,
   listExportablePages,
+  listSkippedPages,
 } from "@/lib/week-export"
 
 const sampleWeek: WeekDocument = {
@@ -145,5 +146,6 @@ describe("week-export", () => {
     })
 
     expect(listExportablePages(week)).toEqual([])
+    expect(listSkippedPages(week).map((page) => page.id)).toEqual(["p01"])
   })
 })
