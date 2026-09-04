@@ -26,7 +26,10 @@ describe("ChartPanelView", () => {
 
     const bars = screen.getAllByTestId("chart-bar-segment")
     expect(bars).toHaveLength(4)
-    expect(bars[0]).toHaveStyle({ height: "37.21%" })
-    expect(bars[1]).toHaveStyle({ height: "62.79%" })
+    // Day totals 43 vs 57 → scale 57; heights are absolute share of max day
+    expect(bars[0]).toHaveStyle({ height: "28.07%" })
+    expect(bars[1]).toHaveStyle({ height: "47.37%" })
+    expect(bars[2]).toHaveStyle({ height: "59.65%" })
+    expect(bars[3]).toHaveStyle({ height: "40.35%" })
   })
 })
