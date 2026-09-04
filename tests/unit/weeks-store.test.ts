@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -154,6 +161,35 @@ describe("weeks-store", () => {
       expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
         /Referenced HTML file does not exist:/
       )
+      expect(existsSync(join(tempDir, "2026-08-31.json"))).toBe(false)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("does not publish a week file when a referenced HTML path is not a file", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const sourceWeek = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "HTML escape hatch",
+          htmlFile: "p03.html",
+        },
+      ],
+    })
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+      mkdirSync(join(tempDir, "2026-08-24", "p03.html"), {
+        recursive: true,
+      })
+
+      expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow()
+      expect(existsSync(join(tempDir, "2026-08-31.json"))).toBe(false)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }

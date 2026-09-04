@@ -112,7 +112,9 @@ describe("useStageExport", () => {
 
     // 截圖應包含 stage-warning 錯誤訊息，而非載入中的 stage-placeholder
     expect(capturedHtml).toContain("stage-warning")
-    expect(capturedHtml).toContain("Failed to load HTML file: missing.html")
+    expect(capturedHtml).toContain(
+      "Failed to load HTML file: missing.html (status 404)"
+    )
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
   })

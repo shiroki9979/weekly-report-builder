@@ -90,10 +90,14 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
 
 export async function preloadHtmlFragment(
   monday: string,
-  htmlFile: string
+  htmlFile: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const url = resolveHtmlUrl(monday, htmlFile)
-  const res = await fetch(url, { cache: "no-cache" })
+  const requestOptions: RequestInit = signal
+    ? { cache: "no-cache", signal }
+    : { cache: "no-cache" }
+  const res = await fetch(url, requestOptions)
   if (!res.ok) {
     throw new Error(`Failed to load HTML file: ${htmlFile} (status ${res.status})`)
   }

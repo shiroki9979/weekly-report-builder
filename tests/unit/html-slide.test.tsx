@@ -65,7 +65,7 @@ describe("HtmlSlide", () => {
     await waitFor(() => {
       const statusEl = screen.getByRole("status")
       expect(statusEl).toHaveTextContent(
-        "Failed to load HTML file: missing.html"
+        "Failed to load HTML file: missing.html (status 404)"
       )
       expect(statusEl).toHaveAttribute("data-status", "error")
     })
