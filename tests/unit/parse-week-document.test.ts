@@ -9,6 +9,11 @@ const fixturePath = resolve(
   "../../weeks/2026-08-24.json"
 )
 
+const fixture20260831Path = resolve(
+  import.meta.dirname,
+  "../../weeks/2026-08-31.json"
+)
+
 describe("parseWeekDocument", () => {
   it("parses the week fixture with two-column layout and table panel", () => {
     const raw = readFileSync(fixturePath, "utf-8")
@@ -42,6 +47,39 @@ describe("parseWeekDocument", () => {
       throw new Error("expected html page")
     }
     expect(htmlPage.htmlFile).toBe("p08.html")
+  })
+
+  it("parses the 2026-08-31 week with seven two-column pages", () => {
+    const raw = readFileSync(fixture20260831Path, "utf-8")
+    const week = parseWeekDocument(JSON.parse(raw))
+
+    expect(week.start).toBe("2026-08-31")
+    expect(week.end).toBe("2026-09-04")
+    expect(week.pages).toHaveLength(7)
+    expect(week.pages.every((page) => page.layout === "two-column")).toBe(true)
+
+    expect(week.pages.map((page) => page.id)).toEqual([
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+    ])
+
+    expect(week.pages.map((page) => page.panel.kind)).toEqual([
+      "chart",
+      "table",
+      "chart",
+      "chart",
+      "chart",
+      "chart",
+      "checklist",
+    ])
+
+    // Grill 共識：全稿不出現「備援」
+    expect(JSON.stringify(week)).not.toMatch(/備援/)
   })
 
   it("rejects documents without pages", () => {
