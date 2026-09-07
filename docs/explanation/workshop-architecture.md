@@ -1,7 +1,7 @@
 # 工坊架構
 
 建立日期：2026-08-31  
-最後更新：2026-09-03
+最後更新：2026-09-07
 
 ---
 
@@ -60,4 +60,4 @@ Login、分享、canvas 拖曳排版、從本 app 播放、以 localStorage 為�
 
 - [週次 JSON 格式](../reference/week-json-format.md)
 - [第一份週報](../tutorials/first-weekly-report.md)
-- 原始 spec：`.scratch/weekly-workshop/spec.md`
+- [HTML 全幅頁規格](../specs/html-page-layout.md)

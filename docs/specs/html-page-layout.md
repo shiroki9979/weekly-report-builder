@@ -1,10 +1,10 @@
 # HTML 全幅頁（16:9 逃生口）
 
 建立日期：2026-09-03  
-最後更新：2026-09-04
-狀態：ready-for-agent
+最後更新：2026-09-07
+狀態：implemented（v0.1.0）
 
-Grill 共識（2026-09-03）。實作 ticket：`.scratch/weekly-workshop/issues/09-html-page-layout.md`
+Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 
 ---
 
