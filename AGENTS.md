@@ -14,7 +14,7 @@ See `.cursor/rules/language.mdc`.
 
 ### Issue tracker
 
-Issues live as markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

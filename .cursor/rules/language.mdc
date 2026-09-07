@@ -27,4 +27,4 @@ Do not add Chinese (or other) UI copy to workshop chrome unless the user explici
 ## Docs
 
 - `README.md` and `docs/agents/*`: English.
-- `.scratch/` tickets and spec: English (existing convention).
+- GitHub issue and spec bodies: English.
