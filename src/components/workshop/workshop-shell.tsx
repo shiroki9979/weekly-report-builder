@@ -27,10 +27,7 @@ import {
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
-import {
-  PagePicker,
-  WorkshopToolbar,
-} from "@/components/workshop/week-picker"
+import { PagePicker, WorkshopToolbar } from "@/components/workshop/week-picker"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
@@ -81,7 +78,7 @@ function EditorSidebar({
       <div className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Sidebar
             </p>
             <p className="text-xs text-muted-foreground">
@@ -312,7 +309,7 @@ export function WorkshopShell() {
         >
           <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden p-4">
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 16:9 preview
               </h2>
               <ExportControls

@@ -78,9 +78,7 @@ export function ChartEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange(
-                    removeChartCategory(week, pageIndex, categoryIndex)
-                  )
+                  onChange(removeChartCategory(week, pageIndex, categoryIndex))
                 }
                 disabled={panel.categories.length <= 1}
               >
@@ -152,7 +150,9 @@ export function ChartEditorForm({
             <div className="grid gap-2 sm:grid-cols-3">
               {panel.categories.map((category, categoryIndex) => (
                 <div key={categoryIndex} className="space-y-2">
-                  <Label htmlFor={`series-${seriesIndex}-value-${categoryIndex}`}>
+                  <Label
+                    htmlFor={`series-${seriesIndex}-value-${categoryIndex}`}
+                  >
                     {category || `Category ${categoryIndex + 1}`}
                   </Label>
                   <Input

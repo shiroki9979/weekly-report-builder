@@ -8,7 +8,9 @@ import * as stageCapture from "@/lib/stage-capture"
 import type { WeekDocument } from "@/lib/week-document"
 
 vi.mock("@/lib/stage-capture", () => ({
-  captureStageToPng: vi.fn(async () => new Blob(["test-png"], { type: "image/png" })),
+  captureStageToPng: vi.fn(
+    async () => new Blob(["test-png"], { type: "image/png" })
+  ),
 }))
 
 vi.mock("@/lib/download-blob", () => ({
@@ -99,12 +101,7 @@ describe("useStageExport", () => {
       current: null,
     }
 
-    render(
-      <ExportTestComponent
-        week={week}
-        exportRef={exportRef}
-      />
-    )
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
 
     await act(async () => {
       await exportRef.current?.downloadVisiblePages()
@@ -149,12 +146,7 @@ describe("useStageExport", () => {
       current: null,
     }
 
-    render(
-      <ExportTestComponent
-        week={week}
-        exportRef={exportRef}
-      />
-    )
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
 
     await act(async () => {
       await exportRef.current?.copyCurrentPage()
