@@ -1,7 +1,4 @@
-import {
-  isHtmlWeekPage,
-  isTwoColumnWeekPage,
-} from "@/lib/week-document"
+import { isHtmlWeekPage, isTwoColumnWeekPage } from "@/lib/week-document"
 import type {
   ChartPanel,
   ChecklistPanel,

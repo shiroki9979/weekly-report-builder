@@ -25,8 +25,8 @@
 
 靜態讀取週次 JSON（Vite 靜態 middleware）。
 
-| 參數 | 說明 |
-|------|------|
+| 參數       | 說明         |
+| ---------- | ------------ |
 | `{monday}` | `YYYY-MM-DD` |
 
 **Response**：週次 JSON 檔案內容；不存在時 404。
@@ -56,7 +56,7 @@
 **Response 201**
 
 ```json
-{ "week": { /* WeekDocument */ } }
+{ "week": {/* WeekDocument */} }
 ```
 
 **Response 400**：無上一週可 clone、日期非週一等

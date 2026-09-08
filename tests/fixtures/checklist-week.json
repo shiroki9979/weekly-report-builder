@@ -24,10 +24,16 @@
         "kind": "checklist",
         "title": "Next checks",
         "items": [
-          { "label": "Scale diagnostics pass before rollout", "checked": false },
+          {
+            "label": "Scale diagnostics pass before rollout",
+            "checked": false
+          },
           { "label": "Compile Harbor day-1 baseline table", "checked": false },
           { "label": "Variant A vs Variant B after data fix", "checked": true },
-          { "label": "Promote only if it beats production champion", "checked": false }
+          {
+            "label": "Promote only if it beats production champion",
+            "checked": false
+          }
         ]
       },
       "notes": "Next week checklist"

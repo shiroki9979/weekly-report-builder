@@ -21,7 +21,9 @@ export function FlowPanelView({ panel }: FlowPanelViewProps) {
               </div>
             ) : null}
             <div
-              className={`stage-flow-box${step.variant === "ok" ? " ok" : ""}`}
+              className={
+                step.variant === "ok" ? "stage-flow-box ok" : "stage-flow-box"
+              }
               data-testid="flow-step"
             >
               {step.label}

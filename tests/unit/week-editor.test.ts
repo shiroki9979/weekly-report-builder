@@ -14,15 +14,10 @@ import {
 } from "@/lib/week-editor"
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(
-  import.meta.dirname,
-  "../../weeks/2026-08-24.json"
-)
+const fixturePath = resolve(import.meta.dirname, "../../weeks/2026-08-24.json")
 
 function loadFixture() {
-  return parseWeekDocument(
-    JSON.parse(readFileSync(fixturePath, "utf-8"))
-  )
+  return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
 describe("week-editor", () => {
@@ -98,7 +93,9 @@ describe("week-editor", () => {
 
     // 驗證型別防衛機制：two-column 頁面不應接受 htmlFile 欄位修改
     const twoColWeek = loadFixture()
-    expect(() => setPageHtmlFile(twoColWeek, 0, "bad.html")).toThrow(/not an HTML page/i)
+    expect(() => setPageHtmlFile(twoColWeek, 0, "bad.html")).toThrow(
+      /not an HTML page/i
+    )
   })
 
   it("assertTwoColumnPage rejects pages with html layout", () => {
