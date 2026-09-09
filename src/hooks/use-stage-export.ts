@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useRef,
-  useState,
-  type RefObject,
-} from "react"
+import { useCallback, useRef, useState, type RefObject } from "react"
 import { flushSync } from "react-dom"
 
 import { copyImageToClipboard } from "@/lib/clipboard-image"

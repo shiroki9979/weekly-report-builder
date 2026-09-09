@@ -101,7 +101,9 @@ export async function preloadHtmlFragment(
     : { cache: "no-cache" }
   const res = await fetch(url, requestOptions)
   if (!res.ok) {
-    throw new Error(`Failed to load HTML file: ${htmlFile} (status ${res.status})`)
+    throw new Error(
+      `Failed to load HTML file: ${htmlFile} (status ${res.status})`
+    )
   }
 
   const raw = await res.text()

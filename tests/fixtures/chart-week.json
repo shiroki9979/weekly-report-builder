@@ -25,9 +25,21 @@
         "title": "Commits this week",
         "categories": ["24", "25", "26", "27", "28"],
         "series": [
-          { "name": "Platform", "color": "#2e75b6", "values": [16, 34, 57, 18, 39] },
-          { "name": "SolarDB", "color": "#7eb0d6", "values": [27, 23, 36, 45, 11] },
-          { "name": "Detroit", "color": "#c5d9ed", "values": [5, 27, 0, 36, 39] }
+          {
+            "name": "Platform",
+            "color": "#2e75b6",
+            "values": [16, 34, 57, 18, 39]
+          },
+          {
+            "name": "SolarDB",
+            "color": "#7eb0d6",
+            "values": [27, 23, 36, 45, 11]
+          },
+          {
+            "name": "Detroit",
+            "color": "#c5d9ed",
+            "values": [5, 27, 0, 36, 39]
+          }
         ]
       },
       "notes": "Overview chart is example data only"

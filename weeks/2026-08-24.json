@@ -23,46 +23,22 @@
       "panel": {
         "kind": "chart",
         "title": "Commits this week",
-        "categories": [
-          "24",
-          "25",
-          "26",
-          "27",
-          "28"
-        ],
+        "categories": ["24", "25", "26", "27", "28"],
         "series": [
           {
             "name": "Platform",
             "color": "#2e75b6",
-            "values": [
-              16,
-              34,
-              57,
-              18,
-              39
-            ]
+            "values": [16, 34, 57, 18, 39]
           },
           {
             "name": "SolarDB",
             "color": "#7eb0d6",
-            "values": [
-              27,
-              23,
-              36,
-              45,
-              11
-            ]
+            "values": [27, 23, 36, 45, 11]
           },
           {
             "name": "Detroit",
             "color": "#c5d9ed",
-            "values": [
-              5,
-              27,
-              0,
-              36,
-              39
-            ]
+            "values": [5, 27, 0, 36, 39]
           }
         ]
       },
@@ -89,37 +65,22 @@
       "panel": {
         "kind": "table",
         "title": "Model archive · Download",
-        "columns": [
-          "Control",
-          "Value"
-        ],
+        "columns": ["Control", "Value"],
         "rows": [
           {
-            "cells": [
-              "Task",
-              "選目標任務"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["Task", "選目標任務"],
+            "emphasis": [0]
           },
           {
             "cells": [
               "Alias",
               "@production　／　@candidate　／　@previous-production"
             ],
-            "emphasis": [
-              0
-            ]
+            "emphasis": [0]
           },
           {
-            "cells": [
-              "Action",
-              "Download archive"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["Action", "Download archive"],
+            "emphasis": [0]
           }
         ]
       },
@@ -190,51 +151,23 @@
       "panel": {
         "kind": "table",
         "title": "Loaded model",
-        "columns": [
-          "動作",
-          "對正式版",
-          "結果"
-        ],
+        "columns": ["動作", "對正式版", "結果"],
         "rows": [
           {
-            "cells": [
-              "排程評估",
-              "釘住中",
-              "skip 晉升"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["排程評估", "釘住中", "skip 晉升"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "手動晉升",
-              "指定歷史版",
-              "契約通過才寫"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["手動晉升", "指定歷史版", "契約通過才寫"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "新訓練",
-              "只寫候選",
-              "不自動 unpin"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["新訓練", "只寫候選", "不自動 unpin"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "Unpin",
-              "只刪釘住",
-              "不回滾 alias"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["Unpin", "只刪釘住", "不回滾 alias"],
+            "emphasis": [1]
           }
         ]
       },
@@ -261,46 +194,23 @@
       "panel": {
         "kind": "table",
         "title": "文件四象限",
-        "columns": [
-          "象限",
-          "用途"
-        ],
+        "columns": ["象限", "用途"],
         "rows": [
           {
-            "cells": [
-              "教學",
-              "帶人跑起來"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["教學", "帶人跑起來"],
+            "emphasis": [0]
           },
           {
-            "cells": [
-              "操作",
-              "完成一件具體事"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["操作", "完成一件具體事"],
+            "emphasis": [0]
           },
           {
-            "cells": [
-              "參考",
-              "API、契約、設定"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["參考", "API、契約、設定"],
+            "emphasis": [0]
           },
           {
-            "cells": [
-              "說明",
-              "為什麼這樣設計"
-            ],
-            "emphasis": [
-              0
-            ]
+            "cells": ["說明", "為什麼這樣設計"],
+            "emphasis": [0]
           }
         ]
       },
@@ -327,46 +237,23 @@
       "panel": {
         "kind": "table",
         "title": "Status",
-        "columns": [
-          "項目",
-          "結果"
-        ],
+        "columns": ["項目", "結果"],
         "rows": [
           {
-            "cells": [
-              "SolarDB",
-              "v2.2 已切版"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["SolarDB", "v2.2 已切版"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "生產骨幹",
-              "M2 維持"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["生產骨幹", "M2 維持"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "Detroit 評測",
-              "日前一天鎖定"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["Detroit 評測", "日前一天鎖定"],
+            "emphasis": [1]
           },
           {
-            "cells": [
-              "遷移實驗",
-              "下週開跑"
-            ],
-            "emphasis": [
-              1
-            ]
+            "cells": ["遷移實驗", "下週開跑"],
+            "emphasis": [1]
           }
         ]
       },

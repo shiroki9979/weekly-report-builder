@@ -36,7 +36,11 @@
         "kind": "flow",
         "title": "Cross-environment path",
         "steps": [
-          { "label": "Source env", "caption": "@production", "variant": "default" },
+          {
+            "label": "Source env",
+            "caption": "@production",
+            "variant": "default"
+          },
           { "label": "Target env", "caption": "New version", "variant": "ok" }
         ]
       }
@@ -64,7 +68,10 @@
       "layout": "two-column",
       "title": "Platform · Eval Gate",
       "items": [
-        { "heading": "Task-scoped metrics", "body": "Per-task promotion metric." },
+        {
+          "heading": "Task-scoped metrics",
+          "body": "Per-task promotion metric."
+        },
         { "heading": "Manual promote", "body": "Pin from history." },
         { "heading": "Production pin", "body": "Scheduled eval still runs." }
       ],
@@ -73,8 +80,14 @@
         "title": "Loaded model",
         "columns": ["Action", "Production", "Outcome"],
         "rows": [
-          { "cells": ["Scheduled eval", "Pinned", "Skip promote"], "emphasis": [1] },
-          { "cells": ["Manual promote", "Chosen version", "Write if valid"], "emphasis": [1] }
+          {
+            "cells": ["Scheduled eval", "Pinned", "Skip promote"],
+            "emphasis": [1]
+          },
+          {
+            "cells": ["Manual promote", "Chosen version", "Write if valid"],
+            "emphasis": [1]
+          }
         ]
       }
     }

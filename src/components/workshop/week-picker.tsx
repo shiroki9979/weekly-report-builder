@@ -159,7 +159,9 @@ export function WorkshopToolbar({
               {saving ? "Saving…" : "Save"}
             </Button>
             {saveMessage ? (
-              <span className="text-xs text-muted-foreground">{saveMessage}</span>
+              <span className="text-xs text-muted-foreground">
+                {saveMessage}
+              </span>
             ) : null}
             {saveError ? (
               <span className="text-xs text-destructive">{saveError}</span>

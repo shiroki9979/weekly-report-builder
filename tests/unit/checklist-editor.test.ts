@@ -52,7 +52,10 @@ describe("checklist week-editor", () => {
     const withoutItem = removeChecklistItem(withItem, 0, 0)
 
     expect(checklistPanel(withItem).items).toHaveLength(5)
-    expect(checklistPanel(withItem).items[4]).toEqual({ label: "", checked: false })
+    expect(checklistPanel(withItem).items[4]).toEqual({
+      label: "",
+      checked: false,
+    })
     expect(checklistPanel(withoutItem).items).toHaveLength(4)
     expect(checklistPanel(withoutItem).items[0].label).toBe(
       "Compile Detroit day-1 baseline table"

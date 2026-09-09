@@ -24,7 +24,7 @@ describe("SpeakerNotesCue", () => {
     render(<SpeakerNotesCue notes="Cue body" />)
 
     expect(
-      screen.getByRole("button", { name: /Speaker notes/i }),
+      screen.getByRole("button", { name: /Speaker notes/i })
     ).toHaveAttribute("aria-expanded", "true")
     expect(screen.getByText("Cue body")).toBeInTheDocument()
   })

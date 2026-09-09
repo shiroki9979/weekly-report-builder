@@ -4,10 +4,7 @@ import { describe, expect, it } from "vitest"
 
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(
-  import.meta.dirname,
-  "../../weeks/2026-08-24.json"
-)
+const fixturePath = resolve(import.meta.dirname, "../../weeks/2026-08-24.json")
 
 const fixture20260831Path = resolve(
   import.meta.dirname,

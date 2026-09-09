@@ -30,7 +30,9 @@ describe("HtmlSlide", () => {
 
   it("shows loading placeholder with data-status=loading while fetch is in-flight", () => {
     // 透過永不 resolve 的 Promise 模擬網路延遲，驗證等待期間呈現 loading 佔位狀態
-    vi.spyOn(globalThis, "fetch").mockImplementationOnce(() => new Promise(() => {}))
+    vi.spyOn(globalThis, "fetch").mockImplementationOnce(
+      () => new Promise(() => {})
+    )
 
     const page: HtmlWeekPage = {
       id: "p03",
