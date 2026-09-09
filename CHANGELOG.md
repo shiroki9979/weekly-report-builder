@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 原型狀態小字改用對比達標的 `--ok-ink`／`--warn-ink`；成果改 `h2`、頁碼改 `footer`。
 
+### Fixed
+
+- 修正 Gallery 預覽控制的 HTML 語意，並提高 Gallery 標籤與返回按鈕的文字對比（`src/prototype/`）。
+
 ## [0.1.0] - 2026-09-04
 
 ### Added

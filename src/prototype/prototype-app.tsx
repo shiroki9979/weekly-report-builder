@@ -40,20 +40,20 @@ export function PrototypeApp() {
       </header>
       <div className="proto-gallery">
         {prototypeLayouts.map((layout) => (
-          <button
-            key={layout.id}
-            type="button"
-            className="proto-preview"
-            aria-label={layout.name}
-            onClick={() => setFocusedId(layout.id)}
-          >
+          <div key={layout.id} className="proto-preview">
             <span className="proto-preview-label">{layout.name}</span>
-            <span className="proto-preview-stage">
+            <span className="proto-preview-stage" aria-hidden="true">
               <StageFrame>
                 <PrototypeLayoutView layout={layout} />
               </StageFrame>
             </span>
-          </button>
+            <button
+              type="button"
+              className="proto-preview-action"
+              aria-label={`Open ${layout.name}`}
+              onClick={() => setFocusedId(layout.id)}
+            />
+          </div>
         ))}
       </div>
     </div>
