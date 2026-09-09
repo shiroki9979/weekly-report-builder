@@ -73,22 +73,31 @@ body,
 }
 
 .proto-preview {
-  appearance: none;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   width: 100%;
   margin: 0;
   padding: 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
   color: inherit;
   text-align: left;
+}
+
+.proto-preview-action {
+  appearance: none;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
 }
 
-.proto-preview:focus-visible {
+.proto-preview-action:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 6px;
 }
@@ -98,7 +107,7 @@ body,
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: var(--blue-deep);
 }
 
 /* 縮圖以 800×450 實尺等比縮放，避免 clamp 下限讓小預覽裁切內文 */
@@ -130,7 +139,7 @@ body,
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: var(--blue-deep);
   cursor: pointer;
 }
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
@@ -52,9 +52,12 @@ describe("PrototypeApp", () => {
     render(<PrototypeApp />)
 
     for (const layout of layouts) {
-      expect(
-        screen.getByRole("button", { name: new RegExp(layout.name, "i") })
-      ).toBeInTheDocument()
+      const openLayout = screen.getByRole("button", {
+        name: `Open ${layout.name}`,
+      })
+
+      expect(openLayout).toBeInTheDocument()
+      expect(within(openLayout).queryByRole("heading")).not.toBeInTheDocument()
     }
   })
 
@@ -64,7 +67,7 @@ describe("PrototypeApp", () => {
 
     for (const layout of layouts) {
       await user.click(
-        screen.getByRole("button", { name: new RegExp(layout.name, "i") })
+        screen.getByRole("button", { name: `Open ${layout.name}` })
       )
 
       expect(screen.getByTestId("stage-frame")).toBeInTheDocument()
@@ -80,7 +83,7 @@ describe("PrototypeApp", () => {
         if (other.name !== layout.name) {
           expect(
             screen.queryByRole("button", {
-              name: new RegExp(other.name, "i"),
+              name: `Open ${other.name}`,
             })
           ).not.toBeInTheDocument()
         }
@@ -89,7 +92,7 @@ describe("PrototypeApp", () => {
       await user.click(screen.getByRole("button", { name: /Back to gallery/i }))
 
       expect(
-        screen.getByRole("button", { name: /Weekly Overview/i })
+        screen.getByRole("button", { name: "Open Weekly Overview" })
       ).toBeInTheDocument()
     }
   })
