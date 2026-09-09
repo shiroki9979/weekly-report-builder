@@ -199,4 +199,12 @@ export default defineConfig({
       "@": path.resolve(rootDir, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(rootDir, "index.html"),
+        prototype: path.resolve(rootDir, "prototype.html"),
+      },
+    },
+  },
 })

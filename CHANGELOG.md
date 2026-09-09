@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 可拋棄的 Structured Layout 原型（Weekly Overview、Evidence-backed Decision、Next Actions），獨立入口 `prototype.html`，不接工坊資料與匯出（`src/prototype/`）。
+
 ## [0.1.0] - 2026-09-04
 
 ### Added
