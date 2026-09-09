@@ -39,7 +39,11 @@ export function EvidenceDecision({ layout }: EvidenceDecisionProps) {
       <div className="proto-decision">
         <div className="proto-evidence">
           {layout.metrics.map((metric) => (
-            <section className="proto-metric" key={metric.label}>
+            <section
+              className="proto-metric"
+              key={metric.label}
+              aria-label={`${metric.label}: ${metric.baselineLabel} ${metric.baselineValue}, ${metric.candidateLabel} ${metric.candidateValue}`}
+            >
               <h2 className="proto-metric-label">{metric.label}</h2>
               <BarRow
                 name={metric.baselineLabel}
@@ -56,7 +60,7 @@ export function EvidenceDecision({ layout }: EvidenceDecisionProps) {
             </section>
           ))}
         </div>
-        <div className="proto-interpret">
+        <div className="proto-interpret" aria-label="Why this verdict">
           {layout.interpretations.map((text) => (
             <p className="proto-interpret-item" key={text}>
               {text}

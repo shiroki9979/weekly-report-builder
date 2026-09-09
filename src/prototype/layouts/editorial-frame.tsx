@@ -27,7 +27,7 @@ export function EditorialFrame({
       </header>
       <hr className="proto-rule" />
       <div className="proto-body">{children}</div>
-      <p className="proto-page-number">{pageNumber}</p>
+      <footer className="proto-page-number">{pageNumber}</footer>
     </article>
   )
 }

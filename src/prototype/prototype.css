@@ -17,6 +17,8 @@ body,
   --ok: #2f9e6b;
   --ok-wash: #e6f6ee;
   --warn: #c47b16;
+  --ok-ink: #1f7a52;
+  --warn-ink: #8a5508;
   --paper: #ffffff;
 
   box-sizing: border-box;
@@ -287,11 +289,12 @@ body,
 
 .proto-status.is-on-track,
 .proto-status.is-improved {
-  color: var(--ok);
+  /* Stage --ok 在小字上未達 4.5:1；原型只用 --ok-ink，不改生產 token */
+  color: var(--ok-ink);
 }
 
 .proto-status.is-watch {
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 
 .proto-verdict {
