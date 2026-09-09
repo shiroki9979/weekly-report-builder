@@ -39,10 +39,10 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                               | 說明                         |
-| -------------------------------------------------- | ---------------------------- |
-| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流 |
-| [Layout 家族原型](explanation/layout-prototype.md) | 可拋棄原型的隔離範圍與限制   |
+| 文件                                               | 說明                                 |
+| -------------------------------------------------- | ------------------------------------ |
+| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流         |
+| [Layout 家族原型](explanation/layout-prototype.md) | 可拋棄原型的隔離範圍、限制與驗證結果 |
 
 ## Specs（尚未落地的功能規格）
 

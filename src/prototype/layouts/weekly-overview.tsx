@@ -16,7 +16,7 @@ function OutcomeBlock({
     <section className={lead ? "proto-lead" : "proto-support"}>
       <p className="proto-workstream">{outcome.workstream}</p>
       <p className="proto-figure">{outcome.figure}</p>
-      <p className="proto-result">{outcome.result}</p>
+      <h2 className="proto-result">{outcome.result}</h2>
       <p className="proto-impact">{outcome.impact}</p>
       <p className={`proto-status is-${outcome.tone}`}>{outcome.status}</p>
     </section>
