@@ -34,11 +34,7 @@ function readRequestBody(req: IncomingMessage): Promise<string> {
   })
 }
 
-function sendJson(
-  res: ServerResponse,
-  status: number,
-  payload: unknown
-): void {
+function sendJson(res: ServerResponse, status: number, payload: unknown): void {
   res.statusCode = status
   res.setHeader("Content-Type", "application/json")
   res.end(JSON.stringify(payload))
@@ -201,6 +197,14 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(rootDir, "./src"),
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(rootDir, "index.html"),
+        prototype: path.resolve(rootDir, "prototype.html"),
+      },
     },
   },
 })

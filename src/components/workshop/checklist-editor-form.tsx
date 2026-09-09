@@ -36,7 +36,9 @@ export function ChecklistEditorForm({
           id="checklist-panel-title"
           value={panel.title}
           onChange={(event) =>
-            onChange(setChecklistPanelTitle(week, pageIndex, event.target.value))
+            onChange(
+              setChecklistPanelTitle(week, pageIndex, event.target.value)
+            )
           }
         />
       </div>

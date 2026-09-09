@@ -61,11 +61,7 @@ export type FieldsPanel = {
 }
 
 export type Panel =
-  | TablePanel
-  | ChartPanel
-  | FlowPanel
-  | ChecklistPanel
-  | FieldsPanel
+  TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
 export type SlideLayout = "two-column" | "html"
 
@@ -136,7 +132,9 @@ function readString(value: unknown, field: string): string {
 function readNonEmptyString(value: unknown, field: string): string {
   const text = readString(value, field)
   if (text.trim() === "") {
-    throw new Error(`Invalid week document: ${field} must be a non-empty string`)
+    throw new Error(
+      `Invalid week document: ${field} must be a non-empty string`
+    )
   }
 
   return text
@@ -346,7 +344,9 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
 
   const items = value.items
   if (!Array.isArray(items) || items.length !== 3) {
-    throw new Error(`Invalid week document: pages[${index}].items must have 3 entries`)
+    throw new Error(
+      `Invalid week document: pages[${index}].items must have 3 entries`
+    )
   }
 
   return {

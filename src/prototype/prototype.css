@@ -1,0 +1,455 @@
+/* 原型殼不用 shadcn。token 與 stage.css 相同：殼層不在 .stage-root 內，必須自行宣告 */
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+.proto-shell {
+  --blue: #2e75b6;
+  --blue-deep: #1f5a8f;
+  --blue-soft: #c5d9ed;
+  --blue-wash: #eef4fa;
+  --ink: #2d2d2d;
+  --mute: #5c5c5c;
+  --line: #d0d7de;
+  --ok: #2f9e6b;
+  --ok-wash: #e6f6ee;
+  --warn: #c47b16;
+  --ok-ink: #1f7a52;
+  --warn-ink: #8a5508;
+  --paper: #ffffff;
+
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #f3f6f8;
+  color: var(--ink);
+  font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.proto-shell *,
+.proto-shell *::before,
+.proto-shell *::after {
+  box-sizing: inherit;
+}
+
+.proto-shell-header,
+.proto-focus {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 1rem;
+}
+
+.proto-shell-header h1 {
+  margin: 0 0 0.65rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--blue-deep);
+  letter-spacing: 0.01em;
+}
+
+.proto-limitations {
+  max-width: 42rem;
+  margin: 0 0 1.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+.proto-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+@media (min-width: 960px) {
+  .proto-gallery {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.proto-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.proto-preview-action {
+  appearance: none;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.proto-preview-action:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 6px;
+}
+
+.proto-preview-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue-deep);
+}
+
+/* 縮圖以 800×450 實尺等比縮放，避免 clamp 下限讓小預覽裁切內文 */
+.proto-preview-stage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.proto-preview-stage .stage-root {
+  width: 800px;
+  height: 450px;
+  aspect-ratio: auto;
+  transform: scale(calc(100cqw / 800px));
+  transform-origin: top left;
+}
+
+.proto-back {
+  appearance: none;
+  display: inline-block;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue-deep);
+  cursor: pointer;
+}
+
+.proto-back:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+}
+
+.proto-focus .stage-root {
+  max-width: 50rem;
+}
+
+.proto-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4.4% 5% 3.2%;
+}
+
+.proto-header {
+  flex: none;
+}
+
+.proto-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.1%;
+}
+
+.proto-eyebrow {
+  margin: 0;
+  font-size: clamp(8px, 1.05cqw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.proto-week {
+  margin: 0;
+  font-size: clamp(8px, 1cqw, 13px);
+  color: var(--mute);
+}
+
+.proto-headline {
+  margin: 0;
+  max-width: 94%;
+  font-size: clamp(16px, 3.15cqw, 40px);
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--blue-deep);
+}
+
+.proto-rule {
+  flex: none;
+  width: 100%;
+  height: 0;
+  margin: 1.8% 0 2.8%;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.proto-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.proto-page-number {
+  flex: none;
+  margin: 1.4% 0 0;
+  font-size: clamp(8px, 1cqw, 13px);
+  letter-spacing: 0.06em;
+  color: var(--mute);
+  text-align: right;
+}
+
+.proto-overview {
+  display: grid;
+  grid-template-columns: 1.38fr 0.9fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0 4.5%;
+  height: 100%;
+}
+
+.proto-lead {
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5.5% 6.5%;
+  background: var(--blue-wash);
+}
+
+.proto-support {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4% 0 4% 1%;
+}
+
+.proto-support + .proto-support {
+  border-top: 1px solid var(--line);
+}
+
+.proto-workstream {
+  margin: 0 0 0.35em;
+  font-size: clamp(8px, 0.95cqw, 12px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.proto-figure {
+  margin: 0 0 0.2em;
+  font-size: clamp(16px, 2.4cqw, 30px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.proto-lead .proto-figure {
+  font-size: clamp(28px, 5.4cqw, 68px);
+  color: var(--blue-deep);
+  margin-bottom: 0.22em;
+}
+
+.proto-result {
+  margin: 0;
+  font-size: clamp(11px, 1.55cqw, 20px);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.proto-lead .proto-result {
+  font-size: clamp(12px, 1.7cqw, 22px);
+}
+
+.proto-impact {
+  margin: 0.35em 0 0;
+  font-size: clamp(10px, 1.35cqw, 18px);
+  line-height: 1.35;
+  color: var(--mute);
+}
+
+.proto-status {
+  margin: 0.7em 0 0;
+  font-size: clamp(8px, 1cqw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.proto-status.is-on-track,
+.proto-status.is-improved {
+  /* Stage --ok 在小字上未達 4.5:1；原型只用 --ok-ink，不改生產 token */
+  color: var(--ok-ink);
+}
+
+.proto-status.is-watch {
+  color: var(--warn-ink);
+}
+
+.proto-verdict {
+  margin: 0 0 3.2%;
+  padding: 2.2% 3%;
+  background: var(--blue-wash);
+  font-size: clamp(13px, 1.95cqw, 26px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--blue-deep);
+}
+
+.proto-decision {
+  display: grid;
+  grid-template-columns: 1.2fr 0.88fr;
+  gap: 4.5%;
+  height: calc(100% - 0.2em);
+}
+
+.proto-evidence {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.15em;
+}
+
+.proto-metric {
+  margin: 0;
+}
+
+.proto-metric-label {
+  margin: 0 0 0.4em;
+  font-size: clamp(9px, 1.1cqw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.proto-bar-row {
+  display: grid;
+  grid-template-columns: 5.6em 4.8em 1fr;
+  align-items: center;
+  gap: 0.45em;
+  margin-bottom: 0.28em;
+}
+
+.proto-bar-name,
+.proto-bar-value {
+  font-size: clamp(9px, 1.15cqw, 15px);
+  color: var(--mute);
+}
+
+.proto-bar-value {
+  color: var(--ink);
+  font-weight: 700;
+  text-align: right;
+}
+
+.proto-bar-track {
+  height: 0.42em;
+  background: var(--blue-wash);
+}
+
+.proto-bar-fill {
+  height: 100%;
+}
+
+.proto-bar-fill.is-baseline {
+  background: var(--blue-soft);
+}
+
+.proto-bar-fill.is-candidate {
+  background: var(--blue);
+}
+
+.proto-interpret {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.1em;
+  padding-left: 6%;
+  border-left: 1px solid var(--line);
+}
+
+.proto-interpret-item {
+  margin: 0;
+  font-size: clamp(11px, 1.5cqw, 20px);
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.proto-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proto-action {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 4.5% 0 0;
+  margin-right: 4.5%;
+  border-right: 1px solid var(--line);
+}
+
+.proto-action:last-child {
+  margin-right: 0;
+  padding-right: 0;
+  border-right: 0;
+}
+
+.proto-action-num {
+  margin: 0 0 0.35em;
+  font-size: clamp(18px, 3.2cqw, 40px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--blue);
+}
+
+.proto-action-title {
+  margin: 0 0 0.45em;
+  font-size: clamp(12px, 1.7cqw, 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.proto-action-outcome {
+  margin: 0;
+  font-size: clamp(11px, 1.45cqw, 19px);
+  line-height: 1.35;
+  color: var(--mute);
+}
+
+.proto-checkpoint {
+  margin-top: auto;
+  padding-top: 0.75em;
+  border-top: 1px solid var(--line);
+  font-size: clamp(10px, 1.3cqw, 17px);
+  line-height: 1.35;
+  color: var(--ink);
+}

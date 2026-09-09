@@ -2,12 +2,17 @@
   "name": "weekly-report-builder",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": "24.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\" \"prototype.html\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\" \"prototype.html\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",

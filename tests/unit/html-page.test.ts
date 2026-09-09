@@ -28,9 +28,15 @@ describe("html-page", () => {
     })
 
     it("rejects path traversal and directory separators", () => {
-      expect(() => validateHtmlFileName("../p03.html")).toThrow(/traversal|path/i)
-      expect(() => validateHtmlFileName("sub/p03.html")).toThrow(/separator|path/i)
-      expect(() => validateHtmlFileName("sub\\p03.html")).toThrow(/separator|path/i)
+      expect(() => validateHtmlFileName("../p03.html")).toThrow(
+        /traversal|path/i
+      )
+      expect(() => validateHtmlFileName("sub/p03.html")).toThrow(
+        /separator|path/i
+      )
+      expect(() => validateHtmlFileName("sub\\p03.html")).toThrow(
+        /separator|path/i
+      )
       expect(() => validateHtmlFileName("/p03.html")).toThrow(/separator|path/i)
       expect(() => validateHtmlFileName("..")).toThrow()
     })
@@ -58,7 +64,9 @@ describe("html-page", () => {
     })
 
     it("rejects invalid monday format", () => {
-      expect(() => resolveHtmlUrl("invalid-date", "p03.html")).toThrow(/monday/i)
+      expect(() => resolveHtmlUrl("invalid-date", "p03.html")).toThrow(
+        /monday/i
+      )
       expect(() => resolveHtmlUrl("2026/08/24", "p03.html")).toThrow(/monday/i)
     })
 
@@ -69,7 +77,8 @@ describe("html-page", () => {
 
   describe("sanitizeHtmlFragment", () => {
     it("strips script elements and their content", () => {
-      const raw = '<div><h1>Title</h1><script>alert("xss")</script><p>Body</p></div>'
+      const raw =
+        '<div><h1>Title</h1><script>alert("xss")</script><p>Body</p></div>'
       const sanitized = sanitizeHtmlFragment(raw)
       expect(sanitized).not.toContain("<script>")
       expect(sanitized).not.toContain("alert")
@@ -156,7 +165,9 @@ describe("html-page", () => {
         '<body class="theme-dark report-root" style="background-color: #121212; color: #ffffff;"><main>Content</main></body>'
       const sanitized = sanitizeHtmlFragment(raw)
       expect(sanitized).toContain('class="theme-dark report-root"')
-      expect(sanitized).toContain('style="background-color: #121212; color: #ffffff;"')
+      expect(sanitized).toContain(
+        'style="background-color: #121212; color: #ffffff;"'
+      )
       expect(sanitized).toContain("<main>Content</main>")
       expect(sanitized.startsWith("<div")).toBe(true)
     })

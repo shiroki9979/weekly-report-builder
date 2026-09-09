@@ -53,13 +53,17 @@ export function PageNavigator({
           <span aria-hidden>·</span>
           <span className="truncate font-medium text-foreground">{title}</span>
           {page?.id ? (
-            <span className="shrink-0 tabular-nums text-muted-foreground">
+            <span className="shrink-0 text-muted-foreground tabular-nums">
               {page.id}
             </span>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1.5" role="group" aria-label="Pages">
+        <div
+          className="flex items-center gap-1.5"
+          role="group"
+          aria-label="Pages"
+        >
           {pages.map((entry, index) => (
             <button
               key={entry.id}

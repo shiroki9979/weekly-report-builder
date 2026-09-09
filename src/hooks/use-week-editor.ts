@@ -6,14 +6,8 @@ import {
   type SetStateAction,
 } from "react"
 
-import {
-  latestWeekMonday,
-  nextMondayAfter,
-} from "@/lib/week-clone"
-import {
-  DEFAULT_WEEK_MONDAY,
-  type WeekDocument,
-} from "@/lib/week-document"
+import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
+import { DEFAULT_WEEK_MONDAY, type WeekDocument } from "@/lib/week-document"
 import {
   createWeekFromPrevious,
   listWeekFiles,
@@ -114,7 +108,8 @@ export function useWeekEditor(
 
     try {
       await saveWeekDocument(selectedMonday, week)
-      const { weeks: weekList, document } = await fetchWeekBundle(selectedMonday)
+      const { weeks: weekList, document } =
+        await fetchWeekBundle(selectedMonday)
       setWeeks(weekList)
       setWeek(document)
       setLoadedMonday(selectedMonday)
@@ -128,29 +123,26 @@ export function useWeekEditor(
     }
   }, [selectedMonday, week])
 
-  const createWeek = useCallback(
-    async (monday: string) => {
-      setCreating(true)
-      setCreateError(null)
-      setSaveMessage(null)
+  const createWeek = useCallback(async (monday: string) => {
+    setCreating(true)
+    setCreateError(null)
+    setSaveMessage(null)
 
-      try {
-        await createWeekFromPrevious(monday)
-        const weekList = await listWeekFiles()
-        setWeeks(weekList)
-        setSelectedMonday(monday)
-        setSelectedPageIndex(0)
-        setLoadedMonday(null)
-      } catch (cause: unknown) {
-        const message =
-          cause instanceof Error ? cause.message : "Failed to create week file"
-        setCreateError(message)
-      } finally {
-        setCreating(false)
-      }
-    },
-    []
-  )
+    try {
+      await createWeekFromPrevious(monday)
+      const weekList = await listWeekFiles()
+      setWeeks(weekList)
+      setSelectedMonday(monday)
+      setSelectedPageIndex(0)
+      setLoadedMonday(null)
+    } catch (cause: unknown) {
+      const message =
+        cause instanceof Error ? cause.message : "Failed to create week file"
+      setCreateError(message)
+    } finally {
+      setCreating(false)
+    }
+  }, [])
 
   return {
     weeks,

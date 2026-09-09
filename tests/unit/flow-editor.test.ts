@@ -11,10 +11,7 @@ import {
 } from "@/lib/week-editor"
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(
-  import.meta.dirname,
-  "../fixtures/flow-week.json"
-)
+const fixturePath = resolve(import.meta.dirname, "../fixtures/flow-week.json")
 
 function loadFlowWeek() {
   return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
@@ -62,6 +59,9 @@ describe("flow week-editor", () => {
     const withStep = addFlowStep(week, 0)
 
     expect(flowPanel(withStep).steps).toHaveLength(5)
-    expect(flowPanel(withStep).steps[4]).toEqual({ label: "", caption: undefined })
+    expect(flowPanel(withStep).steps[4]).toEqual({
+      label: "",
+      caption: undefined,
+    })
   })
 })
