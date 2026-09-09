@@ -24,6 +24,8 @@ Also: `pnpm build`, `pnpm lint`, `pnpm test`
 
 Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename).
 
+A disposable layout-family prototype is at `/prototype.html` while `pnpm dev` is running. It is not linked from the workshop. See [Review the layout prototype](docs/how-to/review-layout-prototype.md).
+
 ## Architecture
 
 | Area                                                | Stack                                                   |
