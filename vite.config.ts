@@ -205,7 +205,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(rootDir, "index.html"),
-        prototype: path.resolve(rootDir, "prototype.html"),
       },
     },
   },

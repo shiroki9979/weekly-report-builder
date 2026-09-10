@@ -8,6 +8,7 @@ import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import { EvidenceDecisionEditorForm } from "@/components/workshop/evidence-decision-editor-form"
+import { NextActionsEditorForm } from "@/components/workshop/next-actions-editor-form"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
@@ -27,6 +28,7 @@ import {
 import {
   isEvidenceDecisionPage,
   isHtmlWeekPage,
+  isNextActionsPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
   type WeekDocument,
@@ -121,6 +123,18 @@ export function PageEditorForm({
   if (isEvidenceDecisionPage(page)) {
     return (
       <EvidenceDecisionEditorForm
+        week={week}
+        pageIndex={pageIndex}
+        page={page}
+        onChange={onChange}
+        readOnly={readOnly}
+      />
+    )
+  }
+
+  if (isNextActionsPage(page)) {
+    return (
+      <NextActionsEditorForm
         week={week}
         pageIndex={pageIndex}
         page={page}

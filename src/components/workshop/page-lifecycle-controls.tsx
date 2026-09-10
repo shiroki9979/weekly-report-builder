@@ -12,6 +12,7 @@ import {
 import {
   addPageAfter,
   createBlankEvidenceDecisionPage,
+  createBlankNextActionsPage,
   createBlankTwoColumnPage,
   createBlankWeeklyOverviewPage,
   deleteSelectedPage,
@@ -29,7 +30,8 @@ type PageLifecycleControlsProps = {
   disabled?: boolean
 }
 
-type AddableLayout = "two-column" | "weekly-overview" | "evidence-decision"
+type AddableLayout =
+  "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
 
 const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
   { value: "table", label: "Table" },
@@ -94,7 +96,8 @@ export function PageLifecycleControls({
               if (
                 value === "two-column" ||
                 value === "weekly-overview" ||
-                value === "evidence-decision"
+                value === "evidence-decision" ||
+                value === "next-actions"
               ) {
                 setLayout(value)
               }
@@ -110,6 +113,7 @@ export function PageLifecycleControls({
               <SelectItem value="evidence-decision">
                 Evidence-backed Decision
               </SelectItem>
+              <SelectItem value="next-actions">Next Actions</SelectItem>
             </SelectContent>
           </Select>
           {layout === "two-column" ? (
@@ -155,7 +159,9 @@ export function PageLifecycleControls({
                   ? createBlankWeeklyOverviewPage(id)
                   : layout === "evidence-decision"
                     ? createBlankEvidenceDecisionPage(id)
-                    : createBlankTwoColumnPage(id, panelKind)
+                    : layout === "next-actions"
+                      ? createBlankNextActionsPage(id)
+                      : createBlankTwoColumnPage(id, panelKind)
               onChange(addPageAfter(week, selectedPageId, page))
             }}
           >

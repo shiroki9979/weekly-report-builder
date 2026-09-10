@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two-column Export Readiness：內容完整性、1280 × 720 overflow 量測與 fail-closed 資格判定；Playwright 使用隔離 weeks 目錄（`src/lib/export-readiness.ts`）。
 - 生產 Weekly Overview Structured Layout：schema、空白工廠、clone、專屬 editor、Editorial Frame renderer 與 Export Readiness（`src/components/stage/weekly-overview-slide.tsx`）。
 - 生產 Evidence-backed Decision Structured Layout：metric formatter、raw numeric buffer、專屬 editor 與 Editorial Frame renderer（`src/lib/metric-format.ts`）。
+- 生產 Next Actions Structured Layout：2–4 個 Commitment、派生編號、專屬 editor 與 Editorial Frame renderer（`src/components/stage/next-actions-slide.tsx`）。
 
 ### Changed
 
@@ -24,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - 修正 Gallery 預覽控制的 HTML 語意，並提高 Gallery 標籤與返回按鈕的文字對比（`src/prototype/`）。
+
+### Removed
+
+- 獨立 layout 原型入口 `prototype.html`、Vite 第二入口與 `src/prototype/` runtime／tests。
 
 ## [0.1.0] - 2026-09-04
 

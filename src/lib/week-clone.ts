@@ -1,6 +1,7 @@
 import {
   isEvidenceDecisionPage,
   isHtmlWeekPage,
+  isNextActionsPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
   type Outcome,
@@ -8,6 +9,7 @@ import {
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
+import { blankCommitment } from "./next-actions-editor"
 
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -154,6 +156,17 @@ function clearPage(page: WeekPage): WeekPage {
         candidateValue: null,
       })),
       interpretations: page.interpretations.map(() => ""),
+      hidden: page.hidden,
+      notes: undefined,
+    }
+  }
+
+  if (isNextActionsPage(page)) {
+    return {
+      id: page.id,
+      layout: "next-actions",
+      title: "",
+      commitments: page.commitments.map(() => blankCommitment()),
       hidden: page.hidden,
       notes: undefined,
     }

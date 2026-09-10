@@ -160,4 +160,19 @@ describe("workshop page lifecycle", () => {
       screen.getByRole("button", { name: "Add interpretation" })
     ).toBeInTheDocument()
   })
+
+  it("adds a next-actions page and shows its editor", async () => {
+    const user = userEvent.setup()
+    render(<LifecycleHarness />)
+
+    await user.click(screen.getByRole("combobox", { name: "Add page" }))
+    await user.click(screen.getByRole("option", { name: "Next Actions" }))
+    await user.click(screen.getByRole("button", { name: "Add page" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Draft page")
+    expect(
+      screen.getByRole("button", { name: "Add commitment" })
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(3)
+  })
 })
