@@ -4,13 +4,16 @@ import {
   isStructuredWeekPage,
   isSupportedStagePage,
   isTwoColumnWeekPage,
+  isWeeklyOverviewPage,
   type ChartPanel,
   type ChecklistPanel,
   type FlowPanel,
+  type Outcome,
   type StructuredWeekPage,
   type TablePanel,
   type TwoColumnWeekPage,
   type WeekPage,
+  type WeeklyOverviewPage,
 } from "./week-document"
 
 import type { OverflowMeasurement } from "./overflow-measurement"
@@ -211,11 +214,49 @@ function assessTwoColumn(page: TwoColumnWeekPage): ExportIssue[] {
   return issues
 }
 
+function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
+  const issues: ExportIssue[] = []
+  const fields = [
+    ["workstream", outcome.workstream, "Workstream is required"],
+    ["figure", outcome.figure, "Figure is required"],
+    ["result", outcome.result, "Result is required"],
+    ["impact", outcome.impact, "Impact is required"],
+    ["status.label", outcome.status.label, "Status label is required"],
+  ] as const
+
+  for (const [path, value, message] of fields) {
+    if (isBlank(value)) {
+      issues.push(missing(`${prefix}.${path}`, message))
+    }
+  }
+
+  return issues
+}
+
+function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
+  const issues: ExportIssue[] = []
+
+  if (isBlank(page.title)) {
+    issues.push(missing("title", "Title is required"))
+  }
+
+  issues.push(...requireOutcomeText(page.lead, "lead"))
+  page.supporting.forEach((outcome, index) => {
+    issues.push(...requireOutcomeText(outcome, `supporting[${index}]`))
+  })
+
+  return issues
+}
+
 export function assessContentReadiness(
   page: StructuredWeekPage
 ): ExportIssue[] {
   if (isTwoColumnWeekPage(page)) {
     return assessTwoColumn(page)
+  }
+
+  if (isWeeklyOverviewPage(page)) {
+    return assessWeeklyOverview(page)
   }
 
   return []

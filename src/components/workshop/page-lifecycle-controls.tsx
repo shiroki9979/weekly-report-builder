@@ -12,6 +12,7 @@ import {
 import {
   addPageAfter,
   createBlankTwoColumnPage,
+  createBlankWeeklyOverviewPage,
   deleteSelectedPage,
   moveSelectedPage,
   nextPageId,
@@ -27,6 +28,8 @@ type PageLifecycleControlsProps = {
   disabled?: boolean
 }
 
+type AddableLayout = "two-column" | "weekly-overview"
+
 const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
   { value: "table", label: "Table" },
   { value: "chart", label: "Chart" },
@@ -40,6 +43,7 @@ export function PageLifecycleControls({
   onChange,
   disabled,
 }: PageLifecycleControlsProps) {
+  const [layout, setLayout] = useState<AddableLayout>("two-column")
   const [panelKind, setPanelKind] = useState<AddableTwoColumnPanelKind>("table")
   const [deleteOpen, setDeleteOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -81,33 +85,56 @@ export function PageLifecycleControls({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="add-page-panel">Add page</Label>
+        <Label htmlFor="add-page-layout">Add page</Label>
         <div className="flex flex-wrap items-center gap-2">
           <Select
-            value={panelKind}
+            value={layout}
             onValueChange={(value) => {
-              if (
-                value === "table" ||
-                value === "chart" ||
-                value === "flow" ||
-                value === "checklist"
-              ) {
-                setPanelKind(value)
+              if (value === "two-column" || value === "weekly-overview") {
+                setLayout(value)
               }
             }}
             disabled={disabled}
           >
-            <SelectTrigger id="add-page-panel" className="min-w-36">
+            <SelectTrigger id="add-page-layout" className="min-w-36">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PANEL_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  Two-column · {option.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="two-column">Two-column</SelectItem>
+              <SelectItem value="weekly-overview">Weekly Overview</SelectItem>
             </SelectContent>
           </Select>
+          {layout === "two-column" ? (
+            <Select
+              value={panelKind}
+              onValueChange={(value) => {
+                if (
+                  value === "table" ||
+                  value === "chart" ||
+                  value === "flow" ||
+                  value === "checklist"
+                ) {
+                  setPanelKind(value)
+                }
+              }}
+              disabled={disabled}
+            >
+              <SelectTrigger
+                id="add-page-panel"
+                aria-label="Panel"
+                className="min-w-36"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PANEL_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -115,13 +142,11 @@ export function PageLifecycleControls({
             disabled={disabled}
             onClick={() => {
               const id = nextPageId(week.pages.map((page) => page.id))
-              onChange(
-                addPageAfter(
-                  week,
-                  selectedPageId,
-                  createBlankTwoColumnPage(id, panelKind)
-                )
-              )
+              const page =
+                layout === "weekly-overview"
+                  ? createBlankWeeklyOverviewPage(id)
+                  : createBlankTwoColumnPage(id, panelKind)
+              onChange(addPageAfter(week, selectedPageId, page))
             }}
           >
             Add page

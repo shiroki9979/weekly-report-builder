@@ -7,6 +7,7 @@ import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
+import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
   addTableColumn,
@@ -25,6 +26,7 @@ import {
 import {
   isHtmlWeekPage,
   isTwoColumnWeekPage,
+  isWeeklyOverviewPage,
   type WeekDocument,
 } from "@/lib/week-document"
 
@@ -99,6 +101,18 @@ export function PageEditorForm({
           </div>
         </fieldset>
       </form>
+    )
+  }
+
+  if (isWeeklyOverviewPage(page)) {
+    return (
+      <WeeklyOverviewEditorForm
+        week={week}
+        pageIndex={pageIndex}
+        page={page}
+        onChange={onChange}
+        readOnly={readOnly}
+      />
     )
   }
 

@@ -141,4 +141,78 @@ describe("week-clone", () => {
 
     expect(() => parseWeekDocument(cloned)).not.toThrow()
   })
+
+  it("clones weekly-overview pages while keeping workstreams and collection length", () => {
+    const previous = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "weekly-overview",
+          title: "Delivery recovered",
+          notes: "Speaker notes",
+          lead: {
+            workstream: "Delivery",
+            figure: "5 days",
+            result: "Turnaround fell",
+            impact: "Same week",
+            status: { label: "On track", tone: "positive" },
+          },
+          supporting: [
+            {
+              workstream: "Accuracy",
+              figure: "1.2%",
+              result: "Faults dropped",
+              impact: "Fewer late fixes",
+              status: { label: "Improved", tone: "caution" },
+            },
+            {
+              workstream: "Stability",
+              figure: "18%",
+              result: "Reserve slowed",
+              impact: "Room remains",
+              status: { label: "Watch", tone: "caution" },
+            },
+          ],
+        },
+      ],
+    })
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const page = cloned.pages[0]
+    if (page.layout !== "weekly-overview") {
+      throw new Error("expected weekly-overview")
+    }
+
+    expect(page).toEqual({
+      id: "p01",
+      layout: "weekly-overview",
+      title: "",
+      lead: {
+        workstream: "Delivery",
+        figure: "",
+        result: "",
+        impact: "",
+        status: { label: "", tone: "neutral" },
+      },
+      supporting: [
+        {
+          workstream: "Accuracy",
+          figure: "",
+          result: "",
+          impact: "",
+          status: { label: "", tone: "neutral" },
+        },
+        {
+          workstream: "Stability",
+          figure: "",
+          result: "",
+          impact: "",
+          status: { label: "", tone: "neutral" },
+        },
+      ],
+    })
+    expect(() => parseWeekDocument(cloned)).not.toThrow()
+  })
 })

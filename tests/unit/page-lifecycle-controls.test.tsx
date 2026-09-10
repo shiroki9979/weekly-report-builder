@@ -117,4 +117,27 @@ describe("workshop page lifecycle", () => {
       screen.getByRole("button", { name: "Add column" })
     ).toBeInTheDocument()
   })
+
+  it("adds a weekly overview page and shows its editor", async () => {
+    const user = userEvent.setup()
+    render(<LifecycleHarness />)
+
+    await user.click(screen.getByRole("combobox", { name: "Add page" }))
+    await user.click(screen.getByRole("option", { name: "Weekly Overview" }))
+    await user.click(screen.getByRole("button", { name: "Add page" }))
+
+    expect(screen.getByTestId("page-ids")).toHaveTextContent("p01,p03,p02")
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Draft page — missing or invalid content"
+    )
+    expect(screen.getByText("Lead outcome")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Add supporting outcome" })
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Make lead" })).toHaveLength(2)
+    expect(screen.getByLabelText("Title")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    )
+  })
 })

@@ -225,6 +225,188 @@ describe("parseWeekDocument", () => {
     expect(doc.pages[0].id).toBe("escape-hatch")
   })
 
+  it("parses a weekly-overview page and strips extra nested fields", () => {
+    const doc = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "weekly-overview",
+          title: "Delivery recovered",
+          extra: "drop-me",
+          lead: {
+            workstream: "Delivery",
+            figure: "5 days",
+            result: "Turnaround fell",
+            impact: "Same week",
+            extra: "nope",
+            status: {
+              label: "On track",
+              tone: "positive",
+              extra: true,
+            },
+          },
+          supporting: [
+            {
+              workstream: "Accuracy",
+              figure: "1.2%",
+              result: "Faults dropped",
+              impact: "Fewer late fixes",
+              status: { label: "Improved", tone: "caution" },
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(doc.pages[0]).toEqual({
+      id: "p01",
+      layout: "weekly-overview",
+      title: "Delivery recovered",
+      lead: {
+        workstream: "Delivery",
+        figure: "5 days",
+        result: "Turnaround fell",
+        impact: "Same week",
+        status: { label: "On track", tone: "positive" },
+      },
+      supporting: [
+        {
+          workstream: "Accuracy",
+          figure: "1.2%",
+          result: "Faults dropped",
+          impact: "Fewer late fixes",
+          status: { label: "Improved", tone: "caution" },
+        },
+      ],
+    })
+  })
+
+  it("accepts a blank weekly-overview draft with one to three supporting outcomes", () => {
+    const supporting = [
+      {
+        workstream: "",
+        figure: "",
+        result: "",
+        impact: "",
+        status: { label: "", tone: "neutral" },
+      },
+      {
+        workstream: "",
+        figure: "",
+        result: "",
+        impact: "",
+        status: { label: "", tone: "neutral" },
+      },
+    ]
+
+    const doc = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "weekly-overview",
+          title: "",
+          lead: {
+            workstream: "",
+            figure: "",
+            result: "",
+            impact: "",
+            status: { label: "", tone: "neutral" },
+          },
+          supporting,
+        },
+      ],
+    })
+
+    expect(doc.pages[0].layout).toBe("weekly-overview")
+    if (doc.pages[0].layout !== "weekly-overview") {
+      throw new Error("expected weekly-overview")
+    }
+    expect(doc.pages[0].supporting).toHaveLength(2)
+  })
+
+  it("rejects weekly-overview pages outside the supporting cardinality", () => {
+    const blankOutcome = {
+      workstream: "",
+      figure: "",
+      result: "",
+      impact: "",
+      status: { label: "", tone: "neutral" },
+    }
+
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p01",
+            layout: "weekly-overview",
+            title: "",
+            lead: blankOutcome,
+            supporting: [],
+          },
+        ],
+      })
+    ).toThrow(/supporting/i)
+
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p01",
+            layout: "weekly-overview",
+            title: "",
+            lead: blankOutcome,
+            supporting: [
+              blankOutcome,
+              blankOutcome,
+              blankOutcome,
+              blankOutcome,
+            ],
+          },
+        ],
+      })
+    ).toThrow(/supporting/i)
+  })
+
+  it("rejects weekly-overview pages with an unknown status tone", () => {
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p01",
+            layout: "weekly-overview",
+            title: "",
+            lead: {
+              workstream: "",
+              figure: "",
+              result: "",
+              impact: "",
+              status: { label: "", tone: "on-track" },
+            },
+            supporting: [
+              {
+                workstream: "",
+                figure: "",
+                result: "",
+                impact: "",
+                status: { label: "", tone: "neutral" },
+              },
+            ],
+          },
+        ],
+      })
+    ).toThrow(/tone/i)
+  })
+
   it("rejects html layout page with invalid htmlFile paths", () => {
     expect(() =>
       parseWeekDocument({

@@ -1,5 +1,6 @@
 import { HtmlSlide } from "@/components/stage/html-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
+import { WeeklyOverviewSlide } from "@/components/stage/weekly-overview-slide"
 import {
   mondayFromWeekLabel,
   type StagePageContext,
@@ -7,6 +8,7 @@ import {
 import {
   isHtmlWeekPage,
   isTwoColumnWeekPage,
+  isWeeklyOverviewPage,
   type WeekPage,
 } from "@/lib/week-document"
 
@@ -34,6 +36,8 @@ export function StageSlide({
         <HtmlSlide page={page} monday={monday} isCapture={isCapture} />
       ) : isTwoColumnWeekPage(page) ? (
         <TwoColumnSlide page={page} />
+      ) : isWeeklyOverviewPage(page) ? (
+        <WeeklyOverviewSlide page={page} context={context} />
       ) : (
         <div className="stage-warning" role="status">
           Unknown layout: {page.layout}

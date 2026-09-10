@@ -63,7 +63,7 @@ export type FieldsPanel = {
 export type Panel =
   TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
-export type SlideLayout = "two-column" | "html"
+export type SlideLayout = "two-column" | "html" | "weekly-overview"
 
 export type TwoColumnWeekPage = {
   id: string
@@ -84,6 +84,31 @@ export type HtmlWeekPage = {
   notes?: string
 }
 
+export type StatusTone = "positive" | "caution" | "neutral"
+
+export type StatusSignal = {
+  label: string
+  tone: StatusTone
+}
+
+export type Outcome = {
+  workstream: string
+  figure: string
+  result: string
+  impact: string
+  status: StatusSignal
+}
+
+export type WeeklyOverviewPage = {
+  id: string
+  layout: "weekly-overview"
+  title: string
+  lead: Outcome
+  supporting: Outcome[]
+  hidden?: boolean
+  notes?: string
+}
+
 export type UnknownWeekPage = {
   id: string
   layout: string
@@ -93,9 +118,10 @@ export type UnknownWeekPage = {
   [key: string]: unknown
 }
 
-export type StructuredWeekPage = TwoColumnWeekPage
+export type StructuredWeekPage = TwoColumnWeekPage | WeeklyOverviewPage
 
-export type WeekPage = TwoColumnWeekPage | HtmlWeekPage | UnknownWeekPage
+export type WeekPage =
+  TwoColumnWeekPage | HtmlWeekPage | WeeklyOverviewPage | UnknownWeekPage
 
 export type WeekDocument = {
   start: string
@@ -111,10 +137,18 @@ export function isTwoColumnWeekPage(page: WeekPage): page is TwoColumnWeekPage {
   return page.layout === "two-column" && "items" in page && "panel" in page
 }
 
+export function isWeeklyOverviewPage(
+  page: WeekPage
+): page is WeeklyOverviewPage {
+  return (
+    page.layout === "weekly-overview" && "lead" in page && "supporting" in page
+  )
+}
+
 export function isStructuredWeekPage(
   page: WeekPage
 ): page is StructuredWeekPage {
-  return isTwoColumnWeekPage(page)
+  return isTwoColumnWeekPage(page) || isWeeklyOverviewPage(page)
 }
 
 const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
@@ -125,7 +159,7 @@ const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
 ])
 
 export function isSupportedStagePage(page: WeekPage): boolean {
-  if (isHtmlWeekPage(page)) {
+  if (isHtmlWeekPage(page) || isWeeklyOverviewPage(page)) {
     return true
   }
 
@@ -330,6 +364,72 @@ function parsePanel(value: unknown): Panel {
   }
 }
 
+const STATUS_TONES = new Set<StatusTone>(["positive", "caution", "neutral"])
+
+function parseStatusSignal(value: unknown, field: string): StatusSignal {
+  if (!isRecord(value)) {
+    throw new Error(`Invalid week document: ${field} must be an object`)
+  }
+
+  const tone = readNonEmptyString(value.tone, `${field}.tone`)
+  if (!STATUS_TONES.has(tone as StatusTone)) {
+    throw new Error(`Invalid week document: ${field}.tone`)
+  }
+
+  return {
+    label: readString(value.label, `${field}.label`),
+    tone: tone as StatusTone,
+  }
+}
+
+function parseOutcome(value: unknown, field: string): Outcome {
+  if (!isRecord(value)) {
+    throw new Error(`Invalid week document: ${field} must be an object`)
+  }
+
+  return {
+    workstream: readString(value.workstream, `${field}.workstream`),
+    figure: readString(value.figure, `${field}.figure`),
+    result: readString(value.result, `${field}.result`),
+    impact: readString(value.impact, `${field}.impact`),
+    status: parseStatusSignal(value.status, `${field}.status`),
+  }
+}
+
+function parseWeeklyOverviewPage(
+  value: Record<string, unknown>,
+  common: {
+    id: string
+    title: string
+    hidden?: boolean
+    notes?: string
+  },
+  index: number
+): WeeklyOverviewPage {
+  const supporting = value.supporting
+  if (
+    !Array.isArray(supporting) ||
+    supporting.length < 1 ||
+    supporting.length > 3
+  ) {
+    throw new Error(
+      `Invalid week document: pages[${index}].supporting must have 1 to 3 entries`
+    )
+  }
+
+  return {
+    id: common.id,
+    layout: "weekly-overview",
+    title: common.title,
+    lead: parseOutcome(value.lead, `pages[${index}].lead`),
+    supporting: supporting.map((entry, supportingIndex) =>
+      parseOutcome(entry, `pages[${index}].supporting[${supportingIndex}]`)
+    ),
+    hidden: common.hidden,
+    notes: common.notes,
+  }
+}
+
 function parseWeekPage(value: unknown, index: number): WeekPage {
   if (!isRecord(value)) {
     throw new Error(`Invalid week document: pages[${index}] must be an object`)
@@ -366,6 +466,10 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
       hidden,
       notes,
     }
+  }
+
+  if (layout === "weekly-overview") {
+    return parseWeeklyOverviewPage(value, { id, title, hidden, notes }, index)
   }
 
   if (layout !== "two-column") {

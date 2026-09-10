@@ -1,6 +1,7 @@
 import { forwardRef } from "react"
 
 import { STAGE_CAPTURE_ROOT_ATTR } from "@/lib/overflow-measurement"
+import "@/styles/editorial-layouts.css"
 import "@/styles/stage.css"
 
 type StageFrameProps = {

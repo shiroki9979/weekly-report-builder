@@ -31,7 +31,7 @@ weeks/YYYY-MM-DD/<htmlFile>
 | 欄位     | 型別      | 必填 | 說明                                                                     |
 | -------- | --------- | ---- | ------------------------------------------------------------------------ |
 | `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分 |
-| `layout` | `string`  | 是   | `"two-column"` 或 `"html"`                                               |
+| `layout` | `string`  | 是   | `"two-column"`、`"html"` 或 `"weekly-overview"`                          |
 | `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                 |
 | `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                               |
 | `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                            |
@@ -54,6 +54,36 @@ Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非�
 | 欄位       | 型別     | 必填 | 說明                                                                                |
 | ---------- | -------- | ---- | ----------------------------------------------------------------------------------- |
 | `htmlFile` | `string` | 是   | 相對該週目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
+
+### `layout: "weekly-overview"`
+
+結論先行的週次總覽。Eyebrow 由 renderer 固定為 `Weekly Overview`，不寫入 JSON。
+
+| 欄位         | 型別        | 必填 | 說明                       |
+| ------------ | ----------- | ---- | -------------------------- |
+| `lead`       | `Outcome`   | 是   | 一個 Lead Outcome          |
+| `supporting` | `Outcome[]` | 是   | 1–3 筆 Supporting Outcomes |
+
+新增頁預設 1 個 Lead 與 2 個 Supporting；文字可為空草稿，tone 預設 `neutral`。Parser 拒絕超出 1–3 的 supporting 數量。
+
+#### Outcome
+
+| 欄位         | 型別           | 必填 |
+| ------------ | -------------- | ---- |
+| `workstream` | `string`       | 是   |
+| `figure`     | `string`       | 是   |
+| `result`     | `string`       | 是   |
+| `impact`     | `string`       | 是   |
+| `status`     | `StatusSignal` | 是   |
+
+#### StatusSignal
+
+| 欄位    | 型別                                       | 必填 |
+| ------- | ------------------------------------------ | ---- |
+| `label` | `string`                                   | 是   |
+| `tone`  | `"positive"` \| `"caution"` \| `"neutral"` | 是   |
+
+Clone 時保留 workstream 與 collection 長度，清除 figure／result／impact／status label，tone 重設為 `neutral`。
 
 ### SlideItem
 
