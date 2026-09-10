@@ -16,7 +16,9 @@ import {
 } from "./server/weeks-store"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-const weeksDir = path.resolve(rootDir, "weeks")
+const weeksDir = path.resolve(
+  process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
+)
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {

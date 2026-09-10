@@ -8,8 +8,13 @@ import {
   type TwoColumnWeekPage,
 } from "@/lib/week-document"
 
+const weekContext = {
+  weekLabel: "2026-08-24 — 2026-08-28",
+  pageLabel: "1 / 1",
+}
+
 describe("StageSlide", () => {
-  it("renders two-column layout slide with explicitly passed monday", () => {
+  it("renders two-column layout slide with stage context", () => {
     const page: TwoColumnWeekPage = {
       id: "p01",
       layout: "two-column",
@@ -26,7 +31,7 @@ describe("StageSlide", () => {
       },
     }
 
-    render(<StageSlide page={page} monday="2026-08-24" />)
+    render(<StageSlide page={page} context={weekContext} />)
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Slide Title" })
@@ -34,7 +39,7 @@ describe("StageSlide", () => {
     expect(screen.getByText("Heading 1")).toBeInTheDocument()
   })
 
-  it("renders html layout slide in capture mode with explicitly passed monday", async () => {
+  it("renders html layout slide in capture mode from the week label monday", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: true,
       text: async () => "<div>Custom Content</div>",
@@ -47,13 +52,41 @@ describe("StageSlide", () => {
       htmlFile: "p03.html",
     }
 
-    render(<StageSlide page={page} monday="2026-08-24" isCapture />)
+    render(<StageSlide page={page} context={weekContext} isCapture />)
 
     await waitFor(() => {
       const captureEl = screen.getByTestId("html-slide-capture")
       expect(captureEl).toHaveAttribute("data-status", "ready")
       expect(captureEl).toHaveTextContent("Custom Content")
     })
+  })
+
+  it("shows Hidden on hidden pages", () => {
+    const page: TwoColumnWeekPage = {
+      id: "p02",
+      layout: "two-column",
+      title: "Hidden slide",
+      hidden: true,
+      items: [
+        { heading: "Heading 1", body: "Body 1" },
+        { heading: "Heading 2", body: "Body 2" },
+        { heading: "Heading 3", body: "Body 3" },
+      ],
+      panel: {
+        kind: "checklist",
+        title: "Checklist",
+        items: [{ label: "Item 1" }],
+      },
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, pageLabel: "Hidden" }}
+      />
+    )
+
+    expect(screen.getByRole("status")).toHaveTextContent("Hidden")
   })
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {
@@ -63,7 +96,12 @@ describe("StageSlide", () => {
       pages: [{ id: "p04", layout: "future-layout", title: "Future Slide" }],
     })
 
-    render(<StageSlide page={week.pages[0]} monday={week.start} />)
+    render(
+      <StageSlide
+        page={week.pages[0]}
+        context={{ ...weekContext, pageLabel: "" }}
+      />
+    )
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "Unknown layout: future-layout"

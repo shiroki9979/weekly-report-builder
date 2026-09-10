@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { StageCaptureHost } from "@/components/workshop/export-controls"
 import { useStageExport } from "@/hooks/use-stage-export"
 import * as stageCapture from "@/lib/stage-capture"
+import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
 
 vi.mock("@/lib/stage-capture", () => ({
@@ -37,7 +38,6 @@ function ExportTestComponent({
     monday: week.start,
     week,
     selectedPage: week.pages[0],
-    previewStageRef,
     captureHostRef,
   })
 
@@ -54,7 +54,7 @@ function ExportTestComponent({
       </div>
       <StageCaptureHost
         page={exportState.capturePage}
-        monday={week.start}
+        week={week}
         hostRef={captureHostRef}
       />
     </div>
@@ -220,7 +220,26 @@ describe("useStageExport", () => {
     })
 
     expect(exportRef.current?.exportWarning).toBe(
-      "Skipped unsupported layouts: p04"
+      "Skipped pages: p04: unsupported"
     )
+  })
+
+  it("blocks copy of a draft two-column page without capturing", async () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [createBlankTwoColumnPage("p01", "table")],
+    }
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    await act(async () => {
+      await exportRef.current?.copyCurrentPage()
+    })
+
+    expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
+    expect(exportRef.current?.clipboardError).toMatch(/title/i)
   })
 })

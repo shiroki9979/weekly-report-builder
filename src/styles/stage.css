@@ -289,3 +289,24 @@
   background: var(--ok);
   border-color: var(--ok);
 }
+
+.stage-slide-host {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.stage-hidden-label {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.9rem;
+  z-index: 1;
+  margin: 0;
+  padding: 0.2em 0.55em;
+  border: 1px solid var(--line);
+  background: var(--blue-wash);
+  color: var(--mute);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

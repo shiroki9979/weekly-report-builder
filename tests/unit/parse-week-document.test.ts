@@ -185,6 +185,46 @@ describe("parseWeekDocument", () => {
     ).toThrow(/htmlFile/i)
   })
 
+  it("rejects a week document whose page ids are not unique", () => {
+    expect(() =>
+      parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages: [
+          {
+            id: "p01",
+            layout: "html",
+            title: "First",
+            htmlFile: "p01.html",
+          },
+          {
+            id: "p01",
+            layout: "html",
+            title: "Duplicate",
+            htmlFile: "p02.html",
+          },
+        ],
+      })
+    ).toThrow(/unique/i)
+  })
+
+  it("accepts custom non-pNN page ids when they are unique", () => {
+    const doc = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "escape-hatch",
+          layout: "html",
+          title: "Custom id",
+          htmlFile: "p03.html",
+        },
+      ],
+    })
+
+    expect(doc.pages[0].id).toBe("escape-hatch")
+  })
+
   it("rejects html layout page with invalid htmlFile paths", () => {
     expect(() =>
       parseWeekDocument({

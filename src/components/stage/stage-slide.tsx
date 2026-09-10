@@ -1,6 +1,10 @@
 import { HtmlSlide } from "@/components/stage/html-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import {
+  mondayFromWeekLabel,
+  type StagePageContext,
+} from "@/lib/stage-page-context"
+import {
   isHtmlWeekPage,
   isTwoColumnWeekPage,
   type WeekPage,
@@ -8,26 +12,33 @@ import {
 
 export type StageSlideProps = {
   page: WeekPage
-  monday: string
+  context: StagePageContext
   isCapture?: boolean
 }
 
 export function StageSlide({
   page,
-  monday,
+  context,
   isCapture = false,
 }: StageSlideProps) {
-  if (isHtmlWeekPage(page)) {
-    return <HtmlSlide page={page} monday={monday} isCapture={isCapture} />
-  }
-
-  if (isTwoColumnWeekPage(page)) {
-    return <TwoColumnSlide page={page} />
-  }
+  const monday = mondayFromWeekLabel(context.weekLabel)
 
   return (
-    <div className="stage-warning" role="status">
-      Unknown layout: {page.layout}
+    <div className="stage-slide-host">
+      {context.pageLabel === "Hidden" ? (
+        <p className="stage-hidden-label" role="status">
+          Hidden
+        </p>
+      ) : null}
+      {isHtmlWeekPage(page) ? (
+        <HtmlSlide page={page} monday={monday} isCapture={isCapture} />
+      ) : isTwoColumnWeekPage(page) ? (
+        <TwoColumnSlide page={page} />
+      ) : (
+        <div className="stage-warning" role="status">
+          Unknown layout: {page.layout}
+        </div>
+      )}
     </div>
   )
 }

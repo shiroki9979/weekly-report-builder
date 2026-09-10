@@ -1,7 +1,7 @@
 # pnpm 指令
 
 建立日期：2026-08-31  
-最後更新：2026-09-09
+最後更新：2026-09-10
 
 ---
 
@@ -19,6 +19,7 @@
 | `pnpm typecheck`    | `tsc --noEmit`                                                                                     |
 | `pnpm test`         | Vitest 單次執行                                                                                    |
 | `pnpm test:watch`   | Vitest watch 模式                                                                                  |
+| `pnpm test:e2e`     | Playwright；使用隔離的測試 weeks 目錄，不寫入 production `weeks/`                                  |
 
 ## 相關文件
 
