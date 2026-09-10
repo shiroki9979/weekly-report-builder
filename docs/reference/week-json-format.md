@@ -1,7 +1,7 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-03
+最後更新：2026-09-10
 
 ---
 
@@ -28,13 +28,15 @@ weeks/YYYY-MM-DD/<htmlFile>
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位     | 型別      | 必填 | 說明                                      |
-| -------- | --------- | ---- | ----------------------------------------- |
-| `id`     | `string`  | 是   | 頁面識別，如 `p01`；匯出 PNG 檔名之一部分 |
-| `layout` | `string`  | 是   | `"two-column"` 或 `"html"`                |
-| `title`  | `string`  | 是   | 投影片主標（可為空字串）                  |
-| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                |
-| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage             |
+| 欄位     | 型別      | 必填 | 說明                                                                     |
+| -------- | --------- | ---- | ------------------------------------------------------------------------ |
+| `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分 |
+| `layout` | `string`  | 是   | `"two-column"` 或 `"html"`                                               |
+| `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                 |
+| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                               |
+| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                            |
+
+Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### `layout: "two-column"`
 

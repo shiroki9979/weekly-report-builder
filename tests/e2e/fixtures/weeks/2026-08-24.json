@@ -1,0 +1,59 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Fit table",
+      "items": [
+        { "heading": "One", "body": "First point stays short." },
+        { "heading": "Two", "body": "Second point stays short." },
+        { "heading": "Three", "body": "Third point stays short." }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Summary",
+        "columns": ["Action", "Result"],
+        "rows": [{ "cells": ["Eval", "Pass"] }]
+      }
+    },
+    {
+      "id": "p02",
+      "layout": "two-column",
+      "title": "Overflow table",
+      "items": [
+        { "heading": "One", "body": "This page is intentionally too tall." },
+        { "heading": "Two", "body": "Rows stack past the capture stage." },
+        { "heading": "Three", "body": "Export should skip this page." }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Long list",
+        "columns": ["Item", "Note"],
+        "rows": [
+          { "cells": ["Row 01", "Keep stacking"] },
+          { "cells": ["Row 02", "Keep stacking"] },
+          { "cells": ["Row 03", "Keep stacking"] },
+          { "cells": ["Row 04", "Keep stacking"] },
+          { "cells": ["Row 05", "Keep stacking"] },
+          { "cells": ["Row 06", "Keep stacking"] },
+          { "cells": ["Row 07", "Keep stacking"] },
+          { "cells": ["Row 08", "Keep stacking"] },
+          { "cells": ["Row 09", "Keep stacking"] },
+          { "cells": ["Row 10", "Keep stacking"] },
+          { "cells": ["Row 11", "Keep stacking"] },
+          { "cells": ["Row 12", "Keep stacking"] },
+          { "cells": ["Row 13", "Keep stacking"] },
+          { "cells": ["Row 14", "Keep stacking"] },
+          { "cells": ["Row 15", "Keep stacking"] },
+          { "cells": ["Row 16", "Keep stacking"] },
+          { "cells": ["Row 17", "Keep stacking"] },
+          { "cells": ["Row 18", "Keep stacking"] },
+          { "cells": ["Row 19", "Keep stacking"] },
+          { "cells": ["Row 20", "Keep stacking"] }
+        ]
+      }
+    }
+  ]
+}

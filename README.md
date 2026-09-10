@@ -20,7 +20,7 @@ pnpm install
 pnpm dev
 ```
 
-Also: `pnpm build`, `pnpm lint`, `pnpm test`
+Also: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`
 
 Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename).
 

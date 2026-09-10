@@ -9,6 +9,7 @@ import {
   setChecklistItemLabel,
   setChecklistPanelTitle,
 } from "@/lib/week-editor"
+import { issuePathsFor } from "@/lib/export-readiness"
 import type { ChecklistPanel, WeekDocument } from "@/lib/week-document"
 
 type ChecklistEditorFormProps = {
@@ -24,6 +25,8 @@ export function ChecklistEditorForm({
   panel,
   onChange,
 }: ChecklistEditorFormProps) {
+  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium text-muted-foreground">
@@ -35,6 +38,7 @@ export function ChecklistEditorForm({
         <Input
           id="checklist-panel-title"
           value={panel.title}
+          aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
             onChange(
               setChecklistPanelTitle(week, pageIndex, event.target.value)
@@ -79,6 +83,10 @@ export function ChecklistEditorForm({
               <Input
                 aria-label={`Checklist item ${itemIndex + 1}`}
                 value={item.label}
+                aria-invalid={
+                  invalidPaths.has(`panel.items[${itemIndex}].label`) ||
+                  undefined
+                }
                 onChange={(event) =>
                   onChange(
                     setChecklistItemLabel(

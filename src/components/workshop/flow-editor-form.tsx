@@ -17,6 +17,7 @@ import {
   setFlowStepLabel,
   setFlowStepVariant,
 } from "@/lib/week-editor"
+import { issuePathsFor } from "@/lib/export-readiness"
 import type { FlowPanel, WeekDocument } from "@/lib/week-document"
 
 type FlowEditorFormProps = {
@@ -32,6 +33,8 @@ export function FlowEditorForm({
   panel,
   onChange,
 }: FlowEditorFormProps) {
+  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium text-muted-foreground">
@@ -43,6 +46,7 @@ export function FlowEditorForm({
         <Input
           id="flow-panel-title"
           value={panel.title}
+          aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
             onChange(setFlowPanelTitle(week, pageIndex, event.target.value))
           }
@@ -75,6 +79,10 @@ export function FlowEditorForm({
               <Input
                 id={`flow-step-label-${stepIndex}`}
                 value={step.label}
+                aria-invalid={
+                  invalidPaths.has(`panel.steps[${stepIndex}].label`) ||
+                  undefined
+                }
                 onChange={(event) =>
                   onChange(
                     setFlowStepLabel(

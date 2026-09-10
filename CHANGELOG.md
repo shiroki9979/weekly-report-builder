@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
 - 可拋棄的 Structured Layout 原型（Weekly Overview、Evidence-backed Decision、Next Actions），獨立入口 `prototype.html`，不接工坊資料與匯出（`src/prototype/`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
+- Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
+- Two-column Export Readiness：內容完整性、1280 × 720 overflow 量測與 fail-closed 資格判定；Playwright 使用隔離 weeks 目錄（`src/lib/export-readiness.ts`）。
 
 ### Changed
 

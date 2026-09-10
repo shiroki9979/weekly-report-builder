@@ -21,6 +21,7 @@
 | ----------------------------------------------------------- | ----------------------------- |
 | [建立新週次](how-to/create-new-week.md)                     | 自上一週 clone 結構並建立新檔 |
 | [編輯並儲存週次](how-to/edit-and-save-a-week.md)            | 修改頁面內容並寫回 JSON       |
+| [新增、刪除與重排頁面](how-to/add-delete-reorder-pages.md)  | Workshop 頁面生命週期操作     |
 | [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md) | 批次下載或複製到剪貼簿        |
 | [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)      | 保留編輯但略過 PNG 匯出       |
 | [檢視 layout 原型](how-to/review-layout-prototype.md)       | 開啟獨立 16:9 layout 家族原型 |

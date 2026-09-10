@@ -1,11 +1,18 @@
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form"
+import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
+import { issuePathsFor } from "@/lib/export-readiness"
 import {
+  addTableColumn,
+  addTableRow,
+  removeTableColumn,
+  removeTableRow,
   setPageHidden,
   setPageHtmlFile,
   setPageItem,
@@ -104,9 +111,11 @@ export function PageEditorForm({
   }
 
   const panel = page.panel
+  const invalidPaths = issuePathsFor(page)
 
   return (
     <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
+      <ContentReadinessSummary page={page} />
       <fieldset
         disabled={readOnly}
         className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
@@ -116,6 +125,7 @@ export function PageEditorForm({
           <Input
             id="page-title"
             value={page.title}
+            aria-invalid={invalidPaths.has("title") || undefined}
             onChange={(event) =>
               onChange(setPageTitle(week, pageIndex, event.target.value))
             }
@@ -132,6 +142,9 @@ export function PageEditorForm({
               <Input
                 id={`item-${itemIndex}-heading`}
                 value={item.heading}
+                aria-invalid={
+                  invalidPaths.has(`items[${itemIndex}].heading`) || undefined
+                }
                 onChange={(event) =>
                   onChange(
                     setPageItem(
@@ -150,6 +163,9 @@ export function PageEditorForm({
               <Textarea
                 id={`item-${itemIndex}-body`}
                 value={item.body}
+                aria-invalid={
+                  invalidPaths.has(`items[${itemIndex}].body`) || undefined
+                }
                 onChange={(event) =>
                   onChange(
                     setPageItem(
@@ -176,12 +192,59 @@ export function PageEditorForm({
               <Input
                 id="panel-title"
                 value={panel.title}
+                aria-invalid={invalidPaths.has("panel.title") || undefined}
                 onChange={(event) =>
                   onChange(
                     setTablePanelTitle(week, pageIndex, event.target.value)
                   )
                 }
               />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={readOnly}
+                onClick={() => onChange(addTableRow(week, pageIndex))}
+              >
+                Add row
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={readOnly || panel.rows.length <= 1}
+                onClick={() =>
+                  onChange(
+                    removeTableRow(week, pageIndex, panel.rows.length - 1)
+                  )
+                }
+              >
+                Remove row
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={readOnly}
+                onClick={() => onChange(addTableColumn(week, pageIndex))}
+              >
+                Add column
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={readOnly || panel.columns.length <= 1}
+                onClick={() =>
+                  onChange(
+                    removeTableColumn(week, pageIndex, panel.columns.length - 1)
+                  )
+                }
+              >
+                Remove column
+              </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
               {panel.columns.map((column, columnIndex) => (
@@ -192,6 +255,10 @@ export function PageEditorForm({
                   <Input
                     id={`column-${columnIndex}`}
                     value={column}
+                    aria-invalid={
+                      invalidPaths.has(`panel.columns[${columnIndex}]`) ||
+                      undefined
+                    }
                     onChange={(event) =>
                       onChange(
                         setTablePanelColumn(
@@ -216,6 +283,11 @@ export function PageEditorForm({
                     <Input
                       id={`cell-${rowIndex}-${cellIndex}`}
                       value={cell}
+                      aria-invalid={
+                        invalidPaths.has(
+                          `panel.rows[${rowIndex}].cells[${cellIndex}]`
+                        ) || undefined
+                      }
                       onChange={(event) =>
                         onChange(
                           setTablePanelCell(

@@ -93,6 +93,8 @@ export type UnknownWeekPage = {
   [key: string]: unknown
 }
 
+export type StructuredWeekPage = TwoColumnWeekPage
+
 export type WeekPage = TwoColumnWeekPage | HtmlWeekPage | UnknownWeekPage
 
 export type WeekDocument = {
@@ -107,6 +109,34 @@ export function isHtmlWeekPage(page: WeekPage): page is HtmlWeekPage {
 
 export function isTwoColumnWeekPage(page: WeekPage): page is TwoColumnWeekPage {
   return page.layout === "two-column" && "items" in page && "panel" in page
+}
+
+export function isStructuredWeekPage(
+  page: WeekPage
+): page is StructuredWeekPage {
+  return isTwoColumnWeekPage(page)
+}
+
+const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
+  "table",
+  "chart",
+  "flow",
+  "checklist",
+])
+
+export function isSupportedStagePage(page: WeekPage): boolean {
+  if (isHtmlWeekPage(page)) {
+    return true
+  }
+
+  return (
+    isTwoColumnWeekPage(page) &&
+    SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(page.panel.kind)
+  )
+}
+
+export function isFiniteNonNegative(value: number): boolean {
+  return Number.isFinite(value) && value >= 0
 }
 
 const V1_PANEL_KINDS = new Set([
@@ -370,10 +400,21 @@ export function parseWeekDocument(value: unknown): WeekDocument {
     throw new Error("Invalid week document: pages must be a non-empty array")
   }
 
+  const parsedPages = pages.map((page, index) => parseWeekPage(page, index))
+  const seenIds = new Set<string>()
+  for (const page of parsedPages) {
+    if (seenIds.has(page.id)) {
+      throw new Error(
+        `Invalid week document: page id "${page.id}" is not unique`
+      )
+    }
+    seenIds.add(page.id)
+  }
+
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),
-    pages: pages.map((page, index) => parseWeekPage(page, index)),
+    pages: parsedPages,
   }
 }
 
