@@ -20,6 +20,10 @@ import {
   type WeeklyOverviewPage,
 } from "./week-document"
 
+import {
+  assessMetricDraftIssues,
+  type MetricDraftBuffer,
+} from "./evidence-decision-editor"
 import type { OverflowMeasurement } from "./overflow-measurement"
 
 export type ExportIssueCode =
@@ -365,9 +369,135 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
   return `Page overflows the 1280 × 720 capture stage ${labels.join(" and ")}`
 }
 
+type PathToken = string | number
+
+const ROOT_FIELDS = [
+  "title",
+  "verdict",
+  "lead",
+  "supporting",
+  "items",
+  "panel",
+  "metrics",
+  "interpretations",
+  "commitments",
+]
+
+const NESTED_FIELDS: Record<string, string[]> = {
+  lead: ["workstream", "figure", "result", "impact", "status"],
+  supporting: ["workstream", "figure", "result", "impact", "status"],
+  status: ["label"],
+  items: ["heading", "body", "label"],
+  panel: ["title", "columns", "rows", "categories", "series", "steps", "items"],
+  rows: ["cells"],
+  series: ["name", "values"],
+  steps: ["label"],
+  metrics: ["label", "baselineValue", "candidateValue"],
+  commitments: ["title", "outcome", "checkpoint"],
+}
+
+function tokenizePath(path: string): PathToken[] {
+  const tokens: PathToken[] = []
+  const pattern = /([A-Za-z][A-Za-z0-9]*)|\[(\d+)\]/g
+  let match = pattern.exec(path)
+  while (match !== null) {
+    if (match[1] !== undefined) {
+      tokens.push(match[1])
+    } else {
+      tokens.push(Number(match[2]))
+    }
+    match = pattern.exec(path)
+  }
+  return tokens
+}
+
+function parentField(tokens: PathToken[], index: number): string | undefined {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const token = tokens[cursor]
+    if (typeof token === "string") {
+      return token
+    }
+  }
+  return undefined
+}
+
+function fieldRank(field: string, parent: string | undefined): number {
+  const order = parent ? (NESTED_FIELDS[parent] ?? ROOT_FIELDS) : ROOT_FIELDS
+  const rank = order.indexOf(field)
+  return rank === -1 ? Number.MAX_SAFE_INTEGER : rank
+}
+
+// 依 schema 宣告序比較 path；localeCompare 會把 interpretations 排到 metrics 前面
+function compareSchemaPaths(left: string, right: string): number {
+  const a = tokenizePath(left)
+  const b = tokenizePath(right)
+  const length = Math.max(a.length, b.length)
+  for (let i = 0; i < length; i += 1) {
+    if (i >= a.length) {
+      return -1
+    }
+    if (i >= b.length) {
+      return 1
+    }
+    const ca = a[i]
+    const cb = b[i]
+    if (typeof ca === "number" && typeof cb === "number") {
+      if (ca !== cb) {
+        return ca - cb
+      }
+      continue
+    }
+    if (typeof ca === "string" && typeof cb === "string") {
+      const rank =
+        fieldRank(ca, parentField(a, i)) - fieldRank(cb, parentField(b, i))
+      if (rank !== 0) {
+        return rank
+      }
+      continue
+    }
+    return String(ca).localeCompare(String(cb))
+  }
+  return 0
+}
+
+function mergeContentAndDraftIssues(
+  contentIssues: ExportIssue[],
+  draftIssues: ExportIssue[]
+): ExportIssue[] {
+  const byPath = new Map<string, ExportIssue>()
+  const unpathed: ExportIssue[] = []
+
+  for (const issue of [...contentIssues, ...draftIssues]) {
+    if (issue.path === undefined) {
+      unpathed.push(issue)
+      continue
+    }
+    const existing = byPath.get(issue.path)
+    if (!existing || issue.code === "invalid-content") {
+      byPath.set(issue.path, issue)
+    }
+  }
+
+  const sorted = [...byPath.values()].sort((left, right) =>
+    compareSchemaPaths(left.path ?? "", right.path ?? "")
+  )
+  return [...unpathed, ...sorted]
+}
+
+export function assessStructuredContentIssues(
+  page: StructuredWeekPage,
+  metricBuffer: MetricDraftBuffer = {}
+): ExportIssue[] {
+  return mergeContentAndDraftIssues(
+    assessContentReadiness(page),
+    assessMetricDraftIssues(page, metricBuffer)
+  )
+}
+
 export function assessExportEligibility(
   page: WeekPage,
-  capture?: CaptureAssessment
+  capture?: CaptureAssessment,
+  metricBuffer: MetricDraftBuffer = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -385,7 +515,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessContentReadiness(page)
+  const contentIssues = assessStructuredContentIssues(page, metricBuffer)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }
@@ -437,13 +567,16 @@ export function formatExportIssues(issues: ExportIssue[]): string {
     .join("; ")
 }
 
-export function issuePathsFor(page: WeekPage): Set<string> {
+export function issuePathsFor(
+  page: WeekPage,
+  metricBuffer: MetricDraftBuffer = {}
+): Set<string> {
   if (!isStructuredWeekPage(page)) {
     return new Set()
   }
 
   return new Set(
-    assessContentReadiness(page)
+    assessStructuredContentIssues(page, metricBuffer)
       .map((issue) => issue.path)
       .filter((path): path is string => path !== undefined)
   )

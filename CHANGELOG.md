@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Copy／批次匯出改由單一 Export Readiness 入口合併非法 metric draft；Move／Remove comparison metric 時 raw buffer 會跟著重對路徑（`src/lib/export-readiness.ts`）。
 - 修正 Gallery 預覽控制的 HTML 語意，並提高 Gallery 標籤與返回按鈕的文字對比（`src/prototype/`）。
 
 ### Removed

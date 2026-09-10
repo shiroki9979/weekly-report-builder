@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { StageCaptureHost } from "@/components/workshop/export-controls"
 import { useStageExport } from "@/hooks/use-stage-export"
+import { metricBufferKey } from "@/lib/evidence-decision-editor"
+import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
 
 vi.mock("@/lib/stage-capture", () => ({
   captureStageToPng: vi.fn(
@@ -25,11 +27,13 @@ vi.mock("@/lib/clipboard-image", () => ({
 function ExportTestComponent({
   week,
   exportRef,
+  metricBuffer,
 }: {
   week: WeekDocument
   exportRef?: {
     current: ReturnType<typeof useStageExport> | null
   }
+  metricBuffer?: MetricDraftBuffer
 }) {
   const previewStageRef = useRef<HTMLDivElement>(null)
   const captureHostRef = useRef<HTMLDivElement>(null)
@@ -39,6 +43,7 @@ function ExportTestComponent({
     week,
     selectedPage: week.pages[0],
     captureHostRef,
+    metricBuffer,
   })
 
   useEffect(() => {
@@ -241,5 +246,52 @@ describe("useStageExport", () => {
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
     expect(exportRef.current?.clipboardError).toMatch(/title/i)
+  })
+
+  it("blocks copy of a complete evidence-decision page with an invalid metric draft", async () => {
+    const page: EvidenceDecisionPage = {
+      id: "p01",
+      layout: "evidence-decision",
+      title: "Ship the candidate.",
+      verdict: "Adopt the candidate.",
+      metrics: [
+        {
+          label: "Turnaround",
+          baselineValue: 9.4,
+          candidateValue: 5.1,
+          unit: "days",
+          unitPosition: "after",
+          unitSpacing: "space",
+          precision: 1,
+        },
+      ],
+      interpretations: ["The candidate finishes the same week."],
+    }
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [page],
+    }
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(
+      <ExportTestComponent
+        week={week}
+        exportRef={exportRef}
+        metricBuffer={{
+          [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
+        }}
+      />
+    )
+
+    await act(async () => {
+      await exportRef.current?.copyCurrentPage()
+    })
+
+    expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
+    expect(exportRef.current?.clipboardError).toBe(
+      "metrics[0].baselineValue: Metric value must be a finite non-negative number"
+    )
   })
 })

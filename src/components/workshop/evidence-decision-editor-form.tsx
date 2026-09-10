@@ -15,10 +15,11 @@ import { useMetricDraft } from "@/components/workshop/metric-draft-context"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
-  assessMetricDraftIssues,
   metricBufferKey,
   moveDecisionInterpretation,
   moveDecisionMetric,
+  remapMetricBufferAfterMove,
+  remapMetricBufferAfterRemove,
   removeDecisionInterpretation,
   removeDecisionMetric,
   setDecisionInterpretation,
@@ -48,20 +49,24 @@ export function EvidenceDecisionEditorForm({
   onChange,
   readOnly = false,
 }: EvidenceDecisionEditorFormProps) {
-  const { buffer } = useMetricDraft()
-  const invalidPaths = new Set([
-    ...issuePathsFor(page),
-    ...assessMetricDraftIssues(page, buffer)
-      .map((issue) => issue.path)
-      .filter((path): path is string => path !== undefined),
-  ])
+  const { buffer, replaceBuffer } = useMetricDraft()
+  const invalidPaths = issuePathsFor(page, buffer)
+
+  function applyMetricMove(fromIndex: number, toIndex: number) {
+    replaceBuffer(
+      remapMetricBufferAfterMove(buffer, page.id, fromIndex, toIndex)
+    )
+    onChange(moveDecisionMetric(week, pageIndex, fromIndex, toIndex))
+  }
+
+  function applyMetricRemove(metricIndex: number) {
+    replaceBuffer(remapMetricBufferAfterRemove(buffer, page.id, metricIndex))
+    onChange(removeDecisionMetric(week, pageIndex, metricIndex))
+  }
 
   return (
     <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
-      <ContentReadinessSummary
-        page={page}
-        extraIssues={assessMetricDraftIssues(page, buffer)}
-      />
+      <ContentReadinessSummary page={page} metricBuffer={buffer} />
       <fieldset
         disabled={readOnly}
         className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
@@ -116,16 +121,7 @@ export function EvidenceDecisionEditorForm({
                 variant="outline"
                 size="sm"
                 disabled={metricIndex === 0}
-                onClick={() =>
-                  onChange(
-                    moveDecisionMetric(
-                      week,
-                      pageIndex,
-                      metricIndex,
-                      metricIndex - 1
-                    )
-                  )
-                }
+                onClick={() => applyMetricMove(metricIndex, metricIndex - 1)}
               >
                 Move up
               </Button>
@@ -134,16 +130,7 @@ export function EvidenceDecisionEditorForm({
                 variant="outline"
                 size="sm"
                 disabled={metricIndex === page.metrics.length - 1}
-                onClick={() =>
-                  onChange(
-                    moveDecisionMetric(
-                      week,
-                      pageIndex,
-                      metricIndex,
-                      metricIndex + 1
-                    )
-                  )
-                }
+                onClick={() => applyMetricMove(metricIndex, metricIndex + 1)}
               >
                 Move down
               </Button>
@@ -152,9 +139,7 @@ export function EvidenceDecisionEditorForm({
                 variant="outline"
                 size="sm"
                 disabled={page.metrics.length <= 1}
-                onClick={() =>
-                  onChange(removeDecisionMetric(week, pageIndex, metricIndex))
-                }
+                onClick={() => applyMetricRemove(metricIndex)}
               >
                 Remove
               </Button>

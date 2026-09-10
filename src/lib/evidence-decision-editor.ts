@@ -171,6 +171,102 @@ export function moveDecisionMetric(
   })
 }
 
+const METRIC_BUFFER_PATH = /^metrics\[(\d+)\]\.(baselineValue|candidateValue)$/
+
+type MetricValueField = "baselineValue" | "candidateValue"
+
+// Move／Remove 只改 week JSON 索引；raw buffer 必須跟著搬，否則非法草稿會黏在舊 path
+function remapMetricValueFields(
+  buffer: MetricDraftBuffer,
+  pageId: string,
+  remapSlots: (slots: (string | undefined)[]) => (string | undefined)[]
+): MetricDraftBuffer {
+  const prefix = `${pageId}:`
+  const drafts: {
+    index: number
+    field: MetricValueField
+    value: string
+  }[] = []
+
+  for (const [key, value] of Object.entries(buffer)) {
+    if (!key.startsWith(prefix)) {
+      continue
+    }
+    const match = METRIC_BUFFER_PATH.exec(key.slice(prefix.length))
+    if (!match) {
+      continue
+    }
+    drafts.push({
+      index: Number(match[1]),
+      field: match[2] as MetricValueField,
+      value,
+    })
+  }
+
+  const next: MetricDraftBuffer = { ...buffer }
+  for (const draft of drafts) {
+    delete next[
+      metricBufferKey(pageId, `metrics[${draft.index}].${draft.field}`)
+    ]
+  }
+
+  for (const field of ["baselineValue", "candidateValue"] as const) {
+    const fieldDrafts = drafts.filter((draft) => draft.field === field)
+    if (fieldDrafts.length === 0) {
+      continue
+    }
+    const maxIndex = Math.max(...fieldDrafts.map((draft) => draft.index))
+    const slots: (string | undefined)[] = Array.from({ length: maxIndex + 1 })
+    for (const draft of fieldDrafts) {
+      slots[draft.index] = draft.value
+    }
+    remapSlots(slots).forEach((raw, index) => {
+      if (raw === undefined) {
+        return
+      }
+      next[metricBufferKey(pageId, `metrics[${index}].${field}`)] = raw
+    })
+  }
+
+  return next
+}
+
+export function remapMetricBufferAfterMove(
+  buffer: MetricDraftBuffer,
+  pageId: string,
+  fromIndex: number,
+  toIndex: number
+): MetricDraftBuffer {
+  if (fromIndex === toIndex) {
+    return buffer
+  }
+
+  return remapMetricValueFields(buffer, pageId, (slots) => {
+    const padded = Array.from(
+      { length: Math.max(slots.length, fromIndex + 1, toIndex + 1) },
+      (_, index) => slots[index]
+    )
+    const [moved] = padded.splice(fromIndex, 1)
+    padded.splice(toIndex, 0, moved)
+    return padded
+  })
+}
+
+export function remapMetricBufferAfterRemove(
+  buffer: MetricDraftBuffer,
+  pageId: string,
+  removedIndex: number
+): MetricDraftBuffer {
+  return remapMetricValueFields(buffer, pageId, (slots) => {
+    const padded = Array.from(
+      { length: Math.max(slots.length, removedIndex + 1) },
+      (_, index) => slots[index]
+    )
+    padded.splice(removedIndex, 1)
+    return padded
+  })
+}
+
 export function setDecisionInterpretation(
   week: WeekDocument,
   pageIndex: number,

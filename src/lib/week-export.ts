@@ -1,7 +1,4 @@
-import {
-  assessMetricDraftIssues,
-  type MetricDraftBuffer,
-} from "./evidence-decision-editor"
+import type { MetricDraftBuffer } from "./evidence-decision-editor"
 import {
   assessExportEligibility,
   type CaptureAssessment,
@@ -53,13 +50,11 @@ export async function exportVisiblePages(
       continue
     }
 
-    const draftIssues = assessMetricDraftIssues(page, deps.metricBuffer ?? {})
-    if (draftIssues.length > 0) {
-      skipped.push({ pageId: page.id, issues: draftIssues })
-      continue
-    }
-
-    const withoutCapture = assessExportEligibility(page)
+    const withoutCapture = assessExportEligibility(
+      page,
+      undefined,
+      deps.metricBuffer
+    )
     const blockedBeforeRender = withoutCapture.issues.some(
       (issue) => issue.code !== "measurement-failed"
     )
@@ -77,7 +72,7 @@ export async function exportVisiblePages(
 
     const element = await deps.renderPage(page)
     const capture = await deps.measureCapture(element)
-    const assessment = assessExportEligibility(page, capture)
+    const assessment = assessExportEligibility(page, capture, deps.metricBuffer)
     if (!assessment.eligible) {
       skipped.push({ pageId: page.id, issues: assessment.issues })
       continue
