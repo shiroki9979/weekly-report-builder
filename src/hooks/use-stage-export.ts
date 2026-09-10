@@ -1,12 +1,9 @@
 import { useCallback, useRef, useState, type RefObject } from "react"
 import { flushSync } from "react-dom"
 
-import {
-  assessMetricDraftIssues,
-  type MetricDraftBuffer,
-} from "@/lib/evidence-decision-editor"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
+import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
 import {
   assessExportEligibility,
   formatExportIssues,
@@ -62,9 +59,10 @@ async function waitForSlideSettled(host: HTMLElement): Promise<void> {
 }
 
 function blockedBeforeCapture(
-  page: WeekPage
+  page: WeekPage,
+  metricBuffer?: MetricDraftBuffer
 ): ReturnType<typeof assessExportEligibility> | null {
-  const assessment = assessExportEligibility(page)
+  const assessment = assessExportEligibility(page, undefined, metricBuffer)
   const blocked = assessment.issues.some(
     (issue) => issue.code !== "measurement-failed"
   )
@@ -151,13 +149,7 @@ export function useStageExport({
     setClipboardError(null)
 
     try {
-      const draftIssues = assessMetricDraftIssues(selectedPage, metricBuffer)
-      if (draftIssues.length > 0) {
-        setClipboardError(formatExportIssues(draftIssues))
-        return
-      }
-
-      const blocked = blockedBeforeCapture(selectedPage)
+      const blocked = blockedBeforeCapture(selectedPage, metricBuffer)
       if (blocked) {
         setClipboardError(formatExportIssues(blocked.issues))
         return
@@ -170,7 +162,11 @@ export function useStageExport({
       } else {
         stageRoot = await renderPageForCapture(selectedPage)
         const capture = await measureStageOverflow(stageRoot)
-        const assessment = assessExportEligibility(selectedPage, capture)
+        const assessment = assessExportEligibility(
+          selectedPage,
+          capture,
+          metricBuffer
+        )
         if (!assessment.eligible) {
           setClipboardError(formatExportIssues(assessment.issues))
           return

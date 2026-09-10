@@ -125,4 +125,58 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 2")
     expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 2")
   })
+
+  it("counts evidence-decision and next-actions pages among supported page positions", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "evidence-decision",
+          title: "Ship the candidate.",
+          verdict: "Adopt the candidate.",
+          metrics: [
+            {
+              label: "Turnaround",
+              baselineValue: 9.4,
+              candidateValue: 5.1,
+              unit: "days",
+              unitPosition: "after",
+              unitSpacing: "space",
+              precision: 1,
+            },
+          ],
+          interpretations: ["The candidate finishes the same week."],
+        },
+        {
+          id: "p02",
+          layout: "next-actions",
+          title: "Five-day reviews.",
+          commitments: [
+            {
+              title: "Stabilize the review queue",
+              outcome: "Changes land within five days.",
+              checkpoint: "Median wait ≤ 5 days next Friday.",
+            },
+            {
+              title: "Hold the reserve",
+              outcome: "Use stays below 25%.",
+              checkpoint: "Reserve report signed before the next release.",
+            },
+          ],
+        },
+        {
+          id: "p03",
+          layout: "html",
+          title: "Diagram",
+          htmlFile: "p03.html",
+        },
+      ],
+    })
+
+    expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 3")
+    expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 3")
+    expect(createStagePageContext(week, "p03").pageLabel).toBe("3 / 3")
+  })
 })

@@ -5,6 +5,8 @@ import {
   addDecisionMetric,
   assessMetricDraftIssues,
   metricBufferKey,
+  remapMetricBufferAfterMove,
+  remapMetricBufferAfterRemove,
   removeDecisionInterpretation,
   removeDecisionMetric,
   setDecisionMetricValue,
@@ -269,5 +271,33 @@ describe("evidence-decision clone and readiness", () => {
     ])
     expect(weekHasInvalidMetricDrafts(weekWith(page), buffer)).toBe(true)
     expect(weekHasInvalidMetricDrafts(weekWith(page), {})).toBe(false)
+  })
+
+  it("moves metric draft keys with the metric", () => {
+    const pageId = "p01"
+    const otherKey = metricBufferKey("p02", "metrics[0].baselineValue")
+    const buffer = {
+      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "1.0",
+      [metricBufferKey(pageId, "metrics[1].candidateValue")]: "abc",
+      [otherKey]: "keep",
+    }
+
+    expect(remapMetricBufferAfterMove(buffer, pageId, 1, 0)).toEqual({
+      [metricBufferKey(pageId, "metrics[0].candidateValue")]: "abc",
+      [metricBufferKey(pageId, "metrics[1].baselineValue")]: "1.0",
+      [otherKey]: "keep",
+    })
+  })
+
+  it("shifts metric draft keys after a metric is removed", () => {
+    const pageId = "p01"
+    const buffer = {
+      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "1.0",
+      [metricBufferKey(pageId, "metrics[1].baselineValue")]: "abc",
+    }
+
+    expect(remapMetricBufferAfterRemove(buffer, pageId, 0)).toEqual({
+      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "abc",
+    })
   })
 })

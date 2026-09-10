@@ -1,23 +1,21 @@
-import {
-  assessContentReadiness,
-  type ExportIssue,
-} from "@/lib/export-readiness"
+import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import { assessStructuredContentIssues } from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
 type ContentReadinessSummaryProps = {
   page: WeekPage
-  extraIssues?: ExportIssue[]
+  metricBuffer?: MetricDraftBuffer
 }
 
 export function ContentReadinessSummary({
   page,
-  extraIssues = [],
+  metricBuffer = {},
 }: ContentReadinessSummaryProps) {
   if (!isStructuredWeekPage(page)) {
     return null
   }
 
-  const issues = [...assessContentReadiness(page), ...extraIssues]
+  const issues = assessStructuredContentIssues(page, metricBuffer)
   if (issues.length === 0) {
     return null
   }

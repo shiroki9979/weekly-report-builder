@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest"
 
+import { metricBufferKey } from "@/lib/evidence-decision-editor"
 import {
   assessContentReadiness,
   assessExportEligibility,
 } from "@/lib/export-readiness"
 import {
+  createBlankEvidenceDecisionPage,
   createBlankTwoColumnPage,
   createBlankWeeklyOverviewPage,
 } from "@/lib/page-lifecycle"
 import type {
+  EvidenceDecisionPage,
   TwoColumnWeekPage,
   UnknownWeekPage,
   WeeklyOverviewPage,
@@ -32,6 +35,30 @@ function completeTablePage(
       columns: ["Action", "Outcome"],
       rows: [{ cells: ["Eval", "Skip"] }],
     },
+    ...overrides,
+  }
+}
+
+function completeDecisionPage(
+  overrides: Partial<EvidenceDecisionPage> = {}
+): EvidenceDecisionPage {
+  return {
+    id: "p01",
+    layout: "evidence-decision",
+    title: "Ship the candidate.",
+    verdict: "Adopt the candidate.",
+    metrics: [
+      {
+        label: "Turnaround",
+        baselineValue: 9.4,
+        candidateValue: 5.1,
+        unit: "days",
+        unitPosition: "after",
+        unitSpacing: "space",
+        precision: 1,
+      },
+    ],
+    interpretations: ["The candidate finishes the same week."],
     ...overrides,
   }
 }
@@ -260,5 +287,48 @@ describe("assessExportEligibility", () => {
     expect(
       assessExportEligibility(completeTablePage(), { status: "fit" })
     ).toEqual({ eligible: true, issues: [] })
+  })
+
+  it("merges invalid metric drafts into content issues without capturing", () => {
+    const buffer = {
+      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
+    }
+
+    expect(
+      assessExportEligibility(completeDecisionPage(), { status: "fit" }, buffer)
+    ).toEqual({
+      eligible: false,
+      issues: [
+        {
+          code: "invalid-content",
+          path: "metrics[0].baselineValue",
+          message: "Metric value must be a finite non-negative number",
+        },
+      ],
+    })
+  })
+
+  it("keeps schema path order and lets invalid drafts win over missing values", () => {
+    const buffer = {
+      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
+    }
+    const assessment = assessExportEligibility(
+      createBlankEvidenceDecisionPage("p01"),
+      undefined,
+      buffer
+    )
+
+    expect(assessment.issues.map((issue) => [issue.path, issue.code])).toEqual([
+      ["title", "missing-content"],
+      ["verdict", "missing-content"],
+      ["metrics[0].label", "missing-content"],
+      ["metrics[0].baselineValue", "invalid-content"],
+      ["metrics[0].candidateValue", "missing-content"],
+      ["metrics[1].label", "missing-content"],
+      ["metrics[1].baselineValue", "missing-content"],
+      ["metrics[1].candidateValue", "missing-content"],
+      ["interpretations[0]", "missing-content"],
+      ["interpretations[1]", "missing-content"],
+    ])
   })
 })

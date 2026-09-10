@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { metricBufferKey } from "@/lib/evidence-decision-editor"
-import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
+import {
+  createBlankEvidenceDecisionPage,
+  createBlankTwoColumnPage,
+} from "@/lib/page-lifecycle"
 import {
   parseWeekDocument,
   type EvidenceDecisionPage,
@@ -252,5 +255,42 @@ describe("week-export", () => {
         ],
       },
     ])
+  })
+
+  it("merges missing content with invalid metric drafts in one skip reason", async () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        createBlankEvidenceDecisionPage("p01"),
+        { ...completePage, id: "p02" },
+      ],
+    }
+    const renderPage = vi.fn(async () => document.createElement("div"))
+    const skipped = await exportVisiblePages("2026-08-24", week, {
+      renderPage,
+      capture: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
+      download: vi.fn(),
+      measureCapture: fitMeasure,
+      metricBuffer: {
+        [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
+      },
+    })
+
+    expect(renderPage.mock.calls.map((call) => call[0].id)).toEqual(["p02"])
+    expect(skipped[0]?.issues.map((issue) => [issue.path, issue.code])).toEqual(
+      [
+        ["title", "missing-content"],
+        ["verdict", "missing-content"],
+        ["metrics[0].label", "missing-content"],
+        ["metrics[0].baselineValue", "invalid-content"],
+        ["metrics[0].candidateValue", "missing-content"],
+        ["metrics[1].label", "missing-content"],
+        ["metrics[1].baselineValue", "missing-content"],
+        ["metrics[1].candidateValue", "missing-content"],
+        ["interpretations[0]", "missing-content"],
+        ["interpretations[1]", "missing-content"],
+      ]
+    )
   })
 })

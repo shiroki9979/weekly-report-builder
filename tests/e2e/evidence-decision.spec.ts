@@ -87,3 +87,35 @@ test("skips an overflowing evidence-backed decision during batch export", async 
   await expect(skipped).not.toContainText("p01:")
   await expect(skipped).not.toContainText("p02:")
 })
+
+test("does not treat a complete evidence-backed decision as missing content on copy", async ({
+  page,
+}) => {
+  await openDecisionWeek(page)
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page.getByRole("button", { name: "Copy to clipboard" })
+  ).toBeEnabled()
+  await expect(
+    page.getByText("title: Title is required", { exact: false })
+  ).toHaveCount(0)
+  await expect(
+    page.getByText("Draft page — missing or invalid content")
+  ).toHaveCount(0)
+})
+
+test("blocks copy when a metric draft is invalid", async ({ page }) => {
+  await openDecisionWeek(page)
+  await unlockEditor(page)
+  await page.getByRole("textbox", { name: "Baseline" }).fill("abc")
+  await expect(page.getByRole("alert")).toContainText(
+    "metrics[0].baselineValue: Metric value must be a finite non-negative number"
+  )
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page.locator("p[role='alert']").filter({
+      hasText:
+        "metrics[0].baselineValue: Metric value must be a finite non-negative number",
+    })
+  ).toBeVisible()
+})

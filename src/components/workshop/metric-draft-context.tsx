@@ -12,11 +12,13 @@ import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
 type MetricDraftContextValue = {
   buffer: MetricDraftBuffer
   setRaw: (key: string, value: string) => void
+  replaceBuffer: (next: MetricDraftBuffer) => void
 }
 
 const MetricDraftContext = createContext<MetricDraftContextValue>({
   buffer: {},
   setRaw: () => undefined,
+  replaceBuffer: () => undefined,
 })
 
 export function MetricDraftProvider({ children }: { children: ReactNode }) {
@@ -26,6 +28,9 @@ export function MetricDraftProvider({ children }: { children: ReactNode }) {
       buffer,
       setRaw: (key: string, value: string) => {
         setBuffer((current) => ({ ...current, [key]: value }))
+      },
+      replaceBuffer: (next: MetricDraftBuffer) => {
+        setBuffer(next)
       },
     }),
     [buffer]
