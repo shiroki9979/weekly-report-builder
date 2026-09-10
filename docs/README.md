@@ -49,10 +49,11 @@
 
 給實作 agent 的完整規格。
 
-| 文件                                                                            | 說明                                   |
-| ------------------------------------------------------------------------------- | -------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)                                        | `layout: "html"` 16:9 逃生口           |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | 三種溝通職能 layout 的 production 規格 |
+| 文件                                                                            | 說明                                              |
+| ------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)                                        | `layout: "html"` 16:9 逃生口                      |
+| [HTML Page error-PNG](specs/html-page-error-png.md)                             | HTML fetch／timeout／capture 失敗政策（尚未實作） |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | 三種溝通職能 layout 的 production 規格            |
 
 ## 其他
 
