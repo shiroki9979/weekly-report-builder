@@ -1,4 +1,5 @@
 import {
+  isEvidenceDecisionPage,
   isHtmlWeekPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
@@ -136,6 +137,23 @@ function clearPage(page: WeekPage): WeekPage {
       title: "",
       lead: clearOutcome(page.lead),
       supporting: page.supporting.map(clearOutcome),
+      hidden: page.hidden,
+      notes: undefined,
+    }
+  }
+
+  if (isEvidenceDecisionPage(page)) {
+    return {
+      id: page.id,
+      layout: "evidence-decision",
+      title: "",
+      verdict: "",
+      metrics: page.metrics.map((metric) => ({
+        ...metric,
+        baselineValue: null,
+        candidateValue: null,
+      })),
+      interpretations: page.interpretations.map(() => ""),
       hidden: page.hidden,
       notes: undefined,
     }

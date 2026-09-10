@@ -63,7 +63,8 @@ export type FieldsPanel = {
 export type Panel =
   TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
-export type SlideLayout = "two-column" | "html" | "weekly-overview"
+export type SlideLayout =
+  "two-column" | "html" | "weekly-overview" | "evidence-decision"
 
 export type TwoColumnWeekPage = {
   id: string
@@ -109,6 +110,30 @@ export type WeeklyOverviewPage = {
   notes?: string
 }
 
+export type UnitPosition = "before" | "after"
+export type UnitSpacing = "none" | "space"
+
+export type ComparisonMetric = {
+  label: string
+  baselineValue: number | null
+  candidateValue: number | null
+  unit: string
+  unitPosition: UnitPosition
+  unitSpacing: UnitSpacing
+  precision: 0 | 1 | 2
+}
+
+export type EvidenceDecisionPage = {
+  id: string
+  layout: "evidence-decision"
+  title: string
+  verdict: string
+  metrics: ComparisonMetric[]
+  interpretations: string[]
+  hidden?: boolean
+  notes?: string
+}
+
 export type UnknownWeekPage = {
   id: string
   layout: string
@@ -118,10 +143,15 @@ export type UnknownWeekPage = {
   [key: string]: unknown
 }
 
-export type StructuredWeekPage = TwoColumnWeekPage | WeeklyOverviewPage
+export type StructuredWeekPage =
+  TwoColumnWeekPage | WeeklyOverviewPage | EvidenceDecisionPage
 
 export type WeekPage =
-  TwoColumnWeekPage | HtmlWeekPage | WeeklyOverviewPage | UnknownWeekPage
+  | TwoColumnWeekPage
+  | HtmlWeekPage
+  | WeeklyOverviewPage
+  | EvidenceDecisionPage
+  | UnknownWeekPage
 
 export type WeekDocument = {
   start: string
@@ -145,10 +175,25 @@ export function isWeeklyOverviewPage(
   )
 }
 
+export function isEvidenceDecisionPage(
+  page: WeekPage
+): page is EvidenceDecisionPage {
+  return (
+    page.layout === "evidence-decision" &&
+    "verdict" in page &&
+    "metrics" in page &&
+    "interpretations" in page
+  )
+}
+
 export function isStructuredWeekPage(
   page: WeekPage
 ): page is StructuredWeekPage {
-  return isTwoColumnWeekPage(page) || isWeeklyOverviewPage(page)
+  return (
+    isTwoColumnWeekPage(page) ||
+    isWeeklyOverviewPage(page) ||
+    isEvidenceDecisionPage(page)
+  )
 }
 
 const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
@@ -159,7 +204,11 @@ const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
 ])
 
 export function isSupportedStagePage(page: WeekPage): boolean {
-  if (isHtmlWeekPage(page) || isWeeklyOverviewPage(page)) {
+  if (
+    isHtmlWeekPage(page) ||
+    isWeeklyOverviewPage(page) ||
+    isEvidenceDecisionPage(page)
+  ) {
     return true
   }
 
@@ -430,6 +479,118 @@ function parseWeeklyOverviewPage(
   }
 }
 
+const UNIT_POSITIONS = new Set<UnitPosition>(["before", "after"])
+const UNIT_SPACINGS = new Set<UnitSpacing>(["none", "space"])
+const PRECISIONS = new Set<ComparisonMetric["precision"]>([0, 1, 2])
+
+function parseNullableMetricValue(
+  value: unknown,
+  field: string
+): number | null {
+  if (value === null) {
+    return null
+  }
+  if (typeof value !== "number" || !isFiniteNonNegative(value)) {
+    throw new Error(`Invalid week document: ${field}`)
+  }
+  return value
+}
+
+function parseComparisonMetric(
+  value: unknown,
+  field: string
+): ComparisonMetric {
+  if (!isRecord(value)) {
+    throw new Error(`Invalid week document: ${field} must be an object`)
+  }
+
+  const unitPosition = readNonEmptyString(
+    value.unitPosition,
+    `${field}.unitPosition`
+  )
+  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition)) {
+    throw new Error(`Invalid week document: ${field}.unitPosition`)
+  }
+
+  const unitSpacing = readNonEmptyString(
+    value.unitSpacing,
+    `${field}.unitSpacing`
+  )
+  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing)) {
+    throw new Error(`Invalid week document: ${field}.unitSpacing`)
+  }
+
+  if (
+    typeof value.precision !== "number" ||
+    !PRECISIONS.has(value.precision as ComparisonMetric["precision"])
+  ) {
+    throw new Error(`Invalid week document: ${field}.precision`)
+  }
+
+  return {
+    label: readString(value.label, `${field}.label`),
+    baselineValue: parseNullableMetricValue(
+      value.baselineValue,
+      `${field}.baselineValue`
+    ),
+    candidateValue: parseNullableMetricValue(
+      value.candidateValue,
+      `${field}.candidateValue`
+    ),
+    unit: readString(value.unit, `${field}.unit`),
+    unitPosition: unitPosition as UnitPosition,
+    unitSpacing: unitSpacing as UnitSpacing,
+    precision: value.precision as ComparisonMetric["precision"],
+  }
+}
+
+function parseEvidenceDecisionPage(
+  value: Record<string, unknown>,
+  common: {
+    id: string
+    title: string
+    hidden?: boolean
+    notes?: string
+  },
+  index: number
+): EvidenceDecisionPage {
+  const metrics = value.metrics
+  if (!Array.isArray(metrics) || metrics.length < 1 || metrics.length > 2) {
+    throw new Error(
+      `Invalid week document: pages[${index}].metrics must have 1 to 2 entries`
+    )
+  }
+
+  const interpretations = value.interpretations
+  if (
+    !Array.isArray(interpretations) ||
+    interpretations.length < 1 ||
+    interpretations.length > 2
+  ) {
+    throw new Error(
+      `Invalid week document: pages[${index}].interpretations must have 1 to 2 entries`
+    )
+  }
+
+  return {
+    id: common.id,
+    layout: "evidence-decision",
+    title: common.title,
+    verdict: readString(value.verdict, `pages[${index}].verdict`),
+    metrics: metrics.map((metric, metricIndex) =>
+      parseComparisonMetric(metric, `pages[${index}].metrics[${metricIndex}]`)
+    ),
+    interpretations: interpretations.map((entry, interpretationIndex) =>
+      readString(
+        entry,
+        `pages[${index}].interpretations[${interpretationIndex}]`
+      )
+    ),
+    hidden: common.hidden,
+    notes: common.notes,
+  }
+}
+
 function parseWeekPage(value: unknown, index: number): WeekPage {
   if (!isRecord(value)) {
     throw new Error(`Invalid week document: pages[${index}] must be an object`)
@@ -470,6 +631,10 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
 
   if (layout === "weekly-overview") {
     return parseWeeklyOverviewPage(value, { id, title, hidden, notes }, index)
+  }
+
+  if (layout === "evidence-decision") {
+    return parseEvidenceDecisionPage(value, { id, title, hidden, notes }, index)
   }
 
   if (layout !== "two-column") {

@@ -30,6 +30,10 @@ import {
   ExportControls,
   StageCaptureHost,
 } from "@/components/workshop/export-controls"
+import {
+  MetricDraftProvider,
+  useMetricDraft,
+} from "@/components/workshop/metric-draft-context"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
@@ -38,6 +42,7 @@ import { PagePicker, WorkshopToolbar } from "@/components/workshop/week-picker"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
+import { weekHasInvalidMetricDrafts } from "@/lib/evidence-decision-editor"
 import { measureStageOverflow } from "@/lib/overflow-measurement"
 import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
@@ -162,6 +167,16 @@ function EditorSidebar({
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
+  return (
+    <MetricDraftProvider>
+      <WorkshopShellBody />
+    </MetricDraftProvider>
+  )
+}
+
+function WorkshopShellBody() {
+  const { buffer } = useMetricDraft()
+  const [draftSaveError, setDraftSaveError] = useState<string | null>(null)
   const {
     weeks,
     selectedMonday,
@@ -201,6 +216,7 @@ export function WorkshopShell() {
     week,
     selectedPage,
     captureHostRef,
+    metricBuffer: buffer,
   })
 
   const editorPanelRef = usePanelRef()
@@ -344,9 +360,16 @@ export function WorkshopShell() {
             }}
             loading={loading}
             saving={saving}
-            saveError={saveError}
+            saveError={saveError ?? draftSaveError}
             saveMessage={saveMessage}
-            onSave={() => void saveWeek()}
+            onSave={() => {
+              if (week && weekHasInvalidMetricDrafts(week, buffer)) {
+                setDraftSaveError("Fix invalid metric values before saving")
+                return
+              }
+              setDraftSaveError(null)
+              void saveWeek()
+            }}
             creating={creating}
             createError={createError}
             suggestedMonday={suggestedMonday}

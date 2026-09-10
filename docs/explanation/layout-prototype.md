@@ -50,7 +50,7 @@ Gallery → focused 16:9 → Back to gallery 的行為由 `PrototypeApp` 測試�
 
 ## 隔離
 
-工坊殼沒有連到此原型。Weekly Overview 已有生產 renderer 與 Workshop editor；Evidence-backed Decision 與 Next Actions 仍只存在於此原型。
+工坊殼沒有連到此原型。Weekly Overview 與 Evidence-backed Decision 已有生產 renderer 與 Workshop editor；Next Actions 仍只存在於此原型。
 
 Production adoption 規格見 [Editorial Layout Family production adoption](../specs/editorial-layout-family.md)。原型會在其餘 layout 達到 production parity 後退場。
 

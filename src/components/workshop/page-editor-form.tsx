@@ -7,6 +7,7 @@ import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
+import { EvidenceDecisionEditorForm } from "@/components/workshop/evidence-decision-editor-form"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
@@ -24,6 +25,7 @@ import {
   setTablePanelTitle,
 } from "@/lib/week-editor"
 import {
+  isEvidenceDecisionPage,
   isHtmlWeekPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
@@ -107,6 +109,18 @@ export function PageEditorForm({
   if (isWeeklyOverviewPage(page)) {
     return (
       <WeeklyOverviewEditorForm
+        week={week}
+        pageIndex={pageIndex}
+        page={page}
+        onChange={onChange}
+        readOnly={readOnly}
+      />
+    )
+  }
+
+  if (isEvidenceDecisionPage(page)) {
+    return (
+      <EvidenceDecisionEditorForm
         week={week}
         pageIndex={pageIndex}
         page={page}

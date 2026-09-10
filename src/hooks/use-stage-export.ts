@@ -1,6 +1,10 @@
 import { useCallback, useRef, useState, type RefObject } from "react"
 import { flushSync } from "react-dom"
 
+import {
+  assessMetricDraftIssues,
+  type MetricDraftBuffer,
+} from "@/lib/evidence-decision-editor"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
 import {
@@ -24,6 +28,7 @@ type UseStageExportOptions = {
   week: WeekDocument | null
   selectedPage?: WeekPage | null
   captureHostRef: RefObject<HTMLElement | null>
+  metricBuffer?: MetricDraftBuffer
 }
 
 function waitForPaint(): Promise<void> {
@@ -74,6 +79,7 @@ export function useStageExport({
   week,
   selectedPage,
   captureHostRef,
+  metricBuffer = {},
 }: UseStageExportOptions) {
   const [capturePage, setCapturePage] = useState<WeekPage | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -122,6 +128,7 @@ export function useStageExport({
         capture: captureStageToPng,
         download: downloadBlob,
         measureCapture: measureStageOverflow,
+        metricBuffer,
       })
       setExportWarning(formatSkippedExportWarning(skipped))
     } catch (cause: unknown) {
@@ -133,7 +140,7 @@ export function useStageExport({
       setExporting(false)
       exportingRef.current = false
     }
-  }, [monday, renderPageForCapture, week])
+  }, [monday, metricBuffer, renderPageForCapture, week])
 
   const copyCurrentPage = useCallback(async () => {
     if (!week || !selectedPage) {
@@ -144,6 +151,12 @@ export function useStageExport({
     setClipboardError(null)
 
     try {
+      const draftIssues = assessMetricDraftIssues(selectedPage, metricBuffer)
+      if (draftIssues.length > 0) {
+        setClipboardError(formatExportIssues(draftIssues))
+        return
+      }
+
       const blocked = blockedBeforeCapture(selectedPage)
       if (blocked) {
         setClipboardError(formatExportIssues(blocked.issues))
@@ -176,7 +189,7 @@ export function useStageExport({
       flushSync(() => setCapturePage(null))
       setCopying(false)
     }
-  }, [renderPageForCapture, selectedPage, week])
+  }, [metricBuffer, renderPageForCapture, selectedPage, week])
 
   return {
     capturePage,

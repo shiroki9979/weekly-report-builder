@@ -1,4 +1,8 @@
 import {
+  assessMetricDraftIssues,
+  type MetricDraftBuffer,
+} from "./evidence-decision-editor"
+import {
   assessExportEligibility,
   type CaptureAssessment,
   type ExportIssue,
@@ -34,6 +38,7 @@ export type ExportVisiblePagesDeps = {
   download: (blob: Blob, fileName: string) => void
   renderPage: (page: WeekPage) => Promise<HTMLElement>
   measureCapture: (element: HTMLElement) => Promise<CaptureAssessment>
+  metricBuffer?: MetricDraftBuffer
 }
 
 export async function exportVisiblePages(
@@ -45,6 +50,12 @@ export async function exportVisiblePages(
 
   for (const page of week.pages) {
     if (page.hidden) {
+      continue
+    }
+
+    const draftIssues = assessMetricDraftIssues(page, deps.metricBuffer ?? {})
+    if (draftIssues.length > 0) {
+      skipped.push({ pageId: page.id, issues: draftIssues })
       continue
     }
 

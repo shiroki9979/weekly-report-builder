@@ -1,3 +1,4 @@
+import { EvidenceDecisionSlide } from "@/components/stage/evidence-decision-slide"
 import { HtmlSlide } from "@/components/stage/html-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import { WeeklyOverviewSlide } from "@/components/stage/weekly-overview-slide"
@@ -6,6 +7,7 @@ import {
   type StagePageContext,
 } from "@/lib/stage-page-context"
 import {
+  isEvidenceDecisionPage,
   isHtmlWeekPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
@@ -38,6 +40,8 @@ export function StageSlide({
         <TwoColumnSlide page={page} />
       ) : isWeeklyOverviewPage(page) ? (
         <WeeklyOverviewSlide page={page} context={context} />
+      ) : isEvidenceDecisionPage(page) ? (
+        <EvidenceDecisionSlide page={page} context={context} />
       ) : (
         <div className="stage-warning" role="status">
           Unknown layout: {page.layout}

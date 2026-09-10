@@ -13,6 +13,7 @@
    - **Title**：投影片主標；Weekly Overview 作為 conclusion-led headline
    - Two-column：**Item 1–3** 與右側 panel 區塊（依 `chart` / `table` / `flow` / `checklist`）
    - Weekly Overview：Lead Outcome 與 1–3 個 Supporting Outcomes（Add / Move / Remove / Make lead）
+   - Evidence-backed Decision：Verdict、1–2 個 Comparison Metric、1–2 則 interpretation
    - **Speaker notes**：備忘，不顯示於 stage；右側 preview 在投影片下方有可收合的 **Speaker notes** 小抄（唯讀，與表單同源）
 4. 點 **Save**
 

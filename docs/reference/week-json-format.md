@@ -31,7 +31,7 @@ weeks/YYYY-MM-DD/<htmlFile>
 | 欄位     | 型別      | 必填 | 說明                                                                     |
 | -------- | --------- | ---- | ------------------------------------------------------------------------ |
 | `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分 |
-| `layout` | `string`  | 是   | `"two-column"`、`"html"` 或 `"weekly-overview"`                          |
+| `layout` | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"` 或 `"evidence-decision"`   |
 | `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                 |
 | `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                               |
 | `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                            |
@@ -84,6 +84,32 @@ Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非�
 | `tone`  | `"positive"` \| `"caution"` \| `"neutral"` | 是   |
 
 Clone 時保留 workstream 與 collection 長度，清除 figure／result／impact／status label，tone 重設為 `neutral`。
+
+### `layout: "evidence-decision"`
+
+Evidence-backed Decision。Eyebrow 固定為 `Evidence-backed Decision`。Baseline／Candidate 標籤由 renderer 產生。
+
+| 欄位              | 型別                 | 必填 | 說明     |
+| ----------------- | -------------------- | ---- | -------- |
+| `verdict`         | `string`             | 是   | 裁決結論 |
+| `metrics`         | `ComparisonMetric[]` | 是   | 1–2 筆   |
+| `interpretations` | `string[]`           | 是   | 1–2 筆   |
+
+新增頁預設兩個 metrics 與兩個 interpretations。數值可為 `null` 草稿。非法非空 metric 輸入會擋 Save／Copy，batch 略過該頁。
+
+#### ComparisonMetric
+
+| 欄位             | 型別                    | 必填 |
+| ---------------- | ----------------------- | ---- |
+| `label`          | `string`                | 是   |
+| `baselineValue`  | `number \| null`        | 是   |
+| `candidateValue` | `number \| null`        | 是   |
+| `unit`           | `string`                | 是   |
+| `unitPosition`   | `"before"` \| `"after"` | 是   |
+| `unitSpacing`    | `"none"` \| `"space"`   | 是   |
+| `precision`      | `0` \| `1` \| `2`       | 是   |
+
+Clone 時保留 label／unit／format，baseline／candidate 重設為 `null`，清除 verdict 與 interpretations 文字。
 
 ### SlideItem
 

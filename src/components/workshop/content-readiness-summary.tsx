@@ -1,18 +1,23 @@
-import { assessContentReadiness } from "@/lib/export-readiness"
+import {
+  assessContentReadiness,
+  type ExportIssue,
+} from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
 type ContentReadinessSummaryProps = {
   page: WeekPage
+  extraIssues?: ExportIssue[]
 }
 
 export function ContentReadinessSummary({
   page,
+  extraIssues = [],
 }: ContentReadinessSummaryProps) {
   if (!isStructuredWeekPage(page)) {
     return null
   }
 
-  const issues = assessContentReadiness(page)
+  const issues = [...assessContentReadiness(page), ...extraIssues]
   if (issues.length === 0) {
     return null
   }
