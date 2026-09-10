@@ -2,6 +2,7 @@ import {
   isEvidenceDecisionPage,
   isFiniteNonNegative,
   isHtmlWeekPage,
+  isNextActionsPage,
   isStructuredWeekPage,
   isSupportedStagePage,
   isTwoColumnWeekPage,
@@ -10,6 +11,7 @@ import {
   type ChecklistPanel,
   type FlowPanel,
   type EvidenceDecisionPage,
+  type NextActionsPage,
   type Outcome,
   type StructuredWeekPage,
   type TablePanel,
@@ -306,6 +308,34 @@ function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
   return issues
 }
 
+function assessNextActions(page: NextActionsPage): ExportIssue[] {
+  const issues: ExportIssue[] = []
+
+  if (isBlank(page.title)) {
+    issues.push(missing("title", "Title is required"))
+  }
+
+  page.commitments.forEach((commitment, index) => {
+    if (isBlank(commitment.title)) {
+      issues.push(
+        missing(`commitments[${index}].title`, "Commitment title is required")
+      )
+    }
+    if (isBlank(commitment.outcome)) {
+      issues.push(
+        missing(`commitments[${index}].outcome`, "Outcome is required")
+      )
+    }
+    if (isBlank(commitment.checkpoint)) {
+      issues.push(
+        missing(`commitments[${index}].checkpoint`, "Checkpoint is required")
+      )
+    }
+  })
+
+  return issues
+}
+
 export function assessContentReadiness(
   page: StructuredWeekPage
 ): ExportIssue[] {
@@ -319,6 +349,10 @@ export function assessContentReadiness(
 
   if (isEvidenceDecisionPage(page)) {
     return assessEvidenceDecision(page)
+  }
+
+  if (isNextActionsPage(page)) {
+    return assessNextActions(page)
   }
 
   return []

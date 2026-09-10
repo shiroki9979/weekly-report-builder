@@ -4,6 +4,7 @@ import {
   addPageAfter,
   createBlankTwoColumnPage,
   createBlankWeeklyOverviewPage,
+  createBlankNextActionsPage,
   deleteSelectedPage,
   moveSelectedPage,
   nextPageId,
@@ -114,6 +115,22 @@ describe("createBlankWeeklyOverviewPage", () => {
       title: "",
       lead: blankOutcome,
       supporting: [blankOutcome, blankOutcome],
+    })
+  })
+})
+
+describe("createBlankNextActionsPage", () => {
+  it("builds three empty commitments", () => {
+    const page = createBlankNextActionsPage("p06")
+    expect(page).toEqual({
+      id: "p06",
+      layout: "next-actions",
+      title: "",
+      commitments: [
+        { title: "", outcome: "", checkpoint: "" },
+        { title: "", outcome: "", checkpoint: "" },
+        { title: "", outcome: "", checkpoint: "" },
+      ],
     })
   })
 })

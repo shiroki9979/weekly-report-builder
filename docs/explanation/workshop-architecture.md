@@ -45,6 +45,7 @@ weeks/YYYY-MM-DD/*.html
 - `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。
 - `weekly-overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、週次範圍、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白草稿可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `evidence-decision`：Editorial Layout。裁決條 + 1–2 個 Comparison Metric 與 1–2 則 interpretation。Metric 數值用 editor-local raw buffer；非法非空輸入擋 Save／Copy。
+- `next-actions`：Editorial Layout。2–4 個 Commitment；顯示編號由順序派生。空白草稿可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `html`：16:9 全幅 HTML 逃生口。整頁由週資料夾獨立 `.html` 片段鋪滿，不渲染三點與 panel。工坊僅編輯相對檔名路徑、標題、講稿與 hidden，不提供線上 HTML 編輯器。HTML Page 不套用 Structured Layout 的 completeness 或 overflow gate。
 
 新 layout 以新 `layout` 字串擴充；未知 layout 在 stage 顯示警告，且不可匯出。
@@ -65,5 +66,5 @@ Login、分享、canvas 拖曳排版、從本 app 播放、以 localStorage 為�
 - [週次 JSON 格式](../reference/week-json-format.md)
 - [第一份週報](../tutorials/first-weekly-report.md)
 - [HTML 全幅頁規格](../specs/html-page-layout.md)
-- [Layout 家族原型](layout-prototype.md)
+- [Layout 家族原型（歷史）](layout-prototype.md)
 - [Editorial Layout Family production adoption 規格](../specs/editorial-layout-family.md)

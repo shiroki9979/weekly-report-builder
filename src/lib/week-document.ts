@@ -64,7 +64,11 @@ export type Panel =
   TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
 export type SlideLayout =
-  "two-column" | "html" | "weekly-overview" | "evidence-decision"
+  | "two-column"
+  | "html"
+  | "weekly-overview"
+  | "evidence-decision"
+  | "next-actions"
 
 export type TwoColumnWeekPage = {
   id: string
@@ -134,6 +138,21 @@ export type EvidenceDecisionPage = {
   notes?: string
 }
 
+export type Commitment = {
+  title: string
+  outcome: string
+  checkpoint: string
+}
+
+export type NextActionsPage = {
+  id: string
+  layout: "next-actions"
+  title: string
+  commitments: Commitment[]
+  hidden?: boolean
+  notes?: string
+}
+
 export type UnknownWeekPage = {
   id: string
   layout: string
@@ -144,13 +163,17 @@ export type UnknownWeekPage = {
 }
 
 export type StructuredWeekPage =
-  TwoColumnWeekPage | WeeklyOverviewPage | EvidenceDecisionPage
+  | TwoColumnWeekPage
+  | WeeklyOverviewPage
+  | EvidenceDecisionPage
+  | NextActionsPage
 
 export type WeekPage =
   | TwoColumnWeekPage
   | HtmlWeekPage
   | WeeklyOverviewPage
   | EvidenceDecisionPage
+  | NextActionsPage
   | UnknownWeekPage
 
 export type WeekDocument = {
@@ -186,13 +209,18 @@ export function isEvidenceDecisionPage(
   )
 }
 
+export function isNextActionsPage(page: WeekPage): page is NextActionsPage {
+  return page.layout === "next-actions" && "commitments" in page
+}
+
 export function isStructuredWeekPage(
   page: WeekPage
 ): page is StructuredWeekPage {
   return (
     isTwoColumnWeekPage(page) ||
     isWeeklyOverviewPage(page) ||
-    isEvidenceDecisionPage(page)
+    isEvidenceDecisionPage(page) ||
+    isNextActionsPage(page)
   )
 }
 
@@ -207,7 +235,8 @@ export function isSupportedStagePage(page: WeekPage): boolean {
   if (
     isHtmlWeekPage(page) ||
     isWeeklyOverviewPage(page) ||
-    isEvidenceDecisionPage(page)
+    isEvidenceDecisionPage(page) ||
+    isNextActionsPage(page)
   ) {
     return true
   }
@@ -591,6 +620,54 @@ function parseEvidenceDecisionPage(
   }
 }
 
+function parseCommitment(value: unknown, field: string): Commitment {
+  if (!isRecord(value)) {
+    throw new Error(`Invalid week document: ${field} must be an object`)
+  }
+
+  return {
+    title: readString(value.title, `${field}.title`),
+    outcome: readString(value.outcome, `${field}.outcome`),
+    checkpoint: readString(value.checkpoint, `${field}.checkpoint`),
+  }
+}
+
+function parseNextActionsPage(
+  value: Record<string, unknown>,
+  common: {
+    id: string
+    title: string
+    hidden?: boolean
+    notes?: string
+  },
+  index: number
+): NextActionsPage {
+  const commitments = value.commitments
+  if (
+    !Array.isArray(commitments) ||
+    commitments.length < 2 ||
+    commitments.length > 4
+  ) {
+    throw new Error(
+      `Invalid week document: pages[${index}].commitments must have 2 to 4 entries`
+    )
+  }
+
+  return {
+    id: common.id,
+    layout: "next-actions",
+    title: common.title,
+    commitments: commitments.map((commitment, commitmentIndex) =>
+      parseCommitment(
+        commitment,
+        `pages[${index}].commitments[${commitmentIndex}]`
+      )
+    ),
+    hidden: common.hidden,
+    notes: common.notes,
+  }
+}
+
 function parseWeekPage(value: unknown, index: number): WeekPage {
   if (!isRecord(value)) {
     throw new Error(`Invalid week document: pages[${index}] must be an object`)
@@ -635,6 +712,10 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
 
   if (layout === "evidence-decision") {
     return parseEvidenceDecisionPage(value, { id, title, hidden, notes }, index)
+  }
+
+  if (layout === "next-actions") {
+    return parseNextActionsPage(value, { id, title, hidden, notes }, index)
   }
 
   if (layout !== "two-column") {

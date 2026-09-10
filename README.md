@@ -24,14 +24,14 @@ Also: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`
 
 Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename).
 
-A disposable layout-family prototype is at `/prototype.html` while `pnpm dev` is running. It is not linked from the workshop. See [Review the layout prototype](docs/how-to/review-layout-prototype.md).
+The disposable layout-family prototype has been retired. Author Weekly Overview, Evidence-backed Decision, and Next Actions from the workshop. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
 
 ## Architecture
 
-| Area                                                | Stack                                                   |
-| --------------------------------------------------- | ------------------------------------------------------- |
-| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                  |
-| 16:9 preview stage                                  | `src/styles/stage.css` tokens — no shadcn on the canvas |
+| Area                                                | Stack                                                                                                       |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                                                                      |
+| 16:9 preview stage                                  | `src/styles/stage.css` tokens, plus `editorial-layouts.css` for Editorial Layouts — no shadcn on the canvas |
 
 ## Language
 

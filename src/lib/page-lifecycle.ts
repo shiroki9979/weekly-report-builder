@@ -8,8 +8,10 @@ import type {
   WeekPage,
   WeeklyOverviewPage,
   EvidenceDecisionPage,
+  NextActionsPage,
 } from "./week-document"
 import { blankMetric } from "./evidence-decision-editor"
+import { blankCommitment } from "./next-actions-editor"
 import { blankOutcome } from "./weekly-overview-editor"
 
 export type AddableTwoColumnPanelKind = "table" | "chart" | "flow" | "checklist"
@@ -122,6 +124,15 @@ export function createBlankEvidenceDecisionPage(
     verdict: "",
     metrics: [blankMetric(), blankMetric()],
     interpretations: ["", ""],
+  }
+}
+
+export function createBlankNextActionsPage(id: string): NextActionsPage {
+  return {
+    id,
+    layout: "next-actions",
+    title: "",
+    commitments: [blankCommitment(), blankCommitment(), blankCommitment()],
   }
 }
 

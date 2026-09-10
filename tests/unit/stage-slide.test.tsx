@@ -8,6 +8,7 @@ import {
   type TwoColumnWeekPage,
   type WeeklyOverviewPage,
   type EvidenceDecisionPage,
+  type NextActionsPage,
 } from "@/lib/week-document"
 
 const weekContext = {
@@ -163,6 +164,39 @@ describe("StageSlide", () => {
     expect(screen.getByText("Candidate")).toBeInTheDocument()
     expect(screen.getByText("9.4 days")).toBeInTheDocument()
     expect(screen.getByText("5.1 days")).toBeInTheDocument()
+  })
+
+  it("renders next-actions commitments with derived numbers", () => {
+    const page: NextActionsPage = {
+      id: "p01",
+      layout: "next-actions",
+      title: "Five-day reviews and a held reserve.",
+      commitments: [
+        {
+          title: "Stabilize the review queue",
+          outcome: "Changes land within five days.",
+          checkpoint: "Median wait ≤ 5 days next Friday.",
+        },
+        {
+          title: "Hold the reserve",
+          outcome: "Use stays below 25%.",
+          checkpoint: "Reserve report signed before the next release.",
+        },
+      ],
+    }
+
+    render(<StageSlide page={page} context={weekContext} />)
+
+    expect(screen.getByText("Next Actions")).toBeInTheDocument()
+    expect(screen.getByText("01")).toBeInTheDocument()
+    expect(screen.getByText("02")).toBeInTheDocument()
+    expect(screen.getByText("Stabilize the review queue")).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Hold the reserve",
+      })
+    ).toBeInTheDocument()
   })
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {

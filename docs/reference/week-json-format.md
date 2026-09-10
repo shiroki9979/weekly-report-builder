@@ -28,13 +28,13 @@ weeks/YYYY-MM-DD/<htmlFile>
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位     | 型別      | 必填 | 說明                                                                     |
-| -------- | --------- | ---- | ------------------------------------------------------------------------ |
-| `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分 |
-| `layout` | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"` 或 `"evidence-decision"`   |
-| `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                 |
-| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                               |
-| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                            |
+| 欄位     | 型別      | 必填 | 說明                                                                                     |
+| -------- | --------- | ---- | ---------------------------------------------------------------------------------------- |
+| `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                 |
+| `layout` | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"` 或 `"next-actions"` |
+| `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                                 |
+| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                               |
+| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                                            |
 
 Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
@@ -110,6 +110,26 @@ Evidence-backed Decision。Eyebrow 固定為 `Evidence-backed Decision`。Baseli
 | `precision`      | `0` \| `1` \| `2`       | 是   |
 
 Clone 時保留 label／unit／format，baseline／candidate 重設為 `null`，清除 verdict 與 interpretations 文字。
+
+### `layout: "next-actions"`
+
+Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順序派生，不寫入 JSON。
+
+| 欄位          | 型別           | 必填 | 說明   |
+| ------------- | -------------- | ---- | ------ |
+| `commitments` | `Commitment[]` | 是   | 2–4 筆 |
+
+新增頁預設三個空白 Commitments。
+
+#### Commitment
+
+| 欄位         | 型別     | 必填 |
+| ------------ | -------- | ---- |
+| `title`      | `string` | 是   |
+| `outcome`    | `string` | 是   |
+| `checkpoint` | `string` | 是   |
+
+Clone 時保留 collection 長度，清除每個 Commitment 的 title／outcome／checkpoint。
 
 ### SlideItem
 
