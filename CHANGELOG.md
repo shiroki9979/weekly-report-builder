@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
 - 可拋棄的 Structured Layout 原型（Weekly Overview、Evidence-backed Decision、Next Actions），獨立入口 `prototype.html`，不接工坊資料與匯出（`src/prototype/`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
 
