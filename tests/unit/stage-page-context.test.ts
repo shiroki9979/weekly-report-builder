@@ -93,4 +93,36 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext(week, "p04").pageLabel).toBe("")
     expect(createStagePageContext(week, "p05").pageLabel).toBe("")
   })
+
+  it("counts weekly-overview pages among supported page positions", () => {
+    const blankOutcome = {
+      workstream: "",
+      figure: "",
+      result: "",
+      impact: "",
+      status: { label: "", tone: "neutral" },
+    }
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "weekly-overview",
+          title: "Overview",
+          lead: blankOutcome,
+          supporting: [blankOutcome],
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Diagram",
+          htmlFile: "p02.html",
+        },
+      ],
+    })
+
+    expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 2")
+    expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 2")
+  })
 })

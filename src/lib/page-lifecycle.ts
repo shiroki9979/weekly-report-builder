@@ -6,7 +6,9 @@ import type {
   TwoColumnWeekPage,
   WeekDocument,
   WeekPage,
+  WeeklyOverviewPage,
 } from "./week-document"
+import { blankOutcome } from "./weekly-overview-editor"
 
 export type AddableTwoColumnPanelKind = "table" | "chart" | "flow" | "checklist"
 
@@ -95,6 +97,16 @@ export function createBlankTwoColumnPage(
     title: "",
     items: blankItems(),
     panel: blankPanel(panelKind),
+  }
+}
+
+export function createBlankWeeklyOverviewPage(id: string): WeeklyOverviewPage {
+  return {
+    id,
+    layout: "weekly-overview",
+    title: "",
+    lead: blankOutcome(),
+    supporting: [blankOutcome(), blankOutcome()],
   }
 }
 

@@ -6,6 +6,7 @@ import {
   parseWeekDocument,
   type HtmlWeekPage,
   type TwoColumnWeekPage,
+  type WeeklyOverviewPage,
 } from "@/lib/week-document"
 
 const weekContext = {
@@ -87,6 +88,50 @@ describe("StageSlide", () => {
     )
 
     expect(screen.getByRole("status")).toHaveTextContent("Hidden")
+  })
+
+  it("renders weekly-overview with the editorial frame context", () => {
+    const page: WeeklyOverviewPage = {
+      id: "p01",
+      layout: "weekly-overview",
+      title: "Delivery recovered, and the week closed with two durable gains.",
+      lead: {
+        workstream: "Delivery",
+        figure: "5 days",
+        result: "Turnaround fell from 9 days to 5.",
+        impact: "Work now finishes in the same week it starts.",
+        status: { label: "On track", tone: "positive" },
+      },
+      supporting: [
+        {
+          workstream: "Accuracy",
+          figure: "1.2%",
+          result: "Faults that reached users dropped to 1.2%.",
+          impact: "Fewer late fixes after something went live.",
+          status: { label: "Improved", tone: "positive" },
+        },
+      ],
+    }
+
+    render(<StageSlide page={page} context={weekContext} />)
+
+    expect(screen.getByText("Weekly Overview")).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Delivery recovered, and the week closed with two durable gains.",
+      })
+    ).toBeInTheDocument()
+    expect(screen.getByText("2026-08-24 — 2026-08-28")).toBeInTheDocument()
+    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+    expect(screen.getByText("Delivery")).toBeInTheDocument()
+    expect(screen.getByText("Accuracy")).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Turnaround fell from 9 days to 5.",
+      })
+    ).toBeInTheDocument()
   })
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {

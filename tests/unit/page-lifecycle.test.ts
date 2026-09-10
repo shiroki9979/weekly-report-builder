@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   addPageAfter,
   createBlankTwoColumnPage,
+  createBlankWeeklyOverviewPage,
   deleteSelectedPage,
   moveSelectedPage,
   nextPageId,
@@ -92,6 +93,27 @@ describe("createBlankTwoColumnPage", () => {
       kind: "checklist",
       title: "",
       items: [{ label: "" }],
+    })
+  })
+})
+
+describe("createBlankWeeklyOverviewPage", () => {
+  it("builds one empty lead and two supporting outcomes with neutral tone", () => {
+    const page = createBlankWeeklyOverviewPage("p05")
+    const blankOutcome = {
+      workstream: "",
+      figure: "",
+      result: "",
+      impact: "",
+      status: { label: "", tone: "neutral" },
+    }
+
+    expect(page).toEqual({
+      id: "p05",
+      layout: "weekly-overview",
+      title: "",
+      lead: blankOutcome,
+      supporting: [blankOutcome, blankOutcome],
     })
   })
 })

@@ -1,6 +1,8 @@
 import {
   isHtmlWeekPage,
   isTwoColumnWeekPage,
+  isWeeklyOverviewPage,
+  type Outcome,
   type Panel,
   type WeekDocument,
   type WeekPage,
@@ -105,6 +107,16 @@ function clearPanel(panel: Panel): Panel {
   }
 }
 
+function clearOutcome(outcome: Outcome): Outcome {
+  return {
+    workstream: outcome.workstream,
+    figure: "",
+    result: "",
+    impact: "",
+    status: { label: "", tone: "neutral" },
+  }
+}
+
 function clearPage(page: WeekPage): WeekPage {
   if (isHtmlWeekPage(page)) {
     return {
@@ -112,6 +124,18 @@ function clearPage(page: WeekPage): WeekPage {
       layout: "html",
       title: "",
       htmlFile: page.htmlFile,
+      hidden: page.hidden,
+      notes: undefined,
+    }
+  }
+
+  if (isWeeklyOverviewPage(page)) {
+    return {
+      id: page.id,
+      layout: "weekly-overview",
+      title: "",
+      lead: clearOutcome(page.lead),
+      supporting: page.supporting.map(clearOutcome),
       hidden: page.hidden,
       notes: undefined,
     }

@@ -4,8 +4,15 @@ import {
   assessContentReadiness,
   assessExportEligibility,
 } from "@/lib/export-readiness"
-import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { TwoColumnWeekPage, UnknownWeekPage } from "@/lib/week-document"
+import {
+  createBlankTwoColumnPage,
+  createBlankWeeklyOverviewPage,
+} from "@/lib/page-lifecycle"
+import type {
+  TwoColumnWeekPage,
+  UnknownWeekPage,
+  WeeklyOverviewPage,
+} from "@/lib/week-document"
 
 function completeTablePage(
   overrides: Partial<TwoColumnWeekPage> = {}
@@ -51,6 +58,55 @@ describe("assessContentReadiness", () => {
       "panel.rows[0].cells[0]",
     ])
     expect(issues.every((issue) => issue.code === "missing-content")).toBe(true)
+  })
+
+  it("lists weekly-overview missing-content issues in schema declaration order", () => {
+    const issues = assessContentReadiness(createBlankWeeklyOverviewPage("p01"))
+
+    expect(issues.map((issue) => issue.path)).toEqual([
+      "title",
+      "lead.workstream",
+      "lead.figure",
+      "lead.result",
+      "lead.impact",
+      "lead.status.label",
+      "supporting[0].workstream",
+      "supporting[0].figure",
+      "supporting[0].result",
+      "supporting[0].impact",
+      "supporting[0].status.label",
+      "supporting[1].workstream",
+      "supporting[1].figure",
+      "supporting[1].result",
+      "supporting[1].impact",
+      "supporting[1].status.label",
+    ])
+  })
+
+  it("treats a filled weekly-overview with neutral tone as complete", () => {
+    const page: WeeklyOverviewPage = {
+      id: "p01",
+      layout: "weekly-overview",
+      title: "Delivery recovered",
+      lead: {
+        workstream: "Delivery",
+        figure: "5 days",
+        result: "Turnaround fell",
+        impact: "Same week",
+        status: { label: "On track", tone: "neutral" },
+      },
+      supporting: [
+        {
+          workstream: "Accuracy",
+          figure: "1.2%",
+          result: "Faults dropped",
+          impact: "Fewer late fixes",
+          status: { label: "Improved", tone: "neutral" },
+        },
+      ],
+    }
+
+    expect(assessContentReadiness(page)).toEqual([])
   })
 
   it("reports rectangular table mismatches as invalid-content", () => {
