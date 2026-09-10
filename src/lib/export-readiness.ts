@@ -1,4 +1,5 @@
 import {
+  isEvidenceDecisionPage,
   isFiniteNonNegative,
   isHtmlWeekPage,
   isStructuredWeekPage,
@@ -8,6 +9,7 @@ import {
   type ChartPanel,
   type ChecklistPanel,
   type FlowPanel,
+  type EvidenceDecisionPage,
   type Outcome,
   type StructuredWeekPage,
   type TablePanel,
@@ -248,6 +250,62 @@ function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
   return issues
 }
 
+function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
+  const issues: ExportIssue[] = []
+
+  if (isBlank(page.title)) {
+    issues.push(missing("title", "Title is required"))
+  }
+  if (isBlank(page.verdict)) {
+    issues.push(missing("verdict", "Verdict is required"))
+  }
+
+  page.metrics.forEach((metric, index) => {
+    if (isBlank(metric.label)) {
+      issues.push(
+        missing(`metrics[${index}].label`, "Metric label is required")
+      )
+    }
+    if (metric.baselineValue === null) {
+      issues.push(
+        missing(`metrics[${index}].baselineValue`, "Baseline value is required")
+      )
+    } else if (!isFiniteNonNegative(metric.baselineValue)) {
+      issues.push(
+        invalid(
+          `metrics[${index}].baselineValue`,
+          "Baseline value must be a finite non-negative number"
+        )
+      )
+    }
+    if (metric.candidateValue === null) {
+      issues.push(
+        missing(
+          `metrics[${index}].candidateValue`,
+          "Candidate value is required"
+        )
+      )
+    } else if (!isFiniteNonNegative(metric.candidateValue)) {
+      issues.push(
+        invalid(
+          `metrics[${index}].candidateValue`,
+          "Candidate value must be a finite non-negative number"
+        )
+      )
+    }
+  })
+
+  page.interpretations.forEach((text, index) => {
+    if (isBlank(text)) {
+      issues.push(
+        missing(`interpretations[${index}]`, "Interpretation is required")
+      )
+    }
+  })
+
+  return issues
+}
+
 export function assessContentReadiness(
   page: StructuredWeekPage
 ): ExportIssue[] {
@@ -257,6 +315,10 @@ export function assessContentReadiness(
 
   if (isWeeklyOverviewPage(page)) {
     return assessWeeklyOverview(page)
+  }
+
+  if (isEvidenceDecisionPage(page)) {
+    return assessEvidenceDecision(page)
   }
 
   return []

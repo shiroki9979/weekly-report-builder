@@ -140,4 +140,24 @@ describe("workshop page lifecycle", () => {
       "true"
     )
   })
+
+  it("adds an evidence-backed decision page and shows its editor", async () => {
+    const user = userEvent.setup()
+    render(<LifecycleHarness />)
+
+    await user.click(screen.getByRole("combobox", { name: "Add page" }))
+    await user.click(
+      screen.getByRole("option", { name: "Evidence-backed Decision" })
+    )
+    await user.click(screen.getByRole("button", { name: "Add page" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Draft page")
+    expect(screen.getByLabelText("Verdict")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Add metric" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Add interpretation" })
+    ).toBeInTheDocument()
+  })
 })

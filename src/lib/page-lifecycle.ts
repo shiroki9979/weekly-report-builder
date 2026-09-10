@@ -7,7 +7,9 @@ import type {
   WeekDocument,
   WeekPage,
   WeeklyOverviewPage,
+  EvidenceDecisionPage,
 } from "./week-document"
+import { blankMetric } from "./evidence-decision-editor"
 import { blankOutcome } from "./weekly-overview-editor"
 
 export type AddableTwoColumnPanelKind = "table" | "chart" | "flow" | "checklist"
@@ -107,6 +109,19 @@ export function createBlankWeeklyOverviewPage(id: string): WeeklyOverviewPage {
     title: "",
     lead: blankOutcome(),
     supporting: [blankOutcome(), blankOutcome()],
+  }
+}
+
+export function createBlankEvidenceDecisionPage(
+  id: string
+): EvidenceDecisionPage {
+  return {
+    id,
+    layout: "evidence-decision",
+    title: "",
+    verdict: "",
+    metrics: [blankMetric(), blankMetric()],
+    interpretations: ["", ""],
   }
 }
 

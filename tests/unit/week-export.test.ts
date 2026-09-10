@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
 
+import { metricBufferKey } from "@/lib/evidence-decision-editor"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
+import {
+  parseWeekDocument,
+  type EvidenceDecisionPage,
+  type WeekDocument,
+} from "@/lib/week-document"
 import {
   exportFileName,
   exportVisiblePages,
@@ -195,5 +200,57 @@ describe("week-export", () => {
     })
 
     expect(renderPage).not.toHaveBeenCalled()
+  })
+
+  it("skips an evidence-decision page with invalid metric drafts and continues", async () => {
+    const decisionPage: EvidenceDecisionPage = {
+      id: "p01",
+      layout: "evidence-decision",
+      title: "Ship the candidate.",
+      verdict: "Adopt the candidate.",
+      metrics: [
+        {
+          label: "Turnaround",
+          baselineValue: 9.4,
+          candidateValue: 5.1,
+          unit: "days",
+          unitPosition: "after",
+          unitSpacing: "space",
+          precision: 1,
+        },
+      ],
+      interpretations: ["The candidate finishes the same week."],
+    }
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [decisionPage, { ...completePage, id: "p02" }],
+    }
+    const downloads: string[] = []
+    const skipped = await exportVisiblePages("2026-08-24", week, {
+      renderPage: async () => document.createElement("div"),
+      capture: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
+      download: (_blob, fileName) => {
+        downloads.push(fileName)
+      },
+      measureCapture: fitMeasure,
+      metricBuffer: {
+        [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
+      },
+    })
+
+    expect(downloads).toEqual(["2026-08-24-p02.png"])
+    expect(skipped).toEqual([
+      {
+        pageId: "p01",
+        issues: [
+          {
+            code: "invalid-content",
+            path: "metrics[0].baselineValue",
+            message: "Metric value must be a finite non-negative number",
+          },
+        ],
+      },
+    ])
   })
 })

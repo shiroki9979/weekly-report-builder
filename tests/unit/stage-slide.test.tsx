@@ -7,6 +7,7 @@ import {
   type HtmlWeekPage,
   type TwoColumnWeekPage,
   type WeeklyOverviewPage,
+  type EvidenceDecisionPage,
 } from "@/lib/week-document"
 
 const weekContext = {
@@ -132,6 +133,36 @@ describe("StageSlide", () => {
         name: "Turnaround fell from 9 days to 5.",
       })
     ).toBeInTheDocument()
+  })
+
+  it("renders evidence-decision Comparison Metrics with fixed Baseline and Candidate labels", () => {
+    const page: EvidenceDecisionPage = {
+      id: "p01",
+      layout: "evidence-decision",
+      title: "Ship the candidate. The baseline is slower.",
+      verdict: "Adopt the candidate.",
+      metrics: [
+        {
+          label: "Turnaround",
+          baselineValue: 9.4,
+          candidateValue: 5.1,
+          unit: "days",
+          unitPosition: "after",
+          unitSpacing: "space",
+          precision: 1,
+        },
+      ],
+      interpretations: ["The candidate finishes the same week."],
+    }
+
+    render(<StageSlide page={page} context={weekContext} />)
+
+    expect(screen.getByText("Evidence-backed Decision")).toBeInTheDocument()
+    expect(screen.getByText("Adopt the candidate.")).toBeInTheDocument()
+    expect(screen.getByText("Baseline")).toBeInTheDocument()
+    expect(screen.getByText("Candidate")).toBeInTheDocument()
+    expect(screen.getByText("9.4 days")).toBeInTheDocument()
+    expect(screen.getByText("5.1 days")).toBeInTheDocument()
   })
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {

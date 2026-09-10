@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
 - Two-column Export Readiness：內容完整性、1280 × 720 overflow 量測與 fail-closed 資格判定；Playwright 使用隔離 weeks 目錄（`src/lib/export-readiness.ts`）。
 - 生產 Weekly Overview Structured Layout：schema、空白工廠、clone、專屬 editor、Editorial Frame renderer 與 Export Readiness（`src/components/stage/weekly-overview-slide.tsx`）。
+- 生產 Evidence-backed Decision Structured Layout：metric formatter、raw numeric buffer、專屬 editor 與 Editorial Frame renderer（`src/lib/metric-format.ts`）。
 
 ### Changed
 
