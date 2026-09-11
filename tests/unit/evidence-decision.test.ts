@@ -5,6 +5,8 @@ import {
   addDecisionMetric,
   assessMetricDraftIssues,
   metricBufferKey,
+  metricDraftPath,
+  parseMetricBufferKey,
   remapMetricBufferAfterMove,
   remapMetricBufferAfterRemove,
   removeDecisionInterpretation,
@@ -299,5 +301,15 @@ describe("evidence-decision clone and readiness", () => {
     expect(remapMetricBufferAfterRemove(buffer, pageId, 0)).toEqual({
       [metricBufferKey(pageId, "metrics[0].baselineValue")]: "abc",
     })
+  })
+
+  it("parses Comparison Metric draft keys into page id and path", () => {
+    const key = metricBufferKey("p01", metricDraftPath(1, "candidateValue"))
+    expect(parseMetricBufferKey(key)).toEqual({
+      pageId: "p01",
+      path: "metrics[1].candidateValue",
+    })
+    expect(parseMetricBufferKey("p01:title")).toBeNull()
+    expect(parseMetricBufferKey("metrics[0].baselineValue")).toBeNull()
   })
 })

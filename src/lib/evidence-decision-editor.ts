@@ -1,5 +1,6 @@
 import type { ExportIssue } from "./export-readiness"
 import { parseMetricInput } from "./metric-format"
+import { updateTypedPage } from "./update-week-page"
 import {
   isEvidenceDecisionPage,
   type ComparisonMetric,
@@ -8,24 +9,42 @@ import {
   type WeekPage,
 } from "./week-document"
 
+export type MetricValueField = "baselineValue" | "candidateValue"
+
+export type MetricDraftPath = `metrics[${number}].${MetricValueField}`
+
 export type MetricDraftBuffer = Record<string, string>
 
-export function metricBufferKey(pageId: string, path: string): string {
+const METRIC_BUFFER_PATH = /^metrics\[(\d+)\]\.(baselineValue|candidateValue)$/
+
+export function metricDraftPath(
+  metricIndex: number,
+  field: MetricValueField
+): MetricDraftPath {
+  return `metrics[${metricIndex}].${field}`
+}
+
+export function isMetricDraftPath(path: string): path is MetricDraftPath {
+  return METRIC_BUFFER_PATH.test(path)
+}
+
+export function metricBufferKey(pageId: string, path: MetricDraftPath): string {
   return `${pageId}:${path}`
 }
 
-function cloneWeek(week: WeekDocument): WeekDocument {
-  return structuredClone(week)
-}
-
-function requireDecision(
-  page: WeekPage,
-  pageIndex: number
-): EvidenceDecisionPage {
-  if (!isEvidenceDecisionPage(page)) {
-    throw new Error(`Page ${pageIndex} is not an evidence-decision page`)
+export function parseMetricBufferKey(
+  key: string
+): { pageId: string; path: MetricDraftPath } | null {
+  const separator = key.indexOf(":")
+  if (separator <= 0) {
+    return null
   }
-  return page
+  const pageId = key.slice(0, separator)
+  const path = key.slice(separator + 1)
+  if (!isMetricDraftPath(path)) {
+    return null
+  }
+  return { pageId, path }
 }
 
 function updateDecision(
@@ -33,13 +52,13 @@ function updateDecision(
   pageIndex: number,
   updater: (page: EvidenceDecisionPage) => EvidenceDecisionPage
 ): WeekDocument {
-  const next = cloneWeek(week)
-  const page = next.pages[pageIndex]
-  if (!page) {
-    throw new Error(`Page index out of range: ${pageIndex}`)
-  }
-  next.pages[pageIndex] = updater(requireDecision(page, pageIndex))
-  return next
+  return updateTypedPage(
+    week,
+    pageIndex,
+    isEvidenceDecisionPage,
+    "an evidence-decision page",
+    updater
+  )
 }
 
 export function blankMetric(): ComparisonMetric {
@@ -171,17 +190,12 @@ export function moveDecisionMetric(
   })
 }
 
-const METRIC_BUFFER_PATH = /^metrics\[(\d+)\]\.(baselineValue|candidateValue)$/
-
-type MetricValueField = "baselineValue" | "candidateValue"
-
 // Move／Remove 只改 week JSON 索引；raw buffer 必須跟著搬，否則非法草稿會黏在舊 path
 function remapMetricValueFields(
   buffer: MetricDraftBuffer,
   pageId: string,
   remapSlots: (slots: (string | undefined)[]) => (string | undefined)[]
 ): MetricDraftBuffer {
-  const prefix = `${pageId}:`
   const drafts: {
     index: number
     field: MetricValueField
@@ -189,10 +203,11 @@ function remapMetricValueFields(
   }[] = []
 
   for (const [key, value] of Object.entries(buffer)) {
-    if (!key.startsWith(prefix)) {
+    const parsed = parseMetricBufferKey(key)
+    if (!parsed || parsed.pageId !== pageId) {
       continue
     }
-    const match = METRIC_BUFFER_PATH.exec(key.slice(prefix.length))
+    const match = METRIC_BUFFER_PATH.exec(parsed.path)
     if (!match) {
       continue
     }
@@ -206,7 +221,7 @@ function remapMetricValueFields(
   const next: MetricDraftBuffer = { ...buffer }
   for (const draft of drafts) {
     delete next[
-      metricBufferKey(pageId, `metrics[${draft.index}].${draft.field}`)
+      metricBufferKey(pageId, metricDraftPath(draft.index, draft.field))
     ]
   }
 
@@ -224,7 +239,7 @@ function remapMetricValueFields(
       if (raw === undefined) {
         return
       }
-      next[metricBufferKey(pageId, `metrics[${index}].${field}`)] = raw
+      next[metricBufferKey(pageId, metricDraftPath(index, field))] = raw
     })
   }
 
@@ -355,7 +370,7 @@ function collectMetricDraftIssues(
   const issues: ExportIssue[] = []
   page.metrics.forEach((_, index) => {
     for (const field of ["baselineValue", "candidateValue"] as const) {
-      const path = `metrics[${index}].${field}`
+      const path = metricDraftPath(index, field)
       const raw = buffer[metricBufferKey(page.id, path)]
       if (raw === undefined) {
         continue

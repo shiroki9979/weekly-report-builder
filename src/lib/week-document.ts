@@ -232,19 +232,47 @@ const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
 ])
 
 export function isSupportedStagePage(page: WeekPage): boolean {
-  if (
-    isHtmlWeekPage(page) ||
-    isWeeklyOverviewPage(page) ||
-    isEvidenceDecisionPage(page) ||
-    isNextActionsPage(page)
-  ) {
-    return true
-  }
+  return matchWeekPage(page, {
+    html: () => true,
+    weeklyOverview: () => true,
+    evidenceDecision: () => true,
+    nextActions: () => true,
+    twoColumn: (twoColumn) =>
+      SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
+    unknown: () => false,
+  })
+}
 
-  return (
-    isTwoColumnWeekPage(page) &&
-    SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(page.panel.kind)
-  )
+type WeekPageMatchers<T> = {
+  html: (page: HtmlWeekPage) => T
+  twoColumn: (page: TwoColumnWeekPage) => T
+  weeklyOverview: (page: WeeklyOverviewPage) => T
+  evidenceDecision: (page: EvidenceDecisionPage) => T
+  nextActions: (page: NextActionsPage) => T
+  unknown: (page: WeekPage) => T
+}
+
+// 各 layout 的分支只在這裡打開一次，preview／editor／clone／readiness 共用同一組 identity
+export function matchWeekPage<T>(
+  page: WeekPage,
+  matchers: WeekPageMatchers<T>
+): T {
+  if (isHtmlWeekPage(page)) {
+    return matchers.html(page)
+  }
+  if (isTwoColumnWeekPage(page)) {
+    return matchers.twoColumn(page)
+  }
+  if (isWeeklyOverviewPage(page)) {
+    return matchers.weeklyOverview(page)
+  }
+  if (isEvidenceDecisionPage(page)) {
+    return matchers.evidenceDecision(page)
+  }
+  if (isNextActionsPage(page)) {
+    return matchers.nextActions(page)
+  }
+  return matchers.unknown(page)
 }
 
 export function isFiniteNonNegative(value: number): boolean {

@@ -85,6 +85,21 @@ export async function exportVisiblePages(
   return skipped
 }
 
+function formatExportIssueReason(issue: ExportIssue): string {
+  const reason =
+    issue.code === "missing-content"
+      ? "Draft Page"
+      : issue.code === "overflow"
+        ? "Overflowing Page"
+        : issue.code === "invalid-content"
+          ? "invalid content"
+          : issue.code === "measurement-failed"
+            ? "measurement failed"
+            : "unsupported"
+
+  return issue.path ? `${issue.path} (${reason})` : reason
+}
+
 export function formatSkippedExportWarning(
   skipped: SkippedExportPage[]
 ): string | null {
@@ -94,11 +109,7 @@ export function formatSkippedExportWarning(
 
   const details = skipped
     .map((entry) => {
-      const reasons = entry.issues
-        .map((issue) =>
-          issue.path ? `${issue.path} (${issue.code})` : issue.code
-        )
-        .join(", ")
+      const reasons = entry.issues.map(formatExportIssueReason).join(", ")
       return `${entry.pageId}: ${reasons}`
     })
     .join("; ")

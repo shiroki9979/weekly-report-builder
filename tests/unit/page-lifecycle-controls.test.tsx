@@ -73,7 +73,7 @@ describe("workshop page lifecycle", () => {
     expect(screen.getByTestId("page-ids")).toHaveTextContent("p01,p03,p02")
     expect(screen.getByTestId("selected-page")).toHaveTextContent("p03")
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Draft page — missing or invalid content"
+      "Draft Page — missing required content"
     )
   })
 
@@ -128,7 +128,7 @@ describe("workshop page lifecycle", () => {
 
     expect(screen.getByTestId("page-ids")).toHaveTextContent("p01,p03,p02")
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Draft page — missing or invalid content"
+      "Draft Page — missing required content"
     )
     expect(screen.getByText("Lead outcome")).toBeInTheDocument()
     expect(
@@ -151,7 +151,7 @@ describe("workshop page lifecycle", () => {
     )
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Draft page")
+    expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
     expect(screen.getByLabelText("Verdict")).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Add metric" })
@@ -169,7 +169,7 @@ describe("workshop page lifecycle", () => {
     await user.click(screen.getByRole("option", { name: "Next Actions" }))
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Draft page")
+    expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
     expect(
       screen.getByRole("button", { name: "Add commitment" })
     ).toBeInTheDocument()

@@ -16,8 +16,5 @@ export function resetE2eWeeks(): void {
   const target = e2eWeeksDir()
   const source = path.resolve(rootDir, "fixtures/weeks")
   fs.rmSync(target, { recursive: true, force: true })
-  fs.mkdirSync(target, { recursive: true })
-  for (const entry of fs.readdirSync(source)) {
-    fs.copyFileSync(path.join(source, entry), path.join(target, entry))
-  }
+  fs.cpSync(source, target, { recursive: true })
 }

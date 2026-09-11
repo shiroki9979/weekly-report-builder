@@ -1,12 +1,9 @@
 import {
-  isEvidenceDecisionPage,
   isFiniteNonNegative,
   isHtmlWeekPage,
-  isNextActionsPage,
   isStructuredWeekPage,
   isSupportedStagePage,
-  isTwoColumnWeekPage,
-  isWeeklyOverviewPage,
+  matchWeekPage,
   type ChartPanel,
   type ChecklistPanel,
   type FlowPanel,
@@ -343,23 +340,14 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
 export function assessContentReadiness(
   page: StructuredWeekPage
 ): ExportIssue[] {
-  if (isTwoColumnWeekPage(page)) {
-    return assessTwoColumn(page)
-  }
-
-  if (isWeeklyOverviewPage(page)) {
-    return assessWeeklyOverview(page)
-  }
-
-  if (isEvidenceDecisionPage(page)) {
-    return assessEvidenceDecision(page)
-  }
-
-  if (isNextActionsPage(page)) {
-    return assessNextActions(page)
-  }
-
-  return []
+  return matchWeekPage(page, {
+    twoColumn: assessTwoColumn,
+    weeklyOverview: assessWeeklyOverview,
+    evidenceDecision: assessEvidenceDecision,
+    nextActions: assessNextActions,
+    html: () => [],
+    unknown: () => [],
+  })
 }
 
 function overflowMessage(axes: ("horizontal" | "vertical")[]): string {

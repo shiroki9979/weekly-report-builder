@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -11,10 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
+import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import { issuePathsFor } from "@/lib/export-readiness"
-import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
 import type {
   StatusTone,
   WeekDocument,
@@ -56,170 +53,137 @@ export function WeeklyOverviewEditorForm({
   const canAddSupporting = page.supporting.length < 3
 
   return (
-    <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
-      <ContentReadinessSummary page={page} />
-      <fieldset
-        disabled={readOnly}
-        className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
-      >
-        <div className="space-y-2">
-          <Label htmlFor="page-title">Title</Label>
-          <Input
-            id="page-title"
-            value={page.title}
-            aria-invalid={invalidPaths.has("title") || undefined}
-            onChange={(event) =>
-              onChange(setPageTitle(week, pageIndex, event.target.value))
-            }
-          />
-        </div>
+    <EditorialPageEditorChrome
+      week={week}
+      pageIndex={pageIndex}
+      page={page}
+      onChange={onChange}
+      readOnly={readOnly}
+      invalidPaths={invalidPaths}
+    >
+      <OutcomeFields
+        idPrefix="lead"
+        legend="Lead outcome"
+        pathPrefix="lead"
+        outcome={page.lead}
+        invalidPaths={invalidPaths}
+        onTextChange={(field, value) =>
+          onChange(setOverviewLeadField(week, pageIndex, field, value))
+        }
+        onStatusChange={(field, value) =>
+          onChange(setOverviewLeadStatus(week, pageIndex, field, value))
+        }
+      />
 
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">Supporting outcomes</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!canAddSupporting}
+          onClick={() => onChange(addSupportingOutcome(week, pageIndex))}
+        >
+          Add supporting outcome
+        </Button>
+      </div>
+
+      {page.supporting.map((outcome, supportingIndex) => (
         <OutcomeFields
-          idPrefix="lead"
-          legend="Lead outcome"
-          pathPrefix="lead"
-          outcome={page.lead}
+          key={supportingIndex}
+          idPrefix={`supporting-${supportingIndex}`}
+          legend={`Supporting outcome ${supportingIndex + 1}`}
+          pathPrefix={`supporting[${supportingIndex}]`}
+          outcome={outcome}
           invalidPaths={invalidPaths}
           onTextChange={(field, value) =>
-            onChange(setOverviewLeadField(week, pageIndex, field, value))
+            onChange(
+              setOverviewSupportingField(
+                week,
+                pageIndex,
+                supportingIndex,
+                field,
+                value
+              )
+            )
           }
           onStatusChange={(field, value) =>
-            onChange(setOverviewLeadStatus(week, pageIndex, field, value))
+            onChange(
+              setOverviewSupportingStatus(
+                week,
+                pageIndex,
+                supportingIndex,
+                field,
+                value
+              )
+            )
+          }
+          toolbar={
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  onChange(makeLead(week, pageIndex, supportingIndex))
+                }
+              >
+                Make lead
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={supportingIndex === 0}
+                onClick={() =>
+                  onChange(
+                    moveSupportingOutcome(
+                      week,
+                      pageIndex,
+                      supportingIndex,
+                      supportingIndex - 1
+                    )
+                  )
+                }
+              >
+                Move up
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={supportingIndex === page.supporting.length - 1}
+                onClick={() =>
+                  onChange(
+                    moveSupportingOutcome(
+                      week,
+                      pageIndex,
+                      supportingIndex,
+                      supportingIndex + 1
+                    )
+                  )
+                }
+              >
+                Move down
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page.supporting.length <= 1}
+                onClick={() =>
+                  onChange(
+                    removeSupportingOutcome(week, pageIndex, supportingIndex)
+                  )
+                }
+              >
+                Remove
+              </Button>
+            </div>
           }
         />
-
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">Supporting outcomes</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!canAddSupporting}
-            onClick={() => onChange(addSupportingOutcome(week, pageIndex))}
-          >
-            Add supporting outcome
-          </Button>
-        </div>
-
-        {page.supporting.map((outcome, supportingIndex) => (
-          <OutcomeFields
-            key={supportingIndex}
-            idPrefix={`supporting-${supportingIndex}`}
-            legend={`Supporting outcome ${supportingIndex + 1}`}
-            pathPrefix={`supporting[${supportingIndex}]`}
-            outcome={outcome}
-            invalidPaths={invalidPaths}
-            onTextChange={(field, value) =>
-              onChange(
-                setOverviewSupportingField(
-                  week,
-                  pageIndex,
-                  supportingIndex,
-                  field,
-                  value
-                )
-              )
-            }
-            onStatusChange={(field, value) =>
-              onChange(
-                setOverviewSupportingStatus(
-                  week,
-                  pageIndex,
-                  supportingIndex,
-                  field,
-                  value
-                )
-              )
-            }
-            toolbar={
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    onChange(makeLead(week, pageIndex, supportingIndex))
-                  }
-                >
-                  Make lead
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={supportingIndex === 0}
-                  onClick={() =>
-                    onChange(
-                      moveSupportingOutcome(
-                        week,
-                        pageIndex,
-                        supportingIndex,
-                        supportingIndex - 1
-                      )
-                    )
-                  }
-                >
-                  Move up
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={supportingIndex === page.supporting.length - 1}
-                  onClick={() =>
-                    onChange(
-                      moveSupportingOutcome(
-                        week,
-                        pageIndex,
-                        supportingIndex,
-                        supportingIndex + 1
-                      )
-                    )
-                  }
-                >
-                  Move down
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page.supporting.length <= 1}
-                  onClick={() =>
-                    onChange(
-                      removeSupportingOutcome(week, pageIndex, supportingIndex)
-                    )
-                  }
-                >
-                  Remove
-                </Button>
-              </div>
-            }
-          />
-        ))}
-
-        <div className="space-y-2">
-          <Label htmlFor="speaker-notes">Speaker notes</Label>
-          <Textarea
-            id="speaker-notes"
-            value={page.notes ?? ""}
-            onChange={(event) =>
-              onChange(setPageNotes(week, pageIndex, event.target.value))
-            }
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="page-hidden"
-            checked={page.hidden ?? false}
-            onCheckedChange={(checked) =>
-              onChange(setPageHidden(week, pageIndex, checked === true))
-            }
-          />
-          <Label htmlFor="page-hidden">Hide page from export</Label>
-        </div>
-      </fieldset>
-    </form>
+      ))}
+    </EditorialPageEditorChrome>
   )
 }
 

@@ -63,7 +63,7 @@ test("adds, saves, and reloads a weekly overview draft", async ({ page }) => {
   await page.getByRole("option", { name: "Weekly Overview" }).click()
   await page.getByRole("button", { name: "Add page" }).click()
 
-  await expect(page.getByRole("alert")).toContainText("Draft page")
+  await expect(page.getByRole("alert")).toContainText("Draft Page")
   await expect(
     page.getByRole("textbox", { name: "Title", exact: true })
   ).toHaveAttribute("aria-invalid", "true")
@@ -106,7 +106,7 @@ test("skips an overflowing weekly overview during batch export", async ({
   await unlockEditor(page)
   await page.getByRole("button", { name: "Download PNGs" }).click()
   const skipped = page.getByRole("status").filter({ hasText: "Skipped pages" })
-  await expect(skipped).toContainText("p04: overflow")
+  await expect(skipped).toContainText("p04: Overflowing Page")
   await expect(skipped).not.toContainText("p01:")
   await expect(skipped).not.toContainText("p02:")
   await expect(skipped).not.toContainText("p03:")

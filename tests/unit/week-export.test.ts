@@ -13,6 +13,7 @@ import {
 import {
   exportFileName,
   exportVisiblePages,
+  formatSkippedExportWarning,
   listExportablePages,
   listSkippedPages,
 } from "@/lib/week-export"
@@ -291,6 +292,39 @@ describe("week-export", () => {
         ["interpretations[0]", "missing-content"],
         ["interpretations[1]", "missing-content"],
       ]
+    )
+  })
+
+  it("names Draft Page and Overflowing Page in skip warnings", () => {
+    expect(
+      formatSkippedExportWarning([
+        {
+          pageId: "p01",
+          issues: [
+            {
+              code: "missing-content",
+              path: "title",
+              message: "Title is required",
+            },
+          ],
+        },
+        {
+          pageId: "p02",
+          issues: [{ code: "overflow", message: "Page overflows" }],
+        },
+        {
+          pageId: "p03",
+          issues: [
+            {
+              code: "invalid-content",
+              path: "metrics[0].baselineValue",
+              message: "Metric value must be a finite non-negative number",
+            },
+          ],
+        },
+      ])
+    ).toBe(
+      "Skipped pages: p01: title (Draft Page); p02: Overflowing Page; p03: metrics[0].baselineValue (invalid content)"
     )
   })
 })
