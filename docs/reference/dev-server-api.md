@@ -1,11 +1,11 @@
 # 開發伺服器 API
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-10
 
 ---
 
-僅在 `pnpm dev` 開發模式下可用。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。
+僅在 `pnpm dev` 開發模式下可用。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。可用環境變數 `WEEKS_DIR` 覆寫 weeks 目錄；Playwright 以此注入測試專用複本，不寫入 production `weeks/`。
 
 ## GET /api/weeks
 

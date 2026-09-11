@@ -1,10 +1,11 @@
 import {
-  isHtmlWeekPage,
-  isTwoColumnWeekPage,
+  matchWeekPage,
+  type Outcome,
   type Panel,
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
+import { blankCommitment } from "./next-actions-editor"
 
 const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -105,31 +106,68 @@ function clearPanel(panel: Panel): Panel {
   }
 }
 
+function clearOutcome(outcome: Outcome): Outcome {
+  return {
+    workstream: outcome.workstream,
+    figure: "",
+    result: "",
+    impact: "",
+    status: { label: "", tone: "neutral" },
+  }
+}
+
 function clearPage(page: WeekPage): WeekPage {
-  if (isHtmlWeekPage(page)) {
-    return {
-      id: page.id,
+  return matchWeekPage(page, {
+    html: (htmlPage) => ({
+      id: htmlPage.id,
       layout: "html",
       title: "",
-      htmlFile: page.htmlFile,
-      hidden: page.hidden,
+      htmlFile: htmlPage.htmlFile,
+      hidden: htmlPage.hidden,
       notes: undefined,
-    }
-  }
-
-  if (!isTwoColumnWeekPage(page)) {
-    return { ...page, title: "", notes: undefined }
-  }
-
-  return {
-    id: page.id,
-    layout: page.layout,
-    title: "",
-    items: page.items.map(() => ({ heading: "", body: "" })),
-    panel: clearPanel(page.panel),
-    hidden: page.hidden,
-    notes: undefined,
-  }
+    }),
+    weeklyOverview: (overview) => ({
+      id: overview.id,
+      layout: "weekly-overview",
+      title: "",
+      lead: clearOutcome(overview.lead),
+      supporting: overview.supporting.map(clearOutcome),
+      hidden: overview.hidden,
+      notes: undefined,
+    }),
+    evidenceDecision: (decision) => ({
+      id: decision.id,
+      layout: "evidence-decision",
+      title: "",
+      verdict: "",
+      metrics: decision.metrics.map((metric) => ({
+        ...metric,
+        baselineValue: null,
+        candidateValue: null,
+      })),
+      interpretations: decision.interpretations.map(() => ""),
+      hidden: decision.hidden,
+      notes: undefined,
+    }),
+    nextActions: (actions) => ({
+      id: actions.id,
+      layout: "next-actions",
+      title: "",
+      commitments: actions.commitments.map(() => blankCommitment()),
+      hidden: actions.hidden,
+      notes: undefined,
+    }),
+    twoColumn: (twoColumn) => ({
+      id: twoColumn.id,
+      layout: twoColumn.layout,
+      title: "",
+      items: twoColumn.items.map(() => ({ heading: "", body: "" })),
+      panel: clearPanel(twoColumn.panel),
+      hidden: twoColumn.hidden,
+      notes: undefined,
+    }),
+    unknown: (unknown) => ({ ...unknown, title: "", notes: undefined }),
+  })
 }
 
 export function cloneWeekFromPrevious(

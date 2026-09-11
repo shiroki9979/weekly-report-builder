@@ -1,0 +1,101 @@
+{
+  "start": "2026-08-10",
+  "end": "2026-08-14",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "evidence-decision",
+      "title": "Ship the candidate. The baseline is slower.",
+      "verdict": "Adopt the candidate.",
+      "metrics": [
+        {
+          "label": "Turnaround",
+          "baselineValue": 9.4,
+          "candidateValue": 5.1,
+          "unit": "days",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 1
+        }
+      ],
+      "interpretations": ["The candidate finishes in the same week."]
+    },
+    {
+      "id": "p02",
+      "layout": "evidence-decision",
+      "title": "採用候選方案。基準較慢且較不穩。",
+      "verdict": "採用候選方案。",
+      "metrics": [
+        {
+          "label": "週轉",
+          "baselineValue": 9.4,
+          "candidateValue": 5.1,
+          "unit": "天",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 1
+        },
+        {
+          "label": "故障",
+          "baselineValue": 2.8,
+          "candidateValue": 1.2,
+          "unit": "%",
+          "unitPosition": "after",
+          "unitSpacing": "none",
+          "precision": 1
+        }
+      ],
+      "interpretations": ["基準無法在當週完成。", "候選方案把故障壓低。"]
+    },
+    {
+      "id": "p03",
+      "layout": "evidence-decision",
+      "title": "Ship the candidate。基準較慢且較不穩。",
+      "verdict": "Adopt the candidate。採用候選方案。",
+      "metrics": [
+        {
+          "label": "Turnaround 週轉",
+          "baselineValue": 9.4,
+          "candidateValue": 5.1,
+          "unit": "days",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 1
+        },
+        {
+          "label": "Faults 故障",
+          "baselineValue": 2.8,
+          "candidateValue": 1.2,
+          "unit": "%",
+          "unitPosition": "after",
+          "unitSpacing": "none",
+          "precision": 1
+        }
+      ],
+      "interpretations": [
+        "The candidate finishes in the same week.",
+        "候選方案把故障壓低。"
+      ]
+    },
+    {
+      "id": "p04",
+      "layout": "evidence-decision",
+      "title": "Overflow decision",
+      "verdict": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "metrics": [
+        {
+          "label": "Wide",
+          "baselineValue": 100,
+          "candidateValue": 1,
+          "unit": "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 0
+        }
+      ],
+      "interpretations": [
+        "This page is intentionally too wide for the 1280 by 720 capture stage."
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-03
+最後更新：2026-09-10
 
 ---
 
@@ -28,13 +28,15 @@ weeks/YYYY-MM-DD/<htmlFile>
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位     | 型別      | 必填 | 說明                                      |
-| -------- | --------- | ---- | ----------------------------------------- |
-| `id`     | `string`  | 是   | 頁面識別，如 `p01`；匯出 PNG 檔名之一部分 |
-| `layout` | `string`  | 是   | `"two-column"` 或 `"html"`                |
-| `title`  | `string`  | 是   | 投影片主標（可為空字串）                  |
-| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                |
-| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage             |
+| 欄位     | 型別      | 必填 | 說明                                                                                     |
+| -------- | --------- | ---- | ---------------------------------------------------------------------------------------- |
+| `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                 |
+| `layout` | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"` 或 `"next-actions"` |
+| `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                                 |
+| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                               |
+| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                                            |
+
+Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### `layout: "two-column"`
 
@@ -52,6 +54,82 @@ weeks/YYYY-MM-DD/<htmlFile>
 | 欄位       | 型別     | 必填 | 說明                                                                                |
 | ---------- | -------- | ---- | ----------------------------------------------------------------------------------- |
 | `htmlFile` | `string` | 是   | 相對該週目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
+
+### `layout: "weekly-overview"`
+
+結論先行的週次總覽。Eyebrow 由 renderer 固定為 `Weekly Overview`，不寫入 JSON。
+
+| 欄位         | 型別        | 必填 | 說明                       |
+| ------------ | ----------- | ---- | -------------------------- |
+| `lead`       | `Outcome`   | 是   | 一個 Lead Outcome          |
+| `supporting` | `Outcome[]` | 是   | 1–3 筆 Supporting Outcomes |
+
+新增頁預設 1 個 Lead 與 2 個 Supporting；文字可為空草稿，tone 預設 `neutral`。Parser 拒絕超出 1–3 的 supporting 數量。
+
+#### Outcome
+
+| 欄位         | 型別           | 必填 |
+| ------------ | -------------- | ---- |
+| `workstream` | `string`       | 是   |
+| `figure`     | `string`       | 是   |
+| `result`     | `string`       | 是   |
+| `impact`     | `string`       | 是   |
+| `status`     | `StatusSignal` | 是   |
+
+#### StatusSignal
+
+| 欄位    | 型別                                       | 必填 |
+| ------- | ------------------------------------------ | ---- |
+| `label` | `string`                                   | 是   |
+| `tone`  | `"positive"` \| `"caution"` \| `"neutral"` | 是   |
+
+Clone 時保留 workstream 與 collection 長度，清除 figure／result／impact／status label，tone 重設為 `neutral`。
+
+### `layout: "evidence-decision"`
+
+Evidence-backed Decision。Eyebrow 固定為 `Evidence-backed Decision`。Baseline／Candidate 標籤由 renderer 產生。
+
+| 欄位              | 型別                 | 必填 | 說明     |
+| ----------------- | -------------------- | ---- | -------- |
+| `verdict`         | `string`             | 是   | 裁決結論 |
+| `metrics`         | `ComparisonMetric[]` | 是   | 1–2 筆   |
+| `interpretations` | `string[]`           | 是   | 1–2 筆   |
+
+新增頁預設兩個 metrics 與兩個 interpretations。數值可為 `null` 草稿。非法非空 metric 輸入會擋 Save／Copy，batch 略過該頁。
+
+#### ComparisonMetric
+
+| 欄位             | 型別                    | 必填 |
+| ---------------- | ----------------------- | ---- |
+| `label`          | `string`                | 是   |
+| `baselineValue`  | `number \| null`        | 是   |
+| `candidateValue` | `number \| null`        | 是   |
+| `unit`           | `string`                | 是   |
+| `unitPosition`   | `"before"` \| `"after"` | 是   |
+| `unitSpacing`    | `"none"` \| `"space"`   | 是   |
+| `precision`      | `0` \| `1` \| `2`       | 是   |
+
+Clone 時保留 label／unit／format，baseline／candidate 重設為 `null`，清除 verdict 與 interpretations 文字。
+
+### `layout: "next-actions"`
+
+Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順序派生，不寫入 JSON。
+
+| 欄位          | 型別           | 必填 | 說明   |
+| ------------- | -------------- | ---- | ------ |
+| `commitments` | `Commitment[]` | 是   | 2–4 筆 |
+
+新增頁預設三個空白 Commitments。
+
+#### Commitment
+
+| 欄位         | 型別     | 必填 |
+| ------------ | -------- | ---- |
+| `title`      | `string` | 是   |
+| `outcome`    | `string` | 是   |
+| `checkpoint` | `string` | 是   |
+
+Clone 時保留 collection 長度，清除每個 Commitment 的 title／outcome／checkpoint。
 
 ### SlideItem
 

@@ -16,7 +16,9 @@ import {
 } from "./server/weeks-store"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-const weeksDir = path.resolve(rootDir, "weeks")
+const weeksDir = path.resolve(
+  process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
+)
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -203,7 +205,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(rootDir, "index.html"),
-        prototype: path.resolve(rootDir, "prototype.html"),
       },
     },
   },
