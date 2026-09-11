@@ -26,11 +26,9 @@ import {
   setTablePanelTitle,
 } from "@/lib/week-editor"
 import {
-  isEvidenceDecisionPage,
-  isHtmlWeekPage,
-  isNextActionsPage,
-  isTwoColumnWeekPage,
-  isWeeklyOverviewPage,
+  matchWeekPage,
+  type HtmlWeekPage,
+  type TwoColumnWeekPage,
   type WeekDocument,
 } from "@/lib/week-document"
 
@@ -53,105 +51,140 @@ export function PageEditorForm({
     return null
   }
 
-  if (isHtmlWeekPage(page)) {
-    return (
-      <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
-        <fieldset
-          disabled={readOnly}
-          className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="page-title">Title</Label>
-            <Input
-              id="page-title"
-              value={page.title}
-              onChange={(event) =>
-                onChange(setPageTitle(week, pageIndex, event.target.value))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="page-html-file">HTML file</Label>
-            <Input
-              id="page-html-file"
-              value={page.htmlFile}
-              onChange={(event) =>
-                onChange(setPageHtmlFile(week, pageIndex, event.target.value))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="speaker-notes">Speaker notes</Label>
-            <Textarea
-              id="speaker-notes"
-              value={page.notes ?? ""}
-              onChange={(event) =>
-                onChange(setPageNotes(week, pageIndex, event.target.value))
-              }
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="page-hidden"
-              checked={page.hidden ?? false}
-              onCheckedChange={(checked) =>
-                onChange(setPageHidden(week, pageIndex, checked === true))
-              }
-            />
-            <Label htmlFor="page-hidden">Hide page from export</Label>
-          </div>
-        </fieldset>
-      </form>
-    )
-  }
-
-  if (isWeeklyOverviewPage(page)) {
-    return (
+  return matchWeekPage(page, {
+    html: (htmlPage) => (
+      <HtmlPageEditorForm
+        week={week}
+        pageIndex={pageIndex}
+        page={htmlPage}
+        onChange={onChange}
+        readOnly={readOnly}
+      />
+    ),
+    weeklyOverview: (overview) => (
       <WeeklyOverviewEditorForm
         week={week}
         pageIndex={pageIndex}
-        page={page}
+        page={overview}
         onChange={onChange}
         readOnly={readOnly}
       />
-    )
-  }
-
-  if (isEvidenceDecisionPage(page)) {
-    return (
+    ),
+    evidenceDecision: (decision) => (
       <EvidenceDecisionEditorForm
         week={week}
         pageIndex={pageIndex}
-        page={page}
+        page={decision}
         onChange={onChange}
         readOnly={readOnly}
       />
-    )
-  }
-
-  if (isNextActionsPage(page)) {
-    return (
+    ),
+    nextActions: (actions) => (
       <NextActionsEditorForm
         week={week}
         pageIndex={pageIndex}
-        page={page}
+        page={actions}
         onChange={onChange}
         readOnly={readOnly}
       />
-    )
-  }
-
-  if (!isTwoColumnWeekPage(page)) {
-    return (
+    ),
+    unknown: () => (
       <p className="text-sm text-muted-foreground" role="status">
         This layout is not editable yet.
       </p>
-    )
-  }
+    ),
+    twoColumn: (twoColumn) => (
+      <TwoColumnPageEditorForm
+        week={week}
+        pageIndex={pageIndex}
+        page={twoColumn}
+        onChange={onChange}
+        readOnly={readOnly}
+      />
+    ),
+  })
+}
 
+function HtmlPageEditorForm({
+  week,
+  pageIndex,
+  page,
+  onChange,
+  readOnly,
+}: {
+  week: WeekDocument
+  pageIndex: number
+  page: HtmlWeekPage
+  onChange: (week: WeekDocument) => void
+  readOnly: boolean
+}) {
+  return (
+    <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
+      <fieldset
+        disabled={readOnly}
+        className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
+      >
+        <div className="space-y-2">
+          <Label htmlFor="page-title">Title</Label>
+          <Input
+            id="page-title"
+            value={page.title}
+            onChange={(event) =>
+              onChange(setPageTitle(week, pageIndex, event.target.value))
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="page-html-file">HTML file</Label>
+          <Input
+            id="page-html-file"
+            value={page.htmlFile}
+            onChange={(event) =>
+              onChange(setPageHtmlFile(week, pageIndex, event.target.value))
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="speaker-notes">Speaker notes</Label>
+          <Textarea
+            id="speaker-notes"
+            value={page.notes ?? ""}
+            onChange={(event) =>
+              onChange(setPageNotes(week, pageIndex, event.target.value))
+            }
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="page-hidden"
+            checked={page.hidden ?? false}
+            onCheckedChange={(checked) =>
+              onChange(setPageHidden(week, pageIndex, checked === true))
+            }
+          />
+          <Label htmlFor="page-hidden">Hide page from export</Label>
+        </div>
+      </fieldset>
+    </form>
+  )
+}
+
+function TwoColumnPageEditorForm({
+  week,
+  pageIndex,
+  page,
+  onChange,
+  readOnly,
+}: {
+  week: WeekDocument
+  pageIndex: number
+  page: TwoColumnWeekPage
+  onChange: (week: WeekDocument) => void
+  readOnly: boolean
+}) {
   const panel = page.panel
   const invalidPaths = issuePathsFor(page)
 

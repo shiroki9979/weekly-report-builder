@@ -3,35 +3,21 @@ import {
   type Commitment,
   type NextActionsPage,
   type WeekDocument,
-  type WeekPage,
 } from "./week-document"
-
-function cloneWeek(week: WeekDocument): WeekDocument {
-  return structuredClone(week)
-}
-
-function requireNextActions(
-  page: WeekPage,
-  pageIndex: number
-): NextActionsPage {
-  if (!isNextActionsPage(page)) {
-    throw new Error(`Page ${pageIndex} is not a next-actions page`)
-  }
-  return page
-}
+import { updateTypedPage } from "./update-week-page"
 
 function updateNextActions(
   week: WeekDocument,
   pageIndex: number,
   updater: (page: NextActionsPage) => NextActionsPage
 ): WeekDocument {
-  const next = cloneWeek(week)
-  const page = next.pages[pageIndex]
-  if (!page) {
-    throw new Error(`Page index out of range: ${pageIndex}`)
-  }
-  next.pages[pageIndex] = updater(requireNextActions(page, pageIndex))
-  return next
+  return updateTypedPage(
+    week,
+    pageIndex,
+    isNextActionsPage,
+    "a next-actions page",
+    updater
+  )
 }
 
 export function blankCommitment(): Commitment {

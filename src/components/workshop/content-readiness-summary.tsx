@@ -1,4 +1,5 @@
 import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import { contentReadinessHeading } from "@/lib/content-readiness-copy"
 import { assessStructuredContentIssues } from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
@@ -26,9 +27,7 @@ export function ContentReadinessSummary({
       aria-live="polite"
       className="space-y-2 rounded-md border p-3"
     >
-      <p className="text-sm font-medium">
-        Draft page — missing or invalid content
-      </p>
+      <p className="text-sm font-medium">{contentReadinessHeading(issues)}</p>
       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
         {issues.map((issue) => (
           <li key={`${issue.code}:${issue.path ?? issue.message}`}>

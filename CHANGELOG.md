@@ -10,27 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
-- 可拋棄的 Structured Layout 原型（Weekly Overview、Evidence-backed Decision、Next Actions），獨立入口 `prototype.html`，不接工坊資料與匯出（`src/prototype/`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
-- Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
+- Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft Page 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
 - Two-column Export Readiness：內容完整性、1280 × 720 overflow 量測與 fail-closed 資格判定；Playwright 使用隔離 weeks 目錄（`src/lib/export-readiness.ts`）。
 - 生產 Weekly Overview Structured Layout：schema、空白工廠、clone、專屬 editor、Editorial Frame renderer 與 Export Readiness（`src/components/stage/weekly-overview-slide.tsx`）。
 - 生產 Evidence-backed Decision Structured Layout：metric formatter、raw numeric buffer、專屬 editor 與 Editorial Frame renderer（`src/lib/metric-format.ts`）。
 - 生產 Next Actions Structured Layout：2–4 個 Commitment、派生編號、專屬 editor 與 Editorial Frame renderer（`src/components/stage/next-actions-slide.tsx`）。
 - HTML Page error-PNG 後續規格：盤點 Preview／Copy／batch 對 fetch、消毒、timeout 與 capture 失敗的現況，並提出待 triage 的政策（`docs/specs/html-page-error-png.md`）。
+- 隔離 Playwright 覆蓋 HTML Page 的 preview／Copy／batch／clone，以及 Delete dialog、鍵盤焦點與 800 × 450 wrapping。
 
 ### Changed
 
-- 原型狀態小字改用對比達標的 `--ok-ink`／`--warn-ink`；成果改 `h2`、頁碼改 `footer`。
+- 工坊就緒摘要與批次略過原因改用 Draft Page／Overflowing Page，不以 invalid page 稱呼 Draft Page。
+- Editorial Layout Family 編輯器共用 week-page updater 與 Title／notes／Hide chrome；preview／editor／clone／readiness／Add page 共用 `matchWeekPage`。
+- Comparison Metric raw draft 以具名 path 型別鍵入，Move／Remove 仍重對 buffer。
 
 ### Fixed
 
 - Copy／批次匯出改由單一 Export Readiness 入口合併非法 metric draft；Move／Remove comparison metric 時 raw buffer 會跟著重對路徑（`src/lib/export-readiness.ts`）。
-- 修正 Gallery 預覽控制的 HTML 語意，並提高 Gallery 標籤與返回按鈕的文字對比（`src/prototype/`）。
-
-### Removed
-
-- 獨立 layout 原型入口 `prototype.html`、Vite 第二入口與 `src/prototype/` runtime／tests。
 
 ## [0.1.0] - 2026-09-04
 

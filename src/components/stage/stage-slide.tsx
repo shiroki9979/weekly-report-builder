@@ -7,14 +7,7 @@ import {
   mondayFromWeekLabel,
   type StagePageContext,
 } from "@/lib/stage-page-context"
-import {
-  isEvidenceDecisionPage,
-  isHtmlWeekPage,
-  isNextActionsPage,
-  isTwoColumnWeekPage,
-  isWeeklyOverviewPage,
-  type WeekPage,
-} from "@/lib/week-document"
+import { matchWeekPage, type WeekPage } from "@/lib/week-document"
 
 export type StageSlideProps = {
   page: WeekPage
@@ -36,21 +29,26 @@ export function StageSlide({
           Hidden
         </p>
       ) : null}
-      {isHtmlWeekPage(page) ? (
-        <HtmlSlide page={page} monday={monday} isCapture={isCapture} />
-      ) : isTwoColumnWeekPage(page) ? (
-        <TwoColumnSlide page={page} />
-      ) : isWeeklyOverviewPage(page) ? (
-        <WeeklyOverviewSlide page={page} context={context} />
-      ) : isEvidenceDecisionPage(page) ? (
-        <EvidenceDecisionSlide page={page} context={context} />
-      ) : isNextActionsPage(page) ? (
-        <NextActionsSlide page={page} context={context} />
-      ) : (
-        <div className="stage-warning" role="status">
-          Unknown layout: {page.layout}
-        </div>
-      )}
+      {matchWeekPage(page, {
+        html: (htmlPage) => (
+          <HtmlSlide page={htmlPage} monday={monday} isCapture={isCapture} />
+        ),
+        twoColumn: (twoColumn) => <TwoColumnSlide page={twoColumn} />,
+        weeklyOverview: (overview) => (
+          <WeeklyOverviewSlide page={overview} context={context} />
+        ),
+        evidenceDecision: (decision) => (
+          <EvidenceDecisionSlide page={decision} context={context} />
+        ),
+        nextActions: (actions) => (
+          <NextActionsSlide page={actions} context={context} />
+        ),
+        unknown: (unknown) => (
+          <div className="stage-warning" role="status">
+            Unknown layout: {unknown.layout}
+          </div>
+        ),
+      })}
     </div>
   )
 }

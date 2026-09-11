@@ -5,7 +5,7 @@
 
 ---
 
-在 Workshop 新增、編輯與匯出 Weekly Overview、Evidence-backed Decision 與 Next Actions。這三種頁面共用 Editorial Frame（eyebrow、headline、Week Label、Page Position），並走與 Two-column 相同的 Save／Copy／batch 規則。
+在 Workshop 新增、編輯與匯出 Weekly Overview、Evidence-backed Decision 與 Next Actions。Editorial Layout Family 共用 Editorial Frame（eyebrow、headline、Week Label、Page Position），並走與 Two-column 相同的 Save／Copy／batch 規則。
 
 ## 新增
 
@@ -13,7 +13,7 @@
 2. 在 **Add page** 選擇 **Weekly Overview**、**Evidence-backed Decision** 或 **Next Actions**
 3. 點 **Add page**
 
-新頁插在目前選取頁之後。內容為空白 Draft，可 Save，但填完前不能 Copy 或進入批次匯出。
+新頁插在目前選取頁之後。內容為空白 Draft Page，可 Save，但填完前不能 Copy 或進入批次匯出。
 
 ## 編輯
 

@@ -11,13 +11,11 @@ import {
 } from "@/components/ui/select"
 import {
   addPageAfter,
-  createBlankEvidenceDecisionPage,
-  createBlankNextActionsPage,
-  createBlankTwoColumnPage,
-  createBlankWeeklyOverviewPage,
+  createBlankAddablePage,
   deleteSelectedPage,
   moveSelectedPage,
   nextPageId,
+  type AddableLayout,
   type AddableTwoColumnPanelKind,
   type PageLifecycleResult,
 } from "@/lib/page-lifecycle"
@@ -29,9 +27,6 @@ type PageLifecycleControlsProps = {
   onChange: (result: PageLifecycleResult) => void
   disabled?: boolean
 }
-
-type AddableLayout =
-  "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
 
 const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
   { value: "table", label: "Table" },
@@ -154,15 +149,13 @@ export function PageLifecycleControls({
             disabled={disabled}
             onClick={() => {
               const id = nextPageId(week.pages.map((page) => page.id))
-              const page =
-                layout === "weekly-overview"
-                  ? createBlankWeeklyOverviewPage(id)
-                  : layout === "evidence-decision"
-                    ? createBlankEvidenceDecisionPage(id)
-                    : layout === "next-actions"
-                      ? createBlankNextActionsPage(id)
-                      : createBlankTwoColumnPage(id, panelKind)
-              onChange(addPageAfter(week, selectedPageId, page))
+              onChange(
+                addPageAfter(
+                  week,
+                  selectedPageId,
+                  createBlankAddablePage(id, layout, panelKind)
+                )
+              )
             }}
           >
             Add page

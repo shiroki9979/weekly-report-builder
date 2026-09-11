@@ -136,6 +136,26 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
   }
 }
 
+export type AddableLayout =
+  "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
+
+export function createBlankAddablePage(
+  id: string,
+  layout: AddableLayout,
+  panelKind: AddableTwoColumnPanelKind
+): WeekPage {
+  switch (layout) {
+    case "weekly-overview":
+      return createBlankWeeklyOverviewPage(id)
+    case "evidence-decision":
+      return createBlankEvidenceDecisionPage(id)
+    case "next-actions":
+      return createBlankNextActionsPage(id)
+    case "two-column":
+      return createBlankTwoColumnPage(id, panelKind)
+  }
+}
+
 function requirePageIndex(week: WeekDocument, pageId: string): number {
   const index = week.pages.findIndex((page) => page.id === pageId)
   if (index === -1) {

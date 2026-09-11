@@ -16,7 +16,7 @@ test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
 
   await unlockEditor(page)
   await page.getByRole("button", { name: "Add page" }).click()
-  await expect(page.getByRole("alert")).toContainText("Draft page")
+  await expect(page.getByRole("alert")).toContainText("Draft Page")
 
   await page
     .getByRole("textbox", { name: "Title", exact: true })
@@ -49,7 +49,7 @@ test("blocks copy of a draft page and skips overflow during batch export", async
   await page.getByRole("button", { name: "Download PNGs" }).click()
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
-  ).toContainText("p02: overflow")
+  ).toContainText("p02: Overflowing Page")
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
   ).toContainText("p03:")

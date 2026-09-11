@@ -1,9 +1,5 @@
 import {
-  isEvidenceDecisionPage,
-  isHtmlWeekPage,
-  isNextActionsPage,
-  isTwoColumnWeekPage,
-  isWeeklyOverviewPage,
+  matchWeekPage,
   type Outcome,
   type Panel,
   type WeekDocument,
@@ -121,70 +117,57 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: WeekPage): WeekPage {
-  if (isHtmlWeekPage(page)) {
-    return {
-      id: page.id,
+  return matchWeekPage(page, {
+    html: (htmlPage) => ({
+      id: htmlPage.id,
       layout: "html",
       title: "",
-      htmlFile: page.htmlFile,
-      hidden: page.hidden,
+      htmlFile: htmlPage.htmlFile,
+      hidden: htmlPage.hidden,
       notes: undefined,
-    }
-  }
-
-  if (isWeeklyOverviewPage(page)) {
-    return {
-      id: page.id,
+    }),
+    weeklyOverview: (overview) => ({
+      id: overview.id,
       layout: "weekly-overview",
       title: "",
-      lead: clearOutcome(page.lead),
-      supporting: page.supporting.map(clearOutcome),
-      hidden: page.hidden,
+      lead: clearOutcome(overview.lead),
+      supporting: overview.supporting.map(clearOutcome),
+      hidden: overview.hidden,
       notes: undefined,
-    }
-  }
-
-  if (isEvidenceDecisionPage(page)) {
-    return {
-      id: page.id,
+    }),
+    evidenceDecision: (decision) => ({
+      id: decision.id,
       layout: "evidence-decision",
       title: "",
       verdict: "",
-      metrics: page.metrics.map((metric) => ({
+      metrics: decision.metrics.map((metric) => ({
         ...metric,
         baselineValue: null,
         candidateValue: null,
       })),
-      interpretations: page.interpretations.map(() => ""),
-      hidden: page.hidden,
+      interpretations: decision.interpretations.map(() => ""),
+      hidden: decision.hidden,
       notes: undefined,
-    }
-  }
-
-  if (isNextActionsPage(page)) {
-    return {
-      id: page.id,
+    }),
+    nextActions: (actions) => ({
+      id: actions.id,
       layout: "next-actions",
       title: "",
-      commitments: page.commitments.map(() => blankCommitment()),
-      hidden: page.hidden,
+      commitments: actions.commitments.map(() => blankCommitment()),
+      hidden: actions.hidden,
       notes: undefined,
-    }
-  }
-
-  if (!isTwoColumnWeekPage(page)) {
-    return { ...page, title: "", notes: undefined }
-  }
-
-  return {
-    id: page.id,
-    layout: page.layout,
-    title: "",
-    items: page.items.map(() => ({ heading: "", body: "" })),
-    panel: clearPanel(page.panel),
-    hidden: page.hidden,
-    notes: undefined,
-  }
+    }),
+    twoColumn: (twoColumn) => ({
+      id: twoColumn.id,
+      layout: twoColumn.layout,
+      title: "",
+      items: twoColumn.items.map(() => ({ heading: "", body: "" })),
+      panel: clearPanel(twoColumn.panel),
+      hidden: twoColumn.hidden,
+      notes: undefined,
+    }),
+    unknown: (unknown) => ({ ...unknown, title: "", notes: undefined }),
+  })
 }
 
 export function cloneWeekFromPrevious(

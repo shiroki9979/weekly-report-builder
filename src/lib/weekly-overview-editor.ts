@@ -3,43 +3,27 @@ import {
   type Outcome,
   type StatusTone,
   type WeekDocument,
-  type WeekPage,
   type WeeklyOverviewPage,
 } from "./week-document"
+import { updateTypedPage } from "./update-week-page"
 
 type OutcomeTextField = "workstream" | "figure" | "result" | "impact"
 type StatusField = "label" | "tone"
 
 const STATUS_TONES = new Set<StatusTone>(["positive", "caution", "neutral"])
 
-function cloneWeek(week: WeekDocument): WeekDocument {
-  return structuredClone(week)
-}
-
-function requireOverview(
-  page: WeekPage,
-  pageIndex: number
-): WeeklyOverviewPage {
-  if (!isWeeklyOverviewPage(page)) {
-    throw new Error(`Page ${pageIndex} is not a weekly-overview page`)
-  }
-
-  return page
-}
-
 function updateOverview(
   week: WeekDocument,
   pageIndex: number,
   updater: (page: WeeklyOverviewPage) => WeeklyOverviewPage
 ): WeekDocument {
-  const next = cloneWeek(week)
-  const page = next.pages[pageIndex]
-  if (!page) {
-    throw new Error(`Page index out of range: ${pageIndex}`)
-  }
-
-  next.pages[pageIndex] = updater(requireOverview(page, pageIndex))
-  return next
+  return updateTypedPage(
+    week,
+    pageIndex,
+    isWeeklyOverviewPage,
+    "a weekly-overview page",
+    updater
+  )
 }
 
 export function blankOutcome(): Outcome {

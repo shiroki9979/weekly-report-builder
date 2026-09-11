@@ -60,7 +60,7 @@ test("adds, saves, and reloads a next-actions draft", async ({ page }) => {
   await page.getByRole("combobox", { name: "Add page" }).click()
   await page.getByRole("option", { name: "Next Actions" }).click()
   await page.getByRole("button", { name: "Add page" }).click()
-  await expect(page.getByRole("alert")).toContainText("Draft page")
+  await expect(page.getByRole("alert")).toContainText("Draft Page")
   await expect(page.getByRole("button", { name: "Remove" })).toHaveCount(3)
 
   await page.getByRole("button", { name: "Add commitment" }).click()
@@ -100,7 +100,7 @@ test("skips an overflowing next-actions page during batch export", async ({
   await unlockEditor(page)
   await page.getByRole("button", { name: "Download PNGs" }).click()
   const skipped = page.getByRole("status").filter({ hasText: "Skipped pages" })
-  await expect(skipped).toContainText("p04: overflow")
+  await expect(skipped).toContainText("p04: Overflowing Page")
   await expect(skipped).not.toContainText("p01:")
   await expect(skipped).not.toContainText("p02:")
   await expect(skipped).not.toContainText("p03:")
