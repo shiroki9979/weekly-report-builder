@@ -3,20 +3,21 @@ import type { RefObject } from "react"
 import { StageFrame } from "@/components/stage/stage-frame"
 import { StageSlide } from "@/components/stage/stage-slide"
 import { Button } from "@/components/ui/button"
-import type { WeekPage } from "@/lib/week-document"
+import { createStagePageContext } from "@/lib/stage-page-context"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 type StageCaptureHostProps = {
   page: WeekPage | null
-  monday: string
+  week: WeekDocument | null
   hostRef: RefObject<HTMLDivElement | null>
 }
 
 export function StageCaptureHost({
   page,
-  monday,
+  week,
   hostRef,
 }: StageCaptureHostProps) {
-  if (!page) {
+  if (!page || !week) {
     return null
   }
 
@@ -29,7 +30,11 @@ export function StageCaptureHost({
     >
       <div className="w-[1280px]">
         <StageFrame>
-          <StageSlide page={page} monday={monday} isCapture />
+          <StageSlide
+            page={page}
+            context={createStagePageContext(week, page.id)}
+            isCapture
+          />
         </StageFrame>
       </div>
     </div>

@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-09-10
+最後更新：2026-09-11
 
 ## Tutorials（入門教學）
 
@@ -17,13 +17,14 @@
 
 假設已會基本操作，針對特定任務給步驟。
 
-| 文件                                                        | 說明                          |
-| ----------------------------------------------------------- | ----------------------------- |
-| [建立新週次](how-to/create-new-week.md)                     | 自上一週 clone 結構並建立新檔 |
-| [編輯並儲存週次](how-to/edit-and-save-a-week.md)            | 修改頁面內容並寫回 JSON       |
-| [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md) | 批次下載或複製到剪貼簿        |
-| [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)      | 保留編輯但略過 PNG 匯出       |
-| [檢視 layout 原型](how-to/review-layout-prototype.md)       | 開啟獨立 16:9 layout 家族原型 |
+| 文件                                                           | 說明                               |
+| -------------------------------------------------------------- | ---------------------------------- |
+| [建立新週次](how-to/create-new-week.md)                        | 自上一週 clone 結構並建立新檔      |
+| [編輯並儲存週次](how-to/edit-and-save-a-week.md)               | 修改頁面內容並寫回 JSON            |
+| [新增、刪除與重排頁面](how-to/add-delete-reorder-pages.md)     | Workshop 頁面生命週期操作          |
+| [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md)    | 批次下載或複製到剪貼簿             |
+| [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)         | 保留編輯但略過 PNG 匯出            |
+| [Author Editorial Layouts](how-to/author-editorial-layouts.md) | 新增與編輯 Editorial Layout Family |
 
 ## Reference（規格手冊）
 
@@ -39,19 +40,27 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                               | 說明                                 |
-| -------------------------------------------------- | ------------------------------------ |
-| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流         |
-| [Layout 家族原型](explanation/layout-prototype.md) | 可拋棄原型的隔離範圍、限制與驗證結果 |
+| 文件                                               | 說明                                           |
+| -------------------------------------------------- | ---------------------------------------------- |
+| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流                   |
+| [Layout 家族原型](explanation/layout-prototype.md) | 歷史 800 × 450 驗證與 production adoption 指標 |
 
 ## Specs（尚未落地的功能規格）
 
 給實作 agent 的完整規格。
 
-| 文件                                                                            | 說明                                   |
-| ------------------------------------------------------------------------------- | -------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)                                        | `layout: "html"` 16:9 逃生口           |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | 三種溝通職能 layout 的 production 規格 |
+| 文件                                                | 說明                                              |
+| --------------------------------------------------- | ------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)            | `layout: "html"` 16:9 逃生口                      |
+| [HTML Page error-PNG](specs/html-page-error-png.md) | HTML fetch／timeout／capture 失敗政策（尚未實作） |
+
+## Specs（已落地）
+
+已實作、仍作為 layout 規則來源的規格。
+
+| 文件                                                                            | 說明                                       |
+| ------------------------------------------------------------------------------- | ------------------------------------------ |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | Editorial Layout Family 的 production 規格 |
 
 ## 其他
 

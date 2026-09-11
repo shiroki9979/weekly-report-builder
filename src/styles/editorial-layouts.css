@@ -1,169 +1,21 @@
-/* 原型殼不用 shadcn。token 與 stage.css 相同：殼層不在 .stage-root 內，必須自行宣告 */
-html,
-body,
-#root {
-  margin: 0;
-  min-height: 100%;
-}
-
-.proto-shell {
-  --blue: #2e75b6;
-  --blue-deep: #1f5a8f;
-  --blue-soft: #c5d9ed;
-  --blue-wash: #eef4fa;
-  --ink: #2d2d2d;
-  --mute: #5c5c5c;
-  --line: #d0d7de;
-  --ok: #2f9e6b;
-  --ok-wash: #e6f6ee;
-  --warn: #c47b16;
+/* 生產 Editorial Layout 專用；只掛在 Stage，不引入 shadcn */
+.stage-root {
   --ok-ink: #1f7a52;
   --warn-ink: #8a5508;
-  --paper: #ffffff;
-
-  box-sizing: border-box;
-  min-height: 100vh;
-  background: #f3f6f8;
-  color: var(--ink);
-  font-family: Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 
-.proto-shell *,
-.proto-shell *::before,
-.proto-shell *::after {
-  box-sizing: inherit;
-}
-
-.proto-shell-header,
-.proto-focus {
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: 1.75rem 1.5rem 1rem;
-}
-
-.proto-shell-header h1 {
-  margin: 0 0 0.65rem;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--blue-deep);
-  letter-spacing: 0.01em;
-}
-
-.proto-limitations {
-  max-width: 42rem;
-  margin: 0 0 1.25rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: var(--mute);
-}
-
-.proto-gallery {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.75rem;
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: 0 1.5rem 3rem;
-}
-
-@media (min-width: 960px) {
-  .proto-gallery {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
-
-.proto-preview {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  color: inherit;
-  text-align: left;
-}
-
-.proto-preview-action {
-  appearance: none;
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.proto-preview-action:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 6px;
-}
-
-.proto-preview-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--blue-deep);
-}
-
-/* 縮圖以 800×450 實尺等比縮放，避免 clamp 下限讓小預覽裁切內文 */
-.proto-preview-stage {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  container-type: inline-size;
-}
-
-.proto-preview-stage .stage-root {
-  width: 800px;
-  height: 450px;
-  aspect-ratio: auto;
-  transform: scale(calc(100cqw / 800px));
-  transform-origin: top left;
-}
-
-.proto-back {
-  appearance: none;
-  display: inline-block;
-  margin: 0 0 0.85rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--blue-deep);
-  cursor: pointer;
-}
-
-.proto-back:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 4px;
-}
-
-.proto-focus .stage-root {
-  max-width: 50rem;
-}
-
-.proto-page {
+.editorial-page {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 4.4% 5% 3.2%;
 }
 
-.proto-header {
+.editorial-header {
   flex: none;
 }
 
-.proto-meta {
+.editorial-meta {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -171,7 +23,7 @@ body,
   margin-bottom: 1.1%;
 }
 
-.proto-eyebrow {
+.editorial-eyebrow {
   margin: 0;
   font-size: clamp(8px, 1.05cqw, 14px);
   font-weight: 700;
@@ -180,13 +32,13 @@ body,
   color: var(--blue);
 }
 
-.proto-week {
+.editorial-week {
   margin: 0;
   font-size: clamp(8px, 1cqw, 13px);
   color: var(--mute);
 }
 
-.proto-headline {
+.editorial-headline {
   margin: 0;
   max-width: 94%;
   font-size: clamp(16px, 3.15cqw, 40px);
@@ -195,7 +47,7 @@ body,
   color: var(--blue-deep);
 }
 
-.proto-rule {
+.editorial-rule {
   flex: none;
   width: 100%;
   height: 0;
@@ -204,12 +56,14 @@ body,
   border-top: 1px solid var(--line);
 }
 
-.proto-body {
+.editorial-body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
 }
 
-.proto-page-number {
+.editorial-page-number {
   flex: none;
   margin: 1.4% 0 0;
   font-size: clamp(8px, 1cqw, 13px);
@@ -218,16 +72,15 @@ body,
   text-align: right;
 }
 
-.proto-overview {
+.editorial-overview {
   display: grid;
+  flex: 1;
   grid-template-columns: 1.38fr 0.9fr;
-  grid-template-rows: 1fr 1fr;
   gap: 0 4.5%;
-  height: 100%;
+  min-height: 0;
 }
 
-.proto-lead {
-  grid-row: 1 / 3;
+.editorial-lead {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -235,18 +88,26 @@ body,
   background: var(--blue-wash);
 }
 
-.proto-support {
+.editorial-supporting {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 4% 0 4% 1%;
+  min-height: 0;
 }
 
-.proto-support + .proto-support {
+.editorial-support {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding: 2% 0 2% 1%;
+}
+
+.editorial-support + .editorial-support {
   border-top: 1px solid var(--line);
 }
 
-.proto-workstream {
+.editorial-workstream {
   margin: 0 0 0.35em;
   font-size: clamp(8px, 0.95cqw, 12px);
   font-weight: 700;
@@ -255,21 +116,25 @@ body,
   color: var(--mute);
 }
 
-.proto-figure {
+.editorial-figure {
   margin: 0 0 0.2em;
-  font-size: clamp(16px, 2.4cqw, 30px);
+  font-size: clamp(14px, 2cqw, 24px);
   font-weight: 700;
   line-height: 1.05;
   color: var(--ink);
 }
 
-.proto-lead .proto-figure {
+.editorial-lead .editorial-figure {
   font-size: clamp(28px, 5.4cqw, 68px);
   color: var(--blue-deep);
   margin-bottom: 0.22em;
 }
 
-.proto-result {
+.editorial-supporting:has(.editorial-support:nth-child(3)) .editorial-figure {
+  font-size: clamp(12px, 1.6cqw, 20px);
+}
+
+.editorial-result {
   margin: 0;
   font-size: clamp(11px, 1.55cqw, 20px);
   font-weight: 700;
@@ -277,36 +142,43 @@ body,
   color: var(--ink);
 }
 
-.proto-lead .proto-result {
+.editorial-lead .editorial-result {
   font-size: clamp(12px, 1.7cqw, 22px);
 }
 
-.proto-impact {
+.editorial-supporting:has(.editorial-support:nth-child(3)) .editorial-result {
+  font-size: clamp(10px, 1.3cqw, 16px);
+}
+
+.editorial-impact {
   margin: 0.35em 0 0;
   font-size: clamp(10px, 1.35cqw, 18px);
   line-height: 1.35;
   color: var(--mute);
 }
 
-.proto-status {
-  margin: 0.7em 0 0;
+.editorial-status {
+  margin: 0.4em 0 0;
   font-size: clamp(8px, 1cqw, 13px);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.proto-status.is-on-track,
-.proto-status.is-improved {
-  /* Stage --ok 在小字上未達 4.5:1；原型只用 --ok-ink，不改生產 token */
+.editorial-status.is-positive {
   color: var(--ok-ink);
 }
 
-.proto-status.is-watch {
+.editorial-status.is-caution {
   color: var(--warn-ink);
 }
 
-.proto-verdict {
+.editorial-status.is-neutral {
+  color: var(--mute);
+}
+
+.editorial-verdict {
+  flex: none;
   margin: 0 0 3.2%;
   padding: 2.2% 3%;
   background: var(--blue-wash);
@@ -316,25 +188,28 @@ body,
   color: var(--blue-deep);
 }
 
-.proto-decision {
+.editorial-decision {
   display: grid;
+  flex: 1;
   grid-template-columns: 1.2fr 0.88fr;
   gap: 4.5%;
-  height: calc(100% - 0.2em);
+  min-height: 0;
+  min-width: 0;
 }
 
-.proto-evidence {
+.editorial-evidence {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 1.15em;
+  min-width: 0;
 }
 
-.proto-metric {
+.editorial-metric {
   margin: 0;
 }
 
-.proto-metric-label {
+.editorial-metric-label {
   margin: 0 0 0.4em;
   font-size: clamp(9px, 1.1cqw, 14px);
   font-weight: 700;
@@ -343,7 +218,7 @@ body,
   color: var(--blue);
 }
 
-.proto-bar-row {
+.editorial-bar-row {
   display: grid;
   grid-template-columns: 5.6em 4.8em 1fr;
   align-items: center;
@@ -351,62 +226,68 @@ body,
   margin-bottom: 0.28em;
 }
 
-.proto-bar-name,
-.proto-bar-value {
+.editorial-bar-name,
+.editorial-bar-value {
   font-size: clamp(9px, 1.15cqw, 15px);
   color: var(--mute);
 }
 
-.proto-bar-value {
+.editorial-bar-value {
   color: var(--ink);
   font-weight: 700;
   text-align: right;
 }
 
-.proto-bar-track {
+.editorial-bar-track {
   height: 0.42em;
   background: var(--blue-wash);
 }
 
-.proto-bar-fill {
+.editorial-bar-fill {
   height: 100%;
 }
 
-.proto-bar-fill.is-baseline {
+.editorial-bar-fill.is-baseline {
   background: var(--blue-soft);
 }
 
-.proto-bar-fill.is-candidate {
+.editorial-bar-fill.is-candidate {
   background: var(--blue);
 }
 
-.proto-interpret {
+.editorial-interpret {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 1.1em;
+  min-width: 0;
   padding-left: 6%;
   border-left: 1px solid var(--line);
 }
 
-.proto-interpret-item {
+.editorial-interpret-item {
   margin: 0;
   font-size: clamp(11px, 1.5cqw, 20px);
   line-height: 1.4;
   color: var(--ink);
 }
 
-.proto-actions {
+.editorial-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  flex: 1;
+  grid-template-columns: repeat(
+    var(--editorial-commitment-count),
+    minmax(0, 1fr)
+  );
   gap: 0;
-  height: 100%;
+  min-height: 0;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.proto-action {
+.editorial-action {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -415,13 +296,13 @@ body,
   border-right: 1px solid var(--line);
 }
 
-.proto-action:last-child {
+.editorial-action:last-child {
   margin-right: 0;
   padding-right: 0;
   border-right: 0;
 }
 
-.proto-action-num {
+.editorial-action-num {
   margin: 0 0 0.35em;
   font-size: clamp(18px, 3.2cqw, 40px);
   font-weight: 700;
@@ -430,7 +311,7 @@ body,
   color: var(--blue);
 }
 
-.proto-action-title {
+.editorial-action-title {
   margin: 0 0 0.45em;
   font-size: clamp(12px, 1.7cqw, 22px);
   font-weight: 700;
@@ -438,18 +319,35 @@ body,
   color: var(--ink);
 }
 
-.proto-action-outcome {
+.editorial-action-outcome {
   margin: 0;
   font-size: clamp(11px, 1.45cqw, 19px);
   line-height: 1.35;
   color: var(--mute);
 }
 
-.proto-checkpoint {
+.editorial-checkpoint {
   margin-top: auto;
   padding-top: 0.75em;
   border-top: 1px solid var(--line);
   font-size: clamp(10px, 1.3cqw, 17px);
   line-height: 1.35;
   color: var(--ink);
+}
+
+.editorial-actions:has(.editorial-action:nth-child(4)) .editorial-action-num {
+  font-size: clamp(14px, 2.4cqw, 28px);
+}
+
+.editorial-actions:has(.editorial-action:nth-child(4)) .editorial-action-title {
+  font-size: clamp(10px, 1.35cqw, 18px);
+}
+
+.editorial-actions:has(.editorial-action:nth-child(4))
+  .editorial-action-outcome {
+  font-size: clamp(9px, 1.2cqw, 16px);
+}
+
+.editorial-actions:has(.editorial-action:nth-child(4)) .editorial-checkpoint {
+  font-size: clamp(8px, 1.1cqw, 14px);
 }

@@ -21,8 +21,10 @@ type UseWeekEditorResult = {
   setSelectedMonday: (monday: string) => void
   week: WeekDocument | null
   setWeek: Dispatch<SetStateAction<WeekDocument | null>>
+  selectedPageId: string | null
   selectedPageIndex: number
   setSelectedPageIndex: (index: number) => void
+  setSelectedPageId: (pageId: string) => void
   loading: boolean
   saving: boolean
   error: string | null
@@ -50,7 +52,7 @@ export function useWeekEditor(
   const [weeks, setWeeks] = useState<string[]>([])
   const [selectedMonday, setSelectedMonday] = useState(initialMonday)
   const [week, setWeek] = useState<WeekDocument | null>(null)
-  const [selectedPageIndex, setSelectedPageIndex] = useState(0)
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [loadedMonday, setLoadedMonday] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +78,7 @@ export function useWeekEditor(
 
         setWeeks(weekList)
         setWeek(document)
-        setSelectedPageIndex(0)
+        setSelectedPageId(document.pages[0]?.id ?? null)
         setLoadedMonday(selectedMonday)
         setError(null)
       })
@@ -133,7 +135,7 @@ export function useWeekEditor(
       const weekList = await listWeekFiles()
       setWeeks(weekList)
       setSelectedMonday(monday)
-      setSelectedPageIndex(0)
+      setSelectedPageId(null)
       setLoadedMonday(null)
     } catch (cause: unknown) {
       const message =
@@ -144,14 +146,34 @@ export function useWeekEditor(
     }
   }, [])
 
+  const visibleWeek = loading ? null : week
+  const selectedPageIndex = visibleWeek
+    ? Math.max(
+        0,
+        visibleWeek.pages.findIndex((page) => page.id === selectedPageId)
+      )
+    : 0
+
+  const setSelectedPageIndex = useCallback(
+    (index: number) => {
+      const page = visibleWeek?.pages[index]
+      if (page) {
+        setSelectedPageId(page.id)
+      }
+    },
+    [visibleWeek]
+  )
+
   return {
     weeks,
     selectedMonday,
     setSelectedMonday,
-    week: loading ? null : week,
+    week: visibleWeek,
     setWeek,
+    selectedPageId: visibleWeek?.pages[selectedPageIndex]?.id ?? selectedPageId,
     selectedPageIndex,
     setSelectedPageIndex,
+    setSelectedPageId,
     loading,
     saving,
     error,

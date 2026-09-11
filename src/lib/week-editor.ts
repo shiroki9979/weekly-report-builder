@@ -260,6 +260,93 @@ export function setTablePanelColumn(
   })
 }
 
+export function addTableRow(
+  week: WeekDocument,
+  pageIndex: number
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    const panel = requireTablePanel(page, pageIndex)
+
+    return {
+      ...page,
+      panel: {
+        ...panel,
+        rows: [...panel.rows, { cells: panel.columns.map(() => "") }],
+      },
+    }
+  })
+}
+
+export function removeTableRow(
+  week: WeekDocument,
+  pageIndex: number,
+  rowIndex: number
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    const panel = requireTablePanel(page, pageIndex)
+    if (panel.rows.length <= 1) {
+      throw new Error("Table must keep at least one row")
+    }
+
+    return {
+      ...page,
+      panel: {
+        ...panel,
+        rows: panel.rows.filter((_, index) => index !== rowIndex),
+      },
+    }
+  })
+}
+
+export function addTableColumn(
+  week: WeekDocument,
+  pageIndex: number
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    const panel = requireTablePanel(page, pageIndex)
+
+    return {
+      ...page,
+      panel: {
+        ...panel,
+        columns: [...panel.columns, ""],
+        rows: panel.rows.map((row) => ({
+          ...row,
+          cells: [...row.cells, ""],
+        })),
+      },
+    }
+  })
+}
+
+export function removeTableColumn(
+  week: WeekDocument,
+  pageIndex: number,
+  columnIndex: number
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => {
+    const panel = requireTablePanel(page, pageIndex)
+    if (panel.columns.length <= 1) {
+      throw new Error("Table must keep at least one column")
+    }
+
+    return {
+      ...page,
+      panel: {
+        ...panel,
+        columns: panel.columns.filter((_, index) => index !== columnIndex),
+        rows: panel.rows.map((row) => ({
+          ...row,
+          cells: row.cells.filter((_, index) => index !== columnIndex),
+          emphasis: row.emphasis
+            ?.filter((index) => index !== columnIndex)
+            .map((index) => (index > columnIndex ? index - 1 : index)),
+        })),
+      },
+    }
+  })
+}
+
 export function setChartPanelTitle(
   week: WeekDocument,
   pageIndex: number,

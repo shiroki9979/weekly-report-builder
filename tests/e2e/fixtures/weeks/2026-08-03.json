@@ -1,0 +1,89 @@
+{
+  "start": "2026-08-03",
+  "end": "2026-08-07",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "next-actions",
+      "title": "Five-day reviews and a held reserve.",
+      "commitments": [
+        {
+          "title": "Stabilize the review queue",
+          "outcome": "Changes land within five days.",
+          "checkpoint": "Median wait ≤ 5 days next Friday."
+        },
+        {
+          "title": "Hold the reserve",
+          "outcome": "Use stays below 25%.",
+          "checkpoint": "Reserve report signed before the next release."
+        }
+      ]
+    },
+    {
+      "id": "p02",
+      "layout": "next-actions",
+      "title": "五日審查、少漏接、守住備援。",
+      "commitments": [
+        {
+          "title": "穩住審查佇列",
+          "outcome": "變更在五日內落地。",
+          "checkpoint": "下週五中位等待 ≤ 5 天。"
+        },
+        {
+          "title": "堵住剩餘漏接",
+          "outcome": "漏接維持在 1.5% 以下。",
+          "checkpoint": "週一覆核漏接次數。"
+        },
+        {
+          "title": "守住備援",
+          "outcome": "使用維持在 25% 以下。",
+          "checkpoint": "下次發布前簽署備援報告。"
+        }
+      ]
+    },
+    {
+      "id": "p03",
+      "layout": "next-actions",
+      "title": "Five-day reviews，少漏接，and a held reserve.",
+      "commitments": [
+        {
+          "title": "Stabilize 審查佇列",
+          "outcome": "Changes land within five days.",
+          "checkpoint": "Median wait ≤ 5 days next Friday."
+        },
+        {
+          "title": "Stop the remaining misses",
+          "outcome": "漏接維持在 1.5% 以下。",
+          "checkpoint": "Miss count reviewed on Monday."
+        },
+        {
+          "title": "Hold the reserve",
+          "outcome": "Use stays below 25%.",
+          "checkpoint": "下次發布前簽署備援報告。"
+        },
+        {
+          "title": "Keep a spare slot",
+          "outcome": "One slot stays open.",
+          "checkpoint": "Spare slot still empty on Thursday."
+        }
+      ]
+    },
+    {
+      "id": "p04",
+      "layout": "next-actions",
+      "title": "Overflow actions",
+      "commitments": [
+        {
+          "title": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "outcome": "This commitment is intentionally too wide for the 1280 by 720 capture stage.",
+          "checkpoint": "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+        },
+        {
+          "title": "Keep stretching",
+          "outcome": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "checkpoint": "Export should skip this overflowing page."
+        }
+      ]
+    }
+  ]
+}

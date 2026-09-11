@@ -3,16 +3,29 @@ import { flushSync } from "react-dom"
 
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
+import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import {
+  assessExportEligibility,
+  formatExportIssues,
+} from "@/lib/export-readiness"
+import { measureStageOverflow } from "@/lib/overflow-measurement"
 import { captureStageToPng } from "@/lib/stage-capture"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
-import { exportVisiblePages, listSkippedPages } from "@/lib/week-export"
+import {
+  isHtmlWeekPage,
+  type WeekDocument,
+  type WeekPage,
+} from "@/lib/week-document"
+import {
+  exportVisiblePages,
+  formatSkippedExportWarning,
+} from "@/lib/week-export"
 
 type UseStageExportOptions = {
   monday: string
   week: WeekDocument | null
   selectedPage?: WeekPage | null
-  previewStageRef: RefObject<HTMLElement | null>
   captureHostRef: RefObject<HTMLElement | null>
+  metricBuffer?: MetricDraftBuffer
 }
 
 function waitForPaint(): Promise<void> {
@@ -45,12 +58,26 @@ async function waitForSlideSettled(host: HTMLElement): Promise<void> {
   }
 }
 
+function blockedBeforeCapture(
+  page: WeekPage,
+  metricBuffer?: MetricDraftBuffer
+): ReturnType<typeof assessExportEligibility> | null {
+  const assessment = assessExportEligibility(page, undefined, metricBuffer)
+  const blocked = assessment.issues.some(
+    (issue) => issue.code !== "measurement-failed"
+  )
+  if (!assessment.eligible && blocked) {
+    return assessment
+  }
+  return null
+}
+
 export function useStageExport({
   monday,
   week,
   selectedPage,
-  previewStageRef,
   captureHostRef,
+  metricBuffer = {},
 }: UseStageExportOptions) {
   const [capturePage, setCapturePage] = useState<WeekPage | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -91,19 +118,17 @@ export function useStageExport({
     exportingRef.current = true
     setExporting(true)
     setExportError(null)
-    const skippedPageIds = listSkippedPages(week).map((page) => page.id)
-    setExportWarning(
-      skippedPageIds.length > 0
-        ? `Skipped unsupported layouts: ${skippedPageIds.join(", ")}`
-        : null
-    )
+    setExportWarning(null)
 
     try {
-      await exportVisiblePages(monday, week, {
+      const skipped = await exportVisiblePages(monday, week, {
         renderPage: renderPageForCapture,
         capture: captureStageToPng,
         download: downloadBlob,
+        measureCapture: measureStageOverflow,
+        metricBuffer,
       })
+      setExportWarning(formatSkippedExportWarning(skipped))
     } catch (cause: unknown) {
       const message =
         cause instanceof Error ? cause.message : "Failed to export PNG files"
@@ -113,10 +138,10 @@ export function useStageExport({
       setExporting(false)
       exportingRef.current = false
     }
-  }, [monday, renderPageForCapture, week])
+  }, [monday, metricBuffer, renderPageForCapture, week])
 
   const copyCurrentPage = useCallback(async () => {
-    if (!week) {
+    if (!week || !selectedPage) {
       return
     }
 
@@ -124,16 +149,28 @@ export function useStageExport({
     setClipboardError(null)
 
     try {
+      const blocked = blockedBeforeCapture(selectedPage, metricBuffer)
+      if (blocked) {
+        setClipboardError(formatExportIssues(blocked.issues))
+        return
+      }
+
       let stageRoot: HTMLElement
 
-      if (selectedPage) {
+      if (isHtmlWeekPage(selectedPage)) {
         stageRoot = await renderPageForCapture(selectedPage)
       } else {
-        const previewRoot = previewStageRef.current
-        if (!(previewRoot instanceof HTMLElement)) {
-          throw new Error("Preview stage not ready")
+        stageRoot = await renderPageForCapture(selectedPage)
+        const capture = await measureStageOverflow(stageRoot)
+        const assessment = assessExportEligibility(
+          selectedPage,
+          capture,
+          metricBuffer
+        )
+        if (!assessment.eligible) {
+          setClipboardError(formatExportIssues(assessment.issues))
+          return
         }
-        stageRoot = previewRoot
       }
 
       const blob = await captureStageToPng(stageRoot)
@@ -145,12 +182,10 @@ export function useStageExport({
           : "Failed to copy image to clipboard"
       setClipboardError(message)
     } finally {
-      if (selectedPage) {
-        flushSync(() => setCapturePage(null))
-      }
+      flushSync(() => setCapturePage(null))
       setCopying(false)
     }
-  }, [previewStageRef, renderPageForCapture, selectedPage, week])
+  }, [metricBuffer, renderPageForCapture, selectedPage, week])
 
   return {
     capturePage,

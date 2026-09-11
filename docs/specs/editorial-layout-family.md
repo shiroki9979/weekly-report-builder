@@ -386,7 +386,7 @@ Issue path 使用不含 `$` 的 JSON-style path：object fields 以 dot 分隔�
 - Capture measurement failure：視為不可匯出，batch 略過、Copy 阻擋，不得猜測為 fit。
 - Export warning 列出被略過的 Page IDs 與結構化原因。
 - Copy current page 若是 Draft、Overflowing 或 measurement-failed，必須阻擋並顯示具體原因。
-- 本功能不改變 HTML Page fetch error 目前的處理；另案追蹤。
+- 本功能不改變 HTML Page fetch error 目前的處理；另案追蹤，見 [HTML Page error-PNG](html-page-error-png.md)。
 
 ## Module design
 

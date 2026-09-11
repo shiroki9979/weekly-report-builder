@@ -1,7 +1,7 @@
 # 匯出 PNG 至團隊簡報
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-10
 
 ---
 
@@ -22,8 +22,11 @@
 
 ## 匯出範圍
 
-- **包含**：`hidden` 未勾選的頁面
-- **排除**：已勾選 **Hide page from export** 的頁面（見 [隱藏不需匯出的頁面](hide-pages-from-export.md)）
+- **包含**：未隱藏、內容完整、且能量測為符合 1280 × 720 capture Stage 的 Structured Layout；以及 HTML Page（維持既有 capture 行為）
+- **排除**：已勾選 **Hide page from export** 的頁面（靜默略過；見 [隱藏不需匯出的頁面](hide-pages-from-export.md)）
+- **略過並警告**：未知 layout、`fields` panel、Draft Page、Overflowing Page、capture 量測失敗。警告會列出 Page ID 與原因，其餘合格頁仍會輸出。
+
+Copy 目前頁時，若該頁是 Draft、Overflowing 或量測失敗，會阻擋並顯示原因。HTML Page 不套用這組 Structured Layout gate。
 
 ## 相關文件
 

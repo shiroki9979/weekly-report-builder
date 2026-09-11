@@ -16,7 +16,7 @@ Do not add Chinese (or other) UI copy to workshop chrome unless the user explici
 
 ## 16:9 stage
 
-- Stage markup uses `src/styles/stage.css` tokens only — no shadcn on the canvas.
+- Stage markup uses `src/styles/stage.css` tokens, plus `src/styles/editorial-layouts.css` for Editorial Layouts — no shadcn on the canvas.
 - **Slide content** (`weeks/YYYY-MM-DD.json`: titles, bullets, tables) is user-authored weekly-report copy; it may be English, Chinese, or mixed. Do not force English on week files when editing report content.
 
 ## Code

@@ -1,0 +1,28 @@
+{
+  "start": "2026-08-31",
+  "end": "2026-09-04",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "html",
+      "title": "Valid HTML Page",
+      "htmlFile": "ok.html"
+    },
+    {
+      "id": "p02",
+      "layout": "two-column",
+      "title": "Companion table",
+      "items": [
+        { "heading": "One", "body": "Keep the batch moving." },
+        { "heading": "Two", "body": "This page should still export." },
+        { "heading": "Three", "body": "HTML pages skip structured gates." }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Summary",
+        "columns": ["Action", "Result"],
+        "rows": [{ "cells": ["Eval", "Pass"] }]
+      }
+    }
+  ]
+}

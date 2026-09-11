@@ -1,4 +1,10 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react"
 import {
   LockIcon,
   MoonIcon,
@@ -24,13 +30,22 @@ import {
   ExportControls,
   StageCaptureHost,
 } from "@/components/workshop/export-controls"
+import {
+  MetricDraftProvider,
+  useMetricDraft,
+} from "@/components/workshop/metric-draft-context"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
+import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
 import { PagePicker, WorkshopToolbar } from "@/components/workshop/week-picker"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
+import { weekHasInvalidMetricDrafts } from "@/lib/evidence-decision-editor"
+import { measureStageOverflow } from "@/lib/overflow-measurement"
+import type { PageLifecycleResult } from "@/lib/page-lifecycle"
+import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
 
 type EditorSidebarProps = {
@@ -40,7 +55,9 @@ type EditorSidebarProps = {
   week: WeekDocument | null
   setWeek: Dispatch<SetStateAction<WeekDocument | null>>
   selectedPageIndex: number
+  selectedPageId: string | null
   onPageSelect: (index: number) => void
+  onPageLifecycle: (result: PageLifecycleResult) => void
   loading: boolean
   saving: boolean
   saveError: string | null
@@ -60,7 +77,9 @@ function EditorSidebar({
   week,
   setWeek,
   selectedPageIndex,
+  selectedPageId,
   onPageSelect,
+  onPageLifecycle,
   loading,
   saving,
   saveError,
@@ -124,6 +143,14 @@ function EditorSidebar({
               selectedPageIndex={selectedPageIndex}
               onSelect={onPageSelect}
             />
+            {selectedPageId ? (
+              <PageLifecycleControls
+                week={week}
+                selectedPageId={selectedPageId}
+                onChange={onPageLifecycle}
+                disabled={!editMode}
+              />
+            ) : null}
             <Separator />
             <PageEditorForm
               week={week}
@@ -140,6 +167,16 @@ function EditorSidebar({
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
+  return (
+    <MetricDraftProvider>
+      <WorkshopShellBody />
+    </MetricDraftProvider>
+  )
+}
+
+function WorkshopShellBody() {
+  const { buffer } = useMetricDraft()
+  const [draftSaveError, setDraftSaveError] = useState<string | null>(null)
   const {
     weeks,
     selectedMonday,
@@ -148,6 +185,8 @@ export function WorkshopShell() {
     setWeek,
     selectedPageIndex,
     setSelectedPageIndex,
+    selectedPageId,
+    setSelectedPageId,
     loading,
     saving,
     error,
@@ -161,8 +200,8 @@ export function WorkshopShell() {
   } = useWeekEditor()
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
-  const previewStageRef = useRef<HTMLDivElement>(null)
   const captureHostRef = useRef<HTMLDivElement>(null)
+  const previewStageRef = useRef<HTMLDivElement>(null)
   const {
     capturePage,
     exporting,
@@ -176,12 +215,39 @@ export function WorkshopShell() {
     monday: selectedMonday,
     week,
     selectedPage,
-    previewStageRef,
     captureHostRef,
+    metricBuffer: buffer,
   })
 
   const editorPanelRef = usePanelRef()
   const [editorCollapsed, setEditorCollapsed] = useState(false)
+  const [previewOverflow, setPreviewOverflow] = useState<string | null>(null)
+
+  useEffect(() => {
+    const root = previewStageRef.current
+    if (!root || !selectedPage) {
+      setPreviewOverflow(null)
+      return
+    }
+
+    let cancelled = false
+    void measureStageOverflow(root).then((result) => {
+      if (cancelled) {
+        return
+      }
+      if (result.status === "overflow") {
+        setPreviewOverflow(
+          `Preview overflow (${result.axes.join(" and ")}) — export still uses the 1280 × 720 capture stage`
+        )
+        return
+      }
+      setPreviewOverflow(null)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedPage, week])
 
   usePageKeyboardNav({
     pageCount: week?.pages.length ?? 0,
@@ -286,12 +352,24 @@ export function WorkshopShell() {
             week={week}
             setWeek={setWeek}
             selectedPageIndex={selectedPageIndex}
+            selectedPageId={selectedPageId}
             onPageSelect={setSelectedPageIndex}
+            onPageLifecycle={(result) => {
+              setWeek(result.week)
+              setSelectedPageId(result.selectedPageId)
+            }}
             loading={loading}
             saving={saving}
-            saveError={saveError}
+            saveError={saveError ?? draftSaveError}
             saveMessage={saveMessage}
-            onSave={() => void saveWeek()}
+            onSave={() => {
+              if (week && weekHasInvalidMetricDrafts(week, buffer)) {
+                setDraftSaveError("Fix invalid metric values before saving")
+                return
+              }
+              setDraftSaveError(null)
+              void saveWeek()
+            }}
             creating={creating}
             createError={createError}
             suggestedMonday={suggestedMonday}
@@ -323,6 +401,11 @@ export function WorkshopShell() {
                 disabled={loading || !week}
               />
             </div>
+            {previewOverflow ? (
+              <p className="mb-3 text-xs text-muted-foreground" role="status">
+                {previewOverflow}
+              </p>
+            ) : null}
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <div className="w-full max-w-5xl">
                 <StageFrame ref={previewStageRef}>
@@ -334,8 +417,11 @@ export function WorkshopShell() {
                       {error}
                     </div>
                   ) : null}
-                  {!loading && selectedPage ? (
-                    <StageSlide page={selectedPage} monday={selectedMonday} />
+                  {!loading && selectedPage && week ? (
+                    <StageSlide
+                      page={selectedPage}
+                      context={createStagePageContext(week, selectedPage.id)}
+                    />
                   ) : null}
                 </StageFrame>
               </div>
@@ -354,7 +440,7 @@ export function WorkshopShell() {
       </ResizablePanelGroup>
       <StageCaptureHost
         page={capturePage}
-        monday={selectedMonday}
+        week={week}
         hostRef={captureHostRef}
       />
     </div>
