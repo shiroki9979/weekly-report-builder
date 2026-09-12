@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 核准 Demo Week Set bootstrap 規格，定義私有 `weeks/`、tracked `demo/`、atomic seed、latest-week 啟動與四段 delivery 計畫（[#19](https://github.com/shiroki9979/weekly-report-builder/issues/19)）。
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
 - Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft Page 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
