@@ -48,6 +48,9 @@ import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
 
+export const EMPTY_STORE_MESSAGE =
+  "The existing weeks/ directory has no Week Documents. Remove the empty directory, then run pnpm seed:weeks."
+
 type EditorSidebarProps = {
   weeks: string[]
   selectedMonday: string
@@ -67,6 +70,7 @@ type EditorSidebarProps = {
   createError: string | null
   suggestedMonday: string
   onCreateWeek: (monday: string) => void
+  emptyStore: boolean
 }
 
 /** 週次切換時以 key remount，editMode 自動回到鎖定 */
@@ -89,6 +93,7 @@ function EditorSidebar({
   createError,
   suggestedMonday,
   onCreateWeek,
+  emptyStore,
 }: EditorSidebarProps) {
   const [editMode, setEditMode] = useState(false)
 
@@ -119,22 +124,30 @@ function EditorSidebar({
           </Button>
         </div>
 
-        <WorkshopToolbar
-          weeks={weeks}
-          selectedMonday={selectedMonday}
-          onWeekChange={onWeekChange}
-          onSave={onSave}
-          saving={saving}
-          saveMessage={saveMessage}
-          saveError={saveError}
-          suggestedMonday={suggestedMonday}
-          onCreateWeek={onCreateWeek}
-          creating={creating}
-          createError={createError}
-          weekSelectDisabled={loading}
-          saveDisabled={loading || !week || !editMode}
-          createDisabled={loading || creating || !editMode}
-        />
+        {emptyStore ? (
+          // 空 store 只說明如何 seed，不提供建立第一週
+          <p className="text-sm text-muted-foreground" role="status">
+            {EMPTY_STORE_MESSAGE}
+          </p>
+        ) : (
+          <WorkshopToolbar
+            weeks={weeks}
+            selectedMonday={selectedMonday}
+            onWeekChange={onWeekChange}
+            onSave={onSave}
+            saving={saving}
+            saveMessage={saveMessage}
+            saveError={saveError}
+            suggestedMonday={suggestedMonday}
+            onCreateWeek={onCreateWeek}
+            creating={creating}
+            createError={createError}
+            weekSelectDisabled={loading}
+            saveDisabled={loading || !week || !editMode}
+            createDisabled={loading || creating || !editMode}
+            hideCreate={weeks.length === 0}
+          />
+        )}
 
         {week ? (
           <>
@@ -197,6 +210,7 @@ function WorkshopShellBody() {
     createError,
     suggestedMonday,
     createWeek,
+    emptyStore,
   } = useWeekEditor()
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
@@ -346,7 +360,7 @@ function WorkshopShellBody() {
         >
           <EditorSidebar
             key={selectedMonday}
-            weeks={weeks.length > 0 ? weeks : [selectedMonday]}
+            weeks={weeks}
             selectedMonday={selectedMonday}
             onWeekChange={setSelectedMonday}
             week={week}
@@ -374,6 +388,7 @@ function WorkshopShellBody() {
             createError={createError}
             suggestedMonday={suggestedMonday}
             onCreateWeek={(monday) => void createWeek(monday)}
+            emptyStore={emptyStore}
           />
         </ResizablePanel>
 
@@ -411,6 +426,11 @@ function WorkshopShellBody() {
                 <StageFrame ref={previewStageRef}>
                   {loading ? (
                     <div className="stage-placeholder">Loading week…</div>
+                  ) : null}
+                  {!loading && emptyStore ? (
+                    <div className="stage-placeholder" role="status">
+                      {EMPTY_STORE_MESSAGE}
+                    </div>
                   ) : null}
                   {!loading && error ? (
                     <div className="stage-warning" role="alert">
