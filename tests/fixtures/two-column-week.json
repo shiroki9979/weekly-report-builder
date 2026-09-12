@@ -1,0 +1,51 @@
+{
+  "start": "2026-08-24",
+  "end": "2026-08-28",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Eval Gate",
+      "items": [
+        {
+          "heading": "Metrics follow the task",
+          "body": "Each prediction task can choose its own comparison metric."
+        },
+        {
+          "heading": "Manual promote is allowed",
+          "body": "A registered version can be forced to production after contract checks."
+        },
+        {
+          "heading": "Production can be pinned",
+          "body": "While pinned, scheduled evaluation still runs but does not promote."
+        }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Loaded model",
+        "columns": ["Action", "Production", "Result"],
+        "rows": [
+          {
+            "cells": ["Scheduled eval", "Pinned", "Skip promote"],
+            "emphasis": [1]
+          },
+          {
+            "cells": [
+              "Manual promote",
+              "Chosen version",
+              "Write after contract"
+            ],
+            "emphasis": [1]
+          }
+        ]
+      },
+      "notes": "Talking points for the eval gate page"
+    },
+    {
+      "id": "p02",
+      "layout": "html",
+      "title": "Contract diagram",
+      "htmlFile": "p02.html"
+    }
+  ]
+}
