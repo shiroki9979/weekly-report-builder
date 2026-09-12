@@ -1,6 +1,9 @@
 # Temporary files
 **/tmp/
 
+# Runtime authoring store — private weekly reports; seeded from tracked demo/
+/weeks/
+
 # Logs
 logs
 *.log
