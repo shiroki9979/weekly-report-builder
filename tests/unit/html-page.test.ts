@@ -138,12 +138,12 @@ describe("html-page", () => {
 
     it("keeps a week-dir SVG diagram after whole-document sanitize", () => {
       const raw = readFileSync(
-        resolve(import.meta.dirname, "../../weeks/2026-08-24/p08.html"),
+        resolve(import.meta.dirname, "../fixtures/html-pages/svg-diagram.html"),
         "utf-8"
       )
       const sanitized = sanitizeHtmlFragment(raw)
       expect(sanitized).toContain("<svg")
-      expect(sanitized).toContain("契約檢查")
+      expect(sanitized).toContain("Contract check before landing")
       expect(sanitized).toContain("marker-end")
       expect(sanitized).toContain("<style>")
       expect(sanitized).not.toContain("<script")

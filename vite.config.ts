@@ -9,6 +9,7 @@ import { defineConfig } from "vite"
 
 import { parseWeekDocument } from "./src/lib/week-document"
 import { validateHtmlFileName } from "./src/lib/html-page"
+import { copyWeeksForProductionBuild } from "./server/copy-weeks-static"
 import {
   listWeeksInDirectory,
   writeWeekFile,
@@ -163,32 +164,7 @@ function weeksStaticPlugin(): Plugin {
       })
     },
     closeBundle() {
-      const outputDir = path.resolve(rootDir, "dist/weeks")
-      fs.mkdirSync(outputDir, { recursive: true })
-
-      for (const entry of fs.readdirSync(weeksDir, { withFileTypes: true })) {
-        if (entry.isFile() && entry.name.endsWith(".json")) {
-          fs.copyFileSync(
-            path.resolve(weeksDir, entry.name),
-            path.resolve(outputDir, entry.name)
-          )
-        } else if (
-          entry.isDirectory() &&
-          /^\d{4}-\d{2}-\d{2}$/.test(entry.name)
-        ) {
-          const targetSubDir = path.resolve(outputDir, entry.name)
-          fs.mkdirSync(targetSubDir, { recursive: true })
-          const sourceSubDir = path.resolve(weeksDir, entry.name)
-          for (const file of fs.readdirSync(sourceSubDir)) {
-            if (file.endsWith(".html")) {
-              fs.copyFileSync(
-                path.resolve(sourceSubDir, file),
-                path.resolve(targetSubDir, file)
-              )
-            }
-          }
-        }
-      }
+      copyWeeksForProductionBuild(weeksDir, path.resolve(rootDir, "dist/weeks"))
     },
   }
 }
