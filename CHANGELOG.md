@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 新增 tracked Demo Week Set 與原子 bootstrap，讓 `pnpm install`／`pnpm seed:weeks` 只在 `weeks/` 不存在時複製虛構 Harbor Grid 週報（[#20](https://github.com/shiroki9979/weekly-report-builder/issues/20)）。
 - 核准 Demo Week Set bootstrap 規格，定義私有 `weeks/`、tracked `demo/`、atomic seed、latest-week 啟動與四段 delivery 計畫（[#19](https://github.com/shiroki9979/weekly-report-builder/issues/19)）。
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
