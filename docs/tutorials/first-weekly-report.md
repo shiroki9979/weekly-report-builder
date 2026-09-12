@@ -1,7 +1,7 @@
 # 第一份週報
 
 > 建立日期：2026-08-31  
-> 最後更新：2026-08-31
+> 最後更新：2026-09-13
 
 ---
 
@@ -19,12 +19,16 @@ pnpm install
 pnpm dev
 ```
 
-瀏覽器開啟終端機顯示的本地網址（通常為 `http://localhost:5173`）。左側為編輯區，右側為 **16:9 preview**。
+`pnpm install` 會在本機還沒有 `weeks/` 時，從公開的 `demo/` 建立初始週報。瀏覽器開啟終端機顯示的本地網址（通常為 `http://localhost:5173`）。左側為編輯區，右側為 **16:9 preview**。
 
-## 步驟 2：開啟範例週次
+## 步驟 2：確認已開啟最新週次
 
-1. 在 **Week** 下拉選單選 `2026-08-24`
+工坊會列出可用週次並自動開啟最新的 Week Document，不必挑選固定日期。Fresh install 後，這就是剛 seed 進來的 Demo Week Set。
+
+1. 確認 **Week** 下拉選單已選中該週
 2. 右側預覽應顯示第一頁 slide
+
+若畫面說明 `weeks/` 沒有 Week Document，先關掉開發伺服器，移除那個空目錄，再執行 `pnpm seed:weeks` 後重新 `pnpm dev`。
 
 ## 步驟 3：編輯第一頁標題
 
@@ -34,7 +38,7 @@ pnpm dev
 
 ## 步驟 4：儲存
 
-點 **Save**。標題旁出現 `Saved` 即表示已寫入 `weeks/2026-08-24.json`。
+點 **Save**。標題旁出現 `Saved` 即表示已寫入目前開啟週次的 `weeks/YYYY-MM-DD.json`（日期隨該週而變）。
 
 ## 步驟 5：匯出 PNG
 
@@ -47,3 +51,4 @@ pnpm dev
 
 - 建立下週空白結構：[建立新週次](../how-to/create-new-week.md)
 - 查 JSON 欄位定義：[週次 JSON 格式](../reference/week-json-format.md)
+- 查安裝與 seed 指令：[pnpm 指令](../reference/npm-scripts.md)

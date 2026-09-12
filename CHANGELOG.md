@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 改為忽略整個本機 `weeks/` 並從目前 index 移除作者週報，Demo Week Set 維持公開於 `demo/`；README 與 Diátaxis 文件對齊自動 bootstrap、手動 seed 與隱私邊界（[#23](https://github.com/shiroki9979/weekly-report-builder/issues/23)）。
 - 單元測試改讀 `tests/fixtures/`，不再依賴 runtime `weeks/` 作者週報，讓 clean CI 不必帶本機私有檔（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
 - Workshop 啟動改為先列出可用週次再開啟最新 Week Document，不再依賴硬編碼日期；清單失敗維持 error，不與 empty store 混用（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
 - 工坊就緒摘要與批次略過原因改用 Draft Page／Overflowing Page，不以 invalid page 稱呼 Draft Page。
