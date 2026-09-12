@@ -17,7 +17,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seed:weeks": "node scripts/seed-weeks.ts",
+    "postinstall": "node scripts/seed-weeks.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
