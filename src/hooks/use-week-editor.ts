@@ -7,7 +7,7 @@ import {
 } from "react"
 
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
-import { DEFAULT_WEEK_MONDAY, type WeekDocument } from "@/lib/week-document"
+import type { WeekDocument } from "@/lib/week-document"
 import {
   createWeekFromPrevious,
   listWeekFiles,
@@ -28,6 +28,7 @@ type UseWeekEditorResult = {
   loading: boolean
   saving: boolean
   error: string | null
+  emptyStore: boolean
   saveError: string | null
   saveMessage: string | null
   saveWeek: () => Promise<void>
@@ -37,7 +38,7 @@ type UseWeekEditorResult = {
   createWeek: (monday: string) => Promise<void>
 }
 
-async function fetchWeekBundle(monday: string) {
+async function refreshWeekBundle(monday: string) {
   const [weeks, document] = await Promise.all([
     listWeekFiles(),
     loadWeekDocument(monday),
@@ -46,16 +47,15 @@ async function fetchWeekBundle(monday: string) {
   return { weeks, document }
 }
 
-export function useWeekEditor(
-  initialMonday: string = DEFAULT_WEEK_MONDAY
-): UseWeekEditorResult {
+export function useWeekEditor(): UseWeekEditorResult {
   const [weeks, setWeeks] = useState<string[]>([])
-  const [selectedMonday, setSelectedMonday] = useState(initialMonday)
+  const [selectedMonday, setSelectedMonday] = useState("")
   const [week, setWeek] = useState<WeekDocument | null>(null)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [loadedMonday, setLoadedMonday] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emptyStore, setEmptyStore] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -63,36 +63,65 @@ export function useWeekEditor(
 
   const loading = loadedMonday !== selectedMonday
   const latestMonday = latestWeekMonday(weeks)
-  const suggestedMonday = latestMonday
-    ? nextMondayAfter(latestMonday)
-    : nextMondayAfter(DEFAULT_WEEK_MONDAY)
+  const suggestedMonday = latestMonday ? nextMondayAfter(latestMonday) : ""
 
   useEffect(() => {
     let cancelled = false
 
-    fetchWeekBundle(selectedMonday)
-      .then(({ weeks: weekList, document }) => {
+    async function loadSelectedWeek() {
+      try {
+        // 先列出可用週次再決定日期，避免啟動時打硬編碼 Monday 而把空 store 誤報成缺檔
+        const weekList = await listWeekFiles()
         if (cancelled) {
           return
         }
 
         setWeeks(weekList)
+
+        if (weekList.length === 0) {
+          setEmptyStore(true)
+          setWeek(null)
+          setError(null)
+          setLoadedMonday("")
+          return
+        }
+
+        setEmptyStore(false)
+        const monday = selectedMonday || latestWeekMonday(weekList)
+        if (!monday) {
+          return
+        }
+
+        if (!selectedMonday) {
+          setSelectedMonday(monday)
+          return
+        }
+
+        const document = await loadWeekDocument(selectedMonday)
+        if (cancelled) {
+          return
+        }
+
         setWeek(document)
         setSelectedPageId(document.pages[0]?.id ?? null)
         setLoadedMonday(selectedMonday)
         setError(null)
-      })
-      .catch((cause: unknown) => {
+      } catch (cause: unknown) {
         if (cancelled) {
           return
         }
 
         const message =
           cause instanceof Error ? cause.message : "Failed to load week file"
+        // 清單或文件載入失敗都維持 error，不可落到 empty store
         setError(message)
+        setEmptyStore(false)
         setWeek(null)
         setLoadedMonday(selectedMonday)
-      })
+      }
+    }
+
+    void loadSelectedWeek()
 
     return () => {
       cancelled = true
@@ -111,7 +140,7 @@ export function useWeekEditor(
     try {
       await saveWeekDocument(selectedMonday, week)
       const { weeks: weekList, document } =
-        await fetchWeekBundle(selectedMonday)
+        await refreshWeekBundle(selectedMonday)
       setWeeks(weekList)
       setWeek(document)
       setLoadedMonday(selectedMonday)
@@ -177,6 +206,7 @@ export function useWeekEditor(
     loading,
     saving,
     error,
+    emptyStore,
     saveError,
     saveMessage,
     saveWeek,

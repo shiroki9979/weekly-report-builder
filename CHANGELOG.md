@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Workshop 在既有 `weeks/` 沒有 Week Document 時顯示英文 empty state，說明需移除空目錄後執行 `pnpm seed:weeks`，且不會建立第一週（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
 - 新增 tracked Demo Week Set 與原子 bootstrap，讓 `pnpm install`／`pnpm seed:weeks` 只在 `weeks/` 不存在時複製虛構 Harbor Grid 週報（[#20](https://github.com/shiroki9979/weekly-report-builder/issues/20)）。
 - 核准 Demo Week Set bootstrap 規格，定義私有 `weeks/`、tracked `demo/`、atomic seed、latest-week 啟動與四段 delivery 計畫（[#19](https://github.com/shiroki9979/weekly-report-builder/issues/19)）。
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Workshop 啟動改為先列出可用週次再開啟最新 Week Document，不再依賴硬編碼日期；清單失敗維持 error，不與 empty store 混用（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
 - 工坊就緒摘要與批次略過原因改用 Draft Page／Overflowing Page，不以 invalid page 稱呼 Draft Page。
 - Editorial Layout Family 編輯器共用 week-page updater 與 Title／notes／Hide chrome；preview／editor／clone／readiness／Add page 共用 `matchWeekPage`。
 - Comparison Metric raw draft 以具名 path 型別鍵入，Move／Remove 仍重對 buffer。

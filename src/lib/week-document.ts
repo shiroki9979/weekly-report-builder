@@ -795,5 +795,3 @@ export function parseWeekDocument(value: unknown): WeekDocument {
     pages: parsedPages,
   }
 }
-
-export const DEFAULT_WEEK_MONDAY = "2026-08-24"
