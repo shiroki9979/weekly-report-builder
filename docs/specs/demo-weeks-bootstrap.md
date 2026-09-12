@@ -32,7 +32,7 @@ Workshop 先列出可用週次再載入最新 Week Document，不再依賴固定
 8. As a contributor, I want concurrent bootstrap attempts to preserve the first completed store, so that install races cannot overwrite files.
 9. As a contributor, I want setup failures to include actionable context and a non-zero exit code, so that CI and local installation do not report false success.
 10. As a demo viewer, I want a fictional public week, so that the repository does not expose real organizations, projects, metrics, or reports.
-11. As a demo viewer, I want the five production layout types represented, so that I can inspect both established and Editorial Layout Family behavior immediately.
+11. As a demo viewer, I want Two-column Layout, Weekly Overview, Evidence-backed Decision, Next Actions, and HTML Page represented, so that I can inspect both established and Editorial Layout Family behavior immediately.
 12. As a demo viewer, I want the demo pages to form one coherent Harbor Grid report, so that the example reads like a real weekly narrative rather than disconnected fixtures.
 13. As a demo viewer, I want the HTML Page asset included in bootstrap, so that full-bleed HTML preview and export work in a fresh checkout.
 14. As a maintainer, I want the Demo Week Set tracked independently from `weeks/`, so that public examples and private authoring data have distinct ownership.

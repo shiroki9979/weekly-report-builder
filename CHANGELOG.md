@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CI 在成功 production build 前驗證缺少 `weeks/` 時以非零結束並提示 `pnpm seed:weeks`；Demo bootstrap 規格改以五個具名 layout 稱呼，不再使用 Production layout。
 - 改為忽略整個本機 `weeks/` 並從目前 index 移除作者週報，Demo Week Set 維持公開於 `demo/`；README 與 Diátaxis 文件對齊自動 bootstrap、手動 seed 與隱私邊界（[#23](https://github.com/shiroki9979/weekly-report-builder/issues/23)）。
 - 單元測試改讀 `tests/fixtures/`，不再依賴 runtime `weeks/` 作者週報，讓 clean CI 不必帶本機私有檔（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
 - Workshop 啟動改為先列出可用週次再開啟最新 Week Document，不再依賴硬編碼日期；清單失敗維持 error，不與 empty store 混用（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。

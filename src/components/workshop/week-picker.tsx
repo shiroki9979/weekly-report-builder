@@ -124,7 +124,6 @@ type WorkshopToolbarProps = {
   weekSelectDisabled?: boolean
   saveDisabled?: boolean
   createDisabled?: boolean
-  hideCreate?: boolean
 }
 
 export function WorkshopToolbar({
@@ -142,7 +141,6 @@ export function WorkshopToolbar({
   weekSelectDisabled,
   saveDisabled,
   createDisabled,
-  hideCreate,
 }: WorkshopToolbarProps) {
   return (
     <div className="space-y-3">
@@ -174,7 +172,7 @@ export function WorkshopToolbar({
         />
       ) : null}
 
-      {hideCreate ? null : (
+      {weeks.length === 0 ? null : (
         <NewWeekForm
           suggestedMonday={suggestedMonday}
           onCreate={onCreateWeek}
