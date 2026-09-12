@@ -33,10 +33,6 @@ function inspectWeeksTarget(
   }
 }
 
-function isExistingDirectory(weeksDir: string): boolean {
-  return inspectWeeksTarget(weeksDir) === "directory"
-}
-
 function isDemoDirectory(demoDir: string): boolean {
   try {
     return fs.statSync(demoDir).isDirectory()
@@ -102,7 +98,7 @@ export function seedWeeksFromDemo(
     // 並行時 loser 的 rename 會撞上 winner 已建立的目錄；此時當 skipped，不得覆寫
     if (
       isErrnoCode(error, ["EEXIST", "ENOTEMPTY", "EPERM"]) &&
-      isExistingDirectory(weeksDir)
+      inspectWeeksTarget(weeksDir) === "directory"
     ) {
       return { status: "skipped", reason: "target-exists" }
     }

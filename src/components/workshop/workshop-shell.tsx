@@ -145,7 +145,6 @@ function EditorSidebar({
             weekSelectDisabled={loading}
             saveDisabled={loading || !week || !editMode}
             createDisabled={loading || creating || !editMode}
-            hideCreate={weeks.length === 0}
           />
         )}
 
