@@ -20,9 +20,17 @@ pnpm install
 pnpm dev
 ```
 
+`pnpm install` runs `postinstall`, which copies the public **Demo Week Set** from `demo/` into a local `weeks/` store **only when `weeks/` does not already exist**. If lifecycle scripts were skipped, run `pnpm seed:weeks` (the same bootstrap). An existing `weeks/` directory, including an empty one, is never merged or overwritten.
+
 Also: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`
 
-Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename).
+`pnpm build` copies the local `weeks/` store into `dist/weeks/`. It does not seed. If `weeks/` is missing, the build fails and tells you to run `pnpm seed:weeks`.
+
+Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename). The Workshop lists available weeks and opens the latest; demo Mondays can change and are not a required startup date.
+
+**Privacy:** `demo/` is tracked, fictional, and public. `weeks/` is the ignored runtime authoring store for your real reports. Ignoring `weeks/` and dropping it from the current Git index does not rewrite history or delete objects in old commits.
+
+If `weeks/` exists but has no Week Documents, remove that empty directory and run `pnpm seed:weeks`. The Workshop will not create a first week for you.
 
 The disposable layout-family prototype has been retired. Author Weekly Overview, Evidence-backed Decision, and Next Actions from the workshop. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
 

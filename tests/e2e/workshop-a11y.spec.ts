@@ -43,8 +43,7 @@ async function assertPreviewFits800x450(page: Page) {
 test("reaches lifecycle controls from the keyboard and confirms delete in a dialog", async ({
   page,
 }) => {
-  await page.goto("/")
-  await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
+  await openWeek(page, "2026-08-24", "Fit table")
   await unlockEditor(page)
 
   const addPage = page.getByRole("button", { name: "Add page" })

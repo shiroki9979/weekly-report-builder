@@ -54,5 +54,23 @@ jobs:
       - name: Playwright
         run: pnpm test:e2e
 
+      - name: Build fails when weeks store is missing
+        run: |
+          restore_weeks() {
+            if [ -d weeks.ci-absent ]; then
+              mv weeks.ci-absent weeks
+            fi
+          }
+          trap restore_weeks EXIT
+          mv weeks weeks.ci-absent
+          set +e
+          output=$(pnpm build 2>&1)
+          status=$?
+          set -e
+          restore_weeks
+          printf '%s\n' "$output"
+          test "$status" -ne 0
+          printf '%s\n' "$output" | grep -q "pnpm seed:weeks"
+
       - name: Build
         run: pnpm build

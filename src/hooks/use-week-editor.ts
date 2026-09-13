@@ -1,19 +1,26 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react"
 
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
-import { DEFAULT_WEEK_MONDAY, type WeekDocument } from "@/lib/week-document"
+import type { WeekDocument } from "@/lib/week-document"
 import {
   createWeekFromPrevious,
   listWeekFiles,
   loadWeekDocument,
   saveWeekDocument,
 } from "@/lib/weeks-client"
+
+export type WeekEditorLoadStatus =
+  | { kind: "loading" }
+  | { kind: "empty" }
+  | { kind: "error"; message: string }
+  | { kind: "ready" }
 
 type UseWeekEditorResult = {
   weeks: string[]
@@ -25,9 +32,8 @@ type UseWeekEditorResult = {
   selectedPageIndex: number
   setSelectedPageIndex: (index: number) => void
   setSelectedPageId: (pageId: string) => void
-  loading: boolean
+  loadStatus: WeekEditorLoadStatus
   saving: boolean
-  error: string | null
   saveError: string | null
   saveMessage: string | null
   saveWeek: () => Promise<void>
@@ -37,7 +43,7 @@ type UseWeekEditorResult = {
   createWeek: (monday: string) => Promise<void>
 }
 
-async function fetchWeekBundle(monday: string) {
+async function refreshWeekBundle(monday: string) {
   const [weeks, document] = await Promise.all([
     listWeekFiles(),
     loadWeekDocument(monday),
@@ -46,77 +52,122 @@ async function fetchWeekBundle(monday: string) {
   return { weeks, document }
 }
 
-export function useWeekEditor(
-  initialMonday: string = DEFAULT_WEEK_MONDAY
-): UseWeekEditorResult {
+export function useWeekEditor(): UseWeekEditorResult {
   const [weeks, setWeeks] = useState<string[]>([])
-  const [selectedMonday, setSelectedMonday] = useState(initialMonday)
+  const [selectedMonday, setSelectedMondayState] = useState("")
+  const selectedMondayRef = useRef("")
   const [week, setWeek] = useState<WeekDocument | null>(null)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
-  const [loadedMonday, setLoadedMonday] = useState<string | null>(null)
+  const [loadStatus, setLoadStatus] = useState<WeekEditorLoadStatus>({
+    kind: "loading",
+  })
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
 
-  const loading = loadedMonday !== selectedMonday
+  const loading = loadStatus.kind === "loading"
   const latestMonday = latestWeekMonday(weeks)
-  const suggestedMonday = latestMonday
-    ? nextMondayAfter(latestMonday)
-    : nextMondayAfter(DEFAULT_WEEK_MONDAY)
+  const suggestedMonday = latestMonday ? nextMondayAfter(latestMonday) : ""
+
+  const setSelectedMonday = useCallback(
+    (monday: string) => {
+      if (monday === selectedMonday) {
+        return
+      }
+
+      // 切週時立刻進入 loading，避免上一份 ready／empty／error 與新 Monday 並存一幀
+      selectedMondayRef.current = monday
+      setLoadStatus({ kind: "loading" })
+      setSelectedMondayState(monday)
+    },
+    [selectedMonday]
+  )
 
   useEffect(() => {
     let cancelled = false
 
-    fetchWeekBundle(selectedMonday)
-      .then(({ weeks: weekList, document }) => {
+    async function loadSelectedWeek() {
+      try {
+        // 先列出可用週次再決定日期，避免啟動時打硬編碼 Monday 而把空 store 誤報成缺檔
+        const weekList = await listWeekFiles()
         if (cancelled) {
           return
         }
 
         setWeeks(weekList)
+
+        if (weekList.length === 0) {
+          setLoadStatus({ kind: "empty" })
+          setWeek(null)
+          return
+        }
+
+        const monday = selectedMonday || latestWeekMonday(weekList)
+        if (!monday) {
+          return
+        }
+
+        if (!selectedMonday) {
+          setSelectedMonday(monday)
+          return
+        }
+
+        const document = await loadWeekDocument(selectedMonday)
+        if (cancelled) {
+          return
+        }
+
         setWeek(document)
         setSelectedPageId(document.pages[0]?.id ?? null)
-        setLoadedMonday(selectedMonday)
-        setError(null)
-      })
-      .catch((cause: unknown) => {
+        setLoadStatus({ kind: "ready" })
+      } catch (cause: unknown) {
         if (cancelled) {
           return
         }
 
         const message =
           cause instanceof Error ? cause.message : "Failed to load week file"
-        setError(message)
+        // empty 與 list／文件失敗是同一 load status 的互斥分支，不可同時成立
+        setLoadStatus({ kind: "error", message })
         setWeek(null)
-        setLoadedMonday(selectedMonday)
-      })
+      }
+    }
+
+    void loadSelectedWeek()
 
     return () => {
       cancelled = true
     }
-  }, [selectedMonday])
+  }, [selectedMonday, setSelectedMonday])
 
   const saveWeek = useCallback(async () => {
     if (!week) {
       return
     }
 
+    const monday = selectedMonday
     setSaving(true)
     setSaveError(null)
     setSaveMessage(null)
 
     try {
-      await saveWeekDocument(selectedMonday, week)
-      const { weeks: weekList, document } =
-        await fetchWeekBundle(selectedMonday)
+      await saveWeekDocument(monday, week)
+      const { weeks: weekList, document } = await refreshWeekBundle(monday)
+      if (selectedMondayRef.current !== monday) {
+        return
+      }
+
       setWeeks(weekList)
       setWeek(document)
-      setLoadedMonday(selectedMonday)
+      setLoadStatus({ kind: "ready" })
       setSaveMessage("Saved")
     } catch (cause: unknown) {
+      if (selectedMondayRef.current !== monday) {
+        return
+      }
+
       const message =
         cause instanceof Error ? cause.message : "Failed to save week file"
       setSaveError(message)
@@ -125,26 +176,28 @@ export function useWeekEditor(
     }
   }, [selectedMonday, week])
 
-  const createWeek = useCallback(async (monday: string) => {
-    setCreating(true)
-    setCreateError(null)
-    setSaveMessage(null)
+  const createWeek = useCallback(
+    async (monday: string) => {
+      setCreating(true)
+      setCreateError(null)
+      setSaveMessage(null)
 
-    try {
-      await createWeekFromPrevious(monday)
-      const weekList = await listWeekFiles()
-      setWeeks(weekList)
-      setSelectedMonday(monday)
-      setSelectedPageId(null)
-      setLoadedMonday(null)
-    } catch (cause: unknown) {
-      const message =
-        cause instanceof Error ? cause.message : "Failed to create week file"
-      setCreateError(message)
-    } finally {
-      setCreating(false)
-    }
-  }, [])
+      try {
+        await createWeekFromPrevious(monday)
+        const weekList = await listWeekFiles()
+        setWeeks(weekList)
+        setSelectedPageId(null)
+        setSelectedMonday(monday)
+      } catch (cause: unknown) {
+        const message =
+          cause instanceof Error ? cause.message : "Failed to create week file"
+        setCreateError(message)
+      } finally {
+        setCreating(false)
+      }
+    },
+    [setSelectedMonday]
+  )
 
   const visibleWeek = loading ? null : week
   const selectedPageIndex = visibleWeek
@@ -174,9 +227,8 @@ export function useWeekEditor(
     selectedPageIndex,
     setSelectedPageIndex,
     setSelectedPageId,
-    loading,
+    loadStatus,
     saving,
-    error,
     saveError,
     saveMessage,
     saveWeek,

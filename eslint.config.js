@@ -9,6 +9,7 @@ export default defineConfig([
   globalIgnores(["dist", "playwright-report", "test-results"]),
   {
     files: ["**/*.{ts,tsx}"],
+    ignores: ["scripts/**"],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -17,6 +18,13 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  {
+    files: ["scripts/**/*.ts"],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ])

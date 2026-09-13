@@ -4,80 +4,68 @@ import { describe, expect, it } from "vitest"
 
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(import.meta.dirname, "../../weeks/2026-08-24.json")
-
-const fixture20260831Path = resolve(
+const twoColumnFixturePath = resolve(
   import.meta.dirname,
-  "../../weeks/2026-08-31.json"
+  "../fixtures/two-column-week.json"
+)
+
+const interleavedHtmlFixturePath = resolve(
+  import.meta.dirname,
+  "../fixtures/interleaved-html-week.json"
 )
 
 describe("parseWeekDocument", () => {
   it("parses the week fixture with two-column layout and table panel", () => {
-    const raw = readFileSync(fixturePath, "utf-8")
+    const raw = readFileSync(twoColumnFixturePath, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
 
     expect(week.start).toBe("2026-08-24")
     expect(week.end).toBe("2026-08-28")
-    expect(week.pages).toHaveLength(10)
+    expect(week.pages).toHaveLength(2)
 
-    const page = week.pages[3]
+    const page = week.pages[0]
     expect(page.layout).toBe("two-column")
-    expect(page.title).toBe("Platform · Eval Gate")
+    expect(page.title).toBe("Eval Gate")
     expect(page.items).toHaveLength(3)
-    expect(page.items[0].heading).toBe("評估指標依任務設定")
+    expect(page.items[0].heading).toBe("Metrics follow the task")
     expect(page.panel.kind).toBe("table")
 
     if (page.panel.kind !== "table") {
       throw new Error("expected table panel")
     }
 
-    expect(page.panel.columns).toEqual(["動作", "對正式版", "結果"])
+    expect(page.panel.columns).toEqual(["Action", "Production", "Result"])
     expect(page.panel.rows[0].cells).toEqual([
-      "排程評估",
-      "釘住中",
-      "skip 晉升",
+      "Scheduled eval",
+      "Pinned",
+      "Skip promote",
     ])
 
-    const htmlPage = week.pages[7]
+    const htmlPage = week.pages[1]
     expect(htmlPage.layout).toBe("html")
     if (htmlPage.layout !== "html") {
       throw new Error("expected html page")
     }
-    expect(htmlPage.htmlFile).toBe("p08.html")
+    expect(htmlPage.htmlFile).toBe("p02.html")
   })
 
-  it("parses the 2026-08-31 week with interleaved html chart pages", () => {
-    const raw = readFileSync(fixture20260831Path, "utf-8")
+  it("parses interleaved html pages among two-column pages", () => {
+    const raw = readFileSync(interleavedHtmlFixturePath, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
 
     expect(week.start).toBe("2026-08-31")
     expect(week.end).toBe("2026-09-04")
-    expect(week.pages).toHaveLength(11)
     expect(week.pages.map((page) => page.id)).toEqual([
       "p01",
       "p02",
       "p03",
       "p04",
-      "p05",
-      "p06",
-      "p07",
-      "p08",
-      "p09",
-      "p10",
-      "p11",
     ])
     expect(week.pages.map((page) => page.layout)).toEqual([
       "two-column",
-      "two-column",
-      "two-column",
       "html",
       "two-column",
       "html",
-      "two-column",
-      "html",
-      "two-column",
-      "html",
-      "two-column",
     ])
 
     const htmlFiles = week.pages
@@ -88,10 +76,7 @@ describe("parseWeekDocument", () => {
         }
         return page.htmlFile
       })
-    expect(htmlFiles).toEqual(["p04.html", "p06.html", "p08.html", "p10.html"])
-
-    // Grill 共識：全稿不出現「備援」
-    expect(JSON.stringify(week)).not.toMatch(/備援/)
+    expect(htmlFiles).toEqual(["p02.html", "p04.html"])
   })
 
   it("rejects documents without pages", () => {

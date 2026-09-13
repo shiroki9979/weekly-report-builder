@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Workshop 在既有 `weeks/` 沒有 Week Document 時顯示英文 empty state，說明需移除空目錄後執行 `pnpm seed:weeks`，且不會建立第一週（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
+- 新增 tracked Demo Week Set 與原子 bootstrap，讓 `pnpm install`／`pnpm seed:weeks` 只在 `weeks/` 不存在時複製虛構 Harbor Grid 週報（[#20](https://github.com/shiroki9979/weekly-report-builder/issues/20)）。
+- 核准 Demo Week Set bootstrap 規格，定義私有 `weeks/`、tracked `demo/`、atomic seed、latest-week 啟動與四段 delivery 計畫（[#19](https://github.com/shiroki9979/weekly-report-builder/issues/19)）。
 - 核准 Editorial Layout Family 的 production adoption 規格、領域語言與四段 sequential delivery 計畫（`docs/specs/editorial-layout-family.md`、`CONTEXT.md`）。
 - 記錄 800 × 450 目視驗證結果與後續生產驗證清單（`docs/explanation/layout-prototype.md`）。
 - Workshop 頁面生命週期：以 Page ID 選取，可新增空白 Two-column、刪除目前頁與上下移動；Draft Page 可存但 Copy／批次匯出會阻擋或略過（`src/lib/page-lifecycle.ts`）。
@@ -21,12 +24,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- production build 的 weeks 複製收回 Vite plugin 內部，安裝公開 seam 仍只有 `pnpm install`／`pnpm seed:weeks`；缺 store 由 build 行程與 CI 驗證，不斷言內部 copy 步驟（[#26](https://github.com/shiroki9979/weekly-report-builder/issues/26)）。
+- Week-editor 改以單一 load status 表達 empty store 與清單失敗，兩者在型別上互斥（[#25](https://github.com/shiroki9979/weekly-report-builder/issues/25)）。
+- CI 在成功 production build 前驗證缺少 `weeks/` 時以非零結束並提示 `pnpm seed:weeks`；Demo bootstrap 規格改以五個具名 layout 稱呼，不再使用 Production layout。
+- 改為忽略整個本機 `weeks/` 並從目前 index 移除作者週報，Demo Week Set 維持公開於 `demo/`；README 與 Diátaxis 文件對齊自動 bootstrap、手動 seed 與隱私邊界（[#23](https://github.com/shiroki9979/weekly-report-builder/issues/23)）。
+- 單元測試改讀 `tests/fixtures/`，不再依賴 runtime `weeks/` 作者週報，讓 clean CI 不必帶本機私有檔（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
+- Workshop 啟動改為先列出可用週次再開啟最新 Week Document，不再依賴硬編碼日期；清單失敗維持 error，不與 empty store 混用（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
 - 工坊就緒摘要與批次略過原因改用 Draft Page／Overflowing Page，不以 invalid page 稱呼 Draft Page。
 - Editorial Layout Family 編輯器共用 week-page updater 與 Title／notes／Hide chrome；preview／editor／clone／readiness／Add page 共用 `matchWeekPage`。
 - Comparison Metric raw draft 以具名 path 型別鍵入，Move／Remove 仍重對 buffer。
 
 ### Fixed
 
+- 修復切換週次後過期的儲存結果可能覆蓋新選取 Week Document 的競態；week-editor 僅公開單一 load status（[#25](https://github.com/shiroki9979/weekly-report-builder/issues/25)）。
+- production build 在缺少 `weeks/` 時改為提示執行 `pnpm seed:weeks` 並以非零結束，不再隱含 seed 或丟出原始檔案系統錯誤（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
 - Copy／批次匯出改由單一 Export Readiness 入口合併非法 metric draft；Move／Remove comparison metric 時 raw buffer 會跟著重對路徑（`src/lib/export-readiness.ts`）。
 
 ## [0.1.0] - 2026-09-04

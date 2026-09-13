@@ -72,8 +72,7 @@ test("captures a 404 HTML Page warning and continues the batch", async ({
 })
 
 test("clones HTML Page files and clears title and notes", async ({ page }) => {
-  await page.goto("/")
-  await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
+  await openWeek(page, "2026-08-31", "Valid HTML Page")
   await unlockEditor(page)
 
   await page.getByRole("button", { name: "Create week" }).click()

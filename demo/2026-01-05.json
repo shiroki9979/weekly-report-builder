@@ -1,0 +1,138 @@
+{
+  "start": "2026-01-05",
+  "end": "2026-01-09",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Harbor Grid · 5–9 Jan 2026",
+      "items": [
+        {
+          "heading": "Platform: one changelog gate",
+          "body": "Harbor Grid ops locked staging and production to a shared promote checklist, so reviewers no longer compare mismatched cut notes."
+        },
+        {
+          "heading": "Forecast: three-site pilot is live",
+          "body": "A fictional day-ahead board now shows confidence bands for North, Central, and South. The numbers exist only for this public demo."
+        },
+        {
+          "heading": "Ops: quiet on-call week",
+          "body": "No Sev-1 in the sample narrative. Time went to documentation and a dry-run cutover instead of incident spend."
+        }
+      ],
+      "panel": {
+        "kind": "chart",
+        "title": "Commits this week (demo)",
+        "categories": ["05", "06", "07", "08", "09"],
+        "series": [
+          {
+            "name": "Platform",
+            "color": "#2e75b6",
+            "values": [4, 6, 3, 5, 2]
+          },
+          {
+            "name": "Forecast",
+            "color": "#7eb0d6",
+            "values": [1, 2, 8, 4, 1]
+          },
+          {
+            "name": "Ops",
+            "color": "#c5d9ed",
+            "values": [2, 1, 1, 2, 3]
+          }
+        ]
+      },
+      "notes": "Open on the fictional Harbor Grid week. The chart is demo volume only."
+    },
+    {
+      "id": "p02",
+      "layout": "weekly-overview",
+      "title": "The cut process held, and the forecast pilot opened.",
+      "lead": {
+        "workstream": "Platform",
+        "figure": "1 gate",
+        "result": "Staging and production now share one changelog checklist before promote.",
+        "impact": "Reviewers stopped comparing notes that lived in different docs.",
+        "status": { "label": "On track", "tone": "positive" }
+      },
+      "supporting": [
+        {
+          "workstream": "Forecast",
+          "figure": "3 sites",
+          "result": "Day-ahead confidence bands sit on one shared board.",
+          "impact": "Operators can compare sites without a side spreadsheet.",
+          "status": { "label": "Live", "tone": "positive" }
+        },
+        {
+          "workstream": "Ops",
+          "figure": "0 Sev-1",
+          "result": "On-call stayed with documentation and the dry-run cutover.",
+          "impact": "The week did not spend reserve on incidents.",
+          "status": { "label": "Quiet", "tone": "neutral" }
+        }
+      ],
+      "notes": "Lead with the gate; the pilot and quiet on-call are supporting evidence."
+    },
+    {
+      "id": "p03",
+      "layout": "evidence-decision",
+      "title": "Keep the single changelog gate.",
+      "verdict": "Keep one checklist before promote. Splitting notes by channel would reopen drift.",
+      "metrics": [
+        {
+          "label": "Note channels",
+          "baselineValue": 2,
+          "candidateValue": 1,
+          "unit": "",
+          "unitPosition": "after",
+          "unitSpacing": "none",
+          "precision": 0
+        },
+        {
+          "label": "Review wait",
+          "baselineValue": 1.8,
+          "candidateValue": 0.5,
+          "unit": "days",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 1
+        }
+      ],
+      "interpretations": [
+        "One gate means reviewers read the same list before an alias moves.",
+        "The extra wait from split staging and production notes is gone."
+      ],
+      "notes": "Verdict first; the two metrics only defend keeping the gate."
+    },
+    {
+      "id": "p04",
+      "layout": "next-actions",
+      "title": "Expand the pilot and rehearse the cut.",
+      "commitments": [
+        {
+          "title": "Add a fourth sample site",
+          "outcome": "The day-ahead window stays comparable across four fictional sites.",
+          "checkpoint": "Fourth site visible on the board before Friday."
+        },
+        {
+          "title": "Dry-run the changelog gate",
+          "outcome": "The promote checklist is rehearsed on a throwaway alias.",
+          "checkpoint": "Alias dry-run signed off by Thursday."
+        },
+        {
+          "title": "File the quiet-week ops note",
+          "outcome": "The next on-call handoff includes the dry-run link.",
+          "checkpoint": "Note posted in the ops channel by Wednesday."
+        }
+      ],
+      "notes": "Close on next week's Harbor Grid work, not on how to seed the repo."
+    },
+    {
+      "id": "p05",
+      "layout": "html",
+      "title": "Forecast · Sample throughput",
+      "htmlFile": "p05.html",
+      "notes": "Full-bleed HTML for the three fictional sites on the forecast board."
+    }
+  ]
+}
