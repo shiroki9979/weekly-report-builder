@@ -112,7 +112,7 @@ describe("useWeekEditor", () => {
     const { result } = renderHook(() => useWeekEditor())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
     })
 
     expect(fetchedUrls()[0]).toBe("/api/weeks")
@@ -120,8 +120,6 @@ describe("useWeekEditor", () => {
     expect(fetchedUrls()).not.toContain(`/weeks/${HARD_CODED_MONDAY}.json`)
     expect(result.current.selectedMonday).toBe(LATEST_MONDAY)
     expect(result.current.week?.pages[0]?.title).toBe("Latest week")
-    expect(result.current.emptyStore).toBe(false)
-    expect(result.current.error).toBeNull()
     expect(result.current.selectedPageId).toBe("p01")
     expect(result.current.suggestedMonday).toBe("2026-01-19")
   })
@@ -132,11 +130,9 @@ describe("useWeekEditor", () => {
     const { result } = renderHook(() => useWeekEditor())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({ kind: "empty" })
     })
 
-    expect(result.current.emptyStore).toBe(true)
-    expect(result.current.error).toBeNull()
     expect(result.current.week).toBeNull()
     expect(result.current.weeks).toEqual([])
     expect(fetchedUrls()).toEqual(["/api/weeks"])
@@ -149,11 +145,12 @@ describe("useWeekEditor", () => {
     const { result } = renderHook(() => useWeekEditor())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({
+        kind: "error",
+        message: "Failed to list week files (503)",
+      })
     })
 
-    expect(result.current.emptyStore).toBe(false)
-    expect(result.current.error).toBe("Failed to list week files (503)")
     expect(result.current.week).toBeNull()
     expect(fetchedUrls().some((url) => url.startsWith("/weeks/"))).toBe(false)
   })
@@ -164,11 +161,12 @@ describe("useWeekEditor", () => {
     const { result } = renderHook(() => useWeekEditor())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({
+        kind: "error",
+        message: "Failed to fetch",
+      })
     })
 
-    expect(result.current.emptyStore).toBe(false)
-    expect(result.current.error).toBe("Failed to fetch")
     expect(result.current.week).toBeNull()
     expect(fetchedUrls().some((url) => url.startsWith("/weeks/"))).toBe(false)
   })
@@ -187,7 +185,7 @@ describe("useWeekEditor", () => {
     const { result } = renderHook(() => useWeekEditor())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
     })
 
     act(() => {
@@ -197,13 +195,11 @@ describe("useWeekEditor", () => {
     await waitFor(() => {
       expect(result.current.selectedMonday).toBe(OLDER_MONDAY)
       expect(result.current.week?.pages[0]?.title).toBe("Older week")
-      expect(result.current.loading).toBe(false)
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
     })
 
     expect(fetchedUrls()).toContain(`/weeks/${OLDER_MONDAY}.json`)
     expect(fetchedUrls()).not.toContain(`/weeks/${HARD_CODED_MONDAY}.json`)
     expect(result.current.selectedPageId).toBe("p01")
-    expect(result.current.emptyStore).toBe(false)
-    expect(result.current.error).toBeNull()
   })
 })
