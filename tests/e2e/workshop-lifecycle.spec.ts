@@ -10,9 +10,19 @@ async function unlockEditor(page: Page) {
   await page.getByRole("button", { name: "Edit", exact: true }).click()
 }
 
-test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
-  await page.goto("/")
+async function selectFitTableWeek(page: Page) {
+  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("option", { name: "2026-08-24" }).click()
   await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
+}
+
+async function openFitTableWeek(page: Page) {
+  await page.goto("/")
+  await selectFitTableWeek(page)
+}
+
+test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
+  await openFitTableWeek(page)
 
   await unlockEditor(page)
   await page.getByRole("button", { name: "Add page" }).click()
@@ -25,7 +35,7 @@ test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
   await page.reload()
-  await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
+  await selectFitTableWeek(page)
   await unlockEditor(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page.getByRole("option", { name: "Saved draft" }).click()
@@ -37,8 +47,7 @@ test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
 test("blocks copy of a draft page and skips overflow during batch export", async ({
   page,
 }) => {
-  await page.goto("/")
-  await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
+  await openFitTableWeek(page)
   await unlockEditor(page)
   await page.getByRole("button", { name: "Add page" }).click()
   await page.getByRole("button", { name: "Copy to clipboard" }).click()
