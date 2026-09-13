@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 修復切換週次後過期的儲存結果可能覆蓋新選取 Week Document 的競態；week-editor 僅公開單一 load status（[#25](https://github.com/shiroki9979/weekly-report-builder/issues/25)）。
 - production build 在缺少 `weeks/` 時改為提示執行 `pnpm seed:weeks` 並以非零結束，不再隱含 seed 或丟出原始檔案系統錯誤（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
 - Copy／批次匯出改由單一 Export Readiness 入口合併非法 metric draft；Move／Remove comparison metric 時 raw buffer 會跟著重對路徑（`src/lib/export-readiness.ts`）。
 

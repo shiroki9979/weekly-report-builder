@@ -122,6 +122,7 @@ describe("useWeekEditor", () => {
     expect(result.current.week?.pages[0]?.title).toBe("Latest week")
     expect(result.current.selectedPageId).toBe("p01")
     expect(result.current.suggestedMonday).toBe("2026-01-19")
+    expect(result.current).not.toHaveProperty("loading")
   })
 
   it("treats a successful empty list as an empty store instead of a missing file", async () => {
@@ -222,5 +223,76 @@ describe("useWeekEditor", () => {
 
     expect(result.current.loadStatus).toEqual({ kind: "ready" })
     expect(result.current.week?.pages[0]?.title).toBe("Latest week")
+  })
+
+  it("ignores a stale save refresh after selecting another week", async () => {
+    const latest = weekDocument(LATEST_MONDAY, "Latest week")
+    const older = weekDocument(OLDER_MONDAY, "Older week")
+    let latestDocumentRequests = 0
+    let resolveStaleRefresh: ((response: Response) => void) | null = null
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = fetchUrl(input)
+
+      if (url === "/api/weeks") {
+        return jsonResponse({ weeks: [OLDER_MONDAY, LATEST_MONDAY] })
+      }
+
+      if (url === `/api/weeks/${LATEST_MONDAY}` && init?.method === "PUT") {
+        return jsonResponse({})
+      }
+
+      if (url === `/weeks/${LATEST_MONDAY}.json`) {
+        latestDocumentRequests += 1
+        if (latestDocumentRequests === 1) {
+          return jsonResponse(latest)
+        }
+
+        return new Promise<Response>((resolve) => {
+          resolveStaleRefresh = resolve
+        })
+      }
+
+      if (url === `/weeks/${OLDER_MONDAY}.json`) {
+        return jsonResponse(older)
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    const { result } = renderHook(() => useWeekEditor())
+
+    await waitFor(() => {
+      expect(result.current.week?.pages[0]?.title).toBe("Latest week")
+    })
+
+    act(() => {
+      void result.current.saveWeek()
+    })
+
+    await waitFor(() => {
+      expect(resolveStaleRefresh).not.toBeNull()
+    })
+
+    act(() => {
+      result.current.setSelectedMonday(OLDER_MONDAY)
+    })
+
+    await waitFor(() => {
+      expect(result.current.selectedMonday).toBe(OLDER_MONDAY)
+      expect(result.current.week?.pages[0]?.title).toBe("Older week")
+    })
+
+    act(() => {
+      resolveStaleRefresh?.(jsonResponse(latest))
+    })
+
+    await waitFor(() => {
+      expect(result.current.saving).toBe(false)
+    })
+
+    expect(result.current.loadStatus).toEqual({ kind: "ready" })
+    expect(result.current.week?.pages[0]?.title).toBe("Older week")
+    expect(result.current.saveMessage).toBeNull()
   })
 })

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -32,7 +33,6 @@ type UseWeekEditorResult = {
   setSelectedPageIndex: (index: number) => void
   setSelectedPageId: (pageId: string) => void
   loadStatus: WeekEditorLoadStatus
-  loading: boolean
   saving: boolean
   saveError: string | null
   saveMessage: string | null
@@ -55,6 +55,7 @@ async function refreshWeekBundle(monday: string) {
 export function useWeekEditor(): UseWeekEditorResult {
   const [weeks, setWeeks] = useState<string[]>([])
   const [selectedMonday, setSelectedMondayState] = useState("")
+  const selectedMondayRef = useRef("")
   const [week, setWeek] = useState<WeekDocument | null>(null)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [loadStatus, setLoadStatus] = useState<WeekEditorLoadStatus>({
@@ -77,6 +78,7 @@ export function useWeekEditor(): UseWeekEditorResult {
       }
 
       // 切週時立刻進入 loading，避免上一份 ready／empty／error 與新 Monday 並存一幀
+      selectedMondayRef.current = monday
       setLoadStatus({ kind: "loading" })
       setSelectedMondayState(monday)
     },
@@ -108,7 +110,7 @@ export function useWeekEditor(): UseWeekEditorResult {
         }
 
         if (!selectedMonday) {
-          setSelectedMondayState(monday)
+          setSelectedMonday(monday)
           return
         }
 
@@ -138,26 +140,34 @@ export function useWeekEditor(): UseWeekEditorResult {
     return () => {
       cancelled = true
     }
-  }, [selectedMonday])
+  }, [selectedMonday, setSelectedMonday])
 
   const saveWeek = useCallback(async () => {
     if (!week) {
       return
     }
 
+    const monday = selectedMonday
     setSaving(true)
     setSaveError(null)
     setSaveMessage(null)
 
     try {
-      await saveWeekDocument(selectedMonday, week)
-      const { weeks: weekList, document } =
-        await refreshWeekBundle(selectedMonday)
+      await saveWeekDocument(monday, week)
+      const { weeks: weekList, document } = await refreshWeekBundle(monday)
+      if (selectedMondayRef.current !== monday) {
+        return
+      }
+
       setWeeks(weekList)
       setWeek(document)
       setLoadStatus({ kind: "ready" })
       setSaveMessage("Saved")
     } catch (cause: unknown) {
+      if (selectedMondayRef.current !== monday) {
+        return
+      }
+
       const message =
         cause instanceof Error ? cause.message : "Failed to save week file"
       setSaveError(message)
@@ -218,7 +228,6 @@ export function useWeekEditor(): UseWeekEditorResult {
     setSelectedPageIndex,
     setSelectedPageId,
     loadStatus,
-    loading,
     saving,
     saveError,
     saveMessage,
