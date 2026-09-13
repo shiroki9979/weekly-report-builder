@@ -70,11 +70,18 @@ export function useWeekEditor(): UseWeekEditorResult {
   const latestMonday = latestWeekMonday(weeks)
   const suggestedMonday = latestMonday ? nextMondayAfter(latestMonday) : ""
 
-  const setSelectedMonday = useCallback((monday: string) => {
-    // 切週時立刻進入 loading，避免上一份 ready／empty／error 與新 Monday 並存一幀
-    setLoadStatus({ kind: "loading" })
-    setSelectedMondayState(monday)
-  }, [])
+  const setSelectedMonday = useCallback(
+    (monday: string) => {
+      if (monday === selectedMonday) {
+        return
+      }
+
+      // 切週時立刻進入 loading，避免上一份 ready／empty／error 與新 Monday 並存一幀
+      setLoadStatus({ kind: "loading" })
+      setSelectedMondayState(monday)
+    },
+    [selectedMonday]
+  )
 
   useEffect(() => {
     let cancelled = false

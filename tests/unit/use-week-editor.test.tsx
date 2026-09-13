@@ -202,4 +202,25 @@ describe("useWeekEditor", () => {
     expect(fetchedUrls()).not.toContain(`/weeks/${HARD_CODED_MONDAY}.json`)
     expect(result.current.selectedPageId).toBe("p01")
   })
+
+  it("keeps the ready week when the same Monday is selected again", async () => {
+    const latest = weekDocument(LATEST_MONDAY, "Latest week")
+    mockWeeksFetch({
+      weeks: [LATEST_MONDAY],
+      documents: { [LATEST_MONDAY]: latest },
+    })
+
+    const { result } = renderHook(() => useWeekEditor())
+
+    await waitFor(() => {
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
+    })
+
+    act(() => {
+      result.current.setSelectedMonday(LATEST_MONDAY)
+    })
+
+    expect(result.current.loadStatus).toEqual({ kind: "ready" })
+    expect(result.current.week?.pages[0]?.title).toBe("Latest week")
+  })
 })
