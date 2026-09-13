@@ -1,13 +1,13 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-09-10
+最後更新：2026-09-13
 
 ---
 
 ## 適用情境
 
-每週一需要新週次檔，且希望保留與上週相同的頁數、panel 種類與 hidden 設定。
+每週一需要新週次檔，且希望保留與上週相同的頁數、panel 種類與 hidden 設定。來源是本機 `weeks/` 裡最新的 Week Document（fresh install 時即為 Demo Week Set 的副本）。
 
 ## 步驟
 
@@ -27,13 +27,17 @@
 
 ## 常見問題
 
-| 狀況                                   | 處理                                                          |
-| -------------------------------------- | ------------------------------------------------------------- |
-| `Week already exists`                  | 該週檔已存在，改選其他日期或先刪除舊檔                        |
-| `Week file name must be a Monday date` | 所選日期不是週一                                              |
-| 尚無任何週次檔                         | 先手動建立第一個 `weeks/*.json`，或複製範例 `2026-08-24.json` |
+| 狀況                                   | 處理                                                                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Week already exists`                  | 該週檔已存在，改選其他日期或先刪除舊檔                                                                                                                         |
+| `Week file name must be a Monday date` | 所選日期不是週一                                                                                                                                               |
+| `weeks/` 不存在                        | 執行 `pnpm seed:weeks`（與 `pnpm install` 的 `postinstall` 相同）。`pnpm build` 與 `pnpm dev` 都不會自動建立該目錄。                                           |
+| `weeks/` 存在但沒有週次檔              | 視為有意的空 store；bootstrap 不會補檔。移除這個空目錄後再執行 `pnpm seed:weeks`。不要手動複製某個固定日期的週報。工坊會顯示 empty state，不會幫你建立第一週。 |
+
+`demo/` 是 Git 追蹤的公開範例來源；你編輯與 Create week 寫入的永遠是被忽略的本機 `weeks/`。忽略該目錄與從目前 index 移除它，不會刪除舊 commits 裡的 Git 物件。
 
 ## 相關文件
 
 - API 細節：[開發伺服器 API — POST](../reference/dev-server-api.md#post-apiweeksmonday)
 - 欄位結構：[週次 JSON 格式](../reference/week-json-format.md)
+- 指令行為：[pnpm 指令](../reference/npm-scripts.md)

@@ -1,7 +1,7 @@
 # 工坊架構
 
 建立日期：2026-08-31  
-最後更新：2026-09-10
+最後更新：2026-09-13
 
 ---
 
@@ -20,10 +20,23 @@
 
 取捨：stage 視覺需對齊既有 PPT HTML（`--blue` 等 token），與工坊 chrome 刻意分離，避免 shadcn 主題污染畫布。
 
+## 目錄所有權
+
+公開與私有資料刻意拆成兩個目錄，執行期路徑則維持不變。
+
+- **`demo/`**（tracked）：可公開的 Demo Week Set。它是 `postinstall`／`pnpm seed:weeks` 的複製來源，不是執行期寫入目標，也不是產品領域模型。
+- **`weeks/`**（ignored）：本機 authoring store。真實週報只活在這裡。Git 忽略整個目錄，並從目前 index 移除既有 tracked paths；這一步**不重寫 Git history**，也不會刪除舊 commits 內的物件。
+- **Runtime 契約不變**：瀏覽器仍走 `/weeks/...` URL；save／clone API、HTML 相對路徑與 `WEEKS_DIR` 覆寫繼續指向這個 runtime store。`WEEKS_DIR` 只給開發伺服器與測試隔離，bootstrap 不讀它。
+
+Fresh checkout 靠 install bootstrap 取得可開啟的 `weeks/`。Workshop 先列出可用週次再開最新一週，因此 demo 日期可以演進，程式不必寫死某個週一。若 `weeks/` 已存在但沒有 Week Document，那是有意的空 store：bootstrap 與 `build` 都不會補檔或 seed；操作者須自行移除空目錄後再 `pnpm seed:weeks`。`build` 只複製既有 `weeks/`，缺少該目錄時失敗並提示手動 seed。
+
 ## 資料流
 
 ```text
-weeks/YYYY-MM-DD.json
+demo/                          （tracked bootstrap 來源；不接受 runtime 寫入）
+        │  僅在 weeks/ 不存在時複製
+        ▼
+weeks/YYYY-MM-DD.json          （ignored authoring store）
 weeks/YYYY-MM-DD/*.html
         │
         ├─ GET /weeks/{monday}.json        ──► 工坊載入
@@ -64,6 +77,7 @@ Login、分享、canvas 拖曳排版、從本 app 播放、以 localStorage 為�
 ## 相關文件
 
 - [週次 JSON 格式](../reference/week-json-format.md)
+- [pnpm 指令](../reference/npm-scripts.md)
 - [第一份週報](../tutorials/first-weekly-report.md)
 - [HTML 全幅頁規格](../specs/html-page-layout.md)
 - [Layout 家族原型（歷史）](layout-prototype.md)

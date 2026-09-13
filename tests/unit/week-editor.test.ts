@@ -14,7 +14,10 @@ import {
 } from "@/lib/week-editor"
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(import.meta.dirname, "../../weeks/2026-08-24.json")
+const fixturePath = resolve(
+  import.meta.dirname,
+  "../fixtures/two-column-week.json"
+)
 
 function loadFixture() {
   return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
@@ -23,18 +26,18 @@ function loadFixture() {
 describe("week-editor", () => {
   it("maps title edits onto the week document", () => {
     const week = loadFixture()
-    const next = setPageTitle(week, 3, "Platform · Eval Gate (edited)")
+    const next = setPageTitle(week, 0, "Eval Gate (edited)")
 
-    expect(next.pages[3].title).toBe("Platform · Eval Gate (edited)")
-    expect(week.pages[3].title).toBe("Platform · Eval Gate")
+    expect(next.pages[0].title).toBe("Eval Gate (edited)")
+    expect(week.pages[0].title).toBe("Eval Gate")
   })
 
   it("maps item heading and body edits onto the week document", () => {
     const week = loadFixture()
-    const withHeading = setPageItem(week, 3, 1, "heading", "Manual promote")
-    const withBody = setPageItem(withHeading, 3, 1, "body", "Updated body copy")
+    const withHeading = setPageItem(week, 0, 1, "heading", "Manual promote")
+    const withBody = setPageItem(withHeading, 0, 1, "body", "Updated body copy")
 
-    expect(withBody.pages[3].items[1]).toEqual({
+    expect(withBody.pages[0].items[1]).toEqual({
       heading: "Manual promote",
       body: "Updated body copy",
     })
@@ -42,10 +45,10 @@ describe("week-editor", () => {
 
   it("maps table panel edits onto the week document", () => {
     const week = loadFixture()
-    const withTitle = setTablePanelTitle(week, 3, "Loaded model (edited)")
-    const withCell = setTablePanelCell(withTitle, 3, 0, 1, "Unpinned")
+    const withTitle = setTablePanelTitle(week, 0, "Loaded model (edited)")
+    const withCell = setTablePanelCell(withTitle, 0, 0, 1, "Unpinned")
 
-    const panel = withCell.pages[3].panel
+    const panel = withCell.pages[0].panel
     if (panel.kind !== "table") {
       throw new Error("expected table panel")
     }
@@ -56,18 +59,18 @@ describe("week-editor", () => {
 
   it("persists hide flag on the page", () => {
     const week = loadFixture()
-    const hidden = setPageHidden(week, 1, true)
-    const visible = setPageHidden(hidden, 1, false)
+    const hidden = setPageHidden(week, 0, true)
+    const visible = setPageHidden(hidden, 0, false)
 
-    expect(hidden.pages[1].hidden).toBe(true)
-    expect(visible.pages[1].hidden).toBeUndefined()
+    expect(hidden.pages[0].hidden).toBe(true)
+    expect(visible.pages[0].hidden).toBeUndefined()
   })
 
   it("maps speaker notes onto the week document", () => {
     const week = loadFixture()
-    const next = setPageNotes(week, 1, "Updated talking points")
+    const next = setPageNotes(week, 0, "Updated talking points")
 
-    expect(next.pages[1].notes).toBe("Updated talking points")
+    expect(next.pages[0].notes).toBe("Updated talking points")
   })
 
   it("maps htmlFile edits onto html layout pages", () => {
