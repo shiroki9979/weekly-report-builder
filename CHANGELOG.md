@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- production build 的 weeks 複製收回 Vite plugin 內部，安裝公開 seam 仍只有 `pnpm install`／`pnpm seed:weeks`；缺 store 由 build 行程與 CI 驗證，不斷言內部 copy 步驟（[#26](https://github.com/shiroki9979/weekly-report-builder/issues/26)）。
 - Week-editor 改以單一 load status 表達 empty store 與清單失敗，兩者在型別上互斥（[#25](https://github.com/shiroki9979/weekly-report-builder/issues/25)）。
 - CI 在成功 production build 前驗證缺少 `weeks/` 時以非零結束並提示 `pnpm seed:weeks`；Demo bootstrap 規格改以五個具名 layout 稱呼，不再使用 Production layout。
 - 改為忽略整個本機 `weeks/` 並從目前 index 移除作者週報，Demo Week Set 維持公開於 `demo/`；README 與 Diátaxis 文件對齊自動 bootstrap、手動 seed 與隱私邊界（[#23](https://github.com/shiroki9979/weekly-report-builder/issues/23)）。

@@ -9,7 +9,6 @@ import { defineConfig } from "vite"
 
 import { parseWeekDocument } from "./src/lib/week-document"
 import { validateHtmlFileName } from "./src/lib/html-page"
-import { copyWeeksForProductionBuild } from "./server/copy-weeks-static"
 import {
   listWeeksInDirectory,
   writeWeekFile,
@@ -20,6 +19,42 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const weeksDir = path.resolve(
   process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
 )
+const MONDAY_DIR = /^\d{4}-\d{2}-\d{2}$/
+
+function copyInitializedWeeksForProductionBuild(
+  sourceDir: string,
+  outputDir: string
+): void {
+  // 只複製已存在的 runtime store；安裝仍只走 seedWeeksFromDemo，build 不隱含 seed
+  if (!fs.existsSync(sourceDir)) {
+    throw new Error(
+      `Runtime weeks store is missing at ${sourceDir}. Run \`pnpm seed:weeks\` before building; production build does not seed or create weeks/.`
+    )
+  }
+
+  fs.mkdirSync(outputDir, { recursive: true })
+
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".json")) {
+      fs.copyFileSync(
+        path.resolve(sourceDir, entry.name),
+        path.resolve(outputDir, entry.name)
+      )
+    } else if (entry.isDirectory() && MONDAY_DIR.test(entry.name)) {
+      const targetSubDir = path.resolve(outputDir, entry.name)
+      fs.mkdirSync(targetSubDir, { recursive: true })
+      const sourceSubDir = path.resolve(sourceDir, entry.name)
+      for (const file of fs.readdirSync(sourceSubDir)) {
+        if (file.endsWith(".html")) {
+          fs.copyFileSync(
+            path.resolve(sourceSubDir, file),
+            path.resolve(targetSubDir, file)
+          )
+        }
+      }
+    }
+  }
+}
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -164,7 +199,10 @@ function weeksStaticPlugin(): Plugin {
       })
     },
     closeBundle() {
-      copyWeeksForProductionBuild(weeksDir, path.resolve(rootDir, "dist/weeks"))
+      copyInitializedWeeksForProductionBuild(
+        weeksDir,
+        path.resolve(rootDir, "dist/weeks")
+      )
     },
   }
 }
