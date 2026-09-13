@@ -199,9 +199,8 @@ function WorkshopShellBody() {
     setSelectedPageIndex,
     selectedPageId,
     setSelectedPageId,
-    loading,
+    loadStatus,
     saving,
-    error,
     saveError,
     saveMessage,
     saveWeek,
@@ -209,8 +208,11 @@ function WorkshopShellBody() {
     createError,
     suggestedMonday,
     createWeek,
-    emptyStore,
   } = useWeekEditor()
+
+  const loading = loadStatus.kind === "loading"
+  const emptyStore = loadStatus.kind === "empty"
+  const error = loadStatus.kind === "error" ? loadStatus.message : null
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
   const captureHostRef = useRef<HTMLDivElement>(null)
