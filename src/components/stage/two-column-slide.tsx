@@ -11,8 +11,8 @@ export function TwoColumnSlide({ page }: TwoColumnSlideProps) {
       <h1>{page.title}</h1>
       <div className="stage-cols">
         <div className="stage-items">
-          {page.items.map((item) => (
-            <div className="stage-item" key={item.heading}>
+          {page.items.map((item, index) => (
+            <div className="stage-item" key={index}>
               <div className="stage-dot" aria-hidden="true" />
               <div>
                 <h3>{item.heading}</h3>

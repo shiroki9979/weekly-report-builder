@@ -1,0 +1,28 @@
+{
+  "start": "2026-07-27",
+  "end": "2026-07-31",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "html",
+      "title": "Missing HTML Page",
+      "htmlFile": "missing.html"
+    },
+    {
+      "id": "p02",
+      "layout": "two-column",
+      "title": "Companion table",
+      "items": [
+        { "heading": "One", "body": "Batch should continue." },
+        { "heading": "Two", "body": "A 404 HTML Page is not a Draft Page." },
+        { "heading": "Three", "body": "Capture the warning and move on." }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Summary",
+        "columns": ["Action", "Result"],
+        "rows": [{ "cells": ["Eval", "Pass"] }]
+      }
+    }
+  ]
+}

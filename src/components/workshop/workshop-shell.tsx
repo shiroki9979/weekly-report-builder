@@ -1,4 +1,10 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react"
 import {
   LockIcon,
   MoonIcon,
@@ -24,17 +30,26 @@ import {
   ExportControls,
   StageCaptureHost,
 } from "@/components/workshop/export-controls"
+import {
+  MetricDraftProvider,
+  useMetricDraft,
+} from "@/components/workshop/metric-draft-context"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
+import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
-import {
-  PagePicker,
-  WorkshopToolbar,
-} from "@/components/workshop/week-picker"
+import { PagePicker, WorkshopToolbar } from "@/components/workshop/week-picker"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
+import { weekHasInvalidMetricDrafts } from "@/lib/evidence-decision-editor"
+import { measureStageOverflow } from "@/lib/overflow-measurement"
+import type { PageLifecycleResult } from "@/lib/page-lifecycle"
+import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
+
+export const EMPTY_STORE_MESSAGE =
+  "weeks/ has no Week Documents. Remove an empty weeks/ directory if it exists, then run pnpm seed:weeks."
 
 type EditorSidebarProps = {
   weeks: string[]
@@ -43,7 +58,9 @@ type EditorSidebarProps = {
   week: WeekDocument | null
   setWeek: Dispatch<SetStateAction<WeekDocument | null>>
   selectedPageIndex: number
+  selectedPageId: string | null
   onPageSelect: (index: number) => void
+  onPageLifecycle: (result: PageLifecycleResult) => void
   loading: boolean
   saving: boolean
   saveError: string | null
@@ -53,6 +70,7 @@ type EditorSidebarProps = {
   createError: string | null
   suggestedMonday: string
   onCreateWeek: (monday: string) => void
+  emptyStore: boolean
 }
 
 /** 週次切換時以 key remount，editMode 自動回到鎖定 */
@@ -63,7 +81,9 @@ function EditorSidebar({
   week,
   setWeek,
   selectedPageIndex,
+  selectedPageId,
   onPageSelect,
+  onPageLifecycle,
   loading,
   saving,
   saveError,
@@ -73,6 +93,7 @@ function EditorSidebar({
   createError,
   suggestedMonday,
   onCreateWeek,
+  emptyStore,
 }: EditorSidebarProps) {
   const [editMode, setEditMode] = useState(false)
 
@@ -81,7 +102,7 @@ function EditorSidebar({
       <div className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Sidebar
             </p>
             <p className="text-xs text-muted-foreground">
@@ -103,22 +124,29 @@ function EditorSidebar({
           </Button>
         </div>
 
-        <WorkshopToolbar
-          weeks={weeks}
-          selectedMonday={selectedMonday}
-          onWeekChange={onWeekChange}
-          onSave={onSave}
-          saving={saving}
-          saveMessage={saveMessage}
-          saveError={saveError}
-          suggestedMonday={suggestedMonday}
-          onCreateWeek={onCreateWeek}
-          creating={creating}
-          createError={createError}
-          weekSelectDisabled={loading}
-          saveDisabled={loading || !week || !editMode}
-          createDisabled={loading || creating || !editMode}
-        />
+        {emptyStore ? (
+          // 空 store 只說明如何 seed，不提供建立第一週
+          <p className="text-sm text-muted-foreground" role="status">
+            {EMPTY_STORE_MESSAGE}
+          </p>
+        ) : (
+          <WorkshopToolbar
+            weeks={weeks}
+            selectedMonday={selectedMonday}
+            onWeekChange={onWeekChange}
+            onSave={onSave}
+            saving={saving}
+            saveMessage={saveMessage}
+            saveError={saveError}
+            suggestedMonday={suggestedMonday}
+            onCreateWeek={onCreateWeek}
+            creating={creating}
+            createError={createError}
+            weekSelectDisabled={loading}
+            saveDisabled={loading || !week || !editMode}
+            createDisabled={loading || creating || !editMode}
+          />
+        )}
 
         {week ? (
           <>
@@ -127,6 +155,14 @@ function EditorSidebar({
               selectedPageIndex={selectedPageIndex}
               onSelect={onPageSelect}
             />
+            {selectedPageId ? (
+              <PageLifecycleControls
+                week={week}
+                selectedPageId={selectedPageId}
+                onChange={onPageLifecycle}
+                disabled={!editMode}
+              />
+            ) : null}
             <Separator />
             <PageEditorForm
               week={week}
@@ -143,6 +179,16 @@ function EditorSidebar({
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
+  return (
+    <MetricDraftProvider>
+      <WorkshopShellBody />
+    </MetricDraftProvider>
+  )
+}
+
+function WorkshopShellBody() {
+  const { buffer } = useMetricDraft()
+  const [draftSaveError, setDraftSaveError] = useState<string | null>(null)
   const {
     weeks,
     selectedMonday,
@@ -151,9 +197,10 @@ export function WorkshopShell() {
     setWeek,
     selectedPageIndex,
     setSelectedPageIndex,
-    loading,
+    selectedPageId,
+    setSelectedPageId,
+    loadStatus,
     saving,
-    error,
     saveError,
     saveMessage,
     saveWeek,
@@ -163,9 +210,13 @@ export function WorkshopShell() {
     createWeek,
   } = useWeekEditor()
 
+  const loading = loadStatus.kind === "loading"
+  const emptyStore = loadStatus.kind === "empty"
+  const error = loadStatus.kind === "error" ? loadStatus.message : null
+
   const selectedPage = week?.pages[selectedPageIndex] ?? null
-  const previewStageRef = useRef<HTMLDivElement>(null)
   const captureHostRef = useRef<HTMLDivElement>(null)
+  const previewStageRef = useRef<HTMLDivElement>(null)
   const {
     capturePage,
     exporting,
@@ -179,12 +230,39 @@ export function WorkshopShell() {
     monday: selectedMonday,
     week,
     selectedPage,
-    previewStageRef,
     captureHostRef,
+    metricBuffer: buffer,
   })
 
   const editorPanelRef = usePanelRef()
   const [editorCollapsed, setEditorCollapsed] = useState(false)
+  const [previewOverflow, setPreviewOverflow] = useState<string | null>(null)
+
+  useEffect(() => {
+    const root = previewStageRef.current
+    if (!root || !selectedPage) {
+      setPreviewOverflow(null)
+      return
+    }
+
+    let cancelled = false
+    void measureStageOverflow(root).then((result) => {
+      if (cancelled) {
+        return
+      }
+      if (result.status === "overflow") {
+        setPreviewOverflow(
+          `Preview overflow (${result.axes.join(" and ")}) — export still uses the 1280 × 720 capture stage`
+        )
+        return
+      }
+      setPreviewOverflow(null)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedPage, week])
 
   usePageKeyboardNav({
     pageCount: week?.pages.length ?? 0,
@@ -283,22 +361,35 @@ export function WorkshopShell() {
         >
           <EditorSidebar
             key={selectedMonday}
-            weeks={weeks.length > 0 ? weeks : [selectedMonday]}
+            weeks={weeks}
             selectedMonday={selectedMonday}
             onWeekChange={setSelectedMonday}
             week={week}
             setWeek={setWeek}
             selectedPageIndex={selectedPageIndex}
+            selectedPageId={selectedPageId}
             onPageSelect={setSelectedPageIndex}
+            onPageLifecycle={(result) => {
+              setWeek(result.week)
+              setSelectedPageId(result.selectedPageId)
+            }}
             loading={loading}
             saving={saving}
-            saveError={saveError}
+            saveError={saveError ?? draftSaveError}
             saveMessage={saveMessage}
-            onSave={() => void saveWeek()}
+            onSave={() => {
+              if (week && weekHasInvalidMetricDrafts(week, buffer)) {
+                setDraftSaveError("Fix invalid metric values before saving")
+                return
+              }
+              setDraftSaveError(null)
+              void saveWeek()
+            }}
             creating={creating}
             createError={createError}
             suggestedMonday={suggestedMonday}
             onCreateWeek={(monday) => void createWeek(monday)}
+            emptyStore={emptyStore}
           />
         </ResizablePanel>
 
@@ -312,7 +403,7 @@ export function WorkshopShell() {
         >
           <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden p-4">
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 16:9 preview
               </h2>
               <ExportControls
@@ -326,19 +417,32 @@ export function WorkshopShell() {
                 disabled={loading || !week}
               />
             </div>
+            {previewOverflow ? (
+              <p className="mb-3 text-xs text-muted-foreground" role="status">
+                {previewOverflow}
+              </p>
+            ) : null}
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <div className="w-full max-w-5xl">
                 <StageFrame ref={previewStageRef}>
                   {loading ? (
                     <div className="stage-placeholder">Loading week…</div>
                   ) : null}
+                  {!loading && emptyStore ? (
+                    <div className="stage-placeholder" role="status">
+                      {EMPTY_STORE_MESSAGE}
+                    </div>
+                  ) : null}
                   {!loading && error ? (
                     <div className="stage-warning" role="alert">
                       {error}
                     </div>
                   ) : null}
-                  {!loading && selectedPage ? (
-                    <StageSlide page={selectedPage} monday={selectedMonday} />
+                  {!loading && selectedPage && week ? (
+                    <StageSlide
+                      page={selectedPage}
+                      context={createStagePageContext(week, selectedPage.id)}
+                    />
                   ) : null}
                 </StageFrame>
               </div>
@@ -357,7 +461,7 @@ export function WorkshopShell() {
       </ResizablePanelGroup>
       <StageCaptureHost
         page={capturePage}
-        monday={selectedMonday}
+        week={week}
         hostRef={captureHostRef}
       />
     </div>

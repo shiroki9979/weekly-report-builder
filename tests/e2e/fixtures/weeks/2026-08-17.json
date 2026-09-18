@@ -1,0 +1,111 @@
+{
+  "start": "2026-08-17",
+  "end": "2026-08-21",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "weekly-overview",
+      "title": "Delivery recovered, and the week closed with two durable gains.",
+      "lead": {
+        "workstream": "Delivery",
+        "figure": "5 days",
+        "result": "Turnaround fell from 9 days to 5.",
+        "impact": "Work now finishes in the same week it starts.",
+        "status": { "label": "On track", "tone": "positive" }
+      },
+      "supporting": [
+        {
+          "workstream": "Accuracy",
+          "figure": "1.2%",
+          "result": "Faults that reached users dropped to 1.2%.",
+          "impact": "Fewer late fixes after something went live.",
+          "status": { "label": "Improved", "tone": "positive" }
+        }
+      ]
+    },
+    {
+      "id": "p02",
+      "layout": "weekly-overview",
+      "title": "交付回穩，本週收斂兩項可延續成果。",
+      "lead": {
+        "workstream": "交付",
+        "figure": "5 天",
+        "result": "週轉從 9 天降到 5 天。",
+        "impact": "工作能在當週完成。",
+        "status": { "label": "穩健", "tone": "positive" }
+      },
+      "supporting": [
+        {
+          "workstream": "準確度",
+          "figure": "1.2%",
+          "result": "進到使用者的故障降到 1.2%。",
+          "impact": "上線後較少緊急修復。",
+          "status": { "label": "改善", "tone": "positive" }
+        },
+        {
+          "workstream": "穩定度",
+          "figure": "18%",
+          "result": "備援使用降到 18%。",
+          "impact": "下次發布前仍有餘裕。",
+          "status": { "label": "留意", "tone": "caution" }
+        }
+      ]
+    },
+    {
+      "id": "p03",
+      "layout": "weekly-overview",
+      "title": "Delivery recovered，本週收斂 two durable gains.",
+      "lead": {
+        "workstream": "Delivery 交付",
+        "figure": "5 days",
+        "result": "Turnaround 降到 5.",
+        "impact": "Same week.",
+        "status": { "label": "On track 穩健", "tone": "positive" }
+      },
+      "supporting": [
+        {
+          "workstream": "Accuracy",
+          "figure": "1.2%",
+          "result": "Faults dropped.",
+          "impact": "Fewer late fixes.",
+          "status": { "label": "Improved", "tone": "positive" }
+        },
+        {
+          "workstream": "穩定度",
+          "figure": "18%",
+          "result": "Reserve slowed.",
+          "impact": "Room remains.",
+          "status": { "label": "Watch", "tone": "caution" }
+        },
+        {
+          "workstream": "Capacity",
+          "figure": "3 slots",
+          "result": "Slots stayed open.",
+          "impact": "No overnight wait.",
+          "status": { "label": "Steady", "tone": "neutral" }
+        }
+      ]
+    },
+    {
+      "id": "p04",
+      "layout": "weekly-overview",
+      "title": "Overflow overview",
+      "lead": {
+        "workstream": "Overflow",
+        "figure": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "result": "This figure is intentionally too wide for the capture stage.",
+        "impact": "Export should skip this overflowing page.",
+        "status": { "label": "Broken", "tone": "caution" }
+      },
+      "supporting": [
+        {
+          "workstream": "Padding",
+          "figure": "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "result": "Keep stretching the layout past 1280 by 720.",
+          "impact": "Batch export must report overflow.",
+          "status": { "label": "Overflow", "tone": "caution" }
+        }
+      ]
+    }
+  ]
+}

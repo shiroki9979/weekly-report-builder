@@ -12,6 +12,7 @@ import {
   setChartSeriesName,
   setChartSeriesValue,
 } from "@/lib/week-editor"
+import { issuePathsFor } from "@/lib/export-readiness"
 import type { ChartPanel, WeekDocument } from "@/lib/week-document"
 
 type ChartEditorFormProps = {
@@ -27,6 +28,8 @@ export function ChartEditorForm({
   panel,
   onChange,
 }: ChartEditorFormProps) {
+  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium text-muted-foreground">
@@ -38,6 +41,7 @@ export function ChartEditorForm({
         <Input
           id="chart-panel-title"
           value={panel.title}
+          aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
             onChange(setChartPanelTitle(week, pageIndex, event.target.value))
           }
@@ -62,6 +66,10 @@ export function ChartEditorForm({
               <Input
                 aria-label={`Category ${categoryIndex + 1}`}
                 value={category}
+                aria-invalid={
+                  invalidPaths.has(`panel.categories[${categoryIndex}]`) ||
+                  undefined
+                }
                 onChange={(event) =>
                   onChange(
                     setChartCategory(
@@ -78,9 +86,7 @@ export function ChartEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange(
-                    removeChartCategory(week, pageIndex, categoryIndex)
-                  )
+                  onChange(removeChartCategory(week, pageIndex, categoryIndex))
                 }
                 disabled={panel.categories.length <= 1}
               >
@@ -118,6 +124,10 @@ export function ChartEditorForm({
                 <Input
                   id={`series-name-${seriesIndex}`}
                   value={series.name}
+                  aria-invalid={
+                    invalidPaths.has(`panel.series[${seriesIndex}].name`) ||
+                    undefined
+                  }
                   onChange={(event) =>
                     onChange(
                       setChartSeriesName(
@@ -152,13 +162,22 @@ export function ChartEditorForm({
             <div className="grid gap-2 sm:grid-cols-3">
               {panel.categories.map((category, categoryIndex) => (
                 <div key={categoryIndex} className="space-y-2">
-                  <Label htmlFor={`series-${seriesIndex}-value-${categoryIndex}`}>
+                  <Label
+                    htmlFor={`series-${seriesIndex}-value-${categoryIndex}`}
+                  >
                     {category || `Category ${categoryIndex + 1}`}
                   </Label>
                   <Input
                     id={`series-${seriesIndex}-value-${categoryIndex}`}
                     type="number"
                     min={0}
+                    aria-invalid={
+                      invalidPaths.has(
+                        `panel.series[${seriesIndex}].values[${categoryIndex}]`
+                      ) ||
+                      invalidPaths.has(`panel.series[${seriesIndex}].values`) ||
+                      undefined
+                    }
                     value={series.values[categoryIndex] ?? 0}
                     onChange={(event) =>
                       onChange(

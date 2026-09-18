@@ -1,11 +1,11 @@
 # 開發伺服器 API
 
 建立日期：2026-08-31  
-最後更新：2026-08-31
+最後更新：2026-09-10
 
 ---
 
-僅在 `pnpm dev` 開發模式下可用。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。
+僅在 `pnpm dev` 開發模式下可用。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。可用環境變數 `WEEKS_DIR` 覆寫 weeks 目錄；Playwright 以此注入測試專用複本，不寫入 production `weeks/`。
 
 ## GET /api/weeks
 
@@ -25,8 +25,8 @@
 
 靜態讀取週次 JSON（Vite 靜態 middleware）。
 
-| 參數 | 說明 |
-|------|------|
+| 參數       | 說明         |
+| ---------- | ------------ |
 | `{monday}` | `YYYY-MM-DD` |
 
 **Response**：週次 JSON 檔案內容；不存在時 404。
@@ -56,7 +56,7 @@
 **Response 201**
 
 ```json
-{ "week": { /* WeekDocument */ } }
+{ "week": {/* WeekDocument */} }
 ```
 
 **Response 400**：無上一週可 clone、日期非週一等
