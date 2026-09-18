@@ -116,11 +116,11 @@ describe("week-editor", () => {
     })
 
     // 驗證針對非 two-column 頁面執行結構化編輯操作時會拋出明確錯誤，防止資料結構毀損
-    expect(() => assertTwoColumnPage(htmlWeek.pages[0], 0)).toThrow(
-      "Page 0 is not a two-column page"
+    expect(() => assertTwoColumnPage(htmlWeek.pages[0])).toThrow(
+      "Week Page p03 is not a two-column page"
     )
     expect(() => setPageItem(htmlWeek, 0, 0, "heading", "fail")).toThrow(
-      "Page 0 is not a two-column page"
+      "Week Page p03 is not a two-column page"
     )
   })
 })

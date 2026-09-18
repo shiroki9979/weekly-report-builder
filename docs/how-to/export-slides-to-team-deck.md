@@ -1,7 +1,7 @@
 # 匯出 PNG 至團隊簡報
 
 建立日期：2026-08-31  
-最後更新：2026-09-10
+最後更新：2026-09-18
 
 ---
 
@@ -27,6 +27,27 @@
 - **略過並警告**：未知 layout、`fields` panel、Draft Page、Overflowing Page、capture 量測失敗。警告會列出 Page ID 與原因，其餘合格頁仍會輸出。
 
 Copy 目前頁時，若該頁是 Draft、Overflowing 或量測失敗，會阻擋並顯示原因。HTML Page 不套用這組 Structured Layout gate。
+
+## 排除匯出阻擋
+
+**Draft Page**
+
+1. 解鎖 **Edit**
+2. 依 readiness alert 填完缺少的必填欄位
+3. **Save**
+4. 再點 **Copy to clipboard** 或 **Download PNGs**
+
+**Overflowing Page**
+
+1. 縮短標題、Outcome、Comparison Metric 或 Commitment，直到 Copy／Download 不再回報 1280 × 720 overflow（800 × 450 預覽警告只是 advisory）
+2. **Save**
+3. 再點 **Copy to clipboard** 或 **Download PNGs**
+
+**非法 Comparison Metric**
+
+1. 把非數字輸入改成有限非負數，或清空該欄
+2. **Save**
+3. 再點 **Copy to clipboard** 或 **Download PNGs**
 
 ## 相關文件
 

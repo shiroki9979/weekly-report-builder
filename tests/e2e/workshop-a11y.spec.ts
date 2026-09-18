@@ -40,6 +40,18 @@ async function assertPreviewFits800x450(page: Page) {
   expect(box.scrollHeight).toBeLessThanOrEqual(box.clientHeight + 1)
 }
 
+async function assertCopyFits1280Capture(page: Page) {
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page.getByRole("button", { name: "Copy to clipboard" })
+  ).toBeEnabled()
+  await expect(
+    page.locator("p[role='alert']").filter({
+      hasText: "Page overflows the 1280 × 720 capture stage",
+    })
+  ).toHaveCount(0)
+}
+
 test("reaches lifecycle controls from the keyboard and confirms delete in a dialog", async ({
   page,
 }) => {
@@ -66,7 +78,7 @@ test("reaches lifecycle controls from the keyboard and confirms delete in a dial
   ).toBeVisible()
 })
 
-test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 450", async ({
+test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 450 and 1280 × 720", async ({
   page,
 }) => {
   await openWeek(
@@ -75,12 +87,14 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
     "Delivery recovered, and the week closed with two durable gains."
   )
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
 
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
     .getByRole("option", { name: "交付回穩，本週收斂兩項可延續成果。" })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
 
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
@@ -89,6 +103,7 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
     })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
 
   await openWeek(
     page,
@@ -96,24 +111,29 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
     "Ship the candidate. The baseline is slower."
   )
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
     .getByRole("option", { name: "採用候選方案。基準較慢且較不穩。" })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
     .getByRole("option", { name: "Ship the candidate。基準較慢且較不穩。" })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
 
   await openWeek(page, "2026-08-03", "Five-day reviews and a held reserve.")
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
     .getByRole("option", { name: "五日審查、少漏接、守住備援。" })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await page
     .getByRole("option", {
@@ -121,4 +141,5 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
     })
     .click()
   await assertPreviewFits800x450(page)
+  await assertCopyFits1280Capture(page)
 })
