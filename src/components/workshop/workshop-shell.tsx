@@ -49,7 +49,7 @@ import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
 
 export const EMPTY_STORE_MESSAGE =
-  "The existing weeks/ directory has no Week Documents. Remove the empty directory, then run pnpm seed:weeks."
+  "weeks/ has no Week Documents. Remove an empty weeks/ directory if it exists, then run pnpm seed:weeks."
 
 type EditorSidebarProps = {
   weeks: string[]

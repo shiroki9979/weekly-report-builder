@@ -11,10 +11,10 @@ export function updateTypedPage<T extends WeekPage>(
   const next = structuredClone(week)
   const page = next.pages[pageIndex]
   if (!page) {
-    throw new Error(`Page index out of range: ${pageIndex}`)
+    throw new Error("Week Page not found")
   }
   if (!guard(page)) {
-    throw new Error(`Page ${pageIndex} is not ${typeLabel}`)
+    throw new Error(`Week Page ${page.id} is not ${typeLabel}`)
   }
   next.pages[pageIndex] = updater(page)
   return next

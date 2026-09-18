@@ -33,12 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 工坊就緒摘要與批次略過原因改用 Draft Page／Overflowing Page，不以 invalid page 稱呼 Draft Page。
 - Editorial Layout Family 編輯器共用 week-page updater 與 Title／notes／Hide chrome；preview／editor／clone／readiness／Add page 共用 `matchWeekPage`。
 - Comparison Metric raw draft 以具名 path 型別鍵入，Move／Remove 仍重對 buffer。
+- README 工作流程改為涵蓋 Editorial Layout Family，不再只描述 Two-column 三欄加 panel。
+- 匯出 How-To 補上 Draft Page、Overflowing Page 與非法 Comparison Metric 的排除步驟。
+- Workshop empty state 不再預設「既有 `weeks/` 目錄」，`weeks/` 缺失與空目錄都提示先移除空目錄（若存在）再 `pnpm seed:weeks`。
 
 ### Fixed
 
 - 修復切換週次後過期的儲存結果可能覆蓋新選取 Week Document 的競態；week-editor 僅公開單一 load status（[#25](https://github.com/shiroki9979/weekly-report-builder/issues/25)）。
 - production build 在缺少 `weeks/` 時改為提示執行 `pnpm seed:weeks` 並以非零結束，不再隱含 seed 或丟出原始檔案系統錯誤（[#22](https://github.com/shiroki9979/weekly-report-builder/issues/22)）。
 - Copy／批次匯出改由單一 Export Readiness 入口合併非法 metric draft；Move／Remove comparison metric 時 raw buffer 會跟著重對路徑（`src/lib/export-readiness.ts`）。
+- Week Page 找不到或型別不符時不再使用 Page index 錯誤字串；型別不符會帶 Page ID（`src/lib/week-editor.ts`、`src/lib/update-week-page.ts`）。
 
 ## [0.1.0] - 2026-09-04
 

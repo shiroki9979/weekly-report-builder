@@ -6,8 +6,8 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 
 ## Status
 
-- **Scaffold**: Vite + React + shadcn (`base-nova`) workshop shell is in place (edit placeholder left, 16:9 stage right).
-- **Complete**: Tickets 01–07 — workshop authoring, all v1 panels, clone week, PNG export and clipboard.
+- **Workshop**: edit a week, preview at 16:9, export PNGs or copy one page to the clipboard.
+- **Structured Layouts**: Two-column, Weekly Overview, Evidence-backed Decision, Next Actions, plus HTML Pages.
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
@@ -45,12 +45,12 @@ The disposable layout-family prototype has been retired. Author Weekly Overview,
 
 Workshop UI and in-app strings are **English**. Slide copy in `weeks/*.json` is user-authored and may be any language.
 
-## Workflow (when complete)
+## Workflow
 
-1. Open the week (`weeks/YYYY-MM-DD.json`; new weeks clone the previous structure with cleared copy).
-2. Fill each page: title, three left bullets, right panel (`chart` / `table` / `flow` / `checklist`).
-3. Hide pages you will not paste into the team deck.
-4. Export visible pages as PNG or copy to the clipboard.
+1. Open the latest week (`weeks/YYYY-MM-DD.json`; new weeks clone the previous structure with cleared copy).
+2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Editorial Layout Family pages use Weekly Overview, Evidence-backed Decision, or Next Actions — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
+3. Hide pages you will not paste into the team deck. Draft and Overflowing Pages cannot be copied or batch-exported until they are Content-complete and fit the 1280 × 720 capture Stage.
+4. Export ready pages as PNG or copy the current page to the clipboard.
 
 ## Out of scope
 

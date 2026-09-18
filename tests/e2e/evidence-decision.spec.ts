@@ -59,6 +59,42 @@ test("adds, saves, and reloads an evidence-backed decision draft", async ({
   await page.getByRole("option", { name: "Evidence-backed Decision" }).click()
   await page.getByRole("button", { name: "Add page" }).click()
   await expect(page.getByRole("alert")).toContainText("Draft Page")
+  await expect(page.getByRole("button", { name: "Add metric" })).toBeDisabled()
+  await expect(
+    page.getByRole("button", { name: "Add interpretation" })
+  ).toBeDisabled()
+
+  await page
+    .getByRole("group", { name: "Metric 2" })
+    .getByRole("button", { name: "Remove" })
+    .click()
+  await expect(page.getByRole("button", { name: "Add metric" })).toBeEnabled()
+  await expect(
+    page.getByRole("group", { name: "Metric 1" }).getByRole("button", {
+      name: "Remove",
+    })
+  ).toBeDisabled()
+  await page.getByRole("button", { name: "Add metric" }).click()
+  await expect(page.getByRole("button", { name: "Add metric" })).toBeDisabled()
+  await expect(page.getByRole("group", { name: "Metric 2" })).toBeVisible()
+
+  await page
+    .getByRole("group", { name: "Interpretation 2" })
+    .getByRole("button", { name: "Remove" })
+    .click()
+  await expect(
+    page.getByRole("button", { name: "Add interpretation" })
+  ).toBeEnabled()
+  await expect(
+    page.getByRole("group", { name: "Interpretation 1" }).getByRole("button", {
+      name: "Remove",
+    })
+  ).toBeDisabled()
+  await page.getByRole("button", { name: "Add interpretation" }).click()
+  await expect(
+    page.getByRole("button", { name: "Add interpretation" })
+  ).toBeDisabled()
+
   await page
     .getByRole("textbox", { name: "Title", exact: true })
     .fill("Saved decision")
@@ -87,6 +123,23 @@ test("skips an overflowing evidence-backed decision during batch export", async 
   await expect(skipped).not.toContainText("p01:")
   await expect(skipped).not.toContainText("p02:")
   await expect(skipped).not.toContainText("p03:")
+})
+
+test("blocks copy of an overflowing evidence-backed decision", async ({
+  page,
+}) => {
+  await openDecisionWeek(page)
+  await page.getByRole("combobox", { name: "Page", exact: true }).click()
+  await page.getByRole("option", { name: "Overflow decision" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Overflow decision" })
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page.locator("p[role='alert']").filter({
+      hasText: "Page overflows the 1280 × 720 capture stage",
+    })
+  ).toBeVisible()
 })
 
 test("does not treat a complete evidence-backed decision as missing content on copy", async ({

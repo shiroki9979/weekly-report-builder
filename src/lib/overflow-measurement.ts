@@ -13,6 +13,7 @@ export type OverflowMeasurement =
   | { status: "overflow"; axes: OverflowAxis[] }
   | { status: "measurement-failed"; message: string }
 
+// ponytail: 固定等 2 個 rAF；字型或動畫若超過兩幀才穩定，改等 layout 事件或拉長 timeout 重試
 function waitFrames(count: number): Promise<void> {
   return new Promise((resolve) => {
     const step = (remaining: number) => {
