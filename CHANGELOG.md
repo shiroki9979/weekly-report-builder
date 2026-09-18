@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-18
+
 ### Added
 
 - Workshop 在既有 `weeks/` 沒有 Week Document 時顯示英文 empty state，說明需移除空目錄後執行 `pnpm seed:weeks`，且不會建立第一週（[#21](https://github.com/shiroki9979/weekly-report-builder/issues/21)）。
@@ -66,3 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - 消毒 HTML 逃生口時啟用 DOMPurify SVG profile，避免 inline 圖表被剝成空白投影片
+
+[Unreleased]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/shiroki9979/weekly-report-builder/releases/tag/v0.1.0
