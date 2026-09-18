@@ -63,6 +63,15 @@ function LifecycleHarness({
   )
 }
 
+async function chooseAddPageLayout(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string
+) {
+  await user.click(screen.getByRole("combobox", { name: "Add page" }))
+  // Base UI Select 的 listbox 在 jsdom 裡是非同步掛上；後續測試若立刻 getByRole 會誤判沒開
+  await user.click(await screen.findByRole("option", { name }))
+}
+
 describe("workshop page lifecycle", () => {
   it("adds a blank two-column page after the selection and selects it", async () => {
     const user = userEvent.setup()
@@ -122,8 +131,7 @@ describe("workshop page lifecycle", () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await user.click(screen.getByRole("combobox", { name: "Add page" }))
-    await user.click(screen.getByRole("option", { name: "Weekly Overview" }))
+    await chooseAddPageLayout(user, "Weekly Overview")
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
     expect(screen.getByTestId("page-ids")).toHaveTextContent("p01,p03,p02")
@@ -145,10 +153,7 @@ describe("workshop page lifecycle", () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await user.click(screen.getByRole("combobox", { name: "Add page" }))
-    await user.click(
-      screen.getByRole("option", { name: "Evidence-backed Decision" })
-    )
+    await chooseAddPageLayout(user, "Evidence-backed Decision")
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
@@ -165,8 +170,7 @@ describe("workshop page lifecycle", () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await user.click(screen.getByRole("combobox", { name: "Add page" }))
-    await user.click(screen.getByRole("option", { name: "Next Actions" }))
+    await chooseAddPageLayout(user, "Next Actions")
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
