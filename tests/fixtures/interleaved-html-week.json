@@ -1,0 +1,50 @@
+{
+  "start": "2026-08-31",
+  "end": "2026-09-04",
+  "pages": [
+    {
+      "id": "p01",
+      "layout": "two-column",
+      "title": "Week open",
+      "items": [
+        { "heading": "One", "body": "First" },
+        { "heading": "Two", "body": "Second" },
+        { "heading": "Three", "body": "Third" }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Summary",
+        "columns": ["Item", "Status"],
+        "rows": [{ "cells": ["Open", "Ready"] }]
+      }
+    },
+    {
+      "id": "p02",
+      "layout": "html",
+      "title": "First diagram",
+      "htmlFile": "p02.html"
+    },
+    {
+      "id": "p03",
+      "layout": "two-column",
+      "title": "Mid week",
+      "items": [
+        { "heading": "One", "body": "First" },
+        { "heading": "Two", "body": "Second" },
+        { "heading": "Three", "body": "Third" }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Checks",
+        "columns": ["Item", "Status"],
+        "rows": [{ "cells": ["Mid", "Ready"] }]
+      }
+    },
+    {
+      "id": "p04",
+      "layout": "html",
+      "title": "Second diagram",
+      "htmlFile": "p04.html"
+    }
+  ]
+}

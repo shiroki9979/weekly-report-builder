@@ -2,16 +2,24 @@
   "name": "weekly-report-builder",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": "24.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "seed:weeks": "node scripts/seed-weeks.ts",
+    "postinstall": "node scripts/seed-weeks.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -31,6 +39,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.6",

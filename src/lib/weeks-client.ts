@@ -4,7 +4,9 @@ export async function loadWeekDocument(monday: string): Promise<WeekDocument> {
   const response = await fetch(`/weeks/${monday}.json`)
 
   if (!response.ok) {
-    throw new Error(`Failed to load week file: ${monday}.json (${response.status})`)
+    throw new Error(
+      `Failed to load week file: ${monday}.json (${response.status})`
+    )
   }
 
   const json: unknown = await response.json()
@@ -44,7 +46,9 @@ export async function saveWeekDocument(
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to save week file: ${monday}.json (${response.status})`)
+    throw new Error(
+      `Failed to save week file: ${monday}.json (${response.status})`
+    )
   }
 }
 
@@ -56,7 +60,9 @@ export async function createWeekFromPrevious(
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to create week file: ${monday}.json (${response.status})`)
+    throw new Error(
+      `Failed to create week file: ${monday}.json (${response.status})`
+    )
   }
 
   const json: unknown = await response.json()

@@ -1,6 +1,9 @@
 # Temporary files
 **/tmp/
 
+# Runtime authoring store — private weekly reports; seeded from tracked demo/
+/weeks/
+
 # Logs
 logs
 *.log
@@ -14,6 +17,10 @@ node_modules
 dist
 dist-ssr
 *.local
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Editor directories and files
 .vscode/*

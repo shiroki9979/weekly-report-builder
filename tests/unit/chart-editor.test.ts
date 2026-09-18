@@ -13,10 +13,7 @@ import {
 } from "@/lib/week-editor"
 import { parseWeekDocument } from "@/lib/week-document"
 
-const fixturePath = resolve(
-  import.meta.dirname,
-  "../fixtures/chart-week.json"
-)
+const fixturePath = resolve(import.meta.dirname, "../fixtures/chart-week.json")
 
 function loadChartWeek() {
   return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))

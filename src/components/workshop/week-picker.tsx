@@ -144,37 +144,43 @@ export function WorkshopToolbar({
 }: WorkshopToolbarProps) {
   return (
     <div className="space-y-3">
-      <WeekPicker
-        weeks={weeks}
-        value={selectedMonday}
-        onChange={onWeekChange}
-        disabled={weekSelectDisabled}
-        trailing={
-          <>
-            <Button
-              type="button"
-              onClick={onSave}
-              disabled={saveDisabled || saving}
-            >
-              {saving ? "Saving…" : "Save"}
-            </Button>
-            {saveMessage ? (
-              <span className="text-xs text-muted-foreground">{saveMessage}</span>
-            ) : null}
-            {saveError ? (
-              <span className="text-xs text-destructive">{saveError}</span>
-            ) : null}
-          </>
-        }
-      />
+      {weeks.length > 0 ? (
+        <WeekPicker
+          weeks={weeks}
+          value={selectedMonday}
+          onChange={onWeekChange}
+          disabled={weekSelectDisabled}
+          trailing={
+            <>
+              <Button
+                type="button"
+                onClick={onSave}
+                disabled={saveDisabled || saving}
+              >
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              {saveMessage ? (
+                <span className="text-xs text-muted-foreground">
+                  {saveMessage}
+                </span>
+              ) : null}
+              {saveError ? (
+                <span className="text-xs text-destructive">{saveError}</span>
+              ) : null}
+            </>
+          }
+        />
+      ) : null}
 
-      <NewWeekForm
-        suggestedMonday={suggestedMonday}
-        onCreate={onCreateWeek}
-        creating={creating}
-        createError={createError}
-        disabled={createDisabled}
-      />
+      {weeks.length === 0 ? null : (
+        <NewWeekForm
+          suggestedMonday={suggestedMonday}
+          onCreate={onCreateWeek}
+          creating={creating}
+          createError={createError}
+          disabled={createDisabled}
+        />
+      )}
     </div>
   )
 }

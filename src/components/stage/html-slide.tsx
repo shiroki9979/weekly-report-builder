@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
 
-import {
-  preloadHtmlFragment,
-  validateHtmlFileName,
-} from "@/lib/html-page"
+import { preloadHtmlFragment, validateHtmlFileName } from "@/lib/html-page"
 import type { HtmlWeekPage } from "@/lib/week-document"
 
 export type HtmlSlideProps = {
