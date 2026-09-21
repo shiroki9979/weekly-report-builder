@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
+import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
 import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
@@ -60,6 +61,12 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
+        <PageNumberSelect
+          week={week}
+          pageIndex={pageIndex}
+          disabled={readOnly}
+          onChange={onChange}
+        />
         <div className="flex items-center gap-2">
           <Checkbox
             id="page-hidden"

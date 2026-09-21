@@ -14,6 +14,7 @@ import {
 const weekContext = {
   weekLabel: "2026-08-24 — 2026-08-28",
   pageLabel: "1 / 1",
+  showPageNumber: true,
 }
 
 describe("StageSlide", () => {
@@ -216,5 +217,140 @@ describe("StageSlide", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Unknown layout: future-layout"
     )
+  })
+
+  it("hides page number on editorial layout when showPageNumber is false", () => {
+    const page: WeeklyOverviewPage = {
+      id: "p01",
+      layout: "weekly-overview",
+      title: "Title",
+      lead: {
+        workstream: "Work",
+        figure: "1",
+        result: "Done",
+        impact: "Impact",
+        status: { label: "OK", tone: "positive" },
+      },
+      supporting: [
+        {
+          workstream: "Sub",
+          figure: "2",
+          result: "Done 2",
+          impact: "Impact 2",
+          status: { label: "OK", tone: "positive" },
+        },
+      ],
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: false }}
+      />
+    )
+
+    expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
+  })
+
+  it("renders page number on html layout when showPageNumber is true", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      text: async () => "<div>Custom Content</div>",
+    } as Response)
+
+    const page: HtmlWeekPage = {
+      id: "p03",
+      layout: "html",
+      title: "HTML Slide",
+      htmlFile: "p03.html",
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: true }}
+      />
+    )
+
+    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+  })
+
+  it("hides page number on html layout when showPageNumber is false", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      text: async () => "<div>Custom Content</div>",
+    } as Response)
+
+    const page: HtmlWeekPage = {
+      id: "p03",
+      layout: "html",
+      title: "HTML Slide",
+      htmlFile: "p03.html",
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: false }}
+      />
+    )
+
+    expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
+  })
+
+  it("renders page number on two-column layout when showPageNumber is true", () => {
+    const page: TwoColumnWeekPage = {
+      id: "p01",
+      layout: "two-column",
+      title: "Slide Title",
+      items: [
+        { heading: "Heading 1", body: "Body 1" },
+        { heading: "Heading 2", body: "Body 2" },
+        { heading: "Heading 3", body: "Body 3" },
+      ],
+      panel: {
+        kind: "table",
+        title: "Table",
+        columns: ["Col"],
+        rows: [{ cells: ["Val"] }],
+      },
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: true }}
+      />
+    )
+
+    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+  })
+
+  it("hides page number on two-column layout when showPageNumber is false", () => {
+    const page: TwoColumnWeekPage = {
+      id: "p01",
+      layout: "two-column",
+      title: "Slide Title",
+      items: [
+        { heading: "Heading 1", body: "Body 1" },
+        { heading: "Heading 2", body: "Body 2" },
+        { heading: "Heading 3", body: "Body 3" },
+      ],
+      panel: {
+        kind: "table",
+        title: "Table",
+        columns: ["Col"],
+        rows: [{ cells: ["Val"] }],
+      },
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: false }}
+      />
+    )
+
+    expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
   })
 })

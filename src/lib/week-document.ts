@@ -78,6 +78,7 @@ export type TwoColumnWeekPage = {
   panel: Panel
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
 }
 
 export type HtmlWeekPage = {
@@ -87,6 +88,7 @@ export type HtmlWeekPage = {
   htmlFile: string
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
 }
 
 export type StatusTone = "positive" | "caution" | "neutral"
@@ -112,6 +114,7 @@ export type WeeklyOverviewPage = {
   supporting: Outcome[]
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
 }
 
 export type UnitPosition = "before" | "after"
@@ -136,6 +139,7 @@ export type EvidenceDecisionPage = {
   interpretations: string[]
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
 }
 
 export type Commitment = {
@@ -151,6 +155,7 @@ export type NextActionsPage = {
   commitments: Commitment[]
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
 }
 
 export type UnknownWeekPage = {
@@ -159,6 +164,7 @@ export type UnknownWeekPage = {
   title: string
   hidden?: boolean
   notes?: string
+  showPageNumber?: boolean
   [key: string]: unknown
 }
 
@@ -179,6 +185,7 @@ export type WeekPage =
 export type WeekDocument = {
   start: string
   end: string
+  showPageNumbers?: boolean
   pages: WeekPage[]
 }
 
@@ -241,6 +248,17 @@ export function isSupportedStagePage(page: WeekPage): boolean {
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
   })
+}
+
+/** 頁碼顯示判斷：單頁設定優先於週層級預設，無設定時預設顯示 */
+export function isPageNumberVisible(
+  week: WeekDocument,
+  page: WeekPage
+): boolean {
+  if (page.showPageNumber !== undefined) {
+    return page.showPageNumber
+  }
+  return week.showPageNumbers ?? true
 }
 
 type WeekPageMatchers<T> = {
@@ -509,6 +527,7 @@ function parseWeeklyOverviewPage(
     title: string
     hidden?: boolean
     notes?: string
+    showPageNumber?: boolean
   },
   index: number
 ): WeeklyOverviewPage {
@@ -533,6 +552,7 @@ function parseWeeklyOverviewPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -608,6 +628,7 @@ function parseEvidenceDecisionPage(
     title: string
     hidden?: boolean
     notes?: string
+    showPageNumber?: boolean
   },
   index: number
 ): EvidenceDecisionPage {
@@ -645,6 +666,7 @@ function parseEvidenceDecisionPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -667,6 +689,7 @@ function parseNextActionsPage(
     title: string
     hidden?: boolean
     notes?: string
+    showPageNumber?: boolean
   },
   index: number
 ): NextActionsPage {
@@ -693,6 +716,7 @@ function parseNextActionsPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -706,6 +730,8 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
   const title = readString(value.title, `pages[${index}].title`)
   const hidden = typeof value.hidden === "boolean" ? value.hidden : undefined
   const notes = typeof value.notes === "string" ? value.notes : undefined
+  const showPageNumber =
+    typeof value.showPageNumber === "boolean" ? value.showPageNumber : undefined
 
   if (layout === "html") {
     const htmlFile = readNonEmptyString(
@@ -731,23 +757,36 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
       htmlFile,
       hidden,
       notes,
+      showPageNumber,
     }
   }
 
   if (layout === "weekly-overview") {
-    return parseWeeklyOverviewPage(value, { id, title, hidden, notes }, index)
+    return parseWeeklyOverviewPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout === "evidence-decision") {
-    return parseEvidenceDecisionPage(value, { id, title, hidden, notes }, index)
+    return parseEvidenceDecisionPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout === "next-actions") {
-    return parseNextActionsPage(value, { id, title, hidden, notes }, index)
+    return parseNextActionsPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout !== "two-column") {
-    return { ...value, id, layout, title, hidden, notes }
+    return { ...value, id, layout, title, hidden, notes, showPageNumber }
   }
 
   const items = value.items
@@ -765,6 +804,7 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
     panel: parsePanel(value.panel),
     hidden,
     notes,
+    showPageNumber,
   }
 }
 
@@ -789,9 +829,15 @@ export function parseWeekDocument(value: unknown): WeekDocument {
     seenIds.add(page.id)
   }
 
+  const showPageNumbers =
+    typeof value.showPageNumbers === "boolean"
+      ? value.showPageNumbers
+      : undefined
+
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),
+    ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
     pages: parsedPages,
   }
 }

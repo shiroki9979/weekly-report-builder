@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Workshop 支援週次與投影片層級頁碼顯示切換，並於所有版面統一以絕對定位渲染外部頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+
+### Changed
+
+- 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
+- Workshop 工具列與頁面編輯器控制項在唯讀鎖定狀態下呈現明確 disabled 樣式（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+
 ## [0.2.0] - 2026-09-18
 
 ### Added

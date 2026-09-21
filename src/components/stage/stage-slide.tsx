@@ -49,6 +49,11 @@ export function StageSlide({
           </div>
         ),
       })}
+      {context.showPageNumber &&
+      context.pageLabel &&
+      context.pageLabel !== "Hidden" ? (
+        <footer className="stage-page-number">{context.pageLabel}</footer>
+      ) : null}
     </div>
   )
 }

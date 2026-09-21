@@ -9,6 +9,7 @@ import { ContentReadinessSummary } from "@/components/workshop/content-readiness
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import { EvidenceDecisionEditorForm } from "@/components/workshop/evidence-decision-editor-form"
 import { NextActionsEditorForm } from "@/components/workshop/next-actions-editor-form"
+import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
@@ -156,6 +157,13 @@ function HtmlPageEditorForm({
             }
           />
         </div>
+
+        <PageNumberSelect
+          week={week}
+          pageIndex={pageIndex}
+          disabled={readOnly}
+          onChange={onChange}
+        />
 
         <div className="flex items-center gap-2">
           <Checkbox
@@ -428,6 +436,13 @@ function TwoColumnPageEditorForm({
             }
           />
         </div>
+
+        <PageNumberSelect
+          week={week}
+          pageIndex={pageIndex}
+          disabled={readOnly}
+          onChange={onChange}
+        />
 
         <div className="flex items-center gap-2">
           <Checkbox

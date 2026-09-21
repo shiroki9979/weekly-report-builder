@@ -8,9 +8,11 @@ import {
   setPageHtmlFile,
   setPageItem,
   setPageNotes,
+  setPageShowPageNumber,
   setPageTitle,
   setTablePanelCell,
   setTablePanelTitle,
+  setWeekShowPageNumbers,
 } from "@/lib/week-editor"
 import { parseWeekDocument } from "@/lib/week-document"
 
@@ -122,5 +124,27 @@ describe("week-editor", () => {
     expect(() => setPageItem(htmlWeek, 0, 0, "heading", "fail")).toThrow(
       "Week Page p03 is not a two-column page"
     )
+  })
+
+  it("updates week-level page-number visibility with setWeekShowPageNumbers", () => {
+    const week = loadFixture()
+    const hidden = setWeekShowPageNumbers(week, false)
+    expect(hidden.showPageNumbers).toBe(false)
+    expect(week.showPageNumbers).toBeUndefined()
+
+    const shown = setWeekShowPageNumbers(hidden, true)
+    expect(shown.showPageNumbers).toBe(true)
+  })
+
+  it("updates page-level page-number visibility override with setPageShowPageNumber", () => {
+    const week = loadFixture()
+    const overrideHide = setPageShowPageNumber(week, 0, false)
+    expect(overrideHide.pages[0].showPageNumber).toBe(false)
+
+    const overrideShow = setPageShowPageNumber(overrideHide, 0, true)
+    expect(overrideShow.pages[0].showPageNumber).toBe(true)
+
+    const resetToInherit = setPageShowPageNumber(overrideShow, 0, undefined)
+    expect(resetToInherit.pages[0].showPageNumber).toBeUndefined()
   })
 })

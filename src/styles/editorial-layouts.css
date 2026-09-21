@@ -63,15 +63,6 @@
   min-height: 0;
 }
 
-.editorial-page-number {
-  flex: none;
-  margin: 1.4% 0 0;
-  font-size: clamp(8px, 1cqw, 13px);
-  letter-spacing: 0.06em;
-  color: var(--mute);
-  text-align: right;
-}
-
 .editorial-overview {
   display: grid;
   flex: 1;

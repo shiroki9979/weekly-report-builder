@@ -215,4 +215,33 @@ describe("week-clone", () => {
     })
     expect(() => parseWeekDocument(cloned)).not.toThrow()
   })
+
+  it("preserves showPageNumbers and showPageNumber across clone", () => {
+    const previous = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: false,
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Custom",
+          htmlFile: "p01.html",
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Custom 2",
+          htmlFile: "p02.html",
+          showPageNumber: false,
+        },
+      ],
+    })
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    expect(cloned.showPageNumbers).toBe(false)
+    expect(cloned.pages[0].showPageNumber).toBe(true)
+    expect(cloned.pages[1].showPageNumber).toBe(false)
+  })
 })
