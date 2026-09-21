@@ -46,7 +46,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 4.6% 5.2% 6.4%;
+  padding: 4.6% 5% 6.4%;
 }
 
 .stage-slide h1 {
@@ -73,19 +73,21 @@
   gap: 1.45em;
 }
 
+/* 採懸掛縮排（hanging indent）：小標與內文起始邊對齊主標題（5% 格線），圓點懸掛於左側間距 */
 .stage-item {
   display: grid;
-  grid-template-columns: 1.15em 1fr;
-  gap: 0.5em;
+  grid-template-columns: 0.55em 1fr;
+  gap: 0.65em;
   align-items: start;
+  margin-left: -1.2em;
 }
 
 .stage-dot {
-  width: 0.62em;
-  height: 0.62em;
+  width: 0.55em;
+  height: 0.55em;
   border-radius: 50%;
   background: var(--blue);
-  margin-top: 0.48em;
+  margin-top: 0.44em;
 }
 
 .stage-item h3 {
