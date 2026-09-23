@@ -243,7 +243,9 @@ function WorkshopShellBody() {
   })
 
   const editorPanelRef = usePanelRef()
+  const notesPanelRef = usePanelRef()
   const [editorCollapsed, setEditorCollapsed] = useState(false)
+  const [notesExpanded, setNotesExpanded] = useState(true)
   const [previewOverflow, setPreviewOverflow] = useState<string | null>(null)
 
   useEffect(() => {
@@ -303,6 +305,20 @@ function WorkshopShellBody() {
     )
   }
 
+  const toggleNotesPanel = () => {
+    const panel = notesPanelRef.current
+    if (!panel) {
+      return
+    }
+    if (panel.isCollapsed()) {
+      panel.expand()
+      setNotesExpanded(true)
+      return
+    }
+    panel.collapse()
+    setNotesExpanded(false)
+  }
+
   const toggleEditorPanel = () => {
     const panel = editorPanelRef.current
     if (!panel) {
@@ -315,6 +331,36 @@ function WorkshopShellBody() {
       panel.collapse()
     }
   }
+
+  const previewStage = (
+    <div className="relative h-full min-h-0 min-w-0 overflow-hidden">
+      <div className="stage-preview-slot absolute inset-0 flex items-center justify-center">
+        <div className="stage-preview-fit">
+          <StageFrame ref={previewStageRef}>
+            {loading ? (
+              <div className="stage-placeholder">Loading week…</div>
+            ) : null}
+            {!loading && emptyStore ? (
+              <div className="stage-placeholder" role="status">
+                {EMPTY_STORE_MESSAGE}
+              </div>
+            ) : null}
+            {!loading && error ? (
+              <div className="stage-warning" role="alert">
+                {error}
+              </div>
+            ) : null}
+            {!loading && selectedPage && week ? (
+              <StageSlide
+                page={selectedPage}
+                context={createStagePageContext(week, selectedPage.id)}
+              />
+            ) : null}
+          </StageFrame>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
@@ -430,32 +476,43 @@ function WorkshopShellBody() {
                 {previewOverflow}
               </p>
             ) : null}
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="w-full max-w-5xl">
-                <StageFrame ref={previewStageRef}>
-                  {loading ? (
-                    <div className="stage-placeholder">Loading week…</div>
-                  ) : null}
-                  {!loading && emptyStore ? (
-                    <div className="stage-placeholder" role="status">
-                      {EMPTY_STORE_MESSAGE}
-                    </div>
-                  ) : null}
-                  {!loading && error ? (
-                    <div className="stage-warning" role="alert">
-                      {error}
-                    </div>
-                  ) : null}
-                  {!loading && selectedPage && week ? (
-                    <StageSlide
-                      page={selectedPage}
-                      context={createStagePageContext(week, selectedPage.id)}
-                    />
-                  ) : null}
-                </StageFrame>
-              </div>
-            </div>
-            {week ? <SpeakerNotesCue notes={selectedPage?.notes} /> : null}
+            {week ? (
+              <ResizablePanelGroup
+                orientation="vertical"
+                className="h-auto min-h-0 flex-1"
+                id="preview-speaker-notes"
+              >
+                <ResizablePanel id="preview-stage" minSize="30%">
+                  {previewStage}
+                </ResizablePanel>
+                <ResizableHandle withHandle aria-label="Resize speaker notes" />
+                <ResizablePanel
+                  id="preview-notes"
+                  panelRef={notesPanelRef}
+                  collapsible
+                  collapsedSize="2.75rem"
+                  defaultSize="12rem"
+                  minSize="2.75rem"
+                  groupResizeBehavior="preserve-pixel-size"
+                  onResize={() => {
+                    const expanded = !(
+                      notesPanelRef.current?.isCollapsed() ?? false
+                    )
+                    setNotesExpanded((current) =>
+                      current === expanded ? current : expanded
+                    )
+                  }}
+                >
+                  <SpeakerNotesCue
+                    notes={selectedPage?.notes}
+                    expanded={notesExpanded}
+                    onToggle={toggleNotesPanel}
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            ) : (
+              <div className="min-h-0 flex-1">{previewStage}</div>
+            )}
             {week ? (
               <PageNavigator
                 pages={week.pages}
