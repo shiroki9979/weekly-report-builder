@@ -117,7 +117,8 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: WeekPage): WeekPage {
-  return matchWeekPage(page, {
+  // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
+  return matchWeekPage<WeekPage>(page, {
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
