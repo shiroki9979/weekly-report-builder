@@ -313,6 +313,7 @@
   text-transform: uppercase;
 }
 
+/* HTML 全幅沒有文流 footer，頁碼疊在右下，不改片段本身 */
 .stage-page-number {
   position: absolute;
   right: 5%;

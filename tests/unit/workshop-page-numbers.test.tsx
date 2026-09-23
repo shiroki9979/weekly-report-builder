@@ -166,4 +166,35 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
       screen.getByRole("combobox", { name: "Page number" })
     ).toBeInTheDocument()
   })
+
+  it("does not render page number select for a two-column page", () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "two-column",
+          title: "Two column",
+          items: [
+            { heading: "", body: "" },
+            { heading: "", body: "" },
+            { heading: "", body: "" },
+          ],
+          panel: {
+            kind: "table",
+            title: "",
+            columns: ["A"],
+            rows: [{ cells: [""] }],
+          },
+        },
+      ],
+    }
+
+    render(<PageEditorForm week={week} pageIndex={0} onChange={() => {}} />)
+
+    expect(
+      screen.queryByRole("combobox", { name: "Page number" })
+    ).not.toBeInTheDocument()
+  })
 })

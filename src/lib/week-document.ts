@@ -70,25 +70,26 @@ export type SlideLayout =
   | "evidence-decision"
   | "next-actions"
 
-export type TwoColumnWeekPage = {
-  id: string
-  layout: "two-column"
-  title: string
-  items: SlideItem[]
-  panel: Panel
+/** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
+export type WeekPageChrome = {
   hidden?: boolean
   notes?: string
   showPageNumber?: boolean
 }
 
-export type HtmlWeekPage = {
+export type TwoColumnWeekPage = WeekPageChrome & {
+  id: string
+  layout: "two-column"
+  title: string
+  items: SlideItem[]
+  panel: Panel
+}
+
+export type HtmlWeekPage = WeekPageChrome & {
   id: string
   layout: "html"
   title: string
   htmlFile: string
-  hidden?: boolean
-  notes?: string
-  showPageNumber?: boolean
 }
 
 export type StatusTone = "positive" | "caution" | "neutral"
@@ -106,15 +107,12 @@ export type Outcome = {
   status: StatusSignal
 }
 
-export type WeeklyOverviewPage = {
+export type WeeklyOverviewPage = WeekPageChrome & {
   id: string
   layout: "weekly-overview"
   title: string
   lead: Outcome
   supporting: Outcome[]
-  hidden?: boolean
-  notes?: string
-  showPageNumber?: boolean
 }
 
 export type UnitPosition = "before" | "after"
@@ -130,16 +128,13 @@ export type ComparisonMetric = {
   precision: 0 | 1 | 2
 }
 
-export type EvidenceDecisionPage = {
+export type EvidenceDecisionPage = WeekPageChrome & {
   id: string
   layout: "evidence-decision"
   title: string
   verdict: string
   metrics: ComparisonMetric[]
   interpretations: string[]
-  hidden?: boolean
-  notes?: string
-  showPageNumber?: boolean
 }
 
 export type Commitment = {
@@ -148,23 +143,17 @@ export type Commitment = {
   checkpoint: string
 }
 
-export type NextActionsPage = {
+export type NextActionsPage = WeekPageChrome & {
   id: string
   layout: "next-actions"
   title: string
   commitments: Commitment[]
-  hidden?: boolean
-  notes?: string
-  showPageNumber?: boolean
 }
 
-export type UnknownWeekPage = {
+export type UnknownWeekPage = WeekPageChrome & {
   id: string
   layout: string
   title: string
-  hidden?: boolean
-  notes?: string
-  showPageNumber?: boolean
   [key: string]: unknown
 }
 
@@ -250,11 +239,24 @@ export function isSupportedStagePage(page: WeekPage): boolean {
   })
 }
 
-/** 頁碼顯示判斷：單頁設定優先於週層級預設，無設定時預設顯示 */
+const PAGE_NUMBER_LAYOUTS = new Set([
+  "html",
+  "weekly-overview",
+  "evidence-decision",
+  "next-actions",
+])
+
+/**
+ * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
+ * 單頁設定優先於週層級；兩者都沒有時預設顯示。
+ */
 export function isPageNumberVisible(
   week: WeekDocument,
   page: WeekPage
 ): boolean {
+  if (page.hidden || !PAGE_NUMBER_LAYOUTS.has(page.layout)) {
+    return false
+  }
   if (page.showPageNumber !== undefined) {
     return page.showPageNumber
   }
@@ -520,15 +522,14 @@ function parseOutcome(value: unknown, field: string): Outcome {
   }
 }
 
+type ParsedPageChrome = WeekPageChrome & {
+  id: string
+  title: string
+}
+
 function parseWeeklyOverviewPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-    showPageNumber?: boolean
-  },
+  common: ParsedPageChrome,
   index: number
 ): WeeklyOverviewPage {
   const supporting = value.supporting
@@ -623,13 +624,7 @@ function parseComparisonMetric(
 
 function parseEvidenceDecisionPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-    showPageNumber?: boolean
-  },
+  common: ParsedPageChrome,
   index: number
 ): EvidenceDecisionPage {
   const metrics = value.metrics
@@ -684,13 +679,7 @@ function parseCommitment(value: unknown, field: string): Commitment {
 
 function parseNextActionsPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-    showPageNumber?: boolean
-  },
+  common: ParsedPageChrome,
   index: number
 ): NextActionsPage {
   const commitments = value.commitments

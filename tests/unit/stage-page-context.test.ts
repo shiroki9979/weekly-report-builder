@@ -230,4 +230,44 @@ describe("createStagePageContext", () => {
       false
     )
   })
+
+  it("does not show a page number on a hidden page or a two-column page", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Hidden override",
+          htmlFile: "p01.html",
+          hidden: true,
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "two-column",
+          title: "Two column",
+          showPageNumber: true,
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: {
+            kind: "table",
+            title: "Grid",
+            columns: ["A"],
+            rows: [{ cells: ["1"] }],
+          },
+        },
+      ],
+    })
+
+    expect(createStagePageContext(week, "p01")).toMatchObject({
+      pageLabel: "Hidden",
+      showPageNumber: false,
+    })
+    expect(createStagePageContext(week, "p02").showPageNumber).toBe(false)
+  })
 })

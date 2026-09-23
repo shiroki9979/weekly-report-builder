@@ -27,6 +27,9 @@ export function EditorialFrame({
       </header>
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
+      {context.showPageNumber && context.pageLabel ? (
+        <footer className="editorial-page-number">{context.pageLabel}</footer>
+      ) : null}
     </article>
   )
 }

@@ -125,7 +125,6 @@ function clearPage(page: WeekPage): WeekPage {
       htmlFile: htmlPage.htmlFile,
       hidden: htmlPage.hidden,
       notes: undefined,
-      showPageNumber: htmlPage.showPageNumber,
     }),
     weeklyOverview: (overview) => ({
       id: overview.id,
@@ -135,7 +134,6 @@ function clearPage(page: WeekPage): WeekPage {
       supporting: overview.supporting.map(clearOutcome),
       hidden: overview.hidden,
       notes: undefined,
-      showPageNumber: overview.showPageNumber,
     }),
     evidenceDecision: (decision) => ({
       id: decision.id,
@@ -150,7 +148,6 @@ function clearPage(page: WeekPage): WeekPage {
       interpretations: decision.interpretations.map(() => ""),
       hidden: decision.hidden,
       notes: undefined,
-      showPageNumber: decision.showPageNumber,
     }),
     nextActions: (actions) => ({
       id: actions.id,
@@ -159,7 +156,6 @@ function clearPage(page: WeekPage): WeekPage {
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,
       notes: undefined,
-      showPageNumber: actions.showPageNumber,
     }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
@@ -169,13 +165,12 @@ function clearPage(page: WeekPage): WeekPage {
       panel: clearPanel(twoColumn.panel),
       hidden: twoColumn.hidden,
       notes: undefined,
-      showPageNumber: twoColumn.showPageNumber,
     }),
     unknown: (unknown) => ({
       ...unknown,
       title: "",
       notes: undefined,
-      showPageNumber: unknown.showPageNumber,
+      showPageNumber: undefined,
     }),
   })
 }
@@ -190,12 +185,10 @@ export function cloneWeekFromPrevious(
 
   const range = weekRangeForMonday(targetMonday)
 
+  // 新週預設顯示頁碼，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
   return {
     start: range.start,
     end: range.end,
-    ...(previous.showPageNumbers !== undefined
-      ? { showPageNumbers: previous.showPageNumbers }
-      : {}),
     pages: previous.pages.map(clearPage),
   }
 }

@@ -216,7 +216,7 @@ describe("week-clone", () => {
     expect(() => parseWeekDocument(cloned)).not.toThrow()
   })
 
-  it("preserves showPageNumbers and showPageNumber across clone", () => {
+  it("starts a new week with page numbers shown, ignoring the previous week's visibility", () => {
     const previous = parseWeekDocument({
       start: "2026-08-24",
       end: "2026-08-28",
@@ -240,8 +240,8 @@ describe("week-clone", () => {
     })
 
     const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
-    expect(cloned.showPageNumbers).toBe(false)
-    expect(cloned.pages[0].showPageNumber).toBe(true)
-    expect(cloned.pages[1].showPageNumber).toBe(false)
+    expect(cloned.showPageNumbers).toBeUndefined()
+    expect(cloned.pages[0].showPageNumber).toBeUndefined()
+    expect(cloned.pages[1].showPageNumber).toBeUndefined()
   })
 })

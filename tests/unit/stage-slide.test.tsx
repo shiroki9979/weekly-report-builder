@@ -126,7 +126,9 @@ describe("StageSlide", () => {
       })
     ).toBeInTheDocument()
     expect(screen.getByText("2026-08-24 — 2026-08-28")).toBeInTheDocument()
-    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+    expect(screen.getByText("1 / 1").closest("footer")).toHaveClass(
+      "editorial-page-number"
+    )
     expect(screen.getByText("Delivery")).toBeInTheDocument()
     expect(screen.getByText("Accuracy")).toBeInTheDocument()
     expect(
@@ -272,7 +274,9 @@ describe("StageSlide", () => {
       />
     )
 
-    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+    expect(screen.getByText("1 / 1").closest("footer")).toHaveClass(
+      "stage-page-number"
+    )
   })
 
   it("hides page number on html layout when showPageNumber is false", async () => {
@@ -298,7 +302,7 @@ describe("StageSlide", () => {
     expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
   })
 
-  it("renders page number on two-column layout when showPageNumber is true", () => {
+  it("does not render a page number on two-column layout", () => {
     const page: TwoColumnWeekPage = {
       id: "p01",
       layout: "two-column",
@@ -320,34 +324,6 @@ describe("StageSlide", () => {
       <StageSlide
         page={page}
         context={{ ...weekContext, showPageNumber: true }}
-      />
-    )
-
-    expect(screen.getByText("1 / 1")).toBeInTheDocument()
-  })
-
-  it("hides page number on two-column layout when showPageNumber is false", () => {
-    const page: TwoColumnWeekPage = {
-      id: "p01",
-      layout: "two-column",
-      title: "Slide Title",
-      items: [
-        { heading: "Heading 1", body: "Body 1" },
-        { heading: "Heading 2", body: "Body 2" },
-        { heading: "Heading 3", body: "Body 3" },
-      ],
-      panel: {
-        kind: "table",
-        title: "Table",
-        columns: ["Col"],
-        rows: [{ cells: ["Val"] }],
-      },
-    }
-
-    render(
-      <StageSlide
-        page={page}
-        context={{ ...weekContext, showPageNumber: false }}
       />
     )
 
