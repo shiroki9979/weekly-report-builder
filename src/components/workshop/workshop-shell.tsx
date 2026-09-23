@@ -47,6 +47,7 @@ import { measureStageOverflow } from "@/lib/overflow-measurement"
 import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
+import { setWeekShowPageNumbers } from "@/lib/week-editor"
 
 export const EMPTY_STORE_MESSAGE =
   "weeks/ has no Week Documents. Remove an empty weeks/ directory if it exists, then run pnpm seed:weeks."
@@ -145,6 +146,13 @@ function EditorSidebar({
             weekSelectDisabled={loading}
             saveDisabled={loading || !week || !editMode}
             createDisabled={loading || creating || !editMode}
+            showPageNumbers={week?.showPageNumbers ?? true}
+            showPageNumbersDisabled={loading || !week || !editMode}
+            onShowPageNumbersChange={(show) =>
+              setWeek((current) =>
+                current ? setWeekShowPageNumbers(current, show) : null
+              )
+            }
           />
         )}
 

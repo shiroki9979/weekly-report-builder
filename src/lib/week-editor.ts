@@ -183,6 +183,27 @@ export function setPageHidden(
   }))
 }
 
+export function setWeekShowPageNumbers(
+  week: WeekDocument,
+  showPageNumbers: boolean
+): WeekDocument {
+  return {
+    ...week,
+    showPageNumbers,
+  }
+}
+
+export function setPageShowPageNumber(
+  week: WeekDocument,
+  pageIndex: number,
+  showPageNumber: boolean | undefined
+): WeekDocument {
+  return updatePage(week, pageIndex, (page) => ({
+    ...page,
+    showPageNumber,
+  }))
+}
+
 export function setTablePanelTitle(
   week: WeekDocument,
   pageIndex: number,

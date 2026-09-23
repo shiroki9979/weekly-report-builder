@@ -70,23 +70,26 @@ export type SlideLayout =
   | "evidence-decision"
   | "next-actions"
 
-export type TwoColumnWeekPage = {
+/** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
+export type WeekPageChrome = {
+  hidden?: boolean
+  notes?: string
+  showPageNumber?: boolean
+}
+
+export type TwoColumnWeekPage = WeekPageChrome & {
   id: string
   layout: "two-column"
   title: string
   items: SlideItem[]
   panel: Panel
-  hidden?: boolean
-  notes?: string
 }
 
-export type HtmlWeekPage = {
+export type HtmlWeekPage = WeekPageChrome & {
   id: string
   layout: "html"
   title: string
   htmlFile: string
-  hidden?: boolean
-  notes?: string
 }
 
 export type StatusTone = "positive" | "caution" | "neutral"
@@ -104,14 +107,12 @@ export type Outcome = {
   status: StatusSignal
 }
 
-export type WeeklyOverviewPage = {
+export type WeeklyOverviewPage = WeekPageChrome & {
   id: string
   layout: "weekly-overview"
   title: string
   lead: Outcome
   supporting: Outcome[]
-  hidden?: boolean
-  notes?: string
 }
 
 export type UnitPosition = "before" | "after"
@@ -127,15 +128,13 @@ export type ComparisonMetric = {
   precision: 0 | 1 | 2
 }
 
-export type EvidenceDecisionPage = {
+export type EvidenceDecisionPage = WeekPageChrome & {
   id: string
   layout: "evidence-decision"
   title: string
   verdict: string
   metrics: ComparisonMetric[]
   interpretations: string[]
-  hidden?: boolean
-  notes?: string
 }
 
 export type Commitment = {
@@ -144,21 +143,17 @@ export type Commitment = {
   checkpoint: string
 }
 
-export type NextActionsPage = {
+export type NextActionsPage = WeekPageChrome & {
   id: string
   layout: "next-actions"
   title: string
   commitments: Commitment[]
-  hidden?: boolean
-  notes?: string
 }
 
-export type UnknownWeekPage = {
+export type UnknownWeekPage = WeekPageChrome & {
   id: string
   layout: string
   title: string
-  hidden?: boolean
-  notes?: string
   [key: string]: unknown
 }
 
@@ -179,6 +174,7 @@ export type WeekPage =
 export type WeekDocument = {
   start: string
   end: string
+  showPageNumbers?: boolean
   pages: WeekPage[]
 }
 
@@ -241,6 +237,30 @@ export function isSupportedStagePage(page: WeekPage): boolean {
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
   })
+}
+
+const PAGE_NUMBER_LAYOUTS = new Set([
+  "html",
+  "weekly-overview",
+  "evidence-decision",
+  "next-actions",
+])
+
+/**
+ * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
+ * 單頁設定優先於週層級；兩者都沒有時預設顯示。
+ */
+export function isPageNumberVisible(
+  week: WeekDocument,
+  page: WeekPage
+): boolean {
+  if (page.hidden || !PAGE_NUMBER_LAYOUTS.has(page.layout)) {
+    return false
+  }
+  if (page.showPageNumber !== undefined) {
+    return page.showPageNumber
+  }
+  return week.showPageNumbers ?? true
 }
 
 type WeekPageMatchers<T> = {
@@ -502,14 +522,14 @@ function parseOutcome(value: unknown, field: string): Outcome {
   }
 }
 
+type ParsedPageChrome = WeekPageChrome & {
+  id: string
+  title: string
+}
+
 function parseWeeklyOverviewPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-  },
+  common: ParsedPageChrome,
   index: number
 ): WeeklyOverviewPage {
   const supporting = value.supporting
@@ -533,6 +553,7 @@ function parseWeeklyOverviewPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -603,12 +624,7 @@ function parseComparisonMetric(
 
 function parseEvidenceDecisionPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-  },
+  common: ParsedPageChrome,
   index: number
 ): EvidenceDecisionPage {
   const metrics = value.metrics
@@ -645,6 +661,7 @@ function parseEvidenceDecisionPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -662,12 +679,7 @@ function parseCommitment(value: unknown, field: string): Commitment {
 
 function parseNextActionsPage(
   value: Record<string, unknown>,
-  common: {
-    id: string
-    title: string
-    hidden?: boolean
-    notes?: string
-  },
+  common: ParsedPageChrome,
   index: number
 ): NextActionsPage {
   const commitments = value.commitments
@@ -693,6 +705,7 @@ function parseNextActionsPage(
     ),
     hidden: common.hidden,
     notes: common.notes,
+    showPageNumber: common.showPageNumber,
   }
 }
 
@@ -706,6 +719,8 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
   const title = readString(value.title, `pages[${index}].title`)
   const hidden = typeof value.hidden === "boolean" ? value.hidden : undefined
   const notes = typeof value.notes === "string" ? value.notes : undefined
+  const showPageNumber =
+    typeof value.showPageNumber === "boolean" ? value.showPageNumber : undefined
 
   if (layout === "html") {
     const htmlFile = readNonEmptyString(
@@ -731,23 +746,36 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
       htmlFile,
       hidden,
       notes,
+      showPageNumber,
     }
   }
 
   if (layout === "weekly-overview") {
-    return parseWeeklyOverviewPage(value, { id, title, hidden, notes }, index)
+    return parseWeeklyOverviewPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout === "evidence-decision") {
-    return parseEvidenceDecisionPage(value, { id, title, hidden, notes }, index)
+    return parseEvidenceDecisionPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout === "next-actions") {
-    return parseNextActionsPage(value, { id, title, hidden, notes }, index)
+    return parseNextActionsPage(
+      value,
+      { id, title, hidden, notes, showPageNumber },
+      index
+    )
   }
 
   if (layout !== "two-column") {
-    return { ...value, id, layout, title, hidden, notes }
+    return { ...value, id, layout, title, hidden, notes, showPageNumber }
   }
 
   const items = value.items
@@ -765,6 +793,7 @@ function parseWeekPage(value: unknown, index: number): WeekPage {
     panel: parsePanel(value.panel),
     hidden,
     notes,
+    showPageNumber,
   }
 }
 
@@ -789,9 +818,15 @@ export function parseWeekDocument(value: unknown): WeekDocument {
     seenIds.add(page.id)
   }
 
+  const showPageNumbers =
+    typeof value.showPageNumbers === "boolean"
+      ? value.showPageNumbers
+      : undefined
+
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),
+    ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
     pages: parsedPages,
   }
 }

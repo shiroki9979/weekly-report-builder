@@ -179,4 +179,95 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 3")
     expect(createStagePageContext(week, "p03").pageLabel).toBe("3 / 3")
   })
+
+  it("determines showPageNumber from week defaults and page-level overrides", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: false,
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Inherited hidden",
+          htmlFile: "p01.html",
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Override show",
+          htmlFile: "p02.html",
+          showPageNumber: true,
+        },
+      ],
+    })
+
+    expect(createStagePageContext(week, "p01").showPageNumber).toBe(false)
+    expect(createStagePageContext(week, "p02").showPageNumber).toBe(true)
+
+    const visibleWeek = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Default visible",
+          htmlFile: "p01.html",
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Override hide",
+          htmlFile: "p02.html",
+          showPageNumber: false,
+        },
+      ],
+    })
+
+    expect(createStagePageContext(visibleWeek, "p01").showPageNumber).toBe(true)
+    expect(createStagePageContext(visibleWeek, "p02").showPageNumber).toBe(
+      false
+    )
+  })
+
+  it("does not show a page number on a hidden page or a two-column page", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Hidden override",
+          htmlFile: "p01.html",
+          hidden: true,
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "two-column",
+          title: "Two column",
+          showPageNumber: true,
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: {
+            kind: "table",
+            title: "Grid",
+            columns: ["A"],
+            rows: [{ cells: ["1"] }],
+          },
+        },
+      ],
+    })
+
+    expect(createStagePageContext(week, "p01")).toMatchObject({
+      pageLabel: "Hidden",
+      showPageNumber: false,
+    })
+    expect(createStagePageContext(week, "p02").showPageNumber).toBe(false)
+  })
 })

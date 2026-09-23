@@ -423,4 +423,68 @@ describe("parseWeekDocument", () => {
       })
     ).toThrow(/html/i)
   })
+
+  it("parses optional showPageNumbers at the week root and showPageNumber on pages", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: false,
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Override show",
+          htmlFile: "p01.html",
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Inherit default",
+          htmlFile: "p02.html",
+        },
+        {
+          id: "p03",
+          layout: "two-column",
+          title: "Override hide",
+          showPageNumber: false,
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: {
+            kind: "checklist",
+            title: "Tasks",
+            items: [{ label: "Done", checked: true }],
+          },
+        },
+      ],
+    })
+
+    expect(week.showPageNumbers).toBe(false)
+    expect(week.pages[0].showPageNumber).toBe(true)
+    expect(week.pages[1].showPageNumber).toBeUndefined()
+    expect(week.pages[2].showPageNumber).toBe(false)
+  })
+
+  it("normalizes non-boolean showPageNumbers and showPageNumber as undefined", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: "invalid",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Page",
+          htmlFile: "p01.html",
+          showPageNumber: 123,
+        },
+      ],
+    })
+
+    expect(week.showPageNumbers).toBeUndefined()
+    expect(week.pages[0].showPageNumber).toBeUndefined()
+  })
 })

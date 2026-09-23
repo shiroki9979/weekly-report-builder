@@ -117,7 +117,8 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: WeekPage): WeekPage {
-  return matchWeekPage(page, {
+  // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
+  return matchWeekPage<WeekPage>(page, {
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
@@ -166,7 +167,12 @@ function clearPage(page: WeekPage): WeekPage {
       hidden: twoColumn.hidden,
       notes: undefined,
     }),
-    unknown: (unknown) => ({ ...unknown, title: "", notes: undefined }),
+    unknown: (unknown) => ({
+      ...unknown,
+      title: "",
+      notes: undefined,
+      showPageNumber: undefined,
+    }),
   })
 }
 
@@ -180,6 +186,7 @@ export function cloneWeekFromPrevious(
 
   const range = weekRangeForMonday(targetMonday)
 
+  // 新週預設顯示頁碼，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
   return {
     start: range.start,
     end: range.end,
