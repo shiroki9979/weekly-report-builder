@@ -1,7 +1,9 @@
 # Editorial Layout Family production adoption
 
-建立日期：2026-09-10<br>
-最後更新：2026-09-10<br>
+建立日期：2026-09-10
+
+最後更新：2026-09-10
+
 狀態：approved
 
 Grill 共識（2026-09-09～2026-09-10）。本文件是實作 Weekly Overview、Evidence-backed Decision 與 Next Actions 的 source of truth。

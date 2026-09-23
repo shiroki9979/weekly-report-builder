@@ -30,20 +30,20 @@ Copy 目前頁時，若該頁是 Draft、Overflowing 或量測失敗，會阻擋
 
 ## 排除匯出阻擋
 
-**Draft Page**
+### Draft Page
 
 1. 解鎖 **Edit**
 2. 依 readiness alert 填完缺少的必填欄位
 3. **Save**
 4. 再點 **Copy to clipboard** 或 **Download PNGs**
 
-**Overflowing Page**
+### Overflowing Page
 
 1. 縮短標題、Outcome、Comparison Metric 或 Commitment，直到 Copy／Download 不再回報 1280 × 720 overflow（800 × 450 預覽警告只是 advisory）
 2. **Save**
 3. 再點 **Copy to clipboard** 或 **Download PNGs**
 
-**非法 Comparison Metric**
+### 非法 Comparison Metric
 
 1. 把非數字輸入改成有限非負數，或清空該欄
 2. **Save**

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 -->
 # 開發伺服器 API
 
 建立日期：2026-08-31  
@@ -11,7 +12,7 @@
 
 列出 `weeks/` 目錄下所有週一日期。
 
-**Response 200**
+### Response 200
 
 ```json
 {
@@ -37,13 +38,13 @@
 
 **Request body**：`WeekDocument` JSON
 
-**Response 200**
+### Response 200
 
 ```json
 { "ok": true }
 ```
 
-**Response 400**
+### Response 400
 
 ```json
 { "error": "<message>" }
@@ -53,7 +54,7 @@
 
 自最新週次 clone 結構並建立新檔。見 [建立新週次](../how-to/create-new-week.md)。
 
-**Response 201**
+### Response 201
 
 ```json
 { "week": {/* WeekDocument */} }

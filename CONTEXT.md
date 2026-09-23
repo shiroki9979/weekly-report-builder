@@ -1,6 +1,7 @@
 # Weekly Report Builder
 
-Created: 2026-09-09<br>
+Created: 2026-09-09
+
 Last updated: 2026-09-10
 
 Weekly Report Builder is an authoring workspace for composing Week Pages, reviewing them on a presentation Stage, and exporting them for a shared deck.

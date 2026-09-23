@@ -7,7 +7,7 @@
 
 ## 檔案路徑
 
-```
+```text
 weeks/YYYY-MM-DD.json
 weeks/YYYY-MM-DD/<htmlFile>
 ```
@@ -187,7 +187,7 @@ Clone 時保留 collection 長度，清除每個 Commitment 的 title／outcome�
 
 ## 匯出 PNG 檔名
 
-```
+```text
 {monday}-{page.id}.png
 ```
 
