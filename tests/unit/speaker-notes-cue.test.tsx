@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
 
@@ -43,5 +43,26 @@ describe("SpeakerNotesCue", () => {
 
     expect(toggle).toHaveAttribute("aria-expanded", "true")
     expect(screen.getByText("Hide me")).toBeInTheDocument()
+  })
+
+  it("lets the panel owner hide the notes while the button only requests a toggle", async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn()
+    const { rerender } = render(
+      <SpeakerNotesCue notes="Hide me" expanded onToggle={onToggle} />
+    )
+
+    const toggle = screen.getByRole("button", { name: /Speaker notes/i })
+    await user.click(toggle)
+
+    expect(onToggle).toHaveBeenCalledOnce()
+    expect(screen.getByText("Hide me")).toBeInTheDocument()
+
+    rerender(
+      <SpeakerNotesCue notes="Hide me" expanded={false} onToggle={onToggle} />
+    )
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByText("Hide me")).not.toBeInTheDocument()
   })
 })

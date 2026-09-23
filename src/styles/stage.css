@@ -1,3 +1,13 @@
+/* 預覽槽先占滿剩餘高度再當 size container，畫布才能同時受寬與高限制 */
+.stage-preview-slot {
+  container-type: size;
+}
+
+/* 在槽內取最大 16:9（寬度上限沿用原 max-w-5xl 的 64rem），避免向下蓋到 speaker notes */
+.stage-preview-fit {
+  width: min(100cqi, 64rem, calc(100cqb * 16 / 9));
+}
+
 /* 16:9 預覽畫布專用 token；不套用 shadcn 元件 */
 .stage-root {
   --blue: #2e75b6;
