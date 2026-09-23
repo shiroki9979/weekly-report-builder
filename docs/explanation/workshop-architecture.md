@@ -1,7 +1,7 @@
 # 工坊架構
 
 建立日期：2026-08-31  
-最後更新：2026-09-13
+最後更新：2026-09-23
 
 ---
 
@@ -55,7 +55,7 @@ weeks/YYYY-MM-DD/*.html
 
 工坊支援下列頁面版面：
 
-- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。
+- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。左欄間距見下方「Two-column 左側間距」。不渲染頁碼。
 - `weekly-overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、週次範圍、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `evidence-decision`：Editorial Layout。裁決條 + 1–2 個 Comparison Metric 與 1–2 則 interpretation。Metric 數值用 editor-local raw buffer；非法非空輸入擋 Save／Copy。
 - `next-actions`：Editorial Layout。2–4 個 Commitment；顯示編號由順序派生。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
@@ -64,6 +64,13 @@ weeks/YYYY-MM-DD/*.html
 新 layout 以新 `layout` 字串擴充；未知 layout 在 stage 顯示警告，且不可匯出。
 
 Draft Structured Layout 可 Save，但 Copy 與 batch export 不輸出。Canonical overflow 量測使用固定 1280 × 720 capture Stage。Responsive preview overflow 僅為提示。
+
+## Two-column 左側間距
+
+左欄把主標、項目標題、內文視為同一條起始邊，圓點懸掛在這條邊的左側。關係只由版面決定，不看文案或語言。預覽與 PNG 共用 `src/styles/stage.css`。
+
+- `.stage-slide` 左右內距都是 `5%`。主標與右側 panel 都落在這個內距裡，所以標題、左欄、右欄共用同一條格線。
+- `.stage-item` 是兩欄 grid：圓點欄 `0.55em`、間距 `0.65em`，合計 `1.2em`。`margin-left: -1.2em` 把項目標題與內文拉回主標的起始邊，圓點落在左側 `5%` 內距裡。
 
 ## 語言邊界
 

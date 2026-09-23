@@ -7,7 +7,11 @@ import {
   mondayFromWeekLabel,
   type StagePageContext,
 } from "@/lib/stage-page-context"
-import { matchWeekPage, type WeekPage } from "@/lib/week-document"
+import {
+  isHtmlWeekPage,
+  matchWeekPage,
+  type WeekPage,
+} from "@/lib/week-document"
 
 export type StageSlideProps = {
   page: WeekPage
@@ -49,6 +53,9 @@ export function StageSlide({
           </div>
         ),
       })}
+      {isHtmlWeekPage(page) && context.showPageNumber && context.pageLabel ? (
+        <footer className="stage-page-number">{context.pageLabel}</footer>
+      ) : null}
     </div>
   )
 }

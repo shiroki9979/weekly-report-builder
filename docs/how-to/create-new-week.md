@@ -1,7 +1,7 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-09-13
+最後更新：2026-09-23
 
 ---
 
@@ -24,6 +24,7 @@
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
 - 若來源週次包含 Next Actions，clone 會保留 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
 - `start` / `end` 自動設為該週週一至週五
+- 新週不複製上一週的 `showPageNumbers` 與各頁 `showPageNumber`，頁碼回到預設顯示
 
 ## 常見問題
 

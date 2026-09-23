@@ -1,7 +1,7 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-10
+最後更新：2026-09-23
 
 ---
 
@@ -18,23 +18,25 @@ weeks/YYYY-MM-DD/<htmlFile>
 
 ## WeekDocument（根物件）
 
-| 欄位    | 型別         | 必填 | 說明                        |
-| ------- | ------------ | ---- | --------------------------- |
-| `start` | `string`     | 是   | 週一，ISO 日期 `YYYY-MM-DD` |
-| `end`   | `string`     | 是   | 週五，ISO 日期 `YYYY-MM-DD` |
-| `pages` | `WeekPage[]` | 是   | 至少一頁                    |
+| 欄位              | 型別         | 必填 | 說明                                                                      |
+| ----------------- | ------------ | ---- | ------------------------------------------------------------------------- |
+| `start`           | `string`     | 是   | 週一，ISO 日期 `YYYY-MM-DD`                                               |
+| `end`             | `string`     | 是   | 週五，ISO 日期 `YYYY-MM-DD`                                               |
+| `pages`           | `WeekPage[]` | 是   | 至少一頁                                                                  |
+| `showPageNumbers` | `boolean`    | 否   | Editorial 與 HTML 的全週頁碼預設；未提供時為顯示。`two-column` 不渲染頁碼 |
 
 ## WeekPage（discriminated union）
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位     | 型別      | 必填 | 說明                                                                                     |
-| -------- | --------- | ---- | ---------------------------------------------------------------------------------------- |
-| `id`     | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                 |
-| `layout` | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"` 或 `"next-actions"` |
-| `title`  | `string`  | 是   | 投影片主標（可為空字串）                                                                 |
-| `hidden` | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                               |
-| `notes`  | `string`  | 否   | Speaker notes，不渲染於 stage                                                            |
+| 欄位             | 型別      | 必填 | 說明                                                                                     |
+| ---------------- | --------- | ---- | ---------------------------------------------------------------------------------------- |
+| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                 |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"` 或 `"next-actions"` |
+| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                 |
+| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                               |
+| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                            |
+| `showPageNumber` | `boolean` | 否   | Editorial 與 HTML 的單頁覆蓋；未提供時繼承全週設定。`two-column` 忽略此欄                |
 
 Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 

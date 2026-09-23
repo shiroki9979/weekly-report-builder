@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+
 import {
   Select,
   SelectContent,
@@ -11,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { WeekDocument } from "@/lib/week-document"
+import { cn } from "@/lib/utils"
 
 type WeekPickerProps = {
   weeks: string[]
@@ -124,6 +127,9 @@ type WorkshopToolbarProps = {
   weekSelectDisabled?: boolean
   saveDisabled?: boolean
   createDisabled?: boolean
+  showPageNumbers?: boolean
+  onShowPageNumbersChange?: (show: boolean) => void
+  showPageNumbersDisabled?: boolean
 }
 
 export function WorkshopToolbar({
@@ -141,35 +147,68 @@ export function WorkshopToolbar({
   weekSelectDisabled,
   saveDisabled,
   createDisabled,
+  showPageNumbers,
+  onShowPageNumbersChange,
+  showPageNumbersDisabled,
 }: WorkshopToolbarProps) {
   return (
     <div className="space-y-3">
       {weeks.length > 0 ? (
-        <WeekPicker
-          weeks={weeks}
-          value={selectedMonday}
-          onChange={onWeekChange}
-          disabled={weekSelectDisabled}
-          trailing={
-            <>
-              <Button
-                type="button"
-                onClick={onSave}
-                disabled={saveDisabled || saving}
+        <>
+          <WeekPicker
+            weeks={weeks}
+            value={selectedMonday}
+            onChange={onWeekChange}
+            disabled={weekSelectDisabled}
+            trailing={
+              <>
+                <Button
+                  type="button"
+                  onClick={onSave}
+                  disabled={saveDisabled || saving}
+                >
+                  {saving ? "Saving…" : "Save"}
+                </Button>
+                {saveMessage ? (
+                  <span className="text-xs text-muted-foreground">
+                    {saveMessage}
+                  </span>
+                ) : null}
+                {saveError ? (
+                  <span className="text-xs text-destructive">{saveError}</span>
+                ) : null}
+              </>
+            }
+          />
+          {onShowPageNumbersChange || showPageNumbers !== undefined ? (
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                (showPageNumbersDisabled || !onShowPageNumbersChange) &&
+                  "cursor-not-allowed opacity-50"
+              )}
+            >
+              <Checkbox
+                id="week-show-page-numbers"
+                checked={showPageNumbers ?? true}
+                disabled={showPageNumbersDisabled || !onShowPageNumbersChange}
+                onCheckedChange={(checked) =>
+                  onShowPageNumbersChange?.(checked === true)
+                }
+              />
+              <Label
+                htmlFor="week-show-page-numbers"
+                className={
+                  showPageNumbersDisabled || !onShowPageNumbersChange
+                    ? "cursor-not-allowed text-muted-foreground"
+                    : undefined
+                }
               >
-                {saving ? "Saving…" : "Save"}
-              </Button>
-              {saveMessage ? (
-                <span className="text-xs text-muted-foreground">
-                  {saveMessage}
-                </span>
-              ) : null}
-              {saveError ? (
-                <span className="text-xs text-destructive">{saveError}</span>
-              ) : null}
-            </>
-          }
-        />
+                Show page numbers
+              </Label>
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       {weeks.length === 0 ? null : (
