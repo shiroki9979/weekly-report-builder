@@ -3,8 +3,12 @@ import type { RefObject } from "react"
 import { StageFrame } from "@/components/stage/stage-frame"
 import { StageSlide } from "@/components/stage/stage-slide"
 import { Button } from "@/components/ui/button"
+import { CAPTURE_STAGE_WIDTH } from "@/lib/overflow-measurement"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
+
+// 移到視窗外但保留排版，截圖與 overflow 量測才拿得到實際尺寸
+const OFFSCREEN_LEFT_PX = -10000
 
 type StageCaptureHostProps = {
   page: WeekPage | null
@@ -26,9 +30,9 @@ export function StageCaptureHost({
       ref={hostRef}
       aria-hidden
       className="pointer-events-none fixed opacity-0"
-      style={{ left: -10000, top: 0, width: 1280 }}
+      style={{ left: OFFSCREEN_LEFT_PX, top: 0, width: CAPTURE_STAGE_WIDTH }}
     >
-      <div className="w-[1280px]">
+      <div style={{ width: CAPTURE_STAGE_WIDTH }}>
         <StageFrame>
           <StageSlide
             page={page}

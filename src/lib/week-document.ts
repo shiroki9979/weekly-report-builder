@@ -283,7 +283,7 @@ type WeekPageMatchers<T> = {
   unknown: (page: WeekPage) => T
 }
 
-// 各 layout 的分支只在這裡打開一次，preview／editor／clone／readiness 共用同一組 identity
+// 已解析頁面的 layout 分支只在這裡打開一次，preview／editor／clone／readiness 共用同一組 identity
 export function matchWeekPage<T>(
   page: WeekPage,
   matchers: WeekPageMatchers<T>
@@ -304,6 +304,32 @@ export function matchWeekPage<T>(
     return matchers.nextActions(page)
   }
   return matchers.unknown(page)
+}
+
+export type Cardinality = { min: number; max: number }
+
+// 版面數量規則的單一來源；parser、editor reducer 與表單按鈕共用
+export const CARDINALITY = {
+  supportingOutcomes: { min: 1, max: 3 },
+  comparisonMetrics: { min: 1, max: 2 },
+  interpretations: { min: 1, max: 2 },
+  commitments: { min: 2, max: 4 },
+} as const satisfies Record<string, Cardinality>
+
+export const TWO_COLUMN_ITEM_COUNT = 3
+
+export function canAddEntry(
+  entries: readonly unknown[],
+  rule: Cardinality
+): boolean {
+  return entries.length < rule.max
+}
+
+export function canRemoveEntry(
+  entries: readonly unknown[],
+  rule: Cardinality
+): boolean {
+  return entries.length > rule.min
 }
 
 export function isFiniteNonNegative(value: number): boolean {
@@ -502,7 +528,11 @@ function parsePanel(value: unknown): Panel {
   }
 }
 
-const STATUS_TONES = new Set<StatusTone>(["positive", "caution", "neutral"])
+const STATUS_TONES = new Set<string>(["positive", "caution", "neutral"])
+
+export function isStatusTone(value: string): value is StatusTone {
+  return STATUS_TONES.has(value)
+}
 
 function parseStatusSignal(value: unknown, field: string): StatusSignal {
   if (!isRecord(value)) {
@@ -510,13 +540,13 @@ function parseStatusSignal(value: unknown, field: string): StatusSignal {
   }
 
   const tone = readNonEmptyString(value.tone, `${field}.tone`)
-  if (!STATUS_TONES.has(tone as StatusTone)) {
+  if (!isStatusTone(tone)) {
     throw new Error(`Invalid week document: ${field}.tone`)
   }
 
   return {
     label: readString(value.label, `${field}.label`),
-    tone: tone as StatusTone,
+    tone,
   }
 }
 
@@ -539,34 +569,58 @@ type ParsedPageChrome = WeekPageChrome & {
   title: string
 }
 
-function parseWeeklyOverviewPage(
-  value: Record<string, unknown>,
-  common: ParsedPageChrome,
-  index: number
-): WeeklyOverviewPage {
-  const supporting = value.supporting
+// 保持既有 JSON 欄位順序（id、layout、title、版面內容、顯示欄位），存檔時不產生無意義 diff
+function withChrome<L extends string, C extends object>(
+  chrome: ParsedPageChrome,
+  layout: L,
+  content: C
+): ParsedPageChrome & { layout: L } & C {
+  return {
+    id: chrome.id,
+    layout,
+    title: chrome.title,
+    ...content,
+    hidden: chrome.hidden,
+    notes: chrome.notes,
+    showPageNumber: chrome.showPageNumber,
+  }
+}
+
+function readEntries(
+  value: unknown,
+  field: string,
+  rule: Cardinality
+): unknown[] {
   if (
-    !Array.isArray(supporting) ||
-    supporting.length < 1 ||
-    supporting.length > 3
+    !Array.isArray(value) ||
+    value.length < rule.min ||
+    value.length > rule.max
   ) {
     throw new Error(
-      `Invalid week document: pages[${index}].supporting must have 1 to 3 entries`
+      `Invalid week document: ${field} must have ${rule.min} to ${rule.max} entries`
     )
   }
 
-  return {
-    id: common.id,
-    layout: "weekly-overview",
-    title: common.title,
-    lead: parseOutcome(value.lead, `pages[${index}].lead`),
+  return value
+}
+
+function parseWeeklyOverviewPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): WeeklyOverviewPage {
+  const supporting = readEntries(
+    value.supporting,
+    `${field}.supporting`,
+    CARDINALITY.supportingOutcomes
+  )
+
+  return withChrome(chrome, "weekly-overview", {
+    lead: parseOutcome(value.lead, `${field}.lead`),
     supporting: supporting.map((entry, supportingIndex) =>
-      parseOutcome(entry, `pages[${index}].supporting[${supportingIndex}]`)
+      parseOutcome(entry, `${field}.supporting[${supportingIndex}]`)
     ),
-    hidden: common.hidden,
-    notes: common.notes,
-    showPageNumber: common.showPageNumber,
-  }
+  })
 }
 
 const UNIT_POSITIONS = new Set<UnitPosition>(["before", "after"])
@@ -636,45 +690,29 @@ function parseComparisonMetric(
 
 function parseEvidenceDecisionPage(
   value: Record<string, unknown>,
-  common: ParsedPageChrome,
-  index: number
+  chrome: ParsedPageChrome,
+  field: string
 ): EvidenceDecisionPage {
-  const metrics = value.metrics
-  if (!Array.isArray(metrics) || metrics.length < 1 || metrics.length > 2) {
-    throw new Error(
-      `Invalid week document: pages[${index}].metrics must have 1 to 2 entries`
-    )
-  }
+  const metrics = readEntries(
+    value.metrics,
+    `${field}.metrics`,
+    CARDINALITY.comparisonMetrics
+  )
+  const interpretations = readEntries(
+    value.interpretations,
+    `${field}.interpretations`,
+    CARDINALITY.interpretations
+  )
 
-  const interpretations = value.interpretations
-  if (
-    !Array.isArray(interpretations) ||
-    interpretations.length < 1 ||
-    interpretations.length > 2
-  ) {
-    throw new Error(
-      `Invalid week document: pages[${index}].interpretations must have 1 to 2 entries`
-    )
-  }
-
-  return {
-    id: common.id,
-    layout: "evidence-decision",
-    title: common.title,
-    verdict: readString(value.verdict, `pages[${index}].verdict`),
+  return withChrome(chrome, "evidence-decision", {
+    verdict: readString(value.verdict, `${field}.verdict`),
     metrics: metrics.map((metric, metricIndex) =>
-      parseComparisonMetric(metric, `pages[${index}].metrics[${metricIndex}]`)
+      parseComparisonMetric(metric, `${field}.metrics[${metricIndex}]`)
     ),
     interpretations: interpretations.map((entry, interpretationIndex) =>
-      readString(
-        entry,
-        `pages[${index}].interpretations[${interpretationIndex}]`
-      )
+      readString(entry, `${field}.interpretations[${interpretationIndex}]`)
     ),
-    hidden: common.hidden,
-    notes: common.notes,
-    showPageNumber: common.showPageNumber,
-  }
+  })
 }
 
 function parseCommitment(value: unknown, field: string): Commitment {
@@ -691,122 +729,106 @@ function parseCommitment(value: unknown, field: string): Commitment {
 
 function parseNextActionsPage(
   value: Record<string, unknown>,
-  common: ParsedPageChrome,
-  index: number
+  chrome: ParsedPageChrome,
+  field: string
 ): NextActionsPage {
-  const commitments = value.commitments
-  if (
-    !Array.isArray(commitments) ||
-    commitments.length < 2 ||
-    commitments.length > 4
-  ) {
+  const commitments = readEntries(
+    value.commitments,
+    `${field}.commitments`,
+    CARDINALITY.commitments
+  )
+
+  return withChrome(chrome, "next-actions", {
+    commitments: commitments.map((commitment, commitmentIndex) =>
+      parseCommitment(commitment, `${field}.commitments[${commitmentIndex}]`)
+    ),
+  })
+}
+
+function parseHtmlPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): HtmlWeekPage {
+  const htmlFile = readNonEmptyString(value.htmlFile, `${field}.htmlFile`)
+
+  try {
+    validateHtmlFileName(htmlFile)
+  } catch (cause: unknown) {
+    const message = cause instanceof Error ? cause.message : "Invalid htmlFile"
+    throw new Error(`Invalid week document: ${field}.htmlFile: ${message}`, {
+      cause,
+    })
+  }
+
+  return withChrome(chrome, "html", { htmlFile })
+}
+
+function parseTwoColumnPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): TwoColumnWeekPage {
+  const items = value.items
+  if (!Array.isArray(items) || items.length !== TWO_COLUMN_ITEM_COUNT) {
     throw new Error(
-      `Invalid week document: pages[${index}].commitments must have 2 to 4 entries`
+      `Invalid week document: ${field}.items must have ${TWO_COLUMN_ITEM_COUNT} entries`
     )
   }
 
+  return withChrome(chrome, "two-column", {
+    items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
+    panel: parsePanel(value.panel),
+  })
+}
+
+type PageParser = (
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+) => WeekPage
+
+// parser 面對的是未驗證 JSON，無法走 matchWeekPage；以 layout 表格分派，新增版面只改這裡
+const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
+  html: parseHtmlPage,
+  "two-column": parseTwoColumnPage,
+  "weekly-overview": parseWeeklyOverviewPage,
+  "evidence-decision": parseEvidenceDecisionPage,
+  "next-actions": parseNextActionsPage,
+}
+
+function isKnownLayout(layout: string): layout is SlideLayout {
+  return Object.hasOwn(PAGE_PARSERS, layout)
+}
+
+function parsePageChrome(
+  value: Record<string, unknown>,
+  field: string
+): ParsedPageChrome {
   return {
-    id: common.id,
-    layout: "next-actions",
-    title: common.title,
-    commitments: commitments.map((commitment, commitmentIndex) =>
-      parseCommitment(
-        commitment,
-        `pages[${index}].commitments[${commitmentIndex}]`
-      )
-    ),
-    hidden: common.hidden,
-    notes: common.notes,
-    showPageNumber: common.showPageNumber,
+    id: readNonEmptyString(value.id, `${field}.id`),
+    title: readString(value.title, `${field}.title`),
+    hidden: typeof value.hidden === "boolean" ? value.hidden : undefined,
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+    showPageNumber:
+      typeof value.showPageNumber === "boolean"
+        ? value.showPageNumber
+        : undefined,
   }
 }
 
 function parseWeekPage(value: unknown, index: number): WeekPage {
-  if (!isRecord(value)) {
-    throw new Error(`Invalid week document: pages[${index}] must be an object`)
+  const field = `pages[${index}]`
+  const page = readRecord(value, field)
+  const chrome = parsePageChrome(page, field)
+  const layout = readNonEmptyString(page.layout, `${field}.layout`)
+
+  if (!isKnownLayout(layout)) {
+    // 保留未知版面讓 stage 顯示警告並略過匯出，而不是整份週報讀不進來
+    return { ...page, ...withChrome(chrome, layout, {}) }
   }
 
-  const id = readNonEmptyString(value.id, `pages[${index}].id`)
-  const layout = readNonEmptyString(value.layout, `pages[${index}].layout`)
-  const title = readString(value.title, `pages[${index}].title`)
-  const hidden = typeof value.hidden === "boolean" ? value.hidden : undefined
-  const notes = typeof value.notes === "string" ? value.notes : undefined
-  const showPageNumber =
-    typeof value.showPageNumber === "boolean" ? value.showPageNumber : undefined
-
-  if (layout === "html") {
-    const htmlFile = readNonEmptyString(
-      value.htmlFile,
-      `pages[${index}].htmlFile`
-    )
-
-    try {
-      validateHtmlFileName(htmlFile)
-    } catch (cause: unknown) {
-      const message =
-        cause instanceof Error ? cause.message : "Invalid htmlFile"
-      throw new Error(
-        `Invalid week document: pages[${index}].htmlFile: ${message}`,
-        { cause }
-      )
-    }
-
-    return {
-      id,
-      layout: "html",
-      title,
-      htmlFile,
-      hidden,
-      notes,
-      showPageNumber,
-    }
-  }
-
-  if (layout === "weekly-overview") {
-    return parseWeeklyOverviewPage(
-      value,
-      { id, title, hidden, notes, showPageNumber },
-      index
-    )
-  }
-
-  if (layout === "evidence-decision") {
-    return parseEvidenceDecisionPage(
-      value,
-      { id, title, hidden, notes, showPageNumber },
-      index
-    )
-  }
-
-  if (layout === "next-actions") {
-    return parseNextActionsPage(
-      value,
-      { id, title, hidden, notes, showPageNumber },
-      index
-    )
-  }
-
-  if (layout !== "two-column") {
-    return { ...value, id, layout, title, hidden, notes, showPageNumber }
-  }
-
-  const items = value.items
-  if (!Array.isArray(items) || items.length !== 3) {
-    throw new Error(
-      `Invalid week document: pages[${index}].items must have 3 entries`
-    )
-  }
-
-  return {
-    id,
-    layout: "two-column",
-    title,
-    items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),
-    panel: parsePanel(value.panel),
-    hidden,
-    notes,
-    showPageNumber,
-  }
+  return PAGE_PARSERS[layout](page, chrome, field)
 }
 
 export function parseWeekDocument(value: unknown): WeekDocument {

@@ -12,10 +12,13 @@ import {
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type {
-  StatusTone,
-  WeekDocument,
-  WeeklyOverviewPage,
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  type StatusTone,
+  type WeekDocument,
+  type WeeklyOverviewPage,
 } from "@/lib/week-document"
 import {
   addSupportingOutcome,
@@ -50,7 +53,10 @@ export function WeeklyOverviewEditorForm({
   readOnly = false,
 }: WeeklyOverviewEditorFormProps) {
   const invalidPaths = issuePathsFor(page)
-  const canAddSupporting = page.supporting.length < 3
+  const canAddSupporting = canAddEntry(
+    page.supporting,
+    CARDINALITY.supportingOutcomes
+  )
 
   return (
     <EditorialPageEditorChrome
@@ -170,7 +176,12 @@ export function WeeklyOverviewEditorForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={page.supporting.length <= 1}
+                disabled={
+                  !canRemoveEntry(
+                    page.supporting,
+                    CARDINALITY.supportingOutcomes
+                  )
+                }
                 onClick={() =>
                   onChange(
                     removeSupportingOutcome(week, pageIndex, supportingIndex)

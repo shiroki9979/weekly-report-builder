@@ -33,7 +33,13 @@ import {
 } from "@/lib/metric-draft-buffer"
 import { issuePathsFor } from "@/lib/export-readiness"
 import { parseMetricInput } from "@/lib/metric-format"
-import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  type EvidenceDecisionPage,
+  type WeekDocument,
+} from "@/lib/week-document"
 
 type EvidenceDecisionEditorFormProps = {
   week: WeekDocument
@@ -93,7 +99,7 @@ export function EvidenceDecisionEditorForm({
           type="button"
           variant="outline"
           size="sm"
-          disabled={page.metrics.length >= 2}
+          disabled={!canAddEntry(page.metrics, CARDINALITY.comparisonMetrics)}
           onClick={() => onChange(addDecisionMetric(week, pageIndex))}
         >
           Add metric
@@ -128,7 +134,9 @@ export function EvidenceDecisionEditorForm({
               type="button"
               variant="outline"
               size="sm"
-              disabled={page.metrics.length <= 1}
+              disabled={
+                !canRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)
+              }
               onClick={() => applyMetricRemove(metricIndex)}
             >
               Remove
@@ -292,7 +300,9 @@ export function EvidenceDecisionEditorForm({
           type="button"
           variant="outline"
           size="sm"
-          disabled={page.interpretations.length >= 2}
+          disabled={
+            !canAddEntry(page.interpretations, CARDINALITY.interpretations)
+          }
           onClick={() => onChange(addDecisionInterpretation(week, pageIndex))}
         >
           Add interpretation
@@ -348,7 +358,12 @@ export function EvidenceDecisionEditorForm({
               type="button"
               variant="outline"
               size="sm"
-              disabled={page.interpretations.length <= 1}
+              disabled={
+                !canRemoveEntry(
+                  page.interpretations,
+                  CARDINALITY.interpretations
+                )
+              }
               onClick={() =>
                 onChange(
                   removeDecisionInterpretation(

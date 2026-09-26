@@ -1,30 +1,21 @@
 import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  isStatusTone,
   isWeeklyOverviewPage,
   type Outcome,
-  type StatusTone,
   type WeekDocument,
-  type WeeklyOverviewPage,
 } from "./week-document"
-import { updateTypedPage } from "./update-week-page"
+import { typedPageUpdater } from "./update-week-page"
 
 type OutcomeTextField = "workstream" | "figure" | "result" | "impact"
 type StatusField = "label" | "tone"
 
-const STATUS_TONES = new Set<StatusTone>(["positive", "caution", "neutral"])
-
-function updateOverview(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (page: WeeklyOverviewPage) => WeeklyOverviewPage
-): WeekDocument {
-  return updateTypedPage(
-    week,
-    pageIndex,
-    isWeeklyOverviewPage,
-    "a weekly-overview page",
-    updater
-  )
-}
+const updateOverview = typedPageUpdater(
+  isWeeklyOverviewPage,
+  "a weekly-overview page"
+)
 
 export function blankOutcome(): Outcome {
   return {
@@ -50,13 +41,13 @@ function updateOutcomeStatus(
   value: string
 ): Outcome {
   if (field === "tone") {
-    if (!STATUS_TONES.has(value as StatusTone)) {
+    if (!isStatusTone(value)) {
       throw new Error(`Invalid status tone: ${value}`)
     }
 
     return {
       ...outcome,
-      status: { ...outcome.status, tone: value as StatusTone },
+      status: { ...outcome.status, tone: value },
     }
   }
 
@@ -127,8 +118,10 @@ export function addSupportingOutcome(
   pageIndex: number
 ): WeekDocument {
   return updateOverview(week, pageIndex, (page) => {
-    if (page.supporting.length >= 3) {
-      throw new Error("Weekly Overview can have at most 3 supporting outcomes")
+    if (!canAddEntry(page.supporting, CARDINALITY.supportingOutcomes)) {
+      throw new Error(
+        `Weekly Overview can have at most ${CARDINALITY.supportingOutcomes.max} supporting outcomes`
+      )
     }
 
     return {
@@ -144,8 +137,10 @@ export function removeSupportingOutcome(
   supportingIndex: number
 ): WeekDocument {
   return updateOverview(week, pageIndex, (page) => {
-    if (page.supporting.length <= 1) {
-      throw new Error("Weekly Overview must keep at least 1 supporting outcome")
+    if (!canRemoveEntry(page.supporting, CARDINALITY.supportingOutcomes)) {
+      throw new Error(
+        `Weekly Overview must keep at least ${CARDINALITY.supportingOutcomes.min} supporting outcome`
+      )
     }
 
     return {

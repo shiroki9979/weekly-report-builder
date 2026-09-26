@@ -3,7 +3,6 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
-  assertTwoColumnPage,
   setPageHidden,
   setPageHtmlFile,
   setPageItem,
@@ -103,7 +102,7 @@ describe("week-editor", () => {
     )
   })
 
-  it("assertTwoColumnPage rejects pages with html layout", () => {
+  it("rejects two-column item edits on an HTML page", () => {
     const htmlWeek = parseWeekDocument({
       start: "2026-08-24",
       end: "2026-08-28",
@@ -118,9 +117,6 @@ describe("week-editor", () => {
     })
 
     // 驗證針對非 two-column 頁面執行結構化編輯操作時會拋出明確錯誤，防止資料結構毀損
-    expect(() => assertTwoColumnPage(htmlWeek.pages[0])).toThrow(
-      "Week Page p03 is not a two-column page"
-    )
     expect(() => setPageItem(htmlWeek, 0, 0, "heading", "fail")).toThrow(
       "Week Page p03 is not a two-column page"
     )

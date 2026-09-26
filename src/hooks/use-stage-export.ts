@@ -155,12 +155,9 @@ export function useStageExport({
         return
       }
 
-      let stageRoot: HTMLElement
-
-      if (isHtmlWeekPage(selectedPage)) {
-        stageRoot = await renderPageForCapture(selectedPage)
-      } else {
-        stageRoot = await renderPageForCapture(selectedPage)
+      const stageRoot = await renderPageForCapture(selectedPage)
+      // HTML Page 不受 overflow 規則約束，只有 Structured Layout 需要量測後再判定
+      if (!isHtmlWeekPage(selectedPage)) {
         const capture = await measureStageOverflow(stageRoot)
         const assessment = assessExportEligibility(
           selectedPage,

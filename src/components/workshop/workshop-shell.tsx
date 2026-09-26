@@ -43,7 +43,10 @@ import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import { useWeekEditor } from "@/hooks/use-week-editor"
 import { weekHasInvalidMetricDrafts } from "@/lib/metric-draft-buffer"
-import { measureStageOverflow } from "@/lib/overflow-measurement"
+import {
+  CAPTURE_STAGE_SIZE_LABEL,
+  measureStageOverflow,
+} from "@/lib/overflow-measurement"
 import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument } from "@/lib/week-document"
@@ -262,7 +265,7 @@ function WorkshopShellBody() {
       }
       if (result.status === "overflow") {
         setPreviewOverflow(
-          `Preview overflow (${result.axes.join(" and ")}) — export still uses the 1280 × 720 capture stage`
+          `Preview overflow (${result.axes.join(" and ")}) — export still uses the ${CAPTURE_STAGE_SIZE_LABEL} capture stage`
         )
         return
       }
