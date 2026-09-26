@@ -8,6 +8,8 @@ import {
 } from "@/components/workshop/workshop-shell"
 import type { WeekDocument } from "@/lib/week-document"
 
+import { jsonResponse } from "./support/json-response"
+
 const LATEST_MONDAY = "2026-01-12"
 
 function weekDocument(monday: string, title: string): WeekDocument {
@@ -33,14 +35,6 @@ function weekDocument(monday: string, title: string): WeekDocument {
       },
     ],
   }
-}
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as Response
 }
 
 function mockWeeksFetch({

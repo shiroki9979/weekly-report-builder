@@ -307,9 +307,10 @@ export function matchWeekPage<T>(
 }
 
 // owner／noun 讓錯誤訊息由規則本身產生，改上下限時文案與單複數跟著正確
+// 省略 max 表示沒有上限，避免 Infinity 流進錯誤文案
 export type Cardinality = {
   min: number
-  max: number
+  max?: number
   owner: string
   noun: string
   plural?: string
@@ -338,31 +339,29 @@ export const CARDINALITY = {
   },
   commitments: { min: 2, max: 4, owner: "Next Actions", noun: "commitment" },
   twoColumnItems: { min: 3, max: 3, owner: "Two-column", noun: "item" },
-  tableRows: { min: 1, max: Infinity, owner: "Table", noun: "row" },
-  tableColumns: { min: 1, max: Infinity, owner: "Table", noun: "column" },
+  tableRows: { min: 1, owner: "Table", noun: "row" },
+  tableColumns: { min: 1, owner: "Table", noun: "column" },
   chartCategories: {
     min: 1,
-    max: Infinity,
     owner: "Chart",
     noun: "category",
     plural: "categories",
   },
   chartSeries: {
     min: 1,
-    max: Infinity,
     owner: "Chart",
     noun: "series",
     plural: "series",
   },
-  flowSteps: { min: 1, max: Infinity, owner: "Flow", noun: "step" },
-  checklistItems: { min: 1, max: Infinity, owner: "Checklist", noun: "item" },
+  flowSteps: { min: 1, owner: "Flow", noun: "step" },
+  checklistItems: { min: 1, owner: "Checklist", noun: "item" },
 } as const satisfies Record<string, Cardinality>
 
 export function canAddEntry(
   entries: readonly unknown[],
   rule: Cardinality
 ): boolean {
-  return entries.length < rule.max
+  return rule.max === undefined || entries.length < rule.max
 }
 
 export function canRemoveEntry(
@@ -372,16 +371,18 @@ export function canRemoveEntry(
   return entries.length > rule.min
 }
 
-function countOf(count: number, rule: Cardinality): string {
-  const noun = count === 1 ? rule.noun : (rule.plural ?? `${rule.noun}s`)
-  return `${count} ${noun}`
+type Noun = Pick<Cardinality, "noun" | "plural">
+
+function countOf(count: number, noun: Noun): string {
+  const word = count === 1 ? noun.noun : (noun.plural ?? `${noun.noun}s`)
+  return `${count} ${word}`
 }
 
 export function assertCanAddEntry(
   entries: readonly unknown[],
   rule: Cardinality
 ): void {
-  if (!canAddEntry(entries, rule)) {
+  if (rule.max !== undefined && !canAddEntry(entries, rule)) {
     throw new Error(`${rule.owner} can have at most ${countOf(rule.max, rule)}`)
   }
 }
@@ -651,6 +652,18 @@ function withChrome<L extends string, C extends object>(
   }
 }
 
+const ENTRY: Noun = { noun: "entry", plural: "entries" }
+
+function entryRangeLabel(rule: Cardinality): string {
+  if (rule.max === undefined) {
+    return `at least ${countOf(rule.min, ENTRY)}`
+  }
+  if (rule.min === rule.max) {
+    return countOf(rule.min, ENTRY)
+  }
+  return `${rule.min} to ${countOf(rule.max, ENTRY)}`
+}
+
 function readEntries(
   value: unknown,
   field: string,
@@ -659,12 +672,10 @@ function readEntries(
   if (
     !Array.isArray(value) ||
     value.length < rule.min ||
-    value.length > rule.max
+    (rule.max !== undefined && value.length > rule.max)
   ) {
-    const range =
-      rule.min === rule.max ? `${rule.min}` : `${rule.min} to ${rule.max}`
     throw new Error(
-      `Invalid week document: ${field} must have ${range} entries`
+      `Invalid week document: ${field} must have ${entryRangeLabel(rule)}`
     )
   }
 
