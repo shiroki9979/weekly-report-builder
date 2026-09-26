@@ -3,6 +3,10 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
+  removeChartCategory,
+  removeChartSeries,
+  removeChecklistItem,
+  removeFlowStep,
   setPageHidden,
   setPageHtmlFile,
   setPageItem,
@@ -13,7 +17,8 @@ import {
   setTablePanelTitle,
   setWeekShowPageNumbers,
 } from "@/lib/week-editor"
-import { parseWeekDocument } from "@/lib/week-document"
+import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -142,5 +147,26 @@ describe("week-editor", () => {
 
     const resetToInherit = setPageShowPageNumber(overrideShow, 0, undefined)
     expect(resetToInherit.pages[0].showPageNumber).toBeUndefined()
+  })
+
+  it("keeps at least one entry in chart, flow, and checklist panels", () => {
+    const weekWith = (kind: "chart" | "flow" | "checklist"): WeekDocument => ({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [createBlankTwoColumnPage("p01", kind)],
+    })
+
+    expect(() => removeChartCategory(weekWith("chart"), 0, 0)).toThrow(
+      "Chart must keep at least 1 category"
+    )
+    expect(() => removeChartSeries(weekWith("chart"), 0, 0)).toThrow(
+      "Chart must keep at least 1 series"
+    )
+    expect(() => removeFlowStep(weekWith("flow"), 0, 0)).toThrow(
+      "Flow must keep at least 1 step"
+    )
+    expect(() => removeChecklistItem(weekWith("checklist"), 0, 0)).toThrow(
+      "Checklist must keep at least 1 item"
+    )
   })
 })

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
 - Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。
 - `pnpm typecheck` 改用 `tsc -b --noEmit`，實際檢查 app 與 node 兩個 TypeScript project。
+- Chart、Flow、Checklist panel 的刪除 reducer 與 Table 一致，至少保留一筆；數量規則與錯誤訊息（含單複數）統一由 `CARDINALITY` 產生。
 
 ### Fixed
 

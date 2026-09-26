@@ -152,17 +152,11 @@ export function useWeekEditor(): UseWeekEditorResult {
     [setSelectedMonday]
   )
 
-  const { clearMessage: clearSaveMessage } = save
-  const creator = useWeekCreate({ onCreated: openCreatedWeek })
-  const { createWeek: createFromPrevious } = creator
   // 建立新週時清掉上一週的 Saved 訊息，避免誤以為新週已存檔
-  const createWeek = useCallback(
-    async (monday: string) => {
-      clearSaveMessage()
-      await createFromPrevious(monday)
-    },
-    [clearSaveMessage, createFromPrevious]
-  )
+  const create = useWeekCreate({
+    onStart: save.clearMessage,
+    onCreated: openCreatedWeek,
+  })
 
   const visibleWeek = loading ? null : week
   const selectedPageIndex = visibleWeek
@@ -195,6 +189,6 @@ export function useWeekEditor(): UseWeekEditorResult {
     loadStatus,
     suggestedMonday,
     save,
-    create: { ...creator, createWeek },
+    create,
   }
 }

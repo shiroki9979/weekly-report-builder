@@ -1,8 +1,8 @@
 import type { MetricValueField } from "./metric-draft-buffer"
 import { typedPageUpdater } from "./update-week-page"
 import {
-  canAddEntry,
-  canRemoveEntry,
+  assertCanAddEntry,
+  assertCanRemoveEntry,
   CARDINALITY,
   isEvidenceDecisionPage,
   type ComparisonMetric,
@@ -98,11 +98,7 @@ export function addDecisionMetric(
   pageIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (!canAddEntry(page.metrics, CARDINALITY.comparisonMetrics)) {
-      throw new Error(
-        `Evidence-backed Decision can have at most ${CARDINALITY.comparisonMetrics.max} metrics`
-      )
-    }
+    assertCanAddEntry(page.metrics, CARDINALITY.comparisonMetrics)
     return { ...page, metrics: [...page.metrics, blankMetric()] }
   })
 }
@@ -113,11 +109,7 @@ export function removeDecisionMetric(
   metricIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (!canRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)) {
-      throw new Error(
-        `Evidence-backed Decision must keep at least ${CARDINALITY.comparisonMetrics.min} metric`
-      )
-    }
+    assertCanRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)
     return {
       ...page,
       metrics: page.metrics.filter((_, index) => index !== metricIndex),
@@ -166,11 +158,7 @@ export function addDecisionInterpretation(
   pageIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (!canAddEntry(page.interpretations, CARDINALITY.interpretations)) {
-      throw new Error(
-        `Evidence-backed Decision can have at most ${CARDINALITY.interpretations.max} interpretations`
-      )
-    }
+    assertCanAddEntry(page.interpretations, CARDINALITY.interpretations)
     return { ...page, interpretations: [...page.interpretations, ""] }
   })
 }
@@ -181,11 +169,7 @@ export function removeDecisionInterpretation(
   interpretationIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (!canRemoveEntry(page.interpretations, CARDINALITY.interpretations)) {
-      throw new Error(
-        `Evidence-backed Decision must keep at least ${CARDINALITY.interpretations.min} interpretation`
-      )
-    }
+    assertCanRemoveEntry(page.interpretations, CARDINALITY.interpretations)
     return {
       ...page,
       interpretations: page.interpretations.filter(

@@ -1,6 +1,6 @@
 import {
-  canAddEntry,
-  canRemoveEntry,
+  assertCanAddEntry,
+  assertCanRemoveEntry,
   CARDINALITY,
   isNextActionsPage,
   type Commitment,
@@ -37,11 +37,7 @@ export function addCommitment(
   pageIndex: number
 ): WeekDocument {
   return updateNextActions(week, pageIndex, (page) => {
-    if (!canAddEntry(page.commitments, CARDINALITY.commitments)) {
-      throw new Error(
-        `Next Actions can have at most ${CARDINALITY.commitments.max} commitments`
-      )
-    }
+    assertCanAddEntry(page.commitments, CARDINALITY.commitments)
     return { ...page, commitments: [...page.commitments, blankCommitment()] }
   })
 }
@@ -52,11 +48,7 @@ export function removeCommitment(
   commitmentIndex: number
 ): WeekDocument {
   return updateNextActions(week, pageIndex, (page) => {
-    if (!canRemoveEntry(page.commitments, CARDINALITY.commitments)) {
-      throw new Error(
-        `Next Actions must keep at least ${CARDINALITY.commitments.min} commitments`
-      )
-    }
+    assertCanRemoveEntry(page.commitments, CARDINALITY.commitments)
     return {
       ...page,
       commitments: page.commitments.filter(

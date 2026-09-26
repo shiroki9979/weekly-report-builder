@@ -306,17 +306,56 @@ export function matchWeekPage<T>(
   return matchers.unknown(page)
 }
 
-export type Cardinality = { min: number; max: number }
+// owner／noun 讓錯誤訊息由規則本身產生，改上下限時文案與單複數跟著正確
+export type Cardinality = {
+  min: number
+  max: number
+  owner: string
+  noun: string
+  plural?: string
+}
 
-// 版面數量規則的單一來源；parser、editor reducer 與表單按鈕共用
+// 版面與 panel 數量規則的單一來源；parser、editor reducer 與表單按鈕共用
 export const CARDINALITY = {
-  supportingOutcomes: { min: 1, max: 3 },
-  comparisonMetrics: { min: 1, max: 2 },
-  interpretations: { min: 1, max: 2 },
-  commitments: { min: 2, max: 4 },
+  supportingOutcomes: {
+    min: 1,
+    max: 3,
+    owner: "Weekly Overview",
+    noun: "supporting outcome",
+  },
+  comparisonMetrics: {
+    min: 1,
+    max: 2,
+    owner: "Evidence-backed Decision",
+    noun: "metric",
+  },
+  interpretations: {
+    min: 1,
+    max: 2,
+    owner: "Evidence-backed Decision",
+    noun: "interpretation",
+  },
+  commitments: { min: 2, max: 4, owner: "Next Actions", noun: "commitment" },
+  twoColumnItems: { min: 3, max: 3, owner: "Two-column", noun: "item" },
+  tableRows: { min: 1, max: Infinity, owner: "Table", noun: "row" },
+  tableColumns: { min: 1, max: Infinity, owner: "Table", noun: "column" },
+  chartCategories: {
+    min: 1,
+    max: Infinity,
+    owner: "Chart",
+    noun: "category",
+    plural: "categories",
+  },
+  chartSeries: {
+    min: 1,
+    max: Infinity,
+    owner: "Chart",
+    noun: "series",
+    plural: "series",
+  },
+  flowSteps: { min: 1, max: Infinity, owner: "Flow", noun: "step" },
+  checklistItems: { min: 1, max: Infinity, owner: "Checklist", noun: "item" },
 } as const satisfies Record<string, Cardinality>
-
-export const TWO_COLUMN_ITEM_COUNT = 3
 
 export function canAddEntry(
   entries: readonly unknown[],
@@ -330,6 +369,31 @@ export function canRemoveEntry(
   rule: Cardinality
 ): boolean {
   return entries.length > rule.min
+}
+
+function countOf(count: number, rule: Cardinality): string {
+  const noun = count === 1 ? rule.noun : (rule.plural ?? `${rule.noun}s`)
+  return `${count} ${noun}`
+}
+
+export function assertCanAddEntry(
+  entries: readonly unknown[],
+  rule: Cardinality
+): void {
+  if (!canAddEntry(entries, rule)) {
+    throw new Error(`${rule.owner} can have at most ${countOf(rule.max, rule)}`)
+  }
+}
+
+export function assertCanRemoveEntry(
+  entries: readonly unknown[],
+  rule: Cardinality
+): void {
+  if (!canRemoveEntry(entries, rule)) {
+    throw new Error(
+      `${rule.owner} must keep at least ${countOf(rule.min, rule)}`
+    )
+  }
 }
 
 export function isFiniteNonNegative(value: number): boolean {
@@ -596,8 +660,10 @@ function readEntries(
     value.length < rule.min ||
     value.length > rule.max
   ) {
+    const range =
+      rule.min === rule.max ? `${rule.min}` : `${rule.min} to ${rule.max}`
     throw new Error(
-      `Invalid week document: ${field} must have ${rule.min} to ${rule.max} entries`
+      `Invalid week document: ${field} must have ${range} entries`
     )
   }
 
@@ -769,12 +835,11 @@ function parseTwoColumnPage(
   chrome: ParsedPageChrome,
   field: string
 ): TwoColumnWeekPage {
-  const items = value.items
-  if (!Array.isArray(items) || items.length !== TWO_COLUMN_ITEM_COUNT) {
-    throw new Error(
-      `Invalid week document: ${field}.items must have ${TWO_COLUMN_ITEM_COUNT} entries`
-    )
-  }
+  const items = readEntries(
+    value.items,
+    `${field}.items`,
+    CARDINALITY.twoColumnItems
+  )
 
   return withChrome(chrome, "two-column", {
     items: items.map((item, itemIndex) => parseSlideItem(item, itemIndex)),

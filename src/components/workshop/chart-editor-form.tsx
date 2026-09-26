@@ -13,21 +13,19 @@ import {
   setChartSeriesValue,
 } from "@/lib/week-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type { ChartPanel, WeekDocument } from "@/lib/week-document"
-
-type ChartEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  panel: ChartPanel
-  onChange: (week: WeekDocument) => void
-}
+import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
+import {
+  canRemoveEntry,
+  CARDINALITY,
+  type ChartPanel,
+} from "@/lib/week-document"
 
 export function ChartEditorForm({
   week,
   pageIndex,
   panel,
   onChange,
-}: ChartEditorFormProps) {
+}: PanelEditorProps<ChartPanel>) {
   const invalidPaths = issuePathsFor(week.pages[pageIndex])
 
   return (
@@ -88,7 +86,9 @@ export function ChartEditorForm({
                 onClick={() =>
                   onChange(removeChartCategory(week, pageIndex, categoryIndex))
                 }
-                disabled={panel.categories.length <= 1}
+                disabled={
+                  !canRemoveEntry(panel.categories, CARDINALITY.chartCategories)
+                }
               >
                 Remove
               </Button>
@@ -201,7 +201,7 @@ export function ChartEditorForm({
               onClick={() =>
                 onChange(removeChartSeries(week, pageIndex, seriesIndex))
               }
-              disabled={panel.series.length <= 1}
+              disabled={!canRemoveEntry(panel.series, CARDINALITY.chartSeries)}
             >
               Remove series
             </Button>

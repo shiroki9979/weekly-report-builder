@@ -49,7 +49,7 @@ export function pruneMetricDrafts(
   )
 }
 
-// 回傳 raw 草稿的錯誤訊息；沒有草稿或草稿可解析時回 null，交由 typed 值判斷
+// 非法輸入寫不回 JSON，typed 值只會停在上一個合法值；只有 raw 草稿看得出使用者目前打錯，所以須獨立檢查
 export function invalidMetricDraftMessage(
   buffer: MetricDraftBuffer,
   pageId: string,

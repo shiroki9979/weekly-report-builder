@@ -10,21 +10,19 @@ import {
   setChecklistPanelTitle,
 } from "@/lib/week-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type { ChecklistPanel, WeekDocument } from "@/lib/week-document"
-
-type ChecklistEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  panel: ChecklistPanel
-  onChange: (week: WeekDocument) => void
-}
+import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
+import {
+  canRemoveEntry,
+  CARDINALITY,
+  type ChecklistPanel,
+} from "@/lib/week-document"
 
 export function ChecklistEditorForm({
   week,
   pageIndex,
   panel,
   onChange,
-}: ChecklistEditorFormProps) {
+}: PanelEditorProps<ChecklistPanel>) {
   const invalidPaths = issuePathsFor(week.pages[pageIndex])
 
   return (
@@ -103,7 +101,9 @@ export function ChecklistEditorForm({
               type="button"
               variant="outline"
               size="sm"
-              disabled={panel.items.length <= 1}
+              disabled={
+                !canRemoveEntry(panel.items, CARDINALITY.checklistItems)
+              }
               onClick={() =>
                 onChange(removeChecklistItem(week, pageIndex, itemIndex))
               }

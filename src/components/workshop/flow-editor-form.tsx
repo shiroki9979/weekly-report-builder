@@ -18,21 +18,19 @@ import {
   setFlowStepVariant,
 } from "@/lib/week-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type { FlowPanel, WeekDocument } from "@/lib/week-document"
-
-type FlowEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  panel: FlowPanel
-  onChange: (week: WeekDocument) => void
-}
+import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
+import {
+  canRemoveEntry,
+  CARDINALITY,
+  type FlowPanel,
+} from "@/lib/week-document"
 
 export function FlowEditorForm({
   week,
   pageIndex,
   panel,
   onChange,
-}: FlowEditorFormProps) {
+}: PanelEditorProps<FlowPanel>) {
   const invalidPaths = issuePathsFor(week.pages[pageIndex])
 
   return (
@@ -175,7 +173,7 @@ export function FlowEditorForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={panel.steps.length <= 1}
+                disabled={!canRemoveEntry(panel.steps, CARDINALITY.flowSteps)}
                 onClick={() =>
                   onChange(removeFlowStep(week, pageIndex, stepIndex))
                 }

@@ -10,6 +10,7 @@ import type {
   EvidenceDecisionPage,
   NextActionsPage,
 } from "./week-document"
+import { CARDINALITY } from "./week-document"
 import { blankMetric } from "./evidence-decision-editor"
 import { blankCommitment } from "./next-actions-editor"
 import { blankOutcome } from "./weekly-overview-editor"
@@ -24,11 +25,10 @@ export type PageLifecycleResult = {
 const PAGE_ID_PATTERN = /^p(\d+)$/
 
 function blankItems(): TwoColumnWeekPage["items"] {
-  return [
-    { heading: "", body: "" },
-    { heading: "", body: "" },
-    { heading: "", body: "" },
-  ]
+  return Array.from({ length: CARDINALITY.twoColumnItems.min }, () => ({
+    heading: "",
+    body: "",
+  }))
 }
 
 function blankPanel(

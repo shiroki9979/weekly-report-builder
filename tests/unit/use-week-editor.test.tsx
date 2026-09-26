@@ -6,6 +6,7 @@ import type { WeekDocument } from "@/lib/week-document"
 
 const OLDER_MONDAY = "2025-12-29"
 const LATEST_MONDAY = "2026-01-12"
+const NEW_MONDAY = "2026-01-19"
 const HARD_CODED_MONDAY = "2026-08-24"
 
 function weekDocument(monday: string, title: string): WeekDocument {
@@ -294,5 +295,46 @@ describe("useWeekEditor", () => {
     expect(result.current.loadStatus).toEqual({ kind: "ready" })
     expect(result.current.week?.pages[0]?.title).toBe("Older week")
     expect(result.current.save.message).toBeNull()
+  })
+
+  it("clears the previous Saved message when creating a new week", async () => {
+    const latest = weekDocument(LATEST_MONDAY, "Latest week")
+    const created = weekDocument(NEW_MONDAY, "")
+    let weeks = [OLDER_MONDAY, LATEST_MONDAY]
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = fetchUrl(input)
+      if (url === "/api/weeks") {
+        return jsonResponse({ weeks })
+      }
+      if (url === `/api/weeks/${LATEST_MONDAY}` && init?.method === "PUT") {
+        return jsonResponse({})
+      }
+      if (url === `/api/weeks/${NEW_MONDAY}` && init?.method === "POST") {
+        weeks = [...weeks, NEW_MONDAY]
+        return jsonResponse({ week: created }, 201)
+      }
+      if (url === `/weeks/${LATEST_MONDAY}.json`) {
+        return jsonResponse(latest)
+      }
+      if (url === `/weeks/${NEW_MONDAY}.json`) {
+        return jsonResponse(created)
+      }
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    const { result } = renderHook(() => useWeekEditor())
+    await waitFor(() => {
+      expect(result.current.week?.pages[0]?.title).toBe("Latest week")
+    })
+    await act(() => result.current.save.saveWeek())
+    expect(result.current.save.message).toBe("Saved")
+
+    await act(() => result.current.create.createWeek(NEW_MONDAY))
+
+    expect(result.current.save.message).toBeNull()
+    await waitFor(() => {
+      expect(result.current.selectedMonday).toBe(NEW_MONDAY)
+    })
   })
 })
