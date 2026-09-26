@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-09-11
+最後更新：2026-09-27
 
 ## Tutorials（入門教學）
 
@@ -40,10 +40,11 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                               | 說明                                           |
-| -------------------------------------------------- | ---------------------------------------------- |
-| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流                   |
-| [Layout 家族原型](explanation/layout-prototype.md) | 歷史 800 × 450 驗證與 production adoption 指標 |
+| 文件                                                             | 說明                                           |
+| ---------------------------------------------------------------- | ---------------------------------------------- |
+| [工坊架構](explanation/workshop-architecture.md)                 | 工坊殼 vs 16:9 stage、資料流                   |
+| [Layout 家族原型](explanation/layout-prototype.md)               | 歷史 800 × 450 驗證與 production adoption 指標 |
+| [架構加深候選](explanation/architecture-deepening-candidates.md) | 2026-09-27 審查找出的 module 加深候選與證據    |
 
 ## Specs（尚未落地的功能規格）
 
