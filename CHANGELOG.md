@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
+- Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。
+- `pnpm typecheck` 改用 `tsc -b --noEmit`，實際檢查 app 與 node 兩個 TypeScript project。
+
+### Fixed
+
+- Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
+- Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
 
 ## [0.2.0] - 2026-09-18
 

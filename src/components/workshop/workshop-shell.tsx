@@ -38,10 +38,18 @@ import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
-import { PagePicker, WorkshopToolbar } from "@/components/workshop/week-picker"
+import { PagePicker } from "@/components/workshop/page-picker"
+import {
+  WorkshopToolbar,
+  type ToolbarCreateControls,
+  type ToolbarSaveControls,
+} from "@/components/workshop/workshop-toolbar"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
-import { useWeekEditor } from "@/hooks/use-week-editor"
+import {
+  useWeekEditor,
+  type WeekEditorLoadStatus,
+} from "@/hooks/use-week-editor"
 import { weekHasInvalidMetricDrafts } from "@/lib/metric-draft-buffer"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
@@ -55,26 +63,23 @@ import { setWeekShowPageNumbers } from "@/lib/week-editor"
 export const EMPTY_STORE_MESSAGE =
   "weeks/ has no Week Documents. Remove an empty weeks/ directory if it exists, then run pnpm seed:weeks."
 
+type PageSelection = {
+  pageIndex: number
+  pageId: string | null
+  onSelect: (index: number) => void
+  onLifecycle: (result: PageLifecycleResult) => void
+}
+
 type EditorSidebarProps = {
   weeks: string[]
   selectedMonday: string
   onWeekChange: (monday: string) => void
   week: WeekDocument | null
   setWeek: Dispatch<SetStateAction<WeekDocument | null>>
-  selectedPageIndex: number
-  selectedPageId: string | null
-  onPageSelect: (index: number) => void
-  onPageLifecycle: (result: PageLifecycleResult) => void
-  loading: boolean
-  saving: boolean
-  saveError: string | null
-  saveMessage: string | null
-  onSave: () => void
-  creating: boolean
-  createError: string | null
-  suggestedMonday: string
-  onCreateWeek: (monday: string) => void
-  emptyStore: boolean
+  selection: PageSelection
+  loadStatus: WeekEditorLoadStatus
+  save: ToolbarSaveControls
+  create: ToolbarCreateControls
 }
 
 /** 週次切換時以 key remount，editMode 自動回到鎖定 */
@@ -84,22 +89,14 @@ function EditorSidebar({
   onWeekChange,
   week,
   setWeek,
-  selectedPageIndex,
-  selectedPageId,
-  onPageSelect,
-  onPageLifecycle,
-  loading,
-  saving,
-  saveError,
-  saveMessage,
-  onSave,
-  creating,
-  createError,
-  suggestedMonday,
-  onCreateWeek,
-  emptyStore,
+  selection,
+  loadStatus,
+  save,
+  create,
 }: EditorSidebarProps) {
   const [editMode, setEditMode] = useState(false)
+  const loading = loadStatus.kind === "loading"
+  const editable = !loading && week !== null && editMode
 
   return (
     <ScrollArea className="h-full min-w-0">
@@ -128,7 +125,7 @@ function EditorSidebar({
           </Button>
         </div>
 
-        {emptyStore ? (
+        {loadStatus.kind === "empty" ? (
           // 空 store 只說明如何 seed，不提供建立第一週
           <p className="text-sm text-muted-foreground" role="status">
             {EMPTY_STORE_MESSAGE}
@@ -138,24 +135,20 @@ function EditorSidebar({
             weeks={weeks}
             selectedMonday={selectedMonday}
             onWeekChange={onWeekChange}
-            onSave={onSave}
-            saving={saving}
-            saveMessage={saveMessage}
-            saveError={saveError}
-            suggestedMonday={suggestedMonday}
-            onCreateWeek={onCreateWeek}
-            creating={creating}
-            createError={createError}
             weekSelectDisabled={loading}
-            saveDisabled={loading || !week || !editMode}
-            createDisabled={loading || creating || !editMode}
-            showPageNumbers={week?.showPageNumbers ?? true}
-            showPageNumbersDisabled={loading || !week || !editMode}
-            onShowPageNumbersChange={(show) =>
-              setWeek((current) =>
-                current ? setWeekShowPageNumbers(current, show) : null
-              )
-            }
+            save={{ ...save, disabled: !editable }}
+            create={{
+              ...create,
+              disabled: loading || create.creating || !editMode,
+            }}
+            pageNumbers={{
+              show: week?.showPageNumbers ?? true,
+              disabled: !editable,
+              onChange: (show) =>
+                setWeek((current) =>
+                  current ? setWeekShowPageNumbers(current, show) : null
+                ),
+            }}
           />
         )}
 
@@ -163,21 +156,21 @@ function EditorSidebar({
           <>
             <PagePicker
               week={week}
-              selectedPageIndex={selectedPageIndex}
-              onSelect={onPageSelect}
+              selectedPageIndex={selection.pageIndex}
+              onSelect={selection.onSelect}
             />
-            {selectedPageId ? (
+            {selection.pageId ? (
               <PageLifecycleControls
                 week={week}
-                selectedPageId={selectedPageId}
-                onChange={onPageLifecycle}
+                selectedPageId={selection.pageId}
+                onChange={selection.onLifecycle}
                 disabled={!editMode}
               />
             ) : null}
             <Separator />
             <PageEditorForm
               week={week}
-              pageIndex={selectedPageIndex}
+              pageIndex={selection.pageIndex}
               onChange={setWeek}
               readOnly={!editMode}
             />
@@ -211,14 +204,9 @@ function WorkshopShellBody() {
     selectedPageId,
     setSelectedPageId,
     loadStatus,
-    saving,
-    saveError,
-    saveMessage,
-    saveWeek,
-    creating,
-    createError,
     suggestedMonday,
-    createWeek,
+    save,
+    create,
   } = useWeekEditor()
 
   const loading = loadStatus.kind === "loading"
@@ -423,30 +411,35 @@ function WorkshopShellBody() {
             onWeekChange={setSelectedMonday}
             week={week}
             setWeek={setWeek}
-            selectedPageIndex={selectedPageIndex}
-            selectedPageId={selectedPageId}
-            onPageSelect={setSelectedPageIndex}
-            onPageLifecycle={(result) => {
-              setWeek(result.week)
-              setSelectedPageId(result.selectedPageId)
+            selection={{
+              pageIndex: selectedPageIndex,
+              pageId: selectedPageId,
+              onSelect: setSelectedPageIndex,
+              onLifecycle: (result) => {
+                setWeek(result.week)
+                setSelectedPageId(result.selectedPageId)
+              },
             }}
-            loading={loading}
-            saving={saving}
-            saveError={saveError ?? draftSaveError}
-            saveMessage={saveMessage}
-            onSave={() => {
-              if (week && weekHasInvalidMetricDrafts(week, buffer)) {
-                setDraftSaveError("Fix invalid metric values before saving")
-                return
-              }
-              setDraftSaveError(null)
-              void saveWeek()
+            loadStatus={loadStatus}
+            save={{
+              saving: save.saving,
+              message: save.message,
+              error: save.error ?? draftSaveError,
+              onSave: () => {
+                if (week && weekHasInvalidMetricDrafts(week, buffer)) {
+                  setDraftSaveError("Fix invalid metric values before saving")
+                  return
+                }
+                setDraftSaveError(null)
+                void save.saveWeek()
+              },
             }}
-            creating={creating}
-            createError={createError}
-            suggestedMonday={suggestedMonday}
-            onCreateWeek={(monday) => void createWeek(monday)}
-            emptyStore={emptyStore}
+            create={{
+              creating: create.creating,
+              error: create.error,
+              suggestedMonday,
+              onCreate: (monday) => void create.createWeek(monday),
+            }}
           />
         </ResizablePanel>
 

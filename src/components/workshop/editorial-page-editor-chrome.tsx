@@ -8,14 +8,9 @@ import { ContentReadinessSummary } from "@/components/workshop/content-readiness
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 
-type EditorialPageEditorChromeProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: WeekPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
+type EditorialPageEditorChromeProps = PageEditorProps & {
   invalidPaths: Set<string>
   metricBuffer?: MetricDraftBuffer
   children: ReactNode

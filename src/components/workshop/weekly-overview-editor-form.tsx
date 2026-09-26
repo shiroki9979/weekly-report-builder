@@ -11,13 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
   canAddEntry,
   canRemoveEntry,
   CARDINALITY,
   type StatusTone,
-  type WeekDocument,
   type WeeklyOverviewPage,
 } from "@/lib/week-document"
 import {
@@ -31,14 +31,6 @@ import {
   setOverviewSupportingStatus,
 } from "@/lib/weekly-overview-editor"
 
-type WeeklyOverviewEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: WeeklyOverviewPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
-}
-
 const TONE_OPTIONS: { value: StatusTone; label: string }[] = [
   { value: "positive", label: "Positive" },
   { value: "caution", label: "Caution" },
@@ -51,7 +43,7 @@ export function WeeklyOverviewEditorForm({
   page,
   onChange,
   readOnly = false,
-}: WeeklyOverviewEditorFormProps) {
+}: PageEditorProps<WeeklyOverviewPage>) {
   const invalidPaths = issuePathsFor(page)
   const canAddSupporting = canAddEntry(
     page.supporting,

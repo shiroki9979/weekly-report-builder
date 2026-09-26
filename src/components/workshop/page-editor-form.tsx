@@ -9,6 +9,7 @@ import { ContentReadinessSummary } from "@/components/workshop/content-readiness
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import { EvidenceDecisionEditorForm } from "@/components/workshop/evidence-decision-editor-form"
 import { NextActionsEditorForm } from "@/components/workshop/next-actions-editor-form"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
@@ -29,16 +30,12 @@ import {
 import {
   matchWeekPage,
   type HtmlWeekPage,
+  type TablePanel,
   type TwoColumnWeekPage,
   type WeekDocument,
 } from "@/lib/week-document"
 
-type PageEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
-}
+type PageEditorFormProps = Omit<PageEditorProps, "page">
 
 export function PageEditorForm({
   week,
@@ -52,42 +49,18 @@ export function PageEditorForm({
     return null
   }
 
+  const editor = { week, pageIndex, onChange, readOnly }
+
   return matchWeekPage(page, {
-    html: (htmlPage) => (
-      <HtmlPageEditorForm
-        week={week}
-        pageIndex={pageIndex}
-        page={htmlPage}
-        onChange={onChange}
-        readOnly={readOnly}
-      />
-    ),
+    html: (htmlPage) => <HtmlPageEditorForm {...editor} page={htmlPage} />,
     weeklyOverview: (overview) => (
-      <WeeklyOverviewEditorForm
-        week={week}
-        pageIndex={pageIndex}
-        page={overview}
-        onChange={onChange}
-        readOnly={readOnly}
-      />
+      <WeeklyOverviewEditorForm {...editor} page={overview} />
     ),
     evidenceDecision: (decision) => (
-      <EvidenceDecisionEditorForm
-        week={week}
-        pageIndex={pageIndex}
-        page={decision}
-        onChange={onChange}
-        readOnly={readOnly}
-      />
+      <EvidenceDecisionEditorForm {...editor} page={decision} />
     ),
     nextActions: (actions) => (
-      <NextActionsEditorForm
-        week={week}
-        pageIndex={pageIndex}
-        page={actions}
-        onChange={onChange}
-        readOnly={readOnly}
-      />
+      <NextActionsEditorForm {...editor} page={actions} />
     ),
     unknown: () => (
       <p className="text-sm text-muted-foreground" role="status">
@@ -95,13 +68,7 @@ export function PageEditorForm({
       </p>
     ),
     twoColumn: (twoColumn) => (
-      <TwoColumnPageEditorForm
-        week={week}
-        pageIndex={pageIndex}
-        page={twoColumn}
-        onChange={onChange}
-        readOnly={readOnly}
-      />
+      <TwoColumnPageEditorForm {...editor} page={twoColumn} />
     ),
   })
 }
@@ -111,14 +78,8 @@ function HtmlPageEditorForm({
   pageIndex,
   page,
   onChange,
-  readOnly,
-}: {
-  week: WeekDocument
-  pageIndex: number
-  page: HtmlWeekPage
-  onChange: (week: WeekDocument) => void
-  readOnly: boolean
-}) {
+  readOnly = false,
+}: PageEditorProps<HtmlWeekPage>) {
   return (
     <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
       <fieldset
@@ -185,15 +146,8 @@ function TwoColumnPageEditorForm({
   pageIndex,
   page,
   onChange,
-  readOnly,
-}: {
-  week: WeekDocument
-  pageIndex: number
-  page: TwoColumnWeekPage
-  onChange: (week: WeekDocument) => void
-  readOnly: boolean
-}) {
-  const panel = page.panel
+  readOnly = false,
+}: PageEditorProps<TwoColumnWeekPage>) {
   const invalidPaths = issuePathsFor(page)
 
   return (
@@ -265,166 +219,14 @@ function TwoColumnPageEditorForm({
           </fieldset>
         ))}
 
-        {panel.kind === "table" ? (
-          <fieldset className="space-y-3 rounded-md border p-3">
-            <legend className="px-1 text-xs font-medium text-muted-foreground">
-              Table panel
-            </legend>
-            <div className="space-y-2">
-              <Label htmlFor="panel-title">Panel title</Label>
-              <Input
-                id="panel-title"
-                value={panel.title}
-                aria-invalid={invalidPaths.has("panel.title") || undefined}
-                onChange={(event) =>
-                  onChange(
-                    setTablePanelTitle(week, pageIndex, event.target.value)
-                  )
-                }
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={readOnly}
-                onClick={() => onChange(addTableRow(week, pageIndex))}
-              >
-                Add row
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={readOnly || panel.rows.length <= 1}
-                onClick={() =>
-                  onChange(
-                    removeTableRow(week, pageIndex, panel.rows.length - 1)
-                  )
-                }
-              >
-                Remove row
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={readOnly}
-                onClick={() => onChange(addTableColumn(week, pageIndex))}
-              >
-                Add column
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={readOnly || panel.columns.length <= 1}
-                onClick={() =>
-                  onChange(
-                    removeTableColumn(week, pageIndex, panel.columns.length - 1)
-                  )
-                }
-              >
-                Remove column
-              </Button>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {panel.columns.map((column, columnIndex) => (
-                <div key={columnIndex} className="space-y-2">
-                  <Label htmlFor={`column-${columnIndex}`}>
-                    Column {columnIndex + 1}
-                  </Label>
-                  <Input
-                    id={`column-${columnIndex}`}
-                    value={column}
-                    aria-invalid={
-                      invalidPaths.has(`panel.columns[${columnIndex}]`) ||
-                      undefined
-                    }
-                    onChange={(event) =>
-                      onChange(
-                        setTablePanelColumn(
-                          week,
-                          pageIndex,
-                          columnIndex,
-                          event.target.value
-                        )
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-            {panel.rows.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid gap-2 sm:grid-cols-3">
-                {row.cells.map((cell, cellIndex) => (
-                  <div key={cellIndex} className="space-y-2">
-                    <Label htmlFor={`cell-${rowIndex}-${cellIndex}`}>
-                      Row {rowIndex + 1}, col {cellIndex + 1}
-                    </Label>
-                    <Input
-                      id={`cell-${rowIndex}-${cellIndex}`}
-                      value={cell}
-                      aria-invalid={
-                        invalidPaths.has(
-                          `panel.rows[${rowIndex}].cells[${cellIndex}]`
-                        ) || undefined
-                      }
-                      onChange={(event) =>
-                        onChange(
-                          setTablePanelCell(
-                            week,
-                            pageIndex,
-                            rowIndex,
-                            cellIndex,
-                            event.target.value
-                          )
-                        )
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </fieldset>
-        ) : null}
-
-        {panel.kind === "chart" ? (
-          <ChartEditorForm
-            week={week}
-            pageIndex={pageIndex}
-            panel={panel}
-            onChange={onChange}
-          />
-        ) : null}
-
-        {panel.kind === "flow" ? (
-          <FlowEditorForm
-            week={week}
-            pageIndex={pageIndex}
-            panel={panel}
-            onChange={onChange}
-          />
-        ) : null}
-
-        {panel.kind === "checklist" ? (
-          <ChecklistEditorForm
-            week={week}
-            pageIndex={pageIndex}
-            panel={panel}
-            onChange={onChange}
-          />
-        ) : null}
-
-        {panel.kind !== "table" &&
-        panel.kind !== "chart" &&
-        panel.kind !== "flow" &&
-        panel.kind !== "checklist" ? (
-          <p className="text-sm text-muted-foreground">
-            This panel kind is not editable yet.
-          </p>
-        ) : null}
+        <TwoColumnPanelEditor
+          week={week}
+          pageIndex={pageIndex}
+          page={page}
+          onChange={onChange}
+          readOnly={readOnly}
+          invalidPaths={invalidPaths}
+        />
 
         <div className="space-y-2">
           <Label htmlFor="speaker-notes">Speaker notes</Label>
@@ -449,5 +251,204 @@ function TwoColumnPageEditorForm({
         </div>
       </fieldset>
     </form>
+  )
+}
+
+type TwoColumnPanelEditorProps = PageEditorProps<TwoColumnWeekPage> & {
+  invalidPaths: Set<string>
+}
+
+function TwoColumnPanelEditor({
+  week,
+  pageIndex,
+  page,
+  onChange,
+  readOnly = false,
+  invalidPaths,
+}: TwoColumnPanelEditorProps) {
+  const panel = page.panel
+  switch (panel.kind) {
+    case "table":
+      return (
+        <TablePanelEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+          readOnly={readOnly}
+          invalidPaths={invalidPaths}
+        />
+      )
+    case "chart":
+      return (
+        <ChartEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+        />
+      )
+    case "flow":
+      return (
+        <FlowEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+        />
+      )
+    case "checklist":
+      return (
+        <ChecklistEditorForm
+          week={week}
+          pageIndex={pageIndex}
+          panel={panel}
+          onChange={onChange}
+        />
+      )
+    case "fields":
+      return (
+        <p className="text-sm text-muted-foreground">
+          This panel kind is not editable yet.
+        </p>
+      )
+  }
+}
+
+type TablePanelEditorFormProps = {
+  week: WeekDocument
+  pageIndex: number
+  panel: TablePanel
+  onChange: (week: WeekDocument) => void
+  readOnly: boolean
+  invalidPaths: Set<string>
+}
+
+function TablePanelEditorForm({
+  week,
+  pageIndex,
+  panel,
+  onChange,
+  readOnly,
+  invalidPaths,
+}: TablePanelEditorFormProps) {
+  return (
+    <fieldset className="space-y-3 rounded-md border p-3">
+      <legend className="px-1 text-xs font-medium text-muted-foreground">
+        Table panel
+      </legend>
+      <div className="space-y-2">
+        <Label htmlFor="panel-title">Panel title</Label>
+        <Input
+          id="panel-title"
+          value={panel.title}
+          aria-invalid={invalidPaths.has("panel.title") || undefined}
+          onChange={(event) =>
+            onChange(setTablePanelTitle(week, pageIndex, event.target.value))
+          }
+        />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={readOnly}
+          onClick={() => onChange(addTableRow(week, pageIndex))}
+        >
+          Add row
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={readOnly || panel.rows.length <= 1}
+          onClick={() =>
+            onChange(removeTableRow(week, pageIndex, panel.rows.length - 1))
+          }
+        >
+          Remove row
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={readOnly}
+          onClick={() => onChange(addTableColumn(week, pageIndex))}
+        >
+          Add column
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={readOnly || panel.columns.length <= 1}
+          onClick={() =>
+            onChange(
+              removeTableColumn(week, pageIndex, panel.columns.length - 1)
+            )
+          }
+        >
+          Remove column
+        </Button>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {panel.columns.map((column, columnIndex) => (
+          <div key={columnIndex} className="space-y-2">
+            <Label htmlFor={`column-${columnIndex}`}>
+              Column {columnIndex + 1}
+            </Label>
+            <Input
+              id={`column-${columnIndex}`}
+              value={column}
+              aria-invalid={
+                invalidPaths.has(`panel.columns[${columnIndex}]`) || undefined
+              }
+              onChange={(event) =>
+                onChange(
+                  setTablePanelColumn(
+                    week,
+                    pageIndex,
+                    columnIndex,
+                    event.target.value
+                  )
+                )
+              }
+            />
+          </div>
+        ))}
+      </div>
+      {panel.rows.map((row, rowIndex) => (
+        <div key={rowIndex} className="grid gap-2 sm:grid-cols-3">
+          {row.cells.map((cell, cellIndex) => (
+            <div key={cellIndex} className="space-y-2">
+              <Label htmlFor={`cell-${rowIndex}-${cellIndex}`}>
+                Row {rowIndex + 1}, col {cellIndex + 1}
+              </Label>
+              <Input
+                id={`cell-${rowIndex}-${cellIndex}`}
+                value={cell}
+                aria-invalid={
+                  invalidPaths.has(
+                    `panel.rows[${rowIndex}].cells[${cellIndex}]`
+                  ) || undefined
+                }
+                onChange={(event) =>
+                  onChange(
+                    setTablePanelCell(
+                      week,
+                      pageIndex,
+                      rowIndex,
+                      cellIndex,
+                      event.target.value
+                    )
+                  )
+                }
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+    </fieldset>
   )
 }

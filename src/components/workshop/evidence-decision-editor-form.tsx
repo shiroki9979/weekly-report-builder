@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { useMetricDraft } from "@/components/workshop/metric-draft-context"
 import {
   addDecisionInterpretation,
@@ -38,16 +39,7 @@ import {
   canRemoveEntry,
   CARDINALITY,
   type EvidenceDecisionPage,
-  type WeekDocument,
 } from "@/lib/week-document"
-
-type EvidenceDecisionEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: EvidenceDecisionPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
-}
 
 export function EvidenceDecisionEditorForm({
   week,
@@ -55,7 +47,7 @@ export function EvidenceDecisionEditorForm({
   page,
   onChange,
   readOnly = false,
-}: EvidenceDecisionEditorFormProps) {
+}: PageEditorProps<EvidenceDecisionPage>) {
   const { buffer, replaceBuffer } = useMetricDraft()
   const invalidPaths = issuePathsFor(page, buffer)
 

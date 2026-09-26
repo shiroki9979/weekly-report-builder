@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import {
   addCommitment,
   moveCommitment,
@@ -14,16 +15,7 @@ import {
   canRemoveEntry,
   CARDINALITY,
   type NextActionsPage,
-  type WeekDocument,
 } from "@/lib/week-document"
-
-type NextActionsEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: NextActionsPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
-}
 
 export function NextActionsEditorForm({
   week,
@@ -31,7 +23,7 @@ export function NextActionsEditorForm({
   page,
   onChange,
   readOnly = false,
-}: NextActionsEditorFormProps) {
+}: PageEditorProps<NextActionsPage>) {
   const invalidPaths = issuePathsFor(page)
 
   return (
