@@ -1,4 +1,4 @@
-import type { MetricDraftBuffer } from "./evidence-decision-editor"
+import type { MetricDraftBuffer } from "./metric-draft-buffer"
 import {
   assessExportEligibility,
   type CaptureAssessment,

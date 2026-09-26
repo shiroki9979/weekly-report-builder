@@ -3,7 +3,7 @@ import { flushSync } from "react-dom"
 
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import {
   assessExportEligibility,
   formatExportIssues,

@@ -7,7 +7,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import type { WeekDocument } from "@/lib/week-document"
+import {
+  defaultPageNumberVisibility,
+  type WeekDocument,
+} from "@/lib/week-document"
 import { setPageShowPageNumber } from "@/lib/week-editor"
 
 type PageNumberSelectProps = {
@@ -25,7 +28,7 @@ export function PageNumberSelect({
   onChange,
 }: PageNumberSelectProps) {
   const page = week.pages[pageIndex]
-  const weekDefault = week.showPageNumbers ?? true
+  const defaultVisible = page ? defaultPageNumberVisibility(week, page) : true
   const currentValue =
     page?.showPageNumber === undefined
       ? "default"
@@ -33,7 +36,7 @@ export function PageNumberSelect({
         ? "show"
         : "hide"
 
-  const defaultLabel = weekDefault ? "Default (Show)" : "Default (Hide)"
+  const defaultLabel = defaultVisible ? "Default (Show)" : "Default (Hide)"
 
   return (
     <div className={cn("space-y-2", disabled && "opacity-50")}>

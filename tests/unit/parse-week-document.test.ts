@@ -14,6 +14,26 @@ const interleavedHtmlFixturePath = resolve(
   "../fixtures/interleaved-html-week.json"
 )
 
+function twoColumnWeekWithPanel(panel: Record<string, unknown>) {
+  return {
+    start: "2026-08-24",
+    end: "2026-08-28",
+    pages: [
+      {
+        id: "p01",
+        layout: "two-column",
+        title: "Panel",
+        items: [
+          { heading: "A", body: "1" },
+          { heading: "B", body: "2" },
+          { heading: "C", body: "3" },
+        ],
+        panel,
+      },
+    ],
+  }
+}
+
 describe("parseWeekDocument", () => {
   it("parses the week fixture with two-column layout and table panel", () => {
     const raw = readFileSync(twoColumnFixturePath, "utf-8")
@@ -422,6 +442,34 @@ describe("parseWeekDocument", () => {
         ],
       })
     ).toThrow(/html/i)
+  })
+
+  it("rejects a chart panel whose series value is not a number", () => {
+    expect(() =>
+      parseWeekDocument(
+        twoColumnWeekWithPanel({
+          kind: "chart",
+          title: "Latency",
+          categories: ["Mon", "Tue"],
+          series: [{ name: "p95", values: [12, "fast"] }],
+        })
+      )
+    ).toThrow(/panel\.series\[0\]\.values\[1\]/)
+  })
+
+  it("rejects chart, flow, and checklist panels missing their entry arrays", () => {
+    const panels = [
+      { kind: "chart", title: "Latency", series: [] },
+      { kind: "chart", title: "Latency", categories: [] },
+      { kind: "flow", title: "Pipeline" },
+      { kind: "checklist", title: "Launch" },
+    ]
+
+    for (const panel of panels) {
+      expect(() => parseWeekDocument(twoColumnWeekWithPanel(panel))).toThrow(
+        /panel\.(categories|series|steps|items)/
+      )
+    }
   })
 
   it("parses optional showPageNumbers at the week root and showPageNumber on pages", () => {

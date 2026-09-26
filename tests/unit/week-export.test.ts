@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { metricBufferKey } from "@/lib/evidence-decision-editor"
 import {
   createBlankEvidenceDecisionPage,
   createBlankTwoColumnPage,
@@ -238,9 +237,7 @@ describe("week-export", () => {
         downloads.push(fileName)
       },
       measureCapture: fitMeasure,
-      metricBuffer: {
-        [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-      },
+      metricBuffer: { p01: { "metrics[0].baselineValue": "abc" } },
     })
 
     expect(downloads).toEqual(["2026-08-24-p02.png"])
@@ -273,9 +270,7 @@ describe("week-export", () => {
       capture: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
       download: vi.fn(),
       measureCapture: fitMeasure,
-      metricBuffer: {
-        [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-      },
+      metricBuffer: { p01: { "metrics[0].baselineValue": "abc" } },
     })
 
     expect(renderPage.mock.calls.map((call) => call[0].id)).toEqual(["p02"])

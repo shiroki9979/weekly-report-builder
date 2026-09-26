@@ -53,7 +53,7 @@ export type ChecklistPanel = {
   items: ChecklistItem[]
 }
 
-/** Spec only; not rendered in v1 */
+/** 僅定義於規格，stage 尚未渲染 */
 export type FieldsPanel = {
   kind: "fields"
   title: string
@@ -247,8 +247,22 @@ const PAGE_NUMBER_LAYOUTS = new Set([
 ])
 
 /**
+ * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
+ * 疊加 overlay 會改變既有輸出，所以不繼承週層級預設、須逐頁開啟。
+ */
+export function defaultPageNumberVisibility(
+  week: WeekDocument,
+  page: WeekPage
+): boolean {
+  if (isHtmlWeekPage(page)) {
+    return false
+  }
+  return week.showPageNumbers ?? true
+}
+
+/**
  * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
- * 單頁設定優先於週層級；兩者都沒有時預設顯示。
+ * 單頁設定優先於預設。
  */
 export function isPageNumberVisible(
   week: WeekDocument,
@@ -257,10 +271,7 @@ export function isPageNumberVisible(
   if (page.hidden || !PAGE_NUMBER_LAYOUTS.has(page.layout)) {
     return false
   }
-  if (page.showPageNumber !== undefined) {
-    return page.showPageNumber
-  }
-  return week.showPageNumbers ?? true
+  return page.showPageNumber ?? defaultPageNumberVisibility(week, page)
 }
 
 type WeekPageMatchers<T> = {
@@ -299,14 +310,6 @@ export function isFiniteNonNegative(value: number): boolean {
   return Number.isFinite(value) && value >= 0
 }
 
-const V1_PANEL_KINDS = new Set([
-  "table",
-  "chart",
-  "flow",
-  "checklist",
-  "fields",
-])
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
@@ -341,16 +344,42 @@ function parseSlideItem(value: unknown, index: number): SlideItem {
   }
 }
 
-function parseTablePanel(value: Record<string, unknown>): TablePanel {
-  const columns = value.columns
-  if (!Array.isArray(columns) || columns.length === 0) {
-    throw new Error("Invalid week document: table panel requires columns")
+function readArray(value: unknown, field: string): unknown[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`Invalid week document: ${field} must be an array`)
   }
 
-  const rows = value.rows
-  if (!Array.isArray(rows) || rows.length === 0) {
-    throw new Error("Invalid week document: table panel requires rows")
+  return value
+}
+
+function readNonEmptyArray(value: unknown, field: string): unknown[] {
+  const entries = readArray(value, field)
+  if (entries.length === 0) {
+    throw new Error(`Invalid week document: ${field} must not be empty`)
   }
+
+  return entries
+}
+
+function readNumber(value: unknown, field: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`Invalid week document: ${field} must be a finite number`)
+  }
+
+  return value
+}
+
+function readRecord(value: unknown, field: string): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Error(`Invalid week document: ${field} must be an object`)
+  }
+
+  return value
+}
+
+function parseTablePanel(value: Record<string, unknown>): TablePanel {
+  const columns = readNonEmptyArray(value.columns, "panel.columns")
+  const rows = readNonEmptyArray(value.rows, "panel.rows")
 
   return {
     kind: "table",
@@ -358,133 +387,116 @@ function parseTablePanel(value: Record<string, unknown>): TablePanel {
     columns: columns.map((column, index) =>
       readString(column, `panel.columns[${index}]`)
     ),
-    rows: rows.map((row, rowIndex) => {
-      if (!isRecord(row)) {
-        throw new Error(`Invalid week document: panel.rows[${rowIndex}]`)
-      }
-
-      const cells = row.cells
-      if (!Array.isArray(cells) || cells.length === 0) {
-        throw new Error(`Invalid week document: panel.rows[${rowIndex}].cells`)
-      }
-
-      const emphasis = row.emphasis
-      if (
-        emphasis !== undefined &&
-        (!Array.isArray(emphasis) ||
-          emphasis.some((index) => typeof index !== "number"))
-      ) {
-        throw new Error(
-          `Invalid week document: panel.rows[${rowIndex}].emphasis`
-        )
-      }
+    rows: rows.map((entry, rowIndex) => {
+      const field = `panel.rows[${rowIndex}]`
+      const row = readRecord(entry, field)
+      const cells = readNonEmptyArray(row.cells, `${field}.cells`)
 
       return {
         cells: cells.map((cell, cellIndex) =>
-          readString(cell, `panel.rows[${rowIndex}].cells[${cellIndex}]`)
+          readString(cell, `${field}.cells[${cellIndex}]`)
         ),
-        emphasis: emphasis as number[] | undefined,
+        emphasis:
+          row.emphasis === undefined
+            ? undefined
+            : readArray(row.emphasis, `${field}.emphasis`).map((index, at) =>
+                readNumber(index, `${field}.emphasis[${at}]`)
+              ),
+      }
+    }),
+  }
+}
+
+function parseChartPanel(value: Record<string, unknown>): ChartPanel {
+  return {
+    kind: "chart",
+    title: readString(value.title, "panel.title"),
+    categories: readArray(value.categories, "panel.categories").map(
+      (category, index) => readString(category, `panel.categories[${index}]`)
+    ),
+    series: readArray(value.series, "panel.series").map((entry, index) => {
+      const field = `panel.series[${index}]`
+      const series = readRecord(entry, field)
+
+      return {
+        name: readString(series.name, `${field}.name`),
+        color: typeof series.color === "string" ? series.color : undefined,
+        values: readArray(series.values, `${field}.values`).map(
+          (value, valueIndex) =>
+            readNumber(value, `${field}.values[${valueIndex}]`)
+        ),
+      }
+    }),
+  }
+}
+
+function parseFlowPanel(value: Record<string, unknown>): FlowPanel {
+  return {
+    kind: "flow",
+    title: readString(value.title, "panel.title"),
+    steps: readArray(value.steps, "panel.steps").map((entry, index) => {
+      const field = `panel.steps[${index}]`
+      const step = readRecord(entry, field)
+
+      return {
+        label: readString(step.label, `${field}.label`),
+        caption: typeof step.caption === "string" ? step.caption : undefined,
+        variant:
+          step.variant === "ok" || step.variant === "default"
+            ? step.variant
+            : undefined,
+      }
+    }),
+  }
+}
+
+function parseChecklistPanel(value: Record<string, unknown>): ChecklistPanel {
+  return {
+    kind: "checklist",
+    title: readString(value.title, "panel.title"),
+    items: readArray(value.items, "panel.items").map((entry, index) => {
+      const field = `panel.items[${index}]`
+      const item = readRecord(entry, field)
+
+      return {
+        label: readString(item.label, `${field}.label`),
+        checked: typeof item.checked === "boolean" ? item.checked : undefined,
+      }
+    }),
+  }
+}
+
+function parseFieldsPanel(value: Record<string, unknown>): FieldsPanel {
+  return {
+    kind: "fields",
+    title: readString(value.title, "panel.title"),
+    rows: readArray(value.rows, "panel.rows").map((entry, index) => {
+      const field = `panel.rows[${index}]`
+      const row = readRecord(entry, field)
+
+      return {
+        label: readString(row.label, `${field}.label`),
+        value: readString(row.value, `${field}.value`),
       }
     }),
   }
 }
 
 function parsePanel(value: unknown): Panel {
-  if (!isRecord(value)) {
-    throw new Error("Invalid week document: panel must be an object")
-  }
-
-  const kind = readNonEmptyString(value.kind, "panel.kind")
-  if (!V1_PANEL_KINDS.has(kind)) {
-    throw new Error(`Invalid week document: unknown panel kind "${kind}"`)
-  }
+  const panel = readRecord(value, "panel")
+  const kind = readNonEmptyString(panel.kind, "panel.kind")
 
   switch (kind) {
     case "table":
-      return parseTablePanel(value)
+      return parseTablePanel(panel)
     case "chart":
-      return {
-        kind: "chart",
-        title: readString(value.title, "panel.title"),
-        categories: Array.isArray(value.categories)
-          ? value.categories.map((category, index) =>
-              readString(category, `panel.categories[${index}]`)
-            )
-          : [],
-        series: Array.isArray(value.series)
-          ? value.series.map((series, index) => {
-              if (!isRecord(series)) {
-                throw new Error(`Invalid week document: panel.series[${index}]`)
-              }
-
-              return {
-                name: readString(series.name, `panel.series[${index}].name`),
-                color:
-                  typeof series.color === "string" ? series.color : undefined,
-                values: Array.isArray(series.values)
-                  ? series.values.map((entry) => Number(entry))
-                  : [],
-              }
-            })
-          : [],
-      }
+      return parseChartPanel(panel)
     case "flow":
-      return {
-        kind: "flow",
-        title: readString(value.title, "panel.title"),
-        steps: Array.isArray(value.steps)
-          ? value.steps.map((step, index) => {
-              if (!isRecord(step)) {
-                throw new Error(`Invalid week document: panel.steps[${index}]`)
-              }
-
-              return {
-                label: readString(step.label, `panel.steps[${index}].label`),
-                caption:
-                  typeof step.caption === "string" ? step.caption : undefined,
-                variant:
-                  step.variant === "ok" || step.variant === "default"
-                    ? step.variant
-                    : undefined,
-              }
-            })
-          : [],
-      }
+      return parseFlowPanel(panel)
     case "checklist":
-      return {
-        kind: "checklist",
-        title: readString(value.title, "panel.title"),
-        items: Array.isArray(value.items)
-          ? value.items.map((item, index) => {
-              if (!isRecord(item)) {
-                throw new Error(`Invalid week document: panel.items[${index}]`)
-              }
-
-              return {
-                label: readString(item.label, `panel.items[${index}].label`),
-                checked:
-                  typeof item.checked === "boolean" ? item.checked : undefined,
-              }
-            })
-          : [],
-      }
+      return parseChecklistPanel(panel)
     case "fields":
-      return {
-        kind: "fields",
-        title: readString(value.title, "panel.title"),
-        rows: Array.isArray(value.rows)
-          ? value.rows.map((row, index) => {
-              if (!isRecord(row)) {
-                throw new Error(`Invalid week document: panel.rows[${index}]`)
-              }
-
-              return {
-                label: readString(row.label, `panel.rows[${index}].label`),
-                value: readString(row.value, `panel.rows[${index}].value`),
-              }
-            })
-          : [],
-      }
+      return parseFieldsPanel(panel)
     default:
       throw new Error(`Invalid week document: unknown panel kind "${kind}"`)
   }

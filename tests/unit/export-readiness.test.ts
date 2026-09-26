@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { metricBufferKey } from "@/lib/evidence-decision-editor"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -290,9 +289,7 @@ describe("assessExportEligibility", () => {
   })
 
   it("merges invalid metric drafts into content issues without capturing", () => {
-    const buffer = {
-      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-    }
+    const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
 
     expect(
       assessExportEligibility(completeDecisionPage(), { status: "fit" }, buffer)
@@ -309,9 +306,7 @@ describe("assessExportEligibility", () => {
   })
 
   it("keeps schema path order and lets invalid drafts win over missing values", () => {
-    const buffer = {
-      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-    }
+    const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
     const assessment = assessExportEligibility(
       createBlankEvidenceDecisionPage("p01"),
       undefined,
