@@ -8,12 +8,17 @@ import {
   setDecisionMetricValue,
 } from "@/lib/evidence-decision-editor"
 import {
+  pruneMetricDrafts,
   remapMetricBufferAfterMove,
   remapMetricBufferAfterRemove,
   weekHasInvalidMetricDrafts,
 } from "@/lib/metric-draft-buffer"
 import { assessContentReadiness } from "@/lib/export-readiness"
-import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
+import {
+  addPageAfter,
+  createBlankEvidenceDecisionPage,
+  deleteSelectedPage,
+} from "@/lib/page-lifecycle"
 import { cloneWeekFromPrevious } from "@/lib/week-clone"
 import { parseWeekDocument } from "@/lib/week-document"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -315,5 +320,25 @@ describe("evidence-decision clone and readiness", () => {
     const remapped = remapMetricBufferAfterRemove(buffer, "ops:1", 0)
 
     expect(weekHasInvalidMetricDrafts(weekWith(page), remapped)).toBe(true)
+  })
+
+  it("does not revive a deleted page's invalid draft when a new page reuses its Page ID", () => {
+    const deleted = createBlankEvidenceDecisionPage("p02")
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [createBlankEvidenceDecisionPage("p01"), deleted],
+    }
+    const buffer = { p02: { "metrics[0].baselineValue": "abc" } }
+
+    const afterDelete = deleteSelectedPage(week, "p02")
+    const pruned = pruneMetricDrafts(buffer, afterDelete.week)
+    const afterAdd = addPageAfter(
+      afterDelete.week,
+      "p01",
+      createBlankEvidenceDecisionPage("p02")
+    )
+
+    expect(weekHasInvalidMetricDrafts(afterAdd.week, pruned)).toBe(false)
   })
 })

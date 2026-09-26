@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複，且建立新週時沿用該頁設定；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 
 ### Changed
 
@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
+- 刪除頁面時一併清除該頁的 Comparison Metric 草稿，新頁重用同一個 Page ID 不會讓舊的非法輸入復活；切換週次時清空草稿，避免上一週的輸入出現在新週並擋住 Save。
 
 ## [0.2.0] - 2026-09-18
 

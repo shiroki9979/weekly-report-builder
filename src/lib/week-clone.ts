@@ -118,6 +118,7 @@ function clearOutcome(outcome: Outcome): Outcome {
 function clearPage(page: WeekPage): WeekPage {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchWeekPage<WeekPage>(page, {
+    // HTML Page 的頁碼須逐頁開啟、不吃週層級預設；沿用上週選擇才不會每週重開
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
@@ -125,6 +126,7 @@ function clearPage(page: WeekPage): WeekPage {
       htmlFile: htmlPage.htmlFile,
       hidden: htmlPage.hidden,
       notes: undefined,
+      showPageNumber: htmlPage.showPageNumber,
     }),
     weeklyOverview: (overview) => ({
       id: overview.id,
@@ -185,7 +187,7 @@ export function cloneWeekFromPrevious(
 
   const range = weekRangeForMonday(targetMonday)
 
-  // 新週預設顯示頁碼，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
+  // 新週的 Editorial 頁碼回到預設顯示，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
   return {
     start: range.start,
     end: range.end,

@@ -9,7 +9,8 @@ import {
   nextMondayAfter,
   weekRangeForMonday,
 } from "@/lib/week-clone"
-import { parseWeekDocument } from "@/lib/week-document"
+import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -216,23 +217,36 @@ describe("week-clone", () => {
     expect(() => parseWeekDocument(cloned)).not.toThrow()
   })
 
-  it("starts a new week with page numbers shown, ignoring the previous week's visibility", () => {
-    const previous = parseWeekDocument({
+  it("starts a new week with Editorial page numbers reset to the week default", () => {
+    const previous: WeekDocument = {
       start: "2026-08-24",
       end: "2026-08-28",
       showPageNumbers: false,
+      pages: [{ ...createBlankNextActionsPage("p01"), showPageNumber: true }],
+    }
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+
+    expect(cloned.showPageNumbers).toBeUndefined()
+    expect(cloned.pages[0].showPageNumber).toBeUndefined()
+  })
+
+  it("keeps an HTML Page's page-number choice because HTML Pages opt in per page", () => {
+    const previous = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
       pages: [
         {
           id: "p01",
           layout: "html",
-          title: "Custom",
+          title: "Opted in",
           htmlFile: "p01.html",
           showPageNumber: true,
         },
         {
           id: "p02",
           layout: "html",
-          title: "Custom 2",
+          title: "Opted out",
           htmlFile: "p02.html",
           showPageNumber: false,
         },
@@ -240,8 +254,8 @@ describe("week-clone", () => {
     })
 
     const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
-    expect(cloned.showPageNumbers).toBeUndefined()
-    expect(cloned.pages[0].showPageNumber).toBeUndefined()
-    expect(cloned.pages[1].showPageNumber).toBeUndefined()
+
+    expect(cloned.pages[0].showPageNumber).toBe(true)
+    expect(cloned.pages[1].showPageNumber).toBe(false)
   })
 })

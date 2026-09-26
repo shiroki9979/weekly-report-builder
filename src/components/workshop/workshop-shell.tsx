@@ -50,7 +50,10 @@ import {
   useWeekEditor,
   type WeekEditorLoadStatus,
 } from "@/hooks/use-week-editor"
-import { weekHasInvalidMetricDrafts } from "@/lib/metric-draft-buffer"
+import {
+  pruneMetricDrafts,
+  weekHasInvalidMetricDrafts,
+} from "@/lib/metric-draft-buffer"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
@@ -191,7 +194,7 @@ export function WorkshopShell() {
 }
 
 function WorkshopShellBody() {
-  const { buffer } = useMetricDraft()
+  const { buffer, replaceBuffer } = useMetricDraft()
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null)
   const {
     weeks,
@@ -208,6 +211,11 @@ function WorkshopShellBody() {
     save,
     create,
   } = useWeekEditor()
+
+  // 草稿以 Page ID 索引，而不同週次會重用 p01 等 id；切週必須清空，否則上一週的非法輸入會出現在新週並擋住 Save
+  useEffect(() => {
+    replaceBuffer({})
+  }, [replaceBuffer, selectedMonday])
 
   const loading = loadStatus.kind === "loading"
   const emptyStore = loadStatus.kind === "empty"
@@ -416,6 +424,7 @@ function WorkshopShellBody() {
               pageId: selectedPageId,
               onSelect: setSelectedPageIndex,
               onLifecycle: (result) => {
+                replaceBuffer(pruneMetricDrafts(buffer, result.week))
                 setWeek(result.week)
                 setSelectedPageId(result.selectedPageId)
               },

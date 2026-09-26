@@ -38,6 +38,17 @@ export function writeMetricDraft(
   return { ...buffer, [pageId]: { ...buffer[pageId], [path]: raw } }
 }
 
+// 刪頁後草稿若留著，之後新頁重用同一個 Page ID 會讓舊的非法輸入復活並擋住 Save
+export function pruneMetricDrafts(
+  buffer: MetricDraftBuffer,
+  week: WeekDocument
+): MetricDraftBuffer {
+  const pageIds = new Set(week.pages.map((page) => page.id))
+  return Object.fromEntries(
+    Object.entries(buffer).filter(([pageId]) => pageIds.has(pageId))
+  )
+}
+
 // 回傳 raw 草稿的錯誤訊息；沒有草稿或草稿可解析時回 null，交由 typed 值判斷
 export function invalidMetricDraftMessage(
   buffer: MetricDraftBuffer,
