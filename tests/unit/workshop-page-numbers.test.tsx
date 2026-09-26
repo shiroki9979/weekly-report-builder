@@ -4,7 +4,7 @@ import { useState } from "react"
 import { describe, expect, it } from "vitest"
 
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import { WorkshopToolbar } from "@/components/workshop/week-picker"
+import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { WeekDocument } from "@/lib/week-document"
@@ -31,6 +31,20 @@ function sampleWeek(showPageNumbers?: boolean): WeekDocument {
   }
 }
 
+const idleSave = {
+  onSave: () => {},
+  saving: false,
+  message: null,
+  error: null,
+}
+
+const idleCreate = {
+  onCreate: () => {},
+  creating: false,
+  error: null,
+  suggestedMonday: "2026-08-31",
+}
+
 describe("WorkshopToolbar showPageNumbers toggle", () => {
   it("renders show page numbers checkbox checked by default and responds to changes", async () => {
     const user = userEvent.setup()
@@ -44,16 +58,9 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
           weeks={["2026-08-24"]}
           selectedMonday="2026-08-24"
           onWeekChange={() => {}}
-          onSave={() => {}}
-          saving={false}
-          saveMessage={null}
-          saveError={null}
-          suggestedMonday="2026-08-31"
-          onCreateWeek={() => {}}
-          creating={false}
-          createError={null}
-          showPageNumbers={show}
-          onShowPageNumbersChange={setShow}
+          save={idleSave}
+          create={idleCreate}
+          pageNumbers={{ show, onChange: setShow }}
         />
       )
     }
@@ -67,23 +74,15 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
     expect(currentShow).toBe(false)
   })
 
-  it("disables the checkbox when showPageNumbersDisabled is true", () => {
+  it("disables the checkbox when page numbers are disabled", () => {
     render(
       <WorkshopToolbar
         weeks={["2026-08-24"]}
         selectedMonday="2026-08-24"
         onWeekChange={() => {}}
-        onSave={() => {}}
-        saving={false}
-        saveMessage={null}
-        saveError={null}
-        suggestedMonday="2026-08-31"
-        onCreateWeek={() => {}}
-        creating={false}
-        createError={null}
-        showPageNumbers={true}
-        showPageNumbersDisabled={true}
-        onShowPageNumbersChange={() => {}}
+        save={idleSave}
+        create={idleCreate}
+        pageNumbers={{ show: true, disabled: true, onChange: () => {} }}
       />
     )
 

@@ -9,12 +9,14 @@ import {
 
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument } from "@/lib/week-document"
+import { listWeekFiles, loadWeekDocument } from "@/lib/weeks-client"
+
+import { useWeekCreate, type WeekCreateControls } from "./use-week-create"
 import {
-  createWeekFromPrevious,
-  listWeekFiles,
-  loadWeekDocument,
-  saveWeekDocument,
-} from "@/lib/weeks-client"
+  useWeekSave,
+  type SavedWeekBundle,
+  type WeekSaveControls,
+} from "./use-week-save"
 
 export type WeekEditorLoadStatus =
   | { kind: "loading" }
@@ -33,23 +35,9 @@ type UseWeekEditorResult = {
   setSelectedPageIndex: (index: number) => void
   setSelectedPageId: (pageId: string) => void
   loadStatus: WeekEditorLoadStatus
-  saving: boolean
-  saveError: string | null
-  saveMessage: string | null
-  saveWeek: () => Promise<void>
-  creating: boolean
-  createError: string | null
   suggestedMonday: string
-  createWeek: (monday: string) => Promise<void>
-}
-
-async function refreshWeekBundle(monday: string) {
-  const [weeks, document] = await Promise.all([
-    listWeekFiles(),
-    loadWeekDocument(monday),
-  ])
-
-  return { weeks, document }
+  save: WeekSaveControls
+  create: WeekCreateControls
 }
 
 export function useWeekEditor(): UseWeekEditorResult {
@@ -61,11 +49,6 @@ export function useWeekEditor(): UseWeekEditorResult {
   const [loadStatus, setLoadStatus] = useState<WeekEditorLoadStatus>({
     kind: "loading",
   })
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
 
   const loading = loadStatus.kind === "loading"
   const latestMonday = latestWeekMonday(weeks)
@@ -142,61 +125,43 @@ export function useWeekEditor(): UseWeekEditorResult {
     }
   }, [selectedMonday, setSelectedMonday])
 
-  const saveWeek = useCallback(async () => {
-    if (!week) {
-      return
-    }
+  const isCurrentMonday = useCallback(
+    (monday: string) => selectedMondayRef.current === monday,
+    []
+  )
 
-    const monday = selectedMonday
-    setSaving(true)
-    setSaveError(null)
-    setSaveMessage(null)
+  const applySavedWeek = useCallback((bundle: SavedWeekBundle) => {
+    setWeeks(bundle.weeks)
+    setWeek(bundle.document)
+    setLoadStatus({ kind: "ready" })
+  }, [])
 
-    try {
-      await saveWeekDocument(monday, week)
-      const { weeks: weekList, document } = await refreshWeekBundle(monday)
-      if (selectedMondayRef.current !== monday) {
-        return
-      }
+  const save = useWeekSave({
+    monday: selectedMonday,
+    week,
+    isCurrentMonday,
+    onSaved: applySavedWeek,
+  })
 
+  const openCreatedWeek = useCallback(
+    (weekList: string[], monday: string) => {
       setWeeks(weekList)
-      setWeek(document)
-      setLoadStatus({ kind: "ready" })
-      setSaveMessage("Saved")
-    } catch (cause: unknown) {
-      if (selectedMondayRef.current !== monday) {
-        return
-      }
-
-      const message =
-        cause instanceof Error ? cause.message : "Failed to save week file"
-      setSaveError(message)
-    } finally {
-      setSaving(false)
-    }
-  }, [selectedMonday, week])
-
-  const createWeek = useCallback(
-    async (monday: string) => {
-      setCreating(true)
-      setCreateError(null)
-      setSaveMessage(null)
-
-      try {
-        await createWeekFromPrevious(monday)
-        const weekList = await listWeekFiles()
-        setWeeks(weekList)
-        setSelectedPageId(null)
-        setSelectedMonday(monday)
-      } catch (cause: unknown) {
-        const message =
-          cause instanceof Error ? cause.message : "Failed to create week file"
-        setCreateError(message)
-      } finally {
-        setCreating(false)
-      }
+      setSelectedPageId(null)
+      setSelectedMonday(monday)
     },
     [setSelectedMonday]
+  )
+
+  const { clearMessage: clearSaveMessage } = save
+  const creator = useWeekCreate({ onCreated: openCreatedWeek })
+  const { createWeek: createFromPrevious } = creator
+  // 建立新週時清掉上一週的 Saved 訊息，避免誤以為新週已存檔
+  const createWeek = useCallback(
+    async (monday: string) => {
+      clearSaveMessage()
+      await createFromPrevious(monday)
+    },
+    [clearSaveMessage, createFromPrevious]
   )
 
   const visibleWeek = loading ? null : week
@@ -228,13 +193,8 @@ export function useWeekEditor(): UseWeekEditorResult {
     setSelectedPageIndex,
     setSelectedPageId,
     loadStatus,
-    saving,
-    saveError,
-    saveMessage,
-    saveWeek,
-    creating,
-    createError,
     suggestedMonday,
-    createWeek,
+    save,
+    create: { ...creator, createWeek },
   }
 }

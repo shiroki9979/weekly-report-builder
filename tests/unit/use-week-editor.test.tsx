@@ -267,7 +267,7 @@ describe("useWeekEditor", () => {
     })
 
     act(() => {
-      void result.current.saveWeek()
+      void result.current.save.saveWeek()
     })
 
     await waitFor(() => {
@@ -288,11 +288,11 @@ describe("useWeekEditor", () => {
     })
 
     await waitFor(() => {
-      expect(result.current.saving).toBe(false)
+      expect(result.current.save.saving).toBe(false)
     })
 
     expect(result.current.loadStatus).toEqual({ kind: "ready" })
     expect(result.current.week?.pages[0]?.title).toBe("Older week")
-    expect(result.current.saveMessage).toBeNull()
+    expect(result.current.save.message).toBeNull()
   })
 })
