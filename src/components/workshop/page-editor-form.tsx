@@ -320,6 +320,8 @@ function TwoColumnPanelEditor({
 }
 
 type TablePanelEditorFormProps = PanelEditorProps<TablePanel> & {
+  // 增刪按鈕另外依 readOnly 與數量規則判斷可用性，所以 table 需要明確的 readOnly
+  readOnly: boolean
   invalidPaths: Set<string>
 }
 
@@ -328,7 +330,7 @@ function TablePanelEditorForm({
   pageIndex,
   panel,
   onChange,
-  readOnly = false,
+  readOnly,
   invalidPaths,
 }: TablePanelEditorFormProps) {
   return (

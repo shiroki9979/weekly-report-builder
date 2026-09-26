@@ -315,7 +315,8 @@ export type Cardinality = {
   plural?: string
 }
 
-// 版面與 panel 數量規則的單一來源；parser、editor reducer 與表單按鈕共用
+// 數量規則的單一來源。版面規則由 parser、reducer 與表單共用；panel 規則只約束編輯，
+// chart／flow／checklist 的 parser 容許空陣列，交由 readiness 標成 Draft Page
 export const CARDINALITY = {
   supportingOutcomes: {
     min: 1,
