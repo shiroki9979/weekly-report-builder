@@ -24,7 +24,7 @@
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
 - 若來源週次包含 Next Actions，clone 會保留 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
 - `start` / `end` 自動設為該週週一至週五
-- 新週不複製上一週的 `showPageNumbers` 與各頁 `showPageNumber`，頁碼回到預設顯示
+- 新週不複製上一週的 `showPageNumbers` 與各頁 `showPageNumber`，頁碼回到預設：Editorial 顯示，HTML Page 不疊頁碼（需逐頁重新開啟）
 
 ## 常見問題
 
