@@ -9,10 +9,12 @@ export type WeekCreateControls = {
 }
 
 type UseWeekCreateOptions = {
+  onStart?: () => void
   onCreated: (weeks: string[], monday: string) => void
 }
 
 export function useWeekCreate({
+  onStart,
   onCreated,
 }: UseWeekCreateOptions): WeekCreateControls {
   const [creating, setCreating] = useState(false)
@@ -20,6 +22,7 @@ export function useWeekCreate({
 
   const createWeek = useCallback(
     async (monday: string) => {
+      onStart?.()
       setCreating(true)
       setError(null)
 
@@ -34,7 +37,7 @@ export function useWeekCreate({
         setCreating(false)
       }
     },
-    [onCreated]
+    [onCreated, onStart]
   )
 
   return { creating, error, createWeek }

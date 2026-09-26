@@ -1,5 +1,10 @@
 import { typedPageUpdater, updateWeekPage } from "@/lib/update-week-page"
-import { isHtmlWeekPage, isTwoColumnWeekPage } from "@/lib/week-document"
+import {
+  assertCanRemoveEntry,
+  CARDINALITY,
+  isHtmlWeekPage,
+  isTwoColumnWeekPage,
+} from "@/lib/week-document"
 import type { Panel, WeekDocument } from "@/lib/week-document"
 
 const updateTwoColumnPage = typedPageUpdater(
@@ -177,9 +182,7 @@ export function removeTableRow(
   rowIndex: number
 ): WeekDocument {
   return updateTablePanel(week, pageIndex, (panel) => {
-    if (panel.rows.length <= 1) {
-      throw new Error("Table must keep at least one row")
-    }
+    assertCanRemoveEntry(panel.rows, CARDINALITY.tableRows)
 
     return {
       ...panel,
@@ -205,9 +208,7 @@ export function removeTableColumn(
   columnIndex: number
 ): WeekDocument {
   return updateTablePanel(week, pageIndex, (panel) => {
-    if (panel.columns.length <= 1) {
-      throw new Error("Table must keep at least one column")
-    }
+    assertCanRemoveEntry(panel.columns, CARDINALITY.tableColumns)
 
     return {
       ...panel,
@@ -267,14 +268,19 @@ export function removeChartCategory(
   pageIndex: number,
   categoryIndex: number
 ): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
-    ...panel,
-    categories: panel.categories.filter((_, index) => index !== categoryIndex),
-    series: panel.series.map((series) => ({
-      ...series,
-      values: series.values.filter((_, index) => index !== categoryIndex),
-    })),
-  }))
+  return updateChartPanel(week, pageIndex, (panel) => {
+    assertCanRemoveEntry(panel.categories, CARDINALITY.chartCategories)
+    return {
+      ...panel,
+      categories: panel.categories.filter(
+        (_, index) => index !== categoryIndex
+      ),
+      series: panel.series.map((series) => ({
+        ...series,
+        values: series.values.filter((_, index) => index !== categoryIndex),
+      })),
+    }
+  })
 }
 
 export function setChartSeriesName(
@@ -350,10 +356,13 @@ export function removeChartSeries(
   pageIndex: number,
   seriesIndex: number
 ): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
-    ...panel,
-    series: panel.series.filter((_, index) => index !== seriesIndex),
-  }))
+  return updateChartPanel(week, pageIndex, (panel) => {
+    assertCanRemoveEntry(panel.series, CARDINALITY.chartSeries)
+    return {
+      ...panel,
+      series: panel.series.filter((_, index) => index !== seriesIndex),
+    }
+  })
 }
 
 export function setFlowPanelTitle(
@@ -432,10 +441,13 @@ export function removeFlowStep(
   pageIndex: number,
   stepIndex: number
 ): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
-    ...panel,
-    steps: panel.steps.filter((_, index) => index !== stepIndex),
-  }))
+  return updateFlowPanel(week, pageIndex, (panel) => {
+    assertCanRemoveEntry(panel.steps, CARDINALITY.flowSteps)
+    return {
+      ...panel,
+      steps: panel.steps.filter((_, index) => index !== stepIndex),
+    }
+  })
 }
 
 export function moveFlowStep(
@@ -506,8 +518,11 @@ export function removeChecklistItem(
   pageIndex: number,
   itemIndex: number
 ): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => ({
-    ...panel,
-    items: panel.items.filter((_, index) => index !== itemIndex),
-  }))
+  return updateChecklistPanel(week, pageIndex, (panel) => {
+    assertCanRemoveEntry(panel.items, CARDINALITY.checklistItems)
+    return {
+      ...panel,
+      items: panel.items.filter((_, index) => index !== itemIndex),
+    }
+  })
 }

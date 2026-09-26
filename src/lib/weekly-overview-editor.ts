@@ -1,6 +1,6 @@
 import {
-  canAddEntry,
-  canRemoveEntry,
+  assertCanAddEntry,
+  assertCanRemoveEntry,
   CARDINALITY,
   isStatusTone,
   isWeeklyOverviewPage,
@@ -118,11 +118,7 @@ export function addSupportingOutcome(
   pageIndex: number
 ): WeekDocument {
   return updateOverview(week, pageIndex, (page) => {
-    if (!canAddEntry(page.supporting, CARDINALITY.supportingOutcomes)) {
-      throw new Error(
-        `Weekly Overview can have at most ${CARDINALITY.supportingOutcomes.max} supporting outcomes`
-      )
-    }
+    assertCanAddEntry(page.supporting, CARDINALITY.supportingOutcomes)
 
     return {
       ...page,
@@ -137,11 +133,7 @@ export function removeSupportingOutcome(
   supportingIndex: number
 ): WeekDocument {
   return updateOverview(week, pageIndex, (page) => {
-    if (!canRemoveEntry(page.supporting, CARDINALITY.supportingOutcomes)) {
-      throw new Error(
-        `Weekly Overview must keep at least ${CARDINALITY.supportingOutcomes.min} supporting outcome`
-      )
-    }
+    assertCanRemoveEntry(page.supporting, CARDINALITY.supportingOutcomes)
 
     return {
       ...page,

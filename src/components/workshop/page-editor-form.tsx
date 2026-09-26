@@ -9,7 +9,10 @@ import { ContentReadinessSummary } from "@/components/workshop/content-readiness
 import { FlowEditorForm } from "@/components/workshop/flow-editor-form"
 import { EvidenceDecisionEditorForm } from "@/components/workshop/evidence-decision-editor-form"
 import { NextActionsEditorForm } from "@/components/workshop/next-actions-editor-form"
-import type { PageEditorProps } from "@/components/workshop/page-editor-props"
+import type {
+  PageEditorProps,
+  PanelEditorProps,
+} from "@/components/workshop/page-editor-props"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
@@ -28,11 +31,12 @@ import {
   setTablePanelTitle,
 } from "@/lib/week-editor"
 import {
+  canRemoveEntry,
+  CARDINALITY,
   matchWeekPage,
   type HtmlWeekPage,
   type TablePanel,
   type TwoColumnWeekPage,
-  type WeekDocument,
 } from "@/lib/week-document"
 
 type PageEditorFormProps = Omit<PageEditorProps, "page">
@@ -315,12 +319,7 @@ function TwoColumnPanelEditor({
   }
 }
 
-type TablePanelEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  panel: TablePanel
-  onChange: (week: WeekDocument) => void
-  readOnly: boolean
+type TablePanelEditorFormProps = PanelEditorProps<TablePanel> & {
   invalidPaths: Set<string>
 }
 
@@ -329,7 +328,7 @@ function TablePanelEditorForm({
   pageIndex,
   panel,
   onChange,
-  readOnly,
+  readOnly = false,
   invalidPaths,
 }: TablePanelEditorFormProps) {
   return (
@@ -362,7 +361,9 @@ function TablePanelEditorForm({
           type="button"
           variant="outline"
           size="sm"
-          disabled={readOnly || panel.rows.length <= 1}
+          disabled={
+            readOnly || !canRemoveEntry(panel.rows, CARDINALITY.tableRows)
+          }
           onClick={() =>
             onChange(removeTableRow(week, pageIndex, panel.rows.length - 1))
           }
@@ -382,7 +383,9 @@ function TablePanelEditorForm({
           type="button"
           variant="outline"
           size="sm"
-          disabled={readOnly || panel.columns.length <= 1}
+          disabled={
+            readOnly || !canRemoveEntry(panel.columns, CARDINALITY.tableColumns)
+          }
           onClick={() =>
             onChange(
               removeTableColumn(week, pageIndex, panel.columns.length - 1)

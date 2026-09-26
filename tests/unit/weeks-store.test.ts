@@ -108,14 +108,9 @@ describe("weeks-store", () => {
     try {
       writeWeekFile(tempDir, "2026-08-24", previous)
 
-      let thrown: unknown
-      try {
-        createWeekFromPrevious(tempDir, "2026-08-24")
-      } catch (error) {
-        thrown = error
-      }
-
-      expect(thrown).toBeInstanceOf(WeekAlreadyExistsError)
+      expect(() => createWeekFromPrevious(tempDir, "2026-08-24")).toThrow(
+        WeekAlreadyExistsError
+      )
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }
