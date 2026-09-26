@@ -9,10 +9,11 @@ export type PageEditorProps<P extends WeekPage = WeekPage> = {
   readOnly?: boolean
 }
 
-// Two-column panel 子表單只改 panel，但寫回仍要整份 week 與頁面位置
+// Two-column panel 子表單只改 panel，但寫回仍要整份 week 與頁面位置。
+// 唯讀由外層 fieldset 的 disabled 處理，不另收 readOnly，避免型別宣稱支援卻被忽略
 export type PanelEditorProps<P extends Panel> = Omit<
   PageEditorProps,
-  "page"
+  "page" | "readOnly"
 > & {
   panel: P
 }
