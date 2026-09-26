@@ -15,6 +15,7 @@ import { setPageHidden, setPageTitle } from "@/lib/week-editor"
 import {
   createWeekFromPrevious,
   listWeeksInDirectory,
+  WeekAlreadyExistsError,
   readWeekFile,
   writeWeekFile,
 } from "../../server/weeks-store"
@@ -93,6 +94,28 @@ describe("weeks-store", () => {
 
       const reloaded = readWeekFile(tempDir, "2026-08-31")
       expect(reloaded).toEqual(created)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("rejects creating a week that already exists with a WeekAlreadyExistsError", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const previous = parseWeekDocument(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", previous)
+
+      let thrown: unknown
+      try {
+        createWeekFromPrevious(tempDir, "2026-08-24")
+      } catch (error) {
+        thrown = error
+      }
+
+      expect(thrown).toBeInstanceOf(WeekAlreadyExistsError)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }

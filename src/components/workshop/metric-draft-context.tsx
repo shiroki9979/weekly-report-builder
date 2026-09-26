@@ -7,11 +7,15 @@ import {
   type ReactNode,
 } from "react"
 
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import {
+  writeMetricDraft,
+  type MetricDraftBuffer,
+  type MetricDraftPath,
+} from "@/lib/metric-draft-buffer"
 
 type MetricDraftContextValue = {
   buffer: MetricDraftBuffer
-  setRaw: (key: string, value: string) => void
+  setRaw: (pageId: string, path: MetricDraftPath, raw: string) => void
   replaceBuffer: (next: MetricDraftBuffer) => void
 }
 
@@ -26,8 +30,8 @@ export function MetricDraftProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       buffer,
-      setRaw: (key: string, value: string) => {
-        setBuffer((current) => ({ ...current, [key]: value }))
+      setRaw: (pageId: string, path: MetricDraftPath, raw: string) => {
+        setBuffer((current) => writeMetricDraft(current, pageId, path, raw))
       },
       replaceBuffer: (next: MetricDraftBuffer) => {
         setBuffer(next)

@@ -180,7 +180,7 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext(week, "p03").pageLabel).toBe("3 / 3")
   })
 
-  it("determines showPageNumber from week defaults and page-level overrides", () => {
+  it("lets an HTML Page opt in to a page number when the week hides them", () => {
     const week = parseWeekDocument({
       start: "2026-08-24",
       end: "2026-08-28",
@@ -189,7 +189,7 @@ describe("createStagePageContext", () => {
         {
           id: "p01",
           layout: "html",
-          title: "Inherited hidden",
+          title: "No override",
           htmlFile: "p01.html",
         },
         {
@@ -204,15 +204,18 @@ describe("createStagePageContext", () => {
 
     expect(createStagePageContext(week, "p01").showPageNumber).toBe(false)
     expect(createStagePageContext(week, "p02").showPageNumber).toBe(true)
+  })
 
-    const visibleWeek = parseWeekDocument({
+  it("does not overlay a page number on an HTML Page without an override, even when the week shows them", () => {
+    const week = parseWeekDocument({
       start: "2026-08-24",
       end: "2026-08-28",
+      showPageNumbers: true,
       pages: [
         {
           id: "p01",
           layout: "html",
-          title: "Default visible",
+          title: "No override",
           htmlFile: "p01.html",
         },
         {
@@ -225,10 +228,8 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(visibleWeek, "p01").showPageNumber).toBe(true)
-    expect(createStagePageContext(visibleWeek, "p02").showPageNumber).toBe(
-      false
-    )
+    expect(createStagePageContext(week, "p01").showPageNumber).toBe(false)
+    expect(createStagePageContext(week, "p02").showPageNumber).toBe(false)
   })
 
   it("does not show a page number on a hidden page or a two-column page", () => {

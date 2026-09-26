@@ -13,12 +13,8 @@ import { useMetricDraft } from "@/components/workshop/metric-draft-context"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
-  metricBufferKey,
-  metricDraftPath,
   moveDecisionInterpretation,
   moveDecisionMetric,
-  remapMetricBufferAfterMove,
-  remapMetricBufferAfterRemove,
   removeDecisionInterpretation,
   removeDecisionMetric,
   setDecisionInterpretation,
@@ -27,8 +23,14 @@ import {
   setDecisionMetricUnit,
   setDecisionMetricValue,
   setDecisionVerdict,
-  type MetricDraftPath,
 } from "@/lib/evidence-decision-editor"
+import {
+  metricDraftPath,
+  readMetricDraft,
+  remapMetricBufferAfterMove,
+  remapMetricBufferAfterRemove,
+  type MetricDraftPath,
+} from "@/lib/metric-draft-buffer"
 import { issuePathsFor } from "@/lib/export-readiness"
 import { parseMetricInput } from "@/lib/metric-format"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -403,8 +405,9 @@ function MetricNumberField({
   onTypedValue: (value: number | null) => void
 }) {
   const { buffer, setRaw } = useMetricDraft()
-  const key = metricBufferKey(pageId, path)
-  const display = buffer[key] ?? (typedValue === null ? "" : String(typedValue))
+  const display =
+    readMetricDraft(buffer, pageId, path) ??
+    (typedValue === null ? "" : String(typedValue))
 
   return (
     <div className="space-y-2">
@@ -415,7 +418,7 @@ function MetricNumberField({
         aria-invalid={invalid || undefined}
         onChange={(event) => {
           const raw = event.target.value
-          setRaw(key, raw)
+          setRaw(pageId, path, raw)
           const parsed = parseMetricInput(raw)
           if (parsed.status === "empty") {
             onTypedValue(null)

@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD024 -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -10,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼，HTML 頁疊在畫布右下；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 
 ### Changed
 

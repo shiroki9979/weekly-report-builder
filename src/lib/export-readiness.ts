@@ -18,9 +18,11 @@ import {
 } from "./week-document"
 
 import {
-  assessMetricDraftIssues,
+  invalidMetricDraftMessage,
+  metricDraftPath,
   type MetricDraftBuffer,
-} from "./evidence-decision-editor"
+  type MetricValueField,
+} from "./metric-draft-buffer"
 import type { OverflowMeasurement } from "./overflow-measurement"
 
 export type ExportIssueCode =
@@ -253,7 +255,39 @@ function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
   return issues
 }
 
-function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
+const METRIC_VALUE_LABELS: Record<MetricValueField, string> = {
+  baselineValue: "Baseline value",
+  candidateValue: "Candidate value",
+}
+
+// 非法 raw 草稿優先於 typed 值：草稿未能寫回 JSON，typed 值只是上一個合法值
+function assessMetricValue(
+  page: EvidenceDecisionPage,
+  metricIndex: number,
+  field: MetricValueField,
+  metricBuffer: MetricDraftBuffer
+): ExportIssue[] {
+  const path = metricDraftPath(metricIndex, field)
+  const draftMessage = invalidMetricDraftMessage(metricBuffer, page.id, path)
+  if (draftMessage !== null) {
+    return [invalid(path, draftMessage)]
+  }
+
+  const value = page.metrics[metricIndex][field]
+  const label = METRIC_VALUE_LABELS[field]
+  if (value === null) {
+    return [missing(path, `${label} is required`)]
+  }
+  if (!isFiniteNonNegative(value)) {
+    return [invalid(path, `${label} must be a finite non-negative number`)]
+  }
+  return []
+}
+
+function assessEvidenceDecision(
+  page: EvidenceDecisionPage,
+  metricBuffer: MetricDraftBuffer
+): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -269,33 +303,10 @@ function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
         missing(`metrics[${index}].label`, "Metric label is required")
       )
     }
-    if (metric.baselineValue === null) {
-      issues.push(
-        missing(`metrics[${index}].baselineValue`, "Baseline value is required")
-      )
-    } else if (!isFiniteNonNegative(metric.baselineValue)) {
-      issues.push(
-        invalid(
-          `metrics[${index}].baselineValue`,
-          "Baseline value must be a finite non-negative number"
-        )
-      )
-    }
-    if (metric.candidateValue === null) {
-      issues.push(
-        missing(
-          `metrics[${index}].candidateValue`,
-          "Candidate value is required"
-        )
-      )
-    } else if (!isFiniteNonNegative(metric.candidateValue)) {
-      issues.push(
-        invalid(
-          `metrics[${index}].candidateValue`,
-          "Candidate value must be a finite non-negative number"
-        )
-      )
-    }
+    issues.push(
+      ...assessMetricValue(page, index, "baselineValue", metricBuffer),
+      ...assessMetricValue(page, index, "candidateValue", metricBuffer)
+    )
   })
 
   page.interpretations.forEach((text, index) => {
@@ -337,13 +348,16 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
   return issues
 }
 
+// issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
-  page: StructuredWeekPage
+  page: StructuredWeekPage,
+  metricBuffer: MetricDraftBuffer = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
     weeklyOverview: assessWeeklyOverview,
-    evidenceDecision: assessEvidenceDecision,
+    evidenceDecision: (decision) =>
+      assessEvidenceDecision(decision, metricBuffer),
     nextActions: assessNextActions,
     html: () => [],
     unknown: () => [],
@@ -355,131 +369,6 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
     axis === "horizontal" ? "horizontally" : "vertically"
   )
   return `Page overflows the 1280 × 720 capture stage ${labels.join(" and ")}`
-}
-
-type PathToken = string | number
-
-const ROOT_FIELDS = [
-  "title",
-  "verdict",
-  "lead",
-  "supporting",
-  "items",
-  "panel",
-  "metrics",
-  "interpretations",
-  "commitments",
-]
-
-const NESTED_FIELDS: Record<string, string[]> = {
-  lead: ["workstream", "figure", "result", "impact", "status"],
-  supporting: ["workstream", "figure", "result", "impact", "status"],
-  status: ["label"],
-  items: ["heading", "body", "label"],
-  panel: ["title", "columns", "rows", "categories", "series", "steps", "items"],
-  rows: ["cells"],
-  series: ["name", "values"],
-  steps: ["label"],
-  metrics: ["label", "baselineValue", "candidateValue"],
-  commitments: ["title", "outcome", "checkpoint"],
-}
-
-function tokenizePath(path: string): PathToken[] {
-  const tokens: PathToken[] = []
-  const pattern = /([A-Za-z][A-Za-z0-9]*)|\[(\d+)\]/g
-  let match = pattern.exec(path)
-  while (match !== null) {
-    if (match[1] !== undefined) {
-      tokens.push(match[1])
-    } else {
-      tokens.push(Number(match[2]))
-    }
-    match = pattern.exec(path)
-  }
-  return tokens
-}
-
-function parentField(tokens: PathToken[], index: number): string | undefined {
-  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-    const token = tokens[cursor]
-    if (typeof token === "string") {
-      return token
-    }
-  }
-  return undefined
-}
-
-function fieldRank(field: string, parent: string | undefined): number {
-  const order = parent ? (NESTED_FIELDS[parent] ?? ROOT_FIELDS) : ROOT_FIELDS
-  const rank = order.indexOf(field)
-  return rank === -1 ? Number.MAX_SAFE_INTEGER : rank
-}
-
-// 依 schema 宣告序比較 path；localeCompare 會把 interpretations 排到 metrics 前面
-function compareSchemaPaths(left: string, right: string): number {
-  const a = tokenizePath(left)
-  const b = tokenizePath(right)
-  const length = Math.max(a.length, b.length)
-  for (let i = 0; i < length; i += 1) {
-    if (i >= a.length) {
-      return -1
-    }
-    if (i >= b.length) {
-      return 1
-    }
-    const ca = a[i]
-    const cb = b[i]
-    if (typeof ca === "number" && typeof cb === "number") {
-      if (ca !== cb) {
-        return ca - cb
-      }
-      continue
-    }
-    if (typeof ca === "string" && typeof cb === "string") {
-      const rank =
-        fieldRank(ca, parentField(a, i)) - fieldRank(cb, parentField(b, i))
-      if (rank !== 0) {
-        return rank
-      }
-      continue
-    }
-    return String(ca).localeCompare(String(cb))
-  }
-  return 0
-}
-
-function mergeContentAndDraftIssues(
-  contentIssues: ExportIssue[],
-  draftIssues: ExportIssue[]
-): ExportIssue[] {
-  const byPath = new Map<string, ExportIssue>()
-  const unpathed: ExportIssue[] = []
-
-  for (const issue of [...contentIssues, ...draftIssues]) {
-    if (issue.path === undefined) {
-      unpathed.push(issue)
-      continue
-    }
-    const existing = byPath.get(issue.path)
-    if (!existing || issue.code === "invalid-content") {
-      byPath.set(issue.path, issue)
-    }
-  }
-
-  const sorted = [...byPath.values()].sort((left, right) =>
-    compareSchemaPaths(left.path ?? "", right.path ?? "")
-  )
-  return [...unpathed, ...sorted]
-}
-
-export function assessStructuredContentIssues(
-  page: StructuredWeekPage,
-  metricBuffer: MetricDraftBuffer = {}
-): ExportIssue[] {
-  return mergeContentAndDraftIssues(
-    assessContentReadiness(page),
-    assessMetricDraftIssues(page, metricBuffer)
-  )
 }
 
 export function assessExportEligibility(
@@ -503,7 +392,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessStructuredContentIssues(page, metricBuffer)
+  const contentIssues = assessContentReadiness(page, metricBuffer)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }
@@ -564,7 +453,7 @@ export function issuePathsFor(
   }
 
   return new Set(
-    assessStructuredContentIssues(page, metricBuffer)
+    assessContentReadiness(page, metricBuffer)
       .map((issue) => issue.path)
       .filter((path): path is string => path !== undefined)
   )

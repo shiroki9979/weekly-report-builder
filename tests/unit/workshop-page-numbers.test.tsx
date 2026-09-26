@@ -95,13 +95,20 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
 describe("PageNumberSelect", () => {
   it("displays Default (Show) when week has showPageNumbers true and page has undefined", () => {
     const week = sampleWeek(true)
-    render(<PageNumberSelect week={week} pageIndex={0} onChange={() => {}} />)
+    render(<PageNumberSelect week={week} pageIndex={1} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Show)")).toBeInTheDocument()
   })
 
   it("displays Default (Hide) when week has showPageNumbers false and page has undefined", () => {
     const week = sampleWeek(false)
+    render(<PageNumberSelect week={week} pageIndex={1} onChange={() => {}} />)
+
+    expect(screen.getByText("Default (Hide)")).toBeInTheDocument()
+  })
+
+  it("displays Default (Hide) for an HTML Page even when the week shows page numbers", () => {
+    const week = sampleWeek(true)
     render(<PageNumberSelect week={week} pageIndex={0} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Hide)")).toBeInTheDocument()

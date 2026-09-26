@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 

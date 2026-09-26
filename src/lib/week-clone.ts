@@ -6,11 +6,10 @@ import {
   type WeekPage,
 } from "./week-document"
 import { blankCommitment } from "./next-actions-editor"
-
-const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+import { isMondayId } from "./week-id"
 
 function parseMonday(value: string): Date {
-  if (!MONDAY_PATTERN.test(value)) {
+  if (!isMondayId(value)) {
     throw new Error(`Invalid date: ${value}`)
   }
 

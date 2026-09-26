@@ -9,17 +9,21 @@ import { defineConfig } from "vite"
 
 import { parseWeekDocument } from "./src/lib/week-document"
 import { validateHtmlFileName } from "./src/lib/html-page"
+import { isMondayId, MONDAY_ID_SOURCE } from "./src/lib/week-id"
 import {
   listWeeksInDirectory,
   writeWeekFile,
   createWeekFromPrevious,
+  WeekAlreadyExistsError,
 } from "./server/weeks-store"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const weeksDir = path.resolve(
   process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
 )
-const MONDAY_DIR = /^\d{4}-\d{2}-\d{2}$/
+const WEEK_API_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE})$`)
+const WEEK_JSON_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE}\\.json)$`)
+const WEEK_HTML_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE})/([^/]+)$`)
 
 function copyInitializedWeeksForProductionBuild(
   sourceDir: string,
@@ -40,7 +44,7 @@ function copyInitializedWeeksForProductionBuild(
         path.resolve(sourceDir, entry.name),
         path.resolve(outputDir, entry.name)
       )
-    } else if (entry.isDirectory() && MONDAY_DIR.test(entry.name)) {
+    } else if (entry.isDirectory() && isMondayId(entry.name)) {
       const targetSubDir = path.resolve(outputDir, entry.name)
       fs.mkdirSync(targetSubDir, { recursive: true })
       const sourceSubDir = path.resolve(sourceDir, entry.name)
@@ -95,7 +99,7 @@ function weeksApiMiddleware(
     return
   }
 
-  const match = /^\/(\d{4}-\d{2}-\d{2})$/.exec(url)
+  const match = WEEK_API_ROUTE.exec(url)
   if (!match) {
     next()
     return
@@ -125,13 +129,80 @@ function weeksApiMiddleware(
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to create week file"
-      const status = message.includes("already exists") ? 409 : 400
+      const status = error instanceof WeekAlreadyExistsError ? 409 : 400
       sendJson(res, status, { error: message })
     }
     return
   }
 
   sendJson(res, 405, { error: "Method not allowed" })
+}
+
+function sendNotFound(res: ServerResponse): void {
+  res.statusCode = 404
+  res.end("Not found")
+}
+
+function serveWeekJson(fileName: string, res: ServerResponse): boolean {
+  const filePath = path.resolve(weeksDir, fileName)
+  if (!filePath.startsWith(weeksDir) || !fs.existsSync(filePath)) {
+    return false
+  }
+
+  res.setHeader("Content-Type", "application/json")
+  fs.createReadStream(filePath).pipe(res)
+  return true
+}
+
+function serveWeekHtml(
+  monday: string,
+  htmlFile: string,
+  res: ServerResponse
+): void {
+  try {
+    validateHtmlFileName(htmlFile)
+  } catch {
+    sendNotFound(res)
+    return
+  }
+
+  const mondayDir = path.resolve(weeksDir, monday)
+  const filePath = path.resolve(mondayDir, htmlFile)
+  if (
+    !filePath.startsWith(mondayDir) ||
+    !fs.existsSync(filePath) ||
+    !fs.statSync(filePath).isFile()
+  ) {
+    sendNotFound(res)
+    return
+  }
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8")
+  fs.createReadStream(filePath).pipe(res)
+}
+
+function weeksStaticMiddleware(
+  req: Connect.IncomingMessage,
+  res: ServerResponse,
+  next: Connect.NextFunction
+): void {
+  const requestPath = req.url?.split("?")[0] ?? ""
+
+  const jsonMatch = WEEK_JSON_ROUTE.exec(requestPath)
+  if (jsonMatch) {
+    if (!serveWeekJson(jsonMatch[1], res)) {
+      next()
+    }
+    return
+  }
+
+  const htmlMatch = WEEK_HTML_ROUTE.exec(requestPath)
+  if (htmlMatch) {
+    serveWeekHtml(htmlMatch[1], htmlMatch[2], res)
+    return
+  }
+
+  next()
 }
 
 function weeksStaticPlugin(): Plugin {
@@ -147,56 +218,7 @@ function weeksStaticPlugin(): Plugin {
       })
 
       server.middlewares.use("/api/weeks", weeksApiMiddleware)
-      server.middlewares.use("/weeks", (req, res, next) => {
-        const requestPath = req.url?.split("?")[0] ?? ""
-
-        const jsonMatch = /^\/(\d{4}-\d{2}-\d{2}\.json)$/.exec(requestPath)
-        if (jsonMatch) {
-          const fileName = jsonMatch[1]
-          const filePath = path.resolve(weeksDir, fileName)
-          if (!filePath.startsWith(weeksDir) || !fs.existsSync(filePath)) {
-            next()
-            return
-          }
-
-          res.setHeader("Content-Type", "application/json")
-          fs.createReadStream(filePath).pipe(res)
-          return
-        }
-
-        const htmlMatch = /^\/(\d{4}-\d{2}-\d{2})\/([^/]+)$/.exec(requestPath)
-        if (htmlMatch) {
-          const monday = htmlMatch[1]
-          const htmlFile = htmlMatch[2]
-
-          try {
-            validateHtmlFileName(htmlFile)
-          } catch {
-            res.statusCode = 404
-            res.end("Not found")
-            return
-          }
-
-          const mondayDir = path.resolve(weeksDir, monday)
-          const filePath = path.resolve(mondayDir, htmlFile)
-
-          if (
-            !filePath.startsWith(mondayDir) ||
-            !fs.existsSync(filePath) ||
-            !fs.statSync(filePath).isFile()
-          ) {
-            res.statusCode = 404
-            res.end("Not found")
-            return
-          }
-
-          res.setHeader("Content-Type", "text/html; charset=utf-8")
-          fs.createReadStream(filePath).pipe(res)
-          return
-        }
-
-        next()
-      })
+      server.middlewares.use("/weeks", weeksStaticMiddleware)
     },
     closeBundle() {
       copyInitializedWeeksForProductionBuild(
@@ -207,7 +229,6 @@ function weeksStaticPlugin(): Plugin {
   }
 }
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), weeksStaticPlugin()],
   resolve: {

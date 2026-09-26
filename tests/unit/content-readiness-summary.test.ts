@@ -27,6 +27,35 @@ describe("contentReadinessHeading", () => {
     ).toBe("Invalid Comparison Metric input")
   })
 
+  it("does not name Comparison Metric for invalid Two-column chart values", () => {
+    expect(
+      contentReadinessHeading([
+        {
+          code: "invalid-content",
+          path: "panel.series[0].values[1]",
+          message: "Chart values must be finite and non-negative",
+        },
+      ])
+    ).toBe("Invalid content")
+  })
+
+  it("names both Draft Page and invalid content when a Two-column page mixes them", () => {
+    expect(
+      contentReadinessHeading([
+        {
+          code: "missing-content",
+          path: "title",
+          message: "Title is required",
+        },
+        {
+          code: "invalid-content",
+          path: "panel.series[0].values[1]",
+          message: "Chart values must be finite and non-negative",
+        },
+      ])
+    ).toBe("Draft Page — missing required content; invalid content")
+  })
+
   it("names both Draft Page and invalid Comparison Metric input when mixed", () => {
     expect(
       contentReadinessHeading([

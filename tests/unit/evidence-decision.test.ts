@@ -3,17 +3,15 @@ import { describe, expect, it } from "vitest"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
-  assessMetricDraftIssues,
-  metricBufferKey,
-  metricDraftPath,
-  parseMetricBufferKey,
-  remapMetricBufferAfterMove,
-  remapMetricBufferAfterRemove,
   removeDecisionInterpretation,
   removeDecisionMetric,
   setDecisionMetricValue,
-  weekHasInvalidMetricDrafts,
 } from "@/lib/evidence-decision-editor"
+import {
+  remapMetricBufferAfterMove,
+  remapMetricBufferAfterRemove,
+  weekHasInvalidMetricDrafts,
+} from "@/lib/metric-draft-buffer"
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import { cloneWeekFromPrevious } from "@/lib/week-clone"
@@ -261,10 +259,11 @@ describe("evidence-decision clone and readiness", () => {
 
   it("treats nonempty invalid metric drafts as invalid-content", () => {
     const page = createBlankEvidenceDecisionPage("p01")
-    const buffer = {
-      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-    }
-    expect(assessMetricDraftIssues(page, buffer)).toEqual([
+    const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
+    const baselineIssues = assessContentReadiness(page, buffer).filter(
+      (issue) => issue.path === "metrics[0].baselineValue"
+    )
+    expect(baselineIssues).toEqual([
       {
         code: "invalid-content",
         path: "metrics[0].baselineValue",
@@ -276,40 +275,45 @@ describe("evidence-decision clone and readiness", () => {
   })
 
   it("moves metric draft keys with the metric", () => {
-    const pageId = "p01"
-    const otherKey = metricBufferKey("p02", "metrics[0].baselineValue")
     const buffer = {
-      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "1.0",
-      [metricBufferKey(pageId, "metrics[1].candidateValue")]: "abc",
-      [otherKey]: "keep",
+      p01: {
+        "metrics[0].baselineValue": "1.0",
+        "metrics[1].candidateValue": "abc",
+      },
+      p02: { "metrics[0].baselineValue": "keep" },
     }
 
-    expect(remapMetricBufferAfterMove(buffer, pageId, 1, 0)).toEqual({
-      [metricBufferKey(pageId, "metrics[0].candidateValue")]: "abc",
-      [metricBufferKey(pageId, "metrics[1].baselineValue")]: "1.0",
-      [otherKey]: "keep",
+    expect(remapMetricBufferAfterMove(buffer, "p01", 1, 0)).toEqual({
+      p01: {
+        "metrics[0].candidateValue": "abc",
+        "metrics[1].baselineValue": "1.0",
+      },
+      p02: { "metrics[0].baselineValue": "keep" },
     })
   })
 
   it("shifts metric draft keys after a metric is removed", () => {
-    const pageId = "p01"
     const buffer = {
-      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "1.0",
-      [metricBufferKey(pageId, "metrics[1].baselineValue")]: "abc",
+      p01: {
+        "metrics[0].baselineValue": "1.0",
+        "metrics[1].baselineValue": "abc",
+      },
     }
 
-    expect(remapMetricBufferAfterRemove(buffer, pageId, 0)).toEqual({
-      [metricBufferKey(pageId, "metrics[0].baselineValue")]: "abc",
+    expect(remapMetricBufferAfterRemove(buffer, "p01", 0)).toEqual({
+      p01: { "metrics[0].baselineValue": "abc" },
     })
   })
 
-  it("parses Comparison Metric draft keys into page id and path", () => {
-    const key = metricBufferKey("p01", metricDraftPath(1, "candidateValue"))
-    expect(parseMetricBufferKey(key)).toEqual({
-      pageId: "p01",
-      path: "metrics[1].candidateValue",
-    })
-    expect(parseMetricBufferKey("p01:title")).toBeNull()
-    expect(parseMetricBufferKey("metrics[0].baselineValue")).toBeNull()
+  it("keeps an invalid draft blocking after Remove when the Page ID contains a colon", () => {
+    const page: EvidenceDecisionPage = {
+      ...createBlankEvidenceDecisionPage("ops:1"),
+      metrics: [createBlankEvidenceDecisionPage("x").metrics[0]],
+    }
+    const buffer = { "ops:1": { "metrics[1].baselineValue": "abc" } }
+
+    const remapped = remapMetricBufferAfterRemove(buffer, "ops:1", 0)
+
+    expect(weekHasInvalidMetricDrafts(weekWith(page), remapped)).toBe(true)
   })
 })

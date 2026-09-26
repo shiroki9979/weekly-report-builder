@@ -4,8 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { StageCaptureHost } from "@/components/workshop/export-controls"
 import { useStageExport } from "@/hooks/use-stage-export"
-import { metricBufferKey } from "@/lib/evidence-decision-editor"
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
+import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -279,9 +278,7 @@ describe("useStageExport", () => {
       <ExportTestComponent
         week={week}
         exportRef={exportRef}
-        metricBuffer={{
-          [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-        }}
+        metricBuffer={{ p01: { "metrics[0].baselineValue": "abc" } }}
       />
     )
 
