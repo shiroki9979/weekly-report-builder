@@ -1,111 +1,36 @@
+import { typedPageUpdater, updateWeekPage } from "@/lib/update-week-page"
 import { isHtmlWeekPage, isTwoColumnWeekPage } from "@/lib/week-document"
-import type {
-  ChartPanel,
-  ChecklistPanel,
-  FlowPanel,
-  TablePanel,
-  TwoColumnWeekPage,
-  WeekDocument,
-  WeekPage,
-} from "@/lib/week-document"
+import type { Panel, WeekDocument } from "@/lib/week-document"
 
-function cloneWeek(week: WeekDocument): WeekDocument {
-  return structuredClone(week)
+const updateTwoColumnPage = typedPageUpdater(
+  isTwoColumnWeekPage,
+  "a two-column page"
+)
+
+const updateHtmlPage = typedPageUpdater(isHtmlWeekPage, "an HTML page")
+
+type PanelOfKind<K extends Panel["kind"]> = Extract<Panel, { kind: K }>
+
+// 各 panel 編輯函式共用同一個 two-column 與 panel kind 防衛，不再各寫一份 require*Panel
+function panelUpdater<K extends Panel["kind"]>(kind: K) {
+  return (
+    week: WeekDocument,
+    pageIndex: number,
+    updater: (panel: PanelOfKind<K>) => PanelOfKind<K>
+  ): WeekDocument =>
+    updateTwoColumnPage(week, pageIndex, (page) => {
+      if (page.panel.kind !== kind) {
+        throw new Error(`Week Page ${page.id} does not have a ${kind} panel`)
+      }
+      // 泛型 K 無法讓 TS 從 kind 比較收窄 union，上面的執行期檢查已保證型別
+      return { ...page, panel: updater(page.panel as PanelOfKind<K>) }
+    })
 }
 
-function updatePage(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (page: WeekPage) => WeekPage
-): WeekDocument {
-  const next = cloneWeek(week)
-  const page = next.pages[pageIndex]
-
-  if (!page) {
-    throw new Error("Week Page not found")
-  }
-
-  next.pages[pageIndex] = updater(page)
-  return next
-}
-
-// 統一收斂 two-column 頁面結構的型別防衛，避免各 panel 編輯函式重複撰寫 switch / layout 判斷
-export function assertTwoColumnPage(page: WeekPage): TwoColumnWeekPage {
-  if (!isTwoColumnWeekPage(page)) {
-    throw new Error(`Week Page ${page.id} is not a two-column page`)
-  }
-
-  return page
-}
-
-function requireTablePanel(page: WeekPage): TablePanel {
-  const twoColumnPage = assertTwoColumnPage(page)
-  if (twoColumnPage.panel.kind !== "table") {
-    throw new Error(`Week Page ${page.id} does not have a table panel`)
-  }
-
-  return twoColumnPage.panel
-}
-
-function requireChartPanel(page: WeekPage): ChartPanel {
-  const twoColumnPage = assertTwoColumnPage(page)
-  if (twoColumnPage.panel.kind !== "chart") {
-    throw new Error(`Week Page ${page.id} does not have a chart panel`)
-  }
-
-  return twoColumnPage.panel
-}
-
-function updateChartPanel(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (panel: ChartPanel) => ChartPanel
-): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
-    ...page,
-    panel: updater(requireChartPanel(page)),
-  }))
-}
-
-function requireFlowPanel(page: WeekPage): FlowPanel {
-  const twoColumnPage = assertTwoColumnPage(page)
-  if (twoColumnPage.panel.kind !== "flow") {
-    throw new Error(`Week Page ${page.id} does not have a flow panel`)
-  }
-
-  return twoColumnPage.panel
-}
-
-function updateFlowPanel(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (panel: FlowPanel) => FlowPanel
-): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
-    ...page,
-    panel: updater(requireFlowPanel(page)),
-  }))
-}
-
-function requireChecklistPanel(page: WeekPage): ChecklistPanel {
-  const twoColumnPage = assertTwoColumnPage(page)
-  if (twoColumnPage.panel.kind !== "checklist") {
-    throw new Error(`Week Page ${page.id} does not have a checklist panel`)
-  }
-
-  return twoColumnPage.panel
-}
-
-function updateChecklistPanel(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (panel: ChecklistPanel) => ChecklistPanel
-): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
-    ...page,
-    panel: updater(requireChecklistPanel(page)),
-  }))
-}
+const updateTablePanel = panelUpdater("table")
+const updateChartPanel = panelUpdater("chart")
+const updateFlowPanel = panelUpdater("flow")
+const updateChecklistPanel = panelUpdater("checklist")
 
 function moveItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
   if (fromIndex === toIndex) {
@@ -123,7 +48,7 @@ export function setPageTitle(
   pageIndex: number,
   title: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({ ...page, title }))
+  return updateWeekPage(week, pageIndex, (page) => ({ ...page, title }))
 }
 
 export function setPageHtmlFile(
@@ -131,16 +56,7 @@ export function setPageHtmlFile(
   pageIndex: number,
   htmlFile: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    if (!isHtmlWeekPage(page)) {
-      throw new Error(`Week Page ${page.id} is not an HTML page`)
-    }
-
-    return {
-      ...page,
-      htmlFile,
-    }
-  })
+  return updateHtmlPage(week, pageIndex, (page) => ({ ...page, htmlFile }))
 }
 
 export function setPageItem(
@@ -150,15 +66,12 @@ export function setPageItem(
   field: "heading" | "body",
   value: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const twoColumnPage = assertTwoColumnPage(page)
-
-    const items = twoColumnPage.items.map((item, index) =>
+  return updateTwoColumnPage(week, pageIndex, (page) => ({
+    ...page,
+    items: page.items.map((item, index) =>
       index === itemIndex ? { ...item, [field]: value } : item
-    )
-
-    return { ...twoColumnPage, items }
-  })
+    ),
+  }))
 }
 
 export function setPageNotes(
@@ -166,7 +79,7 @@ export function setPageNotes(
   pageIndex: number,
   notes: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
+  return updateWeekPage(week, pageIndex, (page) => ({
     ...page,
     notes: notes === "" ? undefined : notes,
   }))
@@ -177,7 +90,7 @@ export function setPageHidden(
   pageIndex: number,
   hidden: boolean
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
+  return updateWeekPage(week, pageIndex, (page) => ({
     ...page,
     hidden: hidden ? true : undefined,
   }))
@@ -198,7 +111,7 @@ export function setPageShowPageNumber(
   pageIndex: number,
   showPageNumber: boolean | undefined
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => ({
+  return updateWeekPage(week, pageIndex, (page) => ({
     ...page,
     showPageNumber,
   }))
@@ -209,17 +122,7 @@ export function setTablePanelTitle(
   pageIndex: number,
   title: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
-
-    return {
-      ...page,
-      panel: {
-        ...panel,
-        title,
-      },
-    }
-  })
+  return updateTablePanel(week, pageIndex, (panel) => ({ ...panel, title }))
 }
 
 export function setTablePanelCell(
@@ -229,28 +132,19 @@ export function setTablePanelCell(
   cellIndex: number,
   value: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
-    const rows = panel.rows.map((row, index) => {
-      if (index !== rowIndex) {
-        return row
-      }
-
-      const cells = row.cells.map((cell, columnIndex) =>
-        columnIndex === cellIndex ? value : cell
-      )
-
-      return { ...row, cells }
-    })
-
-    return {
-      ...page,
-      panel: {
-        ...panel,
-        rows,
-      },
-    }
-  })
+  return updateTablePanel(week, pageIndex, (panel) => ({
+    ...panel,
+    rows: panel.rows.map((row, index) =>
+      index === rowIndex
+        ? {
+            ...row,
+            cells: row.cells.map((cell, columnIndex) =>
+              columnIndex === cellIndex ? value : cell
+            ),
+          }
+        : row
+    ),
+  }))
 }
 
 export function setTablePanelColumn(
@@ -259,37 +153,22 @@ export function setTablePanelColumn(
   columnIndex: number,
   value: string
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
-    const columns = panel.columns.map((column, index) =>
+  return updateTablePanel(week, pageIndex, (panel) => ({
+    ...panel,
+    columns: panel.columns.map((column, index) =>
       index === columnIndex ? value : column
-    )
-
-    return {
-      ...page,
-      panel: {
-        ...panel,
-        columns,
-      },
-    }
-  })
+    ),
+  }))
 }
 
 export function addTableRow(
   week: WeekDocument,
   pageIndex: number
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
-
-    return {
-      ...page,
-      panel: {
-        ...panel,
-        rows: [...panel.rows, { cells: panel.columns.map(() => "") }],
-      },
-    }
-  })
+  return updateTablePanel(week, pageIndex, (panel) => ({
+    ...panel,
+    rows: [...panel.rows, { cells: panel.columns.map(() => "") }],
+  }))
 }
 
 export function removeTableRow(
@@ -297,18 +176,14 @@ export function removeTableRow(
   pageIndex: number,
   rowIndex: number
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
+  return updateTablePanel(week, pageIndex, (panel) => {
     if (panel.rows.length <= 1) {
       throw new Error("Table must keep at least one row")
     }
 
     return {
-      ...page,
-      panel: {
-        ...panel,
-        rows: panel.rows.filter((_, index) => index !== rowIndex),
-      },
+      ...panel,
+      rows: panel.rows.filter((_, index) => index !== rowIndex),
     }
   })
 }
@@ -317,21 +192,11 @@ export function addTableColumn(
   week: WeekDocument,
   pageIndex: number
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
-
-    return {
-      ...page,
-      panel: {
-        ...panel,
-        columns: [...panel.columns, ""],
-        rows: panel.rows.map((row) => ({
-          ...row,
-          cells: [...row.cells, ""],
-        })),
-      },
-    }
-  })
+  return updateTablePanel(week, pageIndex, (panel) => ({
+    ...panel,
+    columns: [...panel.columns, ""],
+    rows: panel.rows.map((row) => ({ ...row, cells: [...row.cells, ""] })),
+  }))
 }
 
 export function removeTableColumn(
@@ -339,25 +204,21 @@ export function removeTableColumn(
   pageIndex: number,
   columnIndex: number
 ): WeekDocument {
-  return updatePage(week, pageIndex, (page) => {
-    const panel = requireTablePanel(page)
+  return updateTablePanel(week, pageIndex, (panel) => {
     if (panel.columns.length <= 1) {
       throw new Error("Table must keep at least one column")
     }
 
     return {
-      ...page,
-      panel: {
-        ...panel,
-        columns: panel.columns.filter((_, index) => index !== columnIndex),
-        rows: panel.rows.map((row) => ({
-          ...row,
-          cells: row.cells.filter((_, index) => index !== columnIndex),
-          emphasis: row.emphasis
-            ?.filter((index) => index !== columnIndex)
-            .map((index) => (index > columnIndex ? index - 1 : index)),
-        })),
-      },
+      ...panel,
+      columns: panel.columns.filter((_, index) => index !== columnIndex),
+      rows: panel.rows.map((row) => ({
+        ...row,
+        cells: row.cells.filter((_, index) => index !== columnIndex),
+        emphasis: row.emphasis
+          ?.filter((index) => index !== columnIndex)
+          .map((index) => (index > columnIndex ? index - 1 : index)),
+      })),
     }
   })
 }

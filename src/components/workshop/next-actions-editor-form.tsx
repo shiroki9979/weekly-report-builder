@@ -9,7 +9,13 @@ import {
   setCommitmentField,
 } from "@/lib/next-actions-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type { NextActionsPage, WeekDocument } from "@/lib/week-document"
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  type NextActionsPage,
+  type WeekDocument,
+} from "@/lib/week-document"
 
 type NextActionsEditorFormProps = {
   week: WeekDocument
@@ -43,7 +49,7 @@ export function NextActionsEditorForm({
           type="button"
           variant="outline"
           size="sm"
-          disabled={page.commitments.length >= 4}
+          disabled={!canAddEntry(page.commitments, CARDINALITY.commitments)}
           onClick={() => onChange(addCommitment(week, pageIndex))}
         >
           Add commitment
@@ -99,7 +105,9 @@ export function NextActionsEditorForm({
               type="button"
               variant="outline"
               size="sm"
-              disabled={page.commitments.length <= 2}
+              disabled={
+                !canRemoveEntry(page.commitments, CARDINALITY.commitments)
+              }
               onClick={() =>
                 onChange(removeCommitment(week, pageIndex, commitmentIndex))
               }

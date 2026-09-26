@@ -1,25 +1,18 @@
 import type { MetricValueField } from "./metric-draft-buffer"
-import { updateTypedPage } from "./update-week-page"
+import { typedPageUpdater } from "./update-week-page"
 import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
   isEvidenceDecisionPage,
   type ComparisonMetric,
-  type EvidenceDecisionPage,
   type WeekDocument,
 } from "./week-document"
 
-function updateDecision(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (page: EvidenceDecisionPage) => EvidenceDecisionPage
-): WeekDocument {
-  return updateTypedPage(
-    week,
-    pageIndex,
-    isEvidenceDecisionPage,
-    "an evidence-decision page",
-    updater
-  )
-}
+const updateDecision = typedPageUpdater(
+  isEvidenceDecisionPage,
+  "an evidence-decision page"
+)
 
 export function blankMetric(): ComparisonMetric {
   return {
@@ -105,8 +98,10 @@ export function addDecisionMetric(
   pageIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (page.metrics.length >= 2) {
-      throw new Error("Evidence-backed Decision can have at most 2 metrics")
+    if (!canAddEntry(page.metrics, CARDINALITY.comparisonMetrics)) {
+      throw new Error(
+        `Evidence-backed Decision can have at most ${CARDINALITY.comparisonMetrics.max} metrics`
+      )
     }
     return { ...page, metrics: [...page.metrics, blankMetric()] }
   })
@@ -118,8 +113,10 @@ export function removeDecisionMetric(
   metricIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (page.metrics.length <= 1) {
-      throw new Error("Evidence-backed Decision must keep at least 1 metric")
+    if (!canRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)) {
+      throw new Error(
+        `Evidence-backed Decision must keep at least ${CARDINALITY.comparisonMetrics.min} metric`
+      )
     }
     return {
       ...page,
@@ -169,9 +166,9 @@ export function addDecisionInterpretation(
   pageIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (page.interpretations.length >= 2) {
+    if (!canAddEntry(page.interpretations, CARDINALITY.interpretations)) {
       throw new Error(
-        "Evidence-backed Decision can have at most 2 interpretations"
+        `Evidence-backed Decision can have at most ${CARDINALITY.interpretations.max} interpretations`
       )
     }
     return { ...page, interpretations: [...page.interpretations, ""] }
@@ -184,9 +181,9 @@ export function removeDecisionInterpretation(
   interpretationIndex: number
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => {
-    if (page.interpretations.length <= 1) {
+    if (!canRemoveEntry(page.interpretations, CARDINALITY.interpretations)) {
       throw new Error(
-        "Evidence-backed Decision must keep at least 1 interpretation"
+        `Evidence-backed Decision must keep at least ${CARDINALITY.interpretations.min} interpretation`
       )
     }
     return {

@@ -139,21 +139,22 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
 export type AddableLayout =
   "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
 
+const BLANK_PAGE_FACTORIES: Record<
+  AddableLayout,
+  (id: string, panelKind: AddableTwoColumnPanelKind) => WeekPage
+> = {
+  "two-column": createBlankTwoColumnPage,
+  "weekly-overview": createBlankWeeklyOverviewPage,
+  "evidence-decision": createBlankEvidenceDecisionPage,
+  "next-actions": createBlankNextActionsPage,
+}
+
 export function createBlankAddablePage(
   id: string,
   layout: AddableLayout,
   panelKind: AddableTwoColumnPanelKind
 ): WeekPage {
-  switch (layout) {
-    case "weekly-overview":
-      return createBlankWeeklyOverviewPage(id)
-    case "evidence-decision":
-      return createBlankEvidenceDecisionPage(id)
-    case "next-actions":
-      return createBlankNextActionsPage(id)
-    case "two-column":
-      return createBlankTwoColumnPage(id, panelKind)
-  }
+  return BLANK_PAGE_FACTORIES[layout](id, panelKind)
 }
 
 function requirePageIndex(week: WeekDocument, pageId: string): number {

@@ -23,7 +23,10 @@ import {
   type MetricDraftBuffer,
   type MetricValueField,
 } from "./metric-draft-buffer"
-import type { OverflowMeasurement } from "./overflow-measurement"
+import {
+  CAPTURE_STAGE_SIZE_LABEL,
+  type OverflowMeasurement,
+} from "./overflow-measurement"
 
 export type ExportIssueCode =
   | "unsupported"
@@ -368,7 +371,7 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
   const labels = axes.map((axis) =>
     axis === "horizontal" ? "horizontally" : "vertically"
   )
-  return `Page overflows the 1280 × 720 capture stage ${labels.join(" and ")}`
+  return `Page overflows the ${CAPTURE_STAGE_SIZE_LABEL} capture stage ${labels.join(" and ")}`
 }
 
 export function assessExportEligibility(
