@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { useWeekCreate } from "@/hooks/use-week-create"
 import type { WeekDocument } from "@/lib/week-document"
 
+import { jsonResponse } from "./support/json-response"
+
 const PREVIOUS_MONDAY = "2026-01-05"
 const NEW_MONDAY = "2026-01-12"
 
@@ -20,21 +22,15 @@ const createdWeek: WeekDocument = {
   ],
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as Response
-}
+type CreateOutcome = "created" | "conflict"
 
-function mockCreateFetch(createStatus: number) {
+function mockCreateFetch(outcome: CreateOutcome) {
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input)
     if (url === `/api/weeks/${NEW_MONDAY}` && init?.method === "POST") {
-      return createStatus === 201
+      return outcome === "created"
         ? jsonResponse({ week: createdWeek }, 201)
-        : jsonResponse({ error: "Week already exists" }, createStatus)
+        : jsonResponse({ error: "Week already exists" }, 409)
     }
     if (url === "/api/weeks") {
       return jsonResponse({ weeks: [PREVIOUS_MONDAY, NEW_MONDAY] })
@@ -49,7 +45,7 @@ describe("useWeekCreate", () => {
   })
 
   it("opens the created week with the refreshed week list", async () => {
-    mockCreateFetch(201)
+    mockCreateFetch("created")
     const onCreated = vi.fn()
     const { result } = renderHook(() => useWeekCreate({ onCreated }))
 
@@ -64,7 +60,7 @@ describe("useWeekCreate", () => {
   })
 
   it("reports a failed creation without opening a week", async () => {
-    mockCreateFetch(409)
+    mockCreateFetch("conflict")
     const onCreated = vi.fn()
     const { result } = renderHook(() => useWeekCreate({ onCreated }))
 
@@ -75,5 +71,24 @@ describe("useWeekCreate", () => {
       "Failed to create week file: 2026-01-12.json (409)"
     )
     expect(result.current.creating).toBe(false)
+  })
+
+  it("runs onStart before the request so stale status clears even when creation fails", async () => {
+    mockCreateFetch("conflict")
+    const events: string[] = []
+    const onStart = vi.fn(() => {
+      events.push("start")
+    })
+    vi.mocked(globalThis.fetch).mockImplementationOnce(async () => {
+      events.push("request")
+      return jsonResponse({ error: "Week already exists" }, 409)
+    })
+    const { result } = renderHook(() =>
+      useWeekCreate({ onStart, onCreated: vi.fn() })
+    )
+
+    await act(() => result.current.createWeek(NEW_MONDAY))
+
+    expect(events).toEqual(["start", "request"])
   })
 })

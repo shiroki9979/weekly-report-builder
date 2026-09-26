@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useWeekEditor } from "@/hooks/use-week-editor"
 import type { WeekDocument } from "@/lib/week-document"
 
+import { jsonResponse } from "./support/json-response"
+
 const OLDER_MONDAY = "2025-12-29"
 const LATEST_MONDAY = "2026-01-12"
 const NEW_MONDAY = "2026-01-19"
@@ -32,14 +34,6 @@ function weekDocument(monday: string, title: string): WeekDocument {
       },
     ],
   }
-}
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as Response
 }
 
 function fetchUrl(input: RequestInfo | URL): string {
