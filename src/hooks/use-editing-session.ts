@@ -20,12 +20,14 @@ import {
   removeSessionMetric,
   selectSessionPage,
   sessionReadiness,
+  sessionOperationSnapshot,
   setSessionWeeks,
   writeMetricInput,
   type EditingSession,
+  type SessionOperationSnapshot,
 } from "@/lib/editing-session"
 import type { ExportIssue } from "@/lib/export-readiness"
-import type { MetricInputMap, MetricValueField } from "@/lib/metric-input"
+import type { MetricValueField } from "@/lib/metric-input"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
@@ -35,7 +37,7 @@ export type EditingSessionResult = {
   selectedMonday: string
   setSelectedMonday: (monday: string) => void
   week: WeekDocument | null
-  metricBuffer: MetricInputMap
+  operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
   readMetricInput: (
     pageId: string,
@@ -236,7 +238,7 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
     selectedMonday: session.selectedMonday,
     setSelectedMonday,
     week,
-    metricBuffer: session.metricInput,
+    operationSnapshot: () => sessionOperationSnapshot(sessionRef.current),
     editContent: (change) =>
       update((current) => editSessionContent(current, change)),
     readMetricInput: (pageId, index, field) =>

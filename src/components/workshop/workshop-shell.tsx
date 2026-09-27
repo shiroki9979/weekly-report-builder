@@ -182,7 +182,7 @@ function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
     selectedMonday,
     setSelectedMonday,
     week,
-    metricBuffer,
+    operationSnapshot,
     editContent,
     readMetricInput,
     writeMetricInput,
@@ -214,12 +214,7 @@ function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
     resultIsError,
     downloadVisiblePages,
     copyCurrentPage,
-  } = useStageExport({
-    monday: selectedMonday,
-    week,
-    selectedPage,
-    metricBuffer,
-  })
+  } = useStageExport({ operationSnapshot })
 
   const editorPanelRef = usePanelRef()
   const notesPanelRef = usePanelRef()
