@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
+import type { ExportIssue } from "@/lib/export-readiness"
 import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 
 type EditorialPageEditorChromeProps = PageEditorProps & {
   invalidPaths: Set<string>
-  metricBuffer?: MetricDraftBuffer
+  readinessIssues?: ExportIssue[]
   children: ReactNode
 }
 
@@ -24,12 +24,12 @@ export function EditorialPageEditorChrome({
   onChange,
   readOnly = false,
   invalidPaths,
-  metricBuffer,
+  readinessIssues,
   children,
 }: EditorialPageEditorChromeProps) {
   return (
     <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
-      <ContentReadinessSummary page={page} metricBuffer={metricBuffer} />
+      <ContentReadinessSummary page={page} issues={readinessIssues} />
       <fieldset
         disabled={readOnly}
         className="min-w-0 space-y-4 border-0 p-0 disabled:opacity-60"
@@ -41,7 +41,9 @@ export function EditorialPageEditorChrome({
             value={page.title}
             aria-invalid={invalidPaths.has("title") || undefined}
             onChange={(event) =>
-              onChange(setPageTitle(week, pageIndex, event.target.value))
+              onChange((currentWeek) =>
+                setPageTitle(currentWeek, pageIndex, event.target.value)
+              )
             }
           />
         </div>
@@ -52,7 +54,9 @@ export function EditorialPageEditorChrome({
             id="speaker-notes"
             value={page.notes ?? ""}
             onChange={(event) =>
-              onChange(setPageNotes(week, pageIndex, event.target.value))
+              onChange((currentWeek) =>
+                setPageNotes(currentWeek, pageIndex, event.target.value)
+              )
             }
           />
         </div>
@@ -67,7 +71,9 @@ export function EditorialPageEditorChrome({
             id="page-hidden"
             checked={page.hidden ?? false}
             onCheckedChange={(checked) =>
-              onChange(setPageHidden(week, pageIndex, checked === true))
+              onChange((currentWeek) =>
+                setPageHidden(currentWeek, pageIndex, checked === true)
+              )
             }
           />
           <Label htmlFor="page-hidden">Hide page from export</Label>

@@ -2,7 +2,7 @@
 
 建立日期：2026-09-10
 
-最後更新：2026-09-10
+最後更新：2026-09-27
 
 狀態：approved
 
@@ -364,7 +364,7 @@ Issue path 使用不含 `$` 的 JSON-style path：object fields 以 dot 分隔�
 - 尅读取 `assessContentReadiness` 的結果；不得在 form 內複製 validation logic。
 - 對應 controls 設定 `aria-invalid`；錯誤摘要使用可被輔助技術宣告的語意。
 - 合法 Draft Page 的 Save 仍可用；Copy 阻擋並顯示原因。
-- Metric input 使用以 Page ID 與 field path 為 key 的 editor-local raw string buffer，以便切換頁面後仍保留輸入中的小數。空白 commit 為 `null`；可解析為 finite、非負 number 才更新 typed Week Document。其他非空輸入顯示 `invalid-content`、設定 `aria-invalid`，並阻擋 Save 與 Copy；batch export 將該 Page 視為 invalid 並略過，避免保存非法 schema 或輸出舊值。Parser、`parseMetricInput` 與 readiness 共用 numeric validation helper，不各自重寫規則。
+- Editing Session 持有以 Page ID 與 field path 為 key 的 Metric Input，切換頁面後仍保留輸入文字，例如 `1.50`。空白輸入寫為 `null`；只有可解析為 finite、非負 number 的輸入才更新 typed Week Document。其他非空輸入顯示 `invalid-content`、設定 `aria-invalid`，並阻擋 Save 與 Copy；batch export 將該 Page 視為 invalid 並略過，避免保存非法 schema 或輸出舊值。Parser、`parseMetricInput` 與 readiness 共用 numeric validation helper，不各自重寫規則。
 
 ## Overflow readiness
 
@@ -519,7 +519,7 @@ Playwright 的引入只服務真實 browser layout 與 Workshop flow；純 domai
 - Week Label 與 Page Position 在 preview、Copy、batch capture 一致；Hidden Page 在 preview/Copy 顯示 `Hidden` 且不進 batch export。
 - Page Position 對所有 supported non-hidden pages 保持穩定；Draft／Overflow 被略過時允許 batch 輸出保留編號缺口。
 - Copy 與 batch 使用同一組 typed Export Readiness reason codes；capture measurement failure 必須 fail closed。
-- 合法 Draft 可 Save；未完成的 metric raw input 可保留於 editor，但非法非空輸入阻擋 Save 與 Copy，batch export 略過該 Page。
+- 合法 Draft 可 Save；Editing Session 保留未完成的 Metric Input，但非法非空輸入阻擋 Save 與 Copy，batch export 略過該 Page。
 - Clone 保留結構、清除週次內容，且 Decision 的未填數值為 `null`。
 - Decision metric 依 precision、unit position 與 spacing 決定顯示；`null` 顯示 em dash 且不得冒充數值零。
 - Stage 在 min/default/max cardinality 與英文、中文、混合 fixtures 下無未偵測裁切。
