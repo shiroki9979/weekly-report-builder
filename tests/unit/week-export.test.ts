@@ -52,6 +52,38 @@ function fakeAdapter(status: "fit" | "overflow" = "fit") {
 }
 
 describe("shared page export", () => {
+  it("bounds a stalled preparation and disposes a session that arrives late", async () => {
+    vi.useFakeTimers()
+    let resolvePrepare!: (
+      session: Awaited<ReturnType<CaptureAdapter["prepare"]>>
+    ) => void
+    const pending = new Promise<Awaited<ReturnType<CaptureAdapter["prepare"]>>>(
+      (resolve) => {
+        resolvePrepare = resolve
+      }
+    )
+    const dispose = vi.fn()
+
+    try {
+      const result = exportPage(week, completePage, { prepare: () => pending })
+      await vi.advanceTimersByTimeAsync(5000)
+      await expect(result).resolves.toMatchObject({
+        kind: "failed",
+        cause: new Error("Capture preparation timed out after 5000 ms"),
+      })
+
+      resolvePrepare({
+        measure: async () => ({ status: "fit" }),
+        capture: async () => new Blob(["png"]),
+        dispose,
+      })
+      await Promise.resolve()
+      expect(dispose).toHaveBeenCalledOnce()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("blocks an explicit HTML load failure before PNG capture", async () => {
     const capture = vi.fn()
     const page = {
