@@ -212,15 +212,6 @@ function metricLocation(
   return { week, pageIndex, page }
 }
 
-function changedMetricFields(
-  before: ComparisonMetric,
-  after: ComparisonMetric
-): (keyof ComparisonMetric)[] {
-  return (Object.keys(before) as (keyof ComparisonMetric)[]).filter(
-    (field) => before[field] !== after[field]
-  )
-}
-
 function hasUnsupportedMetricChange(
   before: ComparisonMetric[],
   after: ComparisonMetric[]
@@ -233,14 +224,18 @@ function hasUnsupportedMetricChange(
     })
   )
     return true
-  // Metric 沒有獨立 ID；一般內容更新限改一個欄位，避免複製物件後換位使輸入錯置。
-  const changes = before.flatMap((metric, index) =>
-    changedMetricFields(metric, after[index])
-  )
+  // Page updater 會複製整份文件；以欄位差異辨識一次是否改動多個既有 Metric。
   return (
-    changes.length > 1 ||
-    changes.includes("baselineValue") ||
-    changes.includes("candidateValue")
+    before.filter((metric, index) =>
+      (Object.keys(metric) as (keyof ComparisonMetric)[]).some(
+        (field) => metric[field] !== after[index][field]
+      )
+    ).length > 1 ||
+    before.some(
+      (metric, index) =>
+        metric.baselineValue !== after[index].baselineValue ||
+        metric.candidateValue !== after[index].candidateValue
+    )
   )
 }
 

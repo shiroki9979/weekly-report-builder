@@ -19,6 +19,7 @@ import {
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import {
   addDecisionMetric,
+  setDecisionMetricFormat,
   setDecisionMetricLabel,
 } from "@/lib/evidence-decision-editor"
 import type { WeekDocument } from "@/lib/week-document"
@@ -289,5 +290,27 @@ describe("Editing Session", () => {
     )
     expect(session.week?.pages[0]).toHaveProperty("metrics.0.label", "Updated")
     expect(session.week?.pages[0]).toHaveProperty("metrics.length", 2)
+  })
+
+  it("allows one metric's format fields to change together", () => {
+    const session = editSessionContent(
+      createEditingSession(week(["p01"])),
+      (current) =>
+        setDecisionMetricFormat(current, 0, 0, {
+          unitPosition: "before",
+          unitSpacing: "none",
+          precision: 2,
+        })
+    )
+
+    expect(session.week?.pages[0]).toHaveProperty(
+      "metrics.0.unitPosition",
+      "before"
+    )
+    expect(session.week?.pages[0]).toHaveProperty(
+      "metrics.0.unitSpacing",
+      "none"
+    )
+    expect(session.week?.pages[0]).toHaveProperty("metrics.0.precision", 2)
   })
 })
