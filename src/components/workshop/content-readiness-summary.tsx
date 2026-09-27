@@ -1,25 +1,25 @@
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import { contentReadinessHeading } from "@/lib/content-readiness-copy"
 import {
   assessContentReadiness,
   formatExportIssue,
+  type ExportIssue,
 } from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
 type ContentReadinessSummaryProps = {
   page: WeekPage
-  metricBuffer?: MetricDraftBuffer
+  issues?: ExportIssue[]
 }
 
 export function ContentReadinessSummary({
   page,
-  metricBuffer = {},
+  issues: suppliedIssues,
 }: ContentReadinessSummaryProps) {
   if (!isStructuredWeekPage(page)) {
     return null
   }
 
-  const issues = assessContentReadiness(page, metricBuffer)
+  const issues = suppliedIssues ?? assessContentReadiness(page)
   if (issues.length === 0) {
     return null
   }

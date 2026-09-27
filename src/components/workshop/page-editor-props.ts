@@ -1,11 +1,27 @@
 import type { Panel, WeekDocument, WeekPage } from "@/lib/week-document"
+import type { ExportIssue } from "@/lib/export-readiness"
+import type { MetricValueField } from "@/lib/metric-input"
+
+export type MetricEditorControls = {
+  read: (pageId: string, metricIndex: number, field: MetricValueField) => string
+  write: (
+    pageId: string,
+    metricIndex: number,
+    field: MetricValueField,
+    raw: string
+  ) => void
+  move: (pageId: string, fromIndex: number, toIndex: number) => void
+  remove: (pageId: string, metricIndex: number) => void
+  readiness: (pageId: string) => ExportIssue[]
+}
 
 // 各 page 編輯表單共用的輸入組合；新增共用欄位只改這裡
 export type PageEditorProps<P extends WeekPage = WeekPage> = {
   week: WeekDocument
   pageIndex: number
   page: P
-  onChange: (week: WeekDocument) => void
+  onChange: (update: (week: WeekDocument) => WeekDocument) => void
+  metricControls?: MetricEditorControls
   readOnly?: boolean
 }
 

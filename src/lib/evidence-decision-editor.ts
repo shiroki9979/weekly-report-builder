@@ -1,4 +1,4 @@
-import type { MetricValueField } from "./metric-draft-buffer"
+import type { MetricValueField } from "./metric-input"
 import { typedPageUpdater } from "./update-week-page"
 import {
   assertCanAddEntry,

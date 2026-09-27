@@ -10,7 +10,7 @@ import { errorMessage } from "@/lib/export-errors"
 import { exportPage } from "@/lib/export-page-gate"
 import { formatExportIssues } from "@/lib/export-readiness"
 import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
+import type { MetricInputMap } from "@/lib/metric-input"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import { exportVisiblePages } from "@/lib/week-export"
 
@@ -18,7 +18,7 @@ type UseStageExportOptions = {
   monday: string
   week: WeekDocument | null
   selectedPage?: WeekPage | null
-  metricBuffer?: MetricDraftBuffer
+  metricBuffer?: MetricInputMap
 }
 
 type ExportCommandResult =
@@ -31,7 +31,7 @@ type OperationSnapshot = {
   monday: string
   week: WeekDocument
   selectedPage: WeekPage | null
-  metricBuffer: MetricDraftBuffer
+  metricBuffer: MetricInputMap
   controller: AbortController
 }
 
