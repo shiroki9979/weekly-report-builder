@@ -1,29 +1,11 @@
 import type { MetricDraftBuffer } from "./metric-draft-buffer"
-import {
-  assessExportEligibility,
-  type CaptureAssessment,
-  type ExportIssue,
-} from "./export-readiness"
-import {
-  isHtmlWeekPage,
-  isSupportedStagePage,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+import type { ExportIssue } from "./export-readiness"
+import { exportPage, type CaptureAdapter } from "./export-page-gate"
+import type { WeekDocument } from "./week-document"
 
 export type SkippedExportPage = {
   pageId: string
   issues: ExportIssue[]
-}
-
-export function listExportablePages(week: WeekDocument): WeekPage[] {
-  return week.pages.filter((page) => !page.hidden && isSupportedStagePage(page))
-}
-
-export function listSkippedPages(week: WeekDocument): WeekPage[] {
-  return week.pages.filter(
-    (page) => !page.hidden && !isSupportedStagePage(page)
-  )
 }
 
 export function exportFileName(monday: string, pageId: string): string {
@@ -31,10 +13,8 @@ export function exportFileName(monday: string, pageId: string): string {
 }
 
 export type ExportVisiblePagesDeps = {
-  capture: (element: HTMLElement) => Promise<Blob>
+  adapter: CaptureAdapter
   download: (blob: Blob, fileName: string) => void
-  renderPage: (page: WeekPage) => Promise<HTMLElement>
-  measureCapture: (element: HTMLElement) => Promise<CaptureAssessment>
   metricBuffer?: MetricDraftBuffer
 }
 
@@ -50,36 +30,15 @@ export async function exportVisiblePages(
       continue
     }
 
-    const withoutCapture = assessExportEligibility(
-      page,
-      undefined,
-      deps.metricBuffer
-    )
-    const blockedBeforeRender = withoutCapture.issues.some(
-      (issue) => issue.code !== "measurement-failed"
-    )
-    if (!withoutCapture.eligible && blockedBeforeRender) {
-      skipped.push({ pageId: page.id, issues: withoutCapture.issues })
+    const result = await exportPage(week, page, deps.adapter, deps.metricBuffer)
+    if (result.kind === "blocked") {
+      skipped.push({ pageId: page.id, issues: result.issues })
       continue
     }
-
-    if (isHtmlWeekPage(page)) {
-      const element = await deps.renderPage(page)
-      const blob = await deps.capture(element)
-      deps.download(blob, exportFileName(monday, page.id))
-      continue
+    if (result.kind === "failed") {
+      throw result.cause
     }
-
-    const element = await deps.renderPage(page)
-    const capture = await deps.measureCapture(element)
-    const assessment = assessExportEligibility(page, capture, deps.metricBuffer)
-    if (!assessment.eligible) {
-      skipped.push({ pageId: page.id, issues: assessment.issues })
-      continue
-    }
-
-    const blob = await deps.capture(element)
-    deps.download(blob, exportFileName(monday, page.id))
+    deps.download(result.blob, exportFileName(monday, page.id))
   }
 
   return skipped
