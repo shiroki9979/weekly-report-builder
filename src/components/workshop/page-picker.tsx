@@ -42,14 +42,17 @@ export function PagePicker({
                 return value
               }
 
-              return page.hidden ? `${page.title} (hidden)` : page.title
+              const label = page.title.trim() || page.id
+              return page.hidden ? `${label} (hidden)` : label
             }}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {week.pages.map((page, index) => (
             <SelectItem key={page.id} value={String(index)}>
-              {page.hidden ? `${page.title} (hidden)` : page.title}
+              {page.hidden
+                ? `${page.title.trim() || page.id} (hidden)`
+                : page.title.trim() || page.id}
             </SelectItem>
           ))}
         </SelectContent>
