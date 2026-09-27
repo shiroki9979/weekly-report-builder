@@ -116,7 +116,7 @@ describe("useStageExport", () => {
     expect(capturedHtml).not.toContain("stage-warning")
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
-    expect(exportRef.current?.exportWarning).toContain(
+    expect(exportRef.current?.exportResult).toContain(
       "p03: Failed to load HTML file: missing.html (status 404)"
     )
     expect(downloadBlob).toHaveBeenCalledOnce()
@@ -190,7 +190,7 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
-    expect(exportRef.current?.clipboardError).toBe(
+    expect(exportRef.current?.exportResult).toBe(
       `Copy p03 from 2026-08-24: ${reason}`
     )
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
@@ -233,9 +233,9 @@ describe("useStageExport", () => {
     })
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
-    expect(exportRef.current?.exportError).toBeNull()
-    expect(exportRef.current?.exportWarning).toContain(
-      "Export for 2026-08-24: Skipped pages: p03: HTML load timed out after 3000 ms"
+    expect(exportRef.current?.resultIsError).toBe(false)
+    expect(exportRef.current?.exportResult).toContain(
+      "Skipped pages: p03: HTML load timed out after 3000 ms"
     )
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
@@ -275,7 +275,7 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
-    expect(exportRef.current?.clipboardError).toBe(
+    expect(exportRef.current?.exportResult).toBe(
       "Copy p03 from 2026-08-24: Screenshot failed"
     )
     expect(
@@ -317,7 +317,7 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
-    expect(exportRef.current?.clipboardError).toBe(
+    expect(exportRef.current?.exportResult).toBe(
       "Copy p03 from 2026-08-24: Capture stage not ready"
     )
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
@@ -347,8 +347,8 @@ describe("useStageExport", () => {
       await exportRef.current?.downloadVisiblePages()
     })
 
-    expect(exportRef.current?.exportWarning).toBe(
-      "Export for 2026-08-24: Skipped pages: p04: This layout cannot be exported"
+    expect(exportRef.current?.exportResult).toBe(
+      "Export for 2026-08-24: Downloads triggered: 0; Skipped: 1; Failed: 0; Not attempted: 0. Skipped pages: p04: This layout cannot be exported"
     )
   })
 
@@ -368,7 +368,7 @@ describe("useStageExport", () => {
     })
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
-    expect(exportRef.current?.clipboardError).toMatch(/title/i)
+    expect(exportRef.current?.exportResult).toMatch(/title/i)
   })
 
   it("blocks copy of a complete evidence-decision page with an invalid metric draft", async () => {
@@ -411,7 +411,7 @@ describe("useStageExport", () => {
     })
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
-    expect(exportRef.current?.clipboardError).toBe(
+    expect(exportRef.current?.exportResult).toBe(
       "Copy p01 from 2026-08-24: metrics[0].baselineValue: Metric value must be a finite non-negative number"
     )
   })

@@ -13,14 +13,14 @@
 
 ## 總覽
 
-| #   | 候選                                              | 強度            | 依賴類別         | 狀態                                                                                                       |
-| --- | ------------------------------------------------- | --------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| 1   | Week 草稿 module                                  | Strong          | in-process       | 候選                                                                                                       |
-| 2   | Export gate module                                | Strong          | mock             | [規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)；實作票 #32～#35 已發布，未實作 |
-| 3   | 以 Page ID 為範圍的頁面編輯                       | Worth exploring | in-process       | 候選                                                                                                       |
-| 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process       | 候選                                                                                                       |
-| 5   | Week store 成為真的 seam                          | Worth exploring | ports & adapters | 候選                                                                                                       |
-| 6   | 每種 Structured Layout 一個 module                | Speculative     | in-process       | 候選                                                                                                       |
+| #   | 候選                                              | 強度            | 依賴類別         | 狀態                                                                                                                                                                         |
+| --- | ------------------------------------------------- | --------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Week 草稿 module                                  | Strong          | in-process       | 候選                                                                                                                                                                         |
+| 2   | Export gate module                                | Strong          | mock             | 已實作於 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)；[規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、實作票 #32～#35 |
+| 3   | 以 Page ID 為範圍的頁面編輯                       | Worth exploring | in-process       | 候選                                                                                                                                                                         |
+| 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process       | 候選                                                                                                                                                                         |
+| 5   | Week store 成為真的 seam                          | Worth exploring | ports & adapters | 候選                                                                                                                                                                         |
+| 6   | 每種 Structured Layout 一個 module                | Speculative     | in-process       | 候選                                                                                                                                                                         |
 
 初次審查建議先做 1：它是唯一反覆出 bug、orchestration 又沒有測試的地方；做完同時削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 
@@ -47,7 +47,7 @@ typed Week Document、Comparison Metric raw 草稿與存檔狀態同住一處。
 
 Copy 與 batch export 共用同一條單頁流程。
 
-- **相關 module**：`src/lib/export-readiness.ts`（`assessExportEligibility`、`formatExportIssues`）、`src/lib/week-export.ts`（`exportVisiblePages`、`listExportablePages`、`listSkippedPages`）、`src/hooks/use-stage-export.ts`（`blockedBeforeCapture`、`copyCurrentPage`）、`src/lib/overflow-measurement.ts`、`src/components/workshop/export-controls.tsx`（`StageCaptureHost`）、`src/components/stage/html-slide.tsx`、`src/lib/content-readiness-copy.ts`。
+- **審查時相關 module**：`src/lib/export-readiness.ts`（`assessExportEligibility`、`formatExportIssues`）、`src/lib/week-export.ts`（`exportVisiblePages`、`listExportablePages`、`listSkippedPages`）、`src/hooks/use-stage-export.ts`（`blockedBeforeCapture`、`copyCurrentPage`）、`src/lib/overflow-measurement.ts`、`src/components/workshop/export-controls.tsx`（`StageCaptureHost`）、`src/components/stage/html-slide.tsx`、`src/lib/content-readiness-copy.ts`。以下問題與證據均為審查時的歷史快照。
 - **問題**：`assessExportEligibility(page, capture?, buffer)` 的 interface 夾帶一個兩段協定：先不帶 capture 呼叫，把 `measurement-failed` 當成「還沒量」濾掉，HTML Page 跳過量測，渲染並量測後再呼叫一次。Copy 與 batch 各寫一份，capture host 掛載、HTML 載入完成的判定與 issue 文案也由呼叫端各自拼湊。
 - **做法**：一個 export gate module 擁有單頁完整流程（判定 → 渲染 → 量測 → 再判定 → 截圖）。render、measure、capture 以 adapter 注入，capture host 掛載、HTML settle 協定與 capture root 查找都藏在瀏覽器 adapter 內。batch 逐頁跑 gate 後下載，Copy 跑一次 gate 後寫入剪貼簿，兩者與編輯器摘要共用同一份 issue 文案。
 - **證據**：
@@ -72,7 +72,7 @@ Copy 與 batch export 共用同一條單頁流程。
   - 已確認：HTML 載入與量測上限維持 3 秒／5 秒，PNG 產生新增 15 秒上限；PNG 逾時後隔離舊頁，丟棄遲到結果，batch 繼續。
   - 已確認：Copy、batch 與編輯器共用原因文字，各自保留前綴與摘要；編輯器不因此執行正式截圖。
   - 已確認：browser adapter 為每次單頁 capture session 自行建立並清理臨時 React root；shell 不再掛 capture host／ref／Provider。沿用既有 Stage renderer 與 CSS，adapter 負責 commit、unmount 與遲到結果隔離。
-  - module 介面、失敗政策與驗收設計見 [HTML Page export failure policy](../specs/html-page-error-png.md)。完整規格已發布為 [#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)；四張實作票皆為 `ready-for-agent`：[共用截圖流程 #32](https://github.com/shiroki9979/weekly-report-builder/issues/32) → [失敗政策 #33](https://github.com/shiroki9979/weekly-report-builder/issues/33)／[操作快照 #34](https://github.com/shiroki9979/weekly-report-builder/issues/34) → [結果摘要 #35](https://github.com/shiroki9979/weekly-report-builder/issues/35)。尚未開始程式實作。
+  - module 介面、失敗政策與驗收設計見 [HTML Page export failure policy](../specs/html-page-error-png.md)。完整規格為 [#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)；四張實作票依 [共用截圖流程 #32](https://github.com/shiroki9979/weekly-report-builder/issues/32) → [失敗政策 #33](https://github.com/shiroki9979/weekly-report-builder/issues/33)／[操作快照 #34](https://github.com/shiroki9979/weekly-report-builder/issues/34) → [結果摘要 #35](https://github.com/shiroki9979/weekly-report-builder/issues/35) 完成，整體實作見 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)。
 
 ## 3. 以 Page ID 為範圍的頁面編輯
 

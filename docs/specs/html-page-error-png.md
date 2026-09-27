@@ -113,6 +113,8 @@ The screenshot library cannot guarantee complete cancellation. On timeout, isola
 
 These limits do not impose new timeouts on Preview or clipboard writes. A clipboard write remains busy until the platform promise settles; disposal behavior is defined in the module design below. The phase limits are not a guarantee of a fixed total operation duration.
 
+Capture preparation has a separate 5000 ms safety bound. If a background tab suppresses animation frames, the browser adapter proceeds with its committed DOM after at most 1000 ms; abort removes the temporary host. A stalled adapter that exceeds the safety bound stops the operation, and any session returned later is disposed without capture or output.
+
 ## Module design
 
 The single-page gate and its browser adapter implement the confirmed behavior. The browser adapter owns a temporary React root for each prepared capture session, as selected in Q11.

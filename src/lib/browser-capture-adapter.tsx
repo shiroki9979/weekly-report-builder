@@ -14,10 +14,34 @@ import type { CaptureAdapter } from "./export-page-gate"
 import { isHtmlWeekPage } from "./week-document"
 
 const OFFSCREEN_LEFT_PX = -10000
+const PAINT_SETTLE_TIMEOUT_MS = 1000
 
-function waitForPaint(): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+function abortError(): DOMException {
+  return new DOMException("Export was aborted", "AbortError")
+}
+
+function waitForPaint(signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.reject(abortError())
+
+  return new Promise((resolve, reject) => {
+    let frame: number | undefined
+    let settled = false
+    const finish = (aborted = false) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+      if (frame !== undefined) cancelAnimationFrame(frame)
+      signal?.removeEventListener("abort", onAbort)
+      if (aborted) reject(abortError())
+      else resolve()
+    }
+    const onAbort = () => finish(true)
+    // 背景分頁可能永遠不派送 rAF；到期後仍可用已提交的 DOM 執行截圖。
+    const timeout = setTimeout(finish, PAINT_SETTLE_TIMEOUT_MS)
+    signal?.addEventListener("abort", onAbort, { once: true })
+    frame = requestAnimationFrame(() => {
+      if (!settled) frame = requestAnimationFrame(() => finish())
+    })
   })
 }
 
@@ -99,7 +123,7 @@ export const browserCaptureAdapter: CaptureAdapter = {
           return load
         }
       }
-      await waitForPaint()
+      await waitForPaint(signal)
       if (signal?.aborted)
         throw new DOMException("Export was aborted", "AbortError")
 

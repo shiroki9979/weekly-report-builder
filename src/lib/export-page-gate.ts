@@ -34,6 +34,7 @@ export type PageGateResult =
 
 const MEASUREMENT_TIMEOUT_MS = 5000
 const CAPTURE_TIMEOUT_MS = 15000
+const PREPARATION_TIMEOUT_MS = 5000
 
 function abortError(): DOMException {
   return new DOMException("Export was aborted", "AbortError")
@@ -72,6 +73,35 @@ async function runPhase<T>(
   }
 }
 
+async function prepareSession(
+  adapter: CaptureAdapter,
+  week: WeekDocument,
+  page: WeekPage,
+  signal?: AbortSignal
+): ReturnType<CaptureAdapter["prepare"]> {
+  const pending = adapter.prepare(week, page, signal)
+  let accepted = false
+  try {
+    const prepared = await runPhase(
+      () => pending,
+      PREPARATION_TIMEOUT_MS,
+      signal,
+      "Capture preparation"
+    )
+    accepted = true
+    return prepared
+  } finally {
+    if (!accepted) {
+      // 逾時或中止後若 adapter 才交出 session，需清理它且不得進入後續頁面。
+      void pending
+        .then((late) => {
+          if (!("kind" in late)) late.dispose()
+        })
+        .catch(() => undefined)
+    }
+  }
+}
+
 export async function exportPage(
   week: WeekDocument,
   page: WeekPage,
@@ -94,11 +124,7 @@ export async function exportPage(
   }
 
   try {
-    const prepared = await runPhase(
-      () => adapter.prepare(week, page, signal),
-      undefined,
-      signal
-    )
+    const prepared = await prepareSession(adapter, week, page, signal)
     if ("kind" in prepared) {
       return {
         kind: "blocked",
