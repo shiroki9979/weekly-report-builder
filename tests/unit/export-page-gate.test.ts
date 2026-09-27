@@ -43,7 +43,6 @@ describe("single-page export gate", () => {
   })
 
   it("blocks an explicit HTML load failure before PNG capture", async () => {
-    const capture = vi.fn()
     const page = {
       id: "html",
       layout: "html" as const,
@@ -68,7 +67,6 @@ describe("single-page export gate", () => {
         },
       ],
     })
-    expect(capture).not.toHaveBeenCalled()
   })
 
   it.each(["html", "structured"])(
@@ -104,10 +102,10 @@ describe("single-page export gate", () => {
     }
   )
 
-  it("bounds a hung measurement at five seconds and a hung capture at fifteen seconds", async () => {
+  it("blocks a hung measurement with measurement-failed after five seconds", async () => {
     vi.useFakeTimers()
     try {
-      const measure = exportPage(week, completePage, {
+      const result = exportPage(week, completePage, {
         adapter: {
           prepare: async () => ({
             measure: () => new Promise(() => undefined),
@@ -116,13 +114,22 @@ describe("single-page export gate", () => {
           }),
         },
       })
+
       await vi.advanceTimersByTimeAsync(5000)
-      expect(await measure).toMatchObject({
+
+      expect(await result).toMatchObject({
         kind: "blocked",
         issues: [{ code: "measurement-failed" }],
       })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 
-      const capture = exportPage(week, completePage, {
+  it("blocks a hung PNG generation with capture-failed after fifteen seconds", async () => {
+    vi.useFakeTimers()
+    try {
+      const result = exportPage(week, completePage, {
         adapter: {
           prepare: async () => ({
             measure: async () => ({ status: "fit" }),
@@ -131,8 +138,10 @@ describe("single-page export gate", () => {
           }),
         },
       })
+
       await vi.advanceTimersByTimeAsync(15000)
-      expect(await capture).toMatchObject({
+
+      expect(await result).toMatchObject({
         kind: "blocked",
         issues: [{ code: "capture-failed" }],
       })
@@ -140,7 +149,6 @@ describe("single-page export gate", () => {
       vi.useRealTimers()
     }
   })
-
   it("discards a timed-out PNG even when it resolves after the next page succeeds", async () => {
     vi.useFakeTimers()
     try {
@@ -263,7 +271,7 @@ describe("single-page export gate", () => {
     expect(dispose).toHaveBeenCalledOnce()
   })
 
-  it("blocks unsupported, draft, and invalid metric pages before opening a session", async () => {
+  it("blocks unsupported and Draft Pages before opening a session", async () => {
     const adapter = fakeAdapter()
     const unsupportedWeek: WeekDocument = {
       ...week,

@@ -43,6 +43,8 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
+type GateDeps = ExportPageDeps & { metricBuffer: MetricInputMap }
+
 type PhaseLimit = { phase: string; timeoutMs: number }
 
 const MEASUREMENT_LIMIT: PhaseLimit = {
@@ -50,7 +52,7 @@ const MEASUREMENT_LIMIT: PhaseLimit = {
   timeoutMs: 5000,
 }
 const CAPTURE_LIMIT: PhaseLimit = { phase: "PNG generation", timeoutMs: 15000 }
-// 需大於 adapter 內部 HTML 載入（3000 ms）與繪製等待（1000 ms）的總和，
+// 需大於 browser adapter 的 HTML_LOAD_TIMEOUT_MS 與 PAINT_SETTLE_TIMEOUT_MS 總和，
 // HTML 逾時才會先被歸類為 html-load-failed，而非整個操作失敗。
 const PREPARATION_LIMIT: PhaseLimit = {
   phase: "Capture preparation",
@@ -71,20 +73,21 @@ export async function exportPage(
   if (deps.signal?.aborted) {
     return { kind: "failed", cause: deps.signal.reason }
   }
-  const readinessIssues = preflightIssues(page, deps.metricBuffer ?? {})
+  const gateDeps: GateDeps = { ...deps, metricBuffer: deps.metricBuffer ?? {} }
+  const readinessIssues = preflightIssues(page, gateDeps.metricBuffer)
   if (readinessIssues.length > 0) {
     return { kind: "blocked", issues: readinessIssues }
   }
 
   try {
-    const prepared = await prepareSession(week, page, deps)
+    const prepared = await prepareSession(week, page, gateDeps)
     if (isHtmlLoadFailure(prepared)) {
       return {
         kind: "blocked",
         issues: [{ code: "html-load-failed", message: prepared.message }],
       }
     }
-    return await captureFromSession(prepared, page, deps)
+    return await captureFromSession(prepared, page, gateDeps)
   } catch (cause: unknown) {
     return { kind: "failed", cause }
   }
@@ -106,7 +109,7 @@ function preflightIssues(
 async function prepareSession(
   week: WeekDocument,
   page: WeekPage,
-  deps: ExportPageDeps
+  deps: GateDeps
 ): Promise<PreparedCapture> {
   const pending = deps.adapter.prepare(week, page, deps.signal)
   let accepted = false
@@ -141,7 +144,7 @@ function disposeLateSession(
 async function captureFromSession(
   session: CaptureSession,
   page: WeekPage,
-  deps: ExportPageDeps
+  deps: GateDeps
 ): Promise<PageGateResult> {
   try {
     const issues = await measurementIssues(session, page, deps)
@@ -157,7 +160,7 @@ async function captureFromSession(
 async function measurementIssues(
   session: CaptureSession,
   page: WeekPage,
-  deps: ExportPageDeps
+  deps: GateDeps
 ): Promise<ExportIssue[]> {
   if (isHtmlWeekPage(page)) {
     return []
@@ -183,7 +186,7 @@ async function measurementIssues(
   const assessment = assessExportEligibility(
     page,
     measurement,
-    deps.metricBuffer ?? {}
+    deps.metricBuffer
   )
   return assessment.eligible ? [] : assessment.issues
 }
