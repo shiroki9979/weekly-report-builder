@@ -44,6 +44,7 @@
 | ---------------------------------------------------------------- | ---------------------------------------------- |
 | [工坊架構](explanation/workshop-architecture.md)                 | 工坊殼 vs 16:9 stage、資料流                   |
 | [Layout 家族原型](explanation/layout-prototype.md)               | 歷史 800 × 450 驗證與 production adoption 指標 |
+| [Slide 設計研究](explanation/slide-design-research.md)           | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據 |
 | [架構加深候選](explanation/architecture-deepening-candidates.md) | 2026-09-27 審查找出的 module 加深候選與證據    |
 
 ## Specs（已落地）

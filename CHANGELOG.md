@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 新增 Slide 設計研究，整理口頭報告與自行閱讀的設計原則、一手來源及新 Structured Layout 的評估依據（[研究筆記](docs/explanation/slide-design-research.md)）。
 - 實作 Export gate 與四張依賴工作票，Copy／batch 共用截圖流程、HTML 失敗政策、操作快照與部分結果摘要（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、#32～#35）。
 - Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複，且建立新週時沿用該頁設定；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 
