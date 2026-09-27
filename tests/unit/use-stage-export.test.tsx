@@ -1,8 +1,7 @@
 import { act, render } from "@testing-library/react"
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { StageCaptureHost } from "@/components/workshop/export-controls"
 import { useStageExport } from "@/hooks/use-stage-export"
 import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import * as stageCapture from "@/lib/stage-capture"
@@ -34,14 +33,10 @@ function ExportTestComponent({
   }
   metricBuffer?: MetricDraftBuffer
 }) {
-  const previewStageRef = useRef<HTMLDivElement>(null)
-  const captureHostRef = useRef<HTMLDivElement>(null)
-
   const exportState = useStageExport({
     monday: week.start,
     week,
     selectedPage: week.pages[0],
-    captureHostRef,
     metricBuffer,
   })
 
@@ -51,26 +46,20 @@ function ExportTestComponent({
     }
   })
 
-  return (
-    <div>
-      <div ref={previewStageRef} className="stage-root">
-        Preview Stage
-      </div>
-      <StageCaptureHost
-        page={exportState.capturePage}
-        week={week}
-        hostRef={captureHostRef}
-      />
-    </div>
-  )
+  return null
 }
 
 describe("useStageExport", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.clearAllMocks()
+    vi.mocked(stageCapture.captureStageToPng).mockResolvedValue(
+      new Blob(["test-png"], { type: "image/png" })
+    )
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -118,6 +107,9 @@ describe("useStageExport", () => {
     )
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
+    expect(
+      document.querySelector("[aria-hidden='true'] .stage-root")
+    ).toBeNull()
   })
 
   it("waits for HTML slide to settle to ready state and captures rendered HTML content", async () => {
@@ -159,6 +151,9 @@ describe("useStageExport", () => {
     expect(capturedHtml).toContain("Rendered Content")
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
+    expect(
+      document.querySelector("[aria-hidden='true'] .stage-root")
+    ).toBeNull()
   })
 
   it("reports an error instead of capturing a slide that never finishes loading", async () => {
@@ -200,6 +195,81 @@ describe("useStageExport", () => {
     expect(exportRef.current?.exportError).toBe(
       "Timed out waiting for HTML slide to load"
     )
+    expect(
+      document.querySelector("[aria-hidden='true'] .stage-root")
+    ).toBeNull()
+  })
+
+  it("uses and disposes an owned canonical capture root after capture fails", async () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Invalid",
+          htmlFile: "../bad.html",
+        },
+      ],
+    }
+    vi.mocked(stageCapture.captureStageToPng).mockImplementation(
+      async (element) => {
+        expect(element.hasAttribute("data-stage-capture-root")).toBe(true)
+        expect(element.closest("[aria-hidden='true']")).not.toBeNull()
+        throw new Error("Screenshot failed")
+      }
+    )
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    await act(async () => {
+      await exportRef.current?.copyCurrentPage()
+    })
+
+    expect(exportRef.current?.clipboardError).toBe("Screenshot failed")
+    expect(
+      document.querySelector("[aria-hidden='true'] .stage-root")
+    ).toBeNull()
+  })
+
+  it("reports a missing canonical root and removes the temporary host", async () => {
+    const originalQuerySelector = HTMLElement.prototype.querySelector
+    vi.spyOn(HTMLElement.prototype, "querySelector").mockImplementation(
+      function (this: HTMLElement, selector: string) {
+        return selector === "[data-stage-capture-root]"
+          ? null
+          : originalQuerySelector.call(this, selector)
+      }
+    )
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p03",
+          layout: "html",
+          title: "Invalid",
+          htmlFile: "../bad.html",
+        },
+      ],
+    }
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    await act(async () => {
+      await exportRef.current?.copyCurrentPage()
+    })
+
+    expect(exportRef.current?.clipboardError).toBe("Capture stage not ready")
+    expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
+    expect(
+      document.querySelector("[aria-hidden='true'] .stage-root")
+    ).toBeNull()
   })
 
   it("warns when batch export skips unsupported layouts", async () => {
