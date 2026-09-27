@@ -193,7 +193,7 @@ describe("useStageExport", () => {
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
     expect(exportRef.current?.exportError).toBe(
-      "Timed out waiting for HTML slide to load"
+      "Export for 2026-08-24: Timed out waiting for HTML slide to load"
     )
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
@@ -229,7 +229,9 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
-    expect(exportRef.current?.clipboardError).toBe("Screenshot failed")
+    expect(exportRef.current?.clipboardError).toBe(
+      "Copy p03 from 2026-08-24: Screenshot failed"
+    )
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
     ).toBeNull()
@@ -265,7 +267,9 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
-    expect(exportRef.current?.clipboardError).toBe("Capture stage not ready")
+    expect(exportRef.current?.clipboardError).toBe(
+      "Copy p03 from 2026-08-24: Capture stage not ready"
+    )
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
@@ -294,7 +298,7 @@ describe("useStageExport", () => {
     })
 
     expect(exportRef.current?.exportWarning).toBe(
-      "Skipped pages: p04: unsupported"
+      "Export for 2026-08-24: Skipped pages: p04: unsupported"
     )
   })
 
@@ -358,7 +362,7 @@ describe("useStageExport", () => {
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
     expect(exportRef.current?.clipboardError).toBe(
-      "metrics[0].baselineValue: Metric value must be a finite non-negative number"
+      "Copy p01 from 2026-08-24: metrics[0].baselineValue: Metric value must be a finite non-negative number"
     )
   })
 })

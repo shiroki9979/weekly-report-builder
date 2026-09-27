@@ -20,7 +20,11 @@ export type CaptureSession = {
 }
 
 export type CaptureAdapter = {
-  prepare: (week: WeekDocument, page: WeekPage) => Promise<CaptureSession>
+  prepare: (
+    week: WeekDocument,
+    page: WeekPage,
+    signal?: AbortSignal
+  ) => Promise<CaptureSession>
 }
 
 export type PageGateResult =
@@ -32,8 +36,12 @@ export async function exportPage(
   week: WeekDocument,
   page: WeekPage,
   adapter: CaptureAdapter,
-  metricBuffer: MetricDraftBuffer = {}
+  metricBuffer: MetricDraftBuffer = {},
+  signal?: AbortSignal
 ): Promise<PageGateResult> {
+  if (signal?.aborted) {
+    return { kind: "failed", cause: signal.reason }
+  }
   if (!isSupportedStagePage(page)) {
     return { kind: "blocked", issues: assessExportEligibility(page).issues }
   }
@@ -48,7 +56,10 @@ export async function exportPage(
   let session: CaptureSession | undefined
   let result: PageGateResult
   try {
-    session = await adapter.prepare(week, page)
+    session = await adapter.prepare(week, page, signal)
+    if (signal?.aborted) {
+      throw signal.reason
+    }
     const assessment = isHtmlWeekPage(page)
       ? { eligible: true, issues: [] }
       : assessExportEligibility(page, await session.measure(), metricBuffer)
