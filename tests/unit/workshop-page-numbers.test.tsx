@@ -123,9 +123,12 @@ describe("PageNumberSelect", () => {
         <PageNumberSelect
           week={week}
           pageIndex={0}
-          onChange={(next) => {
-            updatedWeek = next
-            setWeek(next)
+          onChange={(update) => {
+            setWeek((current) => {
+              const next = update(current)
+              updatedWeek = next
+              return next
+            })
           }}
         />
       )

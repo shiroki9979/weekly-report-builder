@@ -18,11 +18,11 @@ import {
 } from "./week-document"
 
 import {
-  invalidMetricDraftMessage,
-  metricDraftPath,
-  type MetricDraftBuffer,
+  invalidMetricInputMessage,
+  metricInputPath,
+  type MetricInputMap,
   type MetricValueField,
-} from "./metric-draft-buffer"
+} from "./metric-input"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   type OverflowMeasurement,
@@ -270,10 +270,10 @@ function assessMetricValue(
   page: EvidenceDecisionPage,
   metricIndex: number,
   field: MetricValueField,
-  metricBuffer: MetricDraftBuffer
+  metricBuffer: MetricInputMap
 ): ExportIssue[] {
-  const path = metricDraftPath(metricIndex, field)
-  const draftMessage = invalidMetricDraftMessage(metricBuffer, page.id, path)
+  const path = metricInputPath(metricIndex, field)
+  const draftMessage = invalidMetricInputMessage(metricBuffer, page.id, path)
   if (draftMessage !== null) {
     return [invalid(path, draftMessage)]
   }
@@ -291,7 +291,7 @@ function assessMetricValue(
 
 function assessEvidenceDecision(
   page: EvidenceDecisionPage,
-  metricBuffer: MetricDraftBuffer
+  metricBuffer: MetricInputMap
 ): ExportIssue[] {
   const issues: ExportIssue[] = []
 
@@ -356,7 +356,7 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
   page: StructuredWeekPage,
-  metricBuffer: MetricDraftBuffer = {}
+  metricBuffer: MetricInputMap = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
@@ -379,7 +379,7 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricBuffer: MetricDraftBuffer = {}
+  metricBuffer: MetricInputMap = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -451,7 +451,7 @@ export function formatExportIssues(issues: ExportIssue[]): string {
 
 export function issuePathsFor(
   page: WeekPage,
-  metricBuffer: MetricDraftBuffer = {}
+  metricBuffer: MetricInputMap = {}
 ): Set<string> {
   if (!isStructuredWeekPage(page)) {
     return new Set()

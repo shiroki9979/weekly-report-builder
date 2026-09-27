@@ -1,14 +1,25 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
+import {
+  addSessionPage,
+  applySavedSessionWeek,
+  canSaveSession,
+  createEditingSession,
+  deleteSessionPage,
+  editSessionContent,
+  moveSessionMetric,
+  moveSessionPage,
+  openSessionWeek,
+  readMetricInput,
+  removeSessionMetric,
+  selectSessionPage,
+  sessionReadiness,
+  writeMetricInput,
+} from "@/lib/editing-session"
+import type { ExportIssue } from "@/lib/export-readiness"
+import type { MetricInputMap, MetricValueField } from "@/lib/metric-input"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
-import type { WeekDocument } from "@/lib/week-document"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import { listWeekFiles, loadWeekDocument } from "@/lib/weeks-client"
 
 import { useWeekCreate, type WeekCreateControls } from "./use-week-create"
@@ -29,11 +40,28 @@ type UseWeekEditorResult = {
   selectedMonday: string
   setSelectedMonday: (monday: string) => void
   week: WeekDocument | null
-  setWeek: Dispatch<SetStateAction<WeekDocument | null>>
+  metricBuffer: MetricInputMap
+  editContent: (update: (week: WeekDocument) => WeekDocument) => void
+  readMetricInput: (
+    pageId: string,
+    metricIndex: number,
+    field: MetricValueField
+  ) => string
+  writeMetricInput: (
+    pageId: string,
+    metricIndex: number,
+    field: MetricValueField,
+    raw: string
+  ) => void
+  moveMetric: (pageId: string, fromIndex: number, toIndex: number) => void
+  removeMetric: (pageId: string, metricIndex: number) => void
+  addPage: (page: WeekPage) => void
+  deletePage: (pageId: string) => void
+  movePage: (pageId: string, direction: "up" | "down") => void
+  readiness: (pageId: string) => ExportIssue[]
   selectedPageId: string | null
   selectedPageIndex: number
   setSelectedPageIndex: (index: number) => void
-  setSelectedPageId: (pageId: string) => void
   loadStatus: WeekEditorLoadStatus
   suggestedMonday: string
   save: WeekSaveControls
@@ -44,8 +72,8 @@ export function useWeekEditor(): UseWeekEditorResult {
   const [weeks, setWeeks] = useState<string[]>([])
   const [selectedMonday, setSelectedMondayState] = useState("")
   const selectedMondayRef = useRef("")
-  const [week, setWeek] = useState<WeekDocument | null>(null)
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
+  const [session, setSession] = useState(() => createEditingSession())
+  const { week, selectedPageId } = session
   const [loadStatus, setLoadStatus] = useState<WeekEditorLoadStatus>({
     kind: "loading",
   })
@@ -62,6 +90,7 @@ export function useWeekEditor(): UseWeekEditorResult {
 
       // 切週時立刻進入 loading，避免上一份 ready／empty／error 與新 Monday 並存一幀
       selectedMondayRef.current = monday
+      setSession((current) => openSessionWeek(current, null))
       setLoadStatus({ kind: "loading" })
       setSelectedMondayState(monday)
     },
@@ -83,7 +112,7 @@ export function useWeekEditor(): UseWeekEditorResult {
 
         if (weekList.length === 0) {
           setLoadStatus({ kind: "empty" })
-          setWeek(null)
+          setSession((current) => openSessionWeek(current, null))
           return
         }
 
@@ -102,8 +131,7 @@ export function useWeekEditor(): UseWeekEditorResult {
           return
         }
 
-        setWeek(document)
-        setSelectedPageId(document.pages[0]?.id ?? null)
+        setSession((current) => openSessionWeek(current, document))
         setLoadStatus({ kind: "ready" })
       } catch (cause: unknown) {
         if (cancelled) {
@@ -114,7 +142,7 @@ export function useWeekEditor(): UseWeekEditorResult {
           cause instanceof Error ? cause.message : "Failed to load week file"
         // empty 與 list／文件失敗是同一 load status 的互斥分支，不可同時成立
         setLoadStatus({ kind: "error", message })
-        setWeek(null)
+        setSession((current) => openSessionWeek(current, null))
       }
     }
 
@@ -132,7 +160,7 @@ export function useWeekEditor(): UseWeekEditorResult {
 
   const applySavedWeek = useCallback((bundle: SavedWeekBundle) => {
     setWeeks(bundle.weeks)
-    setWeek(bundle.document)
+    setSession((current) => applySavedSessionWeek(current, bundle.document))
     setLoadStatus({ kind: "ready" })
   }, [])
 
@@ -146,7 +174,7 @@ export function useWeekEditor(): UseWeekEditorResult {
   const openCreatedWeek = useCallback(
     (weekList: string[], monday: string) => {
       setWeeks(weekList)
-      setSelectedPageId(null)
+      setSession((current) => openSessionWeek(current, null))
       setSelectedMonday(monday)
     },
     [setSelectedMonday]
@@ -170,25 +198,85 @@ export function useWeekEditor(): UseWeekEditorResult {
     (index: number) => {
       const page = visibleWeek?.pages[index]
       if (page) {
-        setSelectedPageId(page.id)
+        setSession((current) => selectSessionPage(current, page.id))
       }
     },
     [visibleWeek]
   )
+
+  const editContent = useCallback(
+    (update: (week: WeekDocument) => WeekDocument) => {
+      setSession((current) => editSessionContent(current, update))
+    },
+    []
+  )
+  const addPage = useCallback((page: WeekPage) => {
+    setSession((current) => addSessionPage(current, page))
+  }, [])
+  const deletePage = useCallback((pageId: string) => {
+    setSession((current) => deleteSessionPage(current, pageId))
+  }, [])
+  const movePage = useCallback((pageId: string, direction: "up" | "down") => {
+    setSession((current) => moveSessionPage(current, pageId, direction))
+  }, [])
+  const moveMetric = useCallback(
+    (pageId: string, fromIndex: number, toIndex: number) => {
+      setSession((current) =>
+        moveSessionMetric(current, pageId, fromIndex, toIndex)
+      )
+    },
+    []
+  )
+  const removeMetric = useCallback((pageId: string, metricIndex: number) => {
+    setSession((current) => removeSessionMetric(current, pageId, metricIndex))
+  }, [])
+  const writeInput = useCallback(
+    (
+      pageId: string,
+      metricIndex: number,
+      field: MetricValueField,
+      raw: string
+    ) => {
+      setSession((current) =>
+        writeMetricInput(current, pageId, metricIndex, field, raw)
+      )
+    },
+    []
+  )
+  const saveSession = useCallback(async () => {
+    const gate = canSaveSession(session)
+    setSession(gate.session)
+    if (gate.allowed) {
+      await save.saveWeek()
+    }
+  }, [save, session])
 
   return {
     weeks,
     selectedMonday,
     setSelectedMonday,
     week: visibleWeek,
-    setWeek,
+    metricBuffer: session.metricInput,
+    editContent,
+    readMetricInput: (pageId, metricIndex, field) =>
+      readMetricInput(session, pageId, metricIndex, field),
+    writeMetricInput: writeInput,
+    moveMetric,
+    removeMetric,
+    addPage,
+    deletePage,
+    movePage,
+    readiness: (pageId) => sessionReadiness(session, pageId),
     selectedPageId: visibleWeek?.pages[selectedPageIndex]?.id ?? selectedPageId,
     selectedPageIndex,
     setSelectedPageIndex,
-    setSelectedPageId,
     loadStatus,
     suggestedMonday,
-    save,
+    save: {
+      ...save,
+      error: session.saveError ?? save.error,
+      saveWeek: saveSession,
+    },
     create,
   }
 }

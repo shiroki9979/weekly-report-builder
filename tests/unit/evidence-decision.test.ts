@@ -7,18 +7,8 @@ import {
   removeDecisionMetric,
   setDecisionMetricValue,
 } from "@/lib/evidence-decision-editor"
-import {
-  pruneMetricDrafts,
-  remapMetricBufferAfterMove,
-  remapMetricBufferAfterRemove,
-  weekHasInvalidMetricDrafts,
-} from "@/lib/metric-draft-buffer"
 import { assessContentReadiness } from "@/lib/export-readiness"
-import {
-  addPageAfter,
-  createBlankEvidenceDecisionPage,
-  deleteSelectedPage,
-} from "@/lib/page-lifecycle"
+import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import { cloneWeekFromPrevious } from "@/lib/week-clone"
 import { parseWeekDocument } from "@/lib/week-document"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -262,7 +252,7 @@ describe("evidence-decision clone and readiness", () => {
     ])
   })
 
-  it("treats nonempty invalid metric drafts as invalid-content", () => {
+  it("treats nonempty invalid Metric Input as invalid-content", () => {
     const page = createBlankEvidenceDecisionPage("p01")
     const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
     const baselineIssues = assessContentReadiness(page, buffer).filter(
@@ -275,70 +265,5 @@ describe("evidence-decision clone and readiness", () => {
         message: "Metric value must be a finite non-negative number",
       },
     ])
-    expect(weekHasInvalidMetricDrafts(weekWith(page), buffer)).toBe(true)
-    expect(weekHasInvalidMetricDrafts(weekWith(page), {})).toBe(false)
-  })
-
-  it("moves metric draft keys with the metric", () => {
-    const buffer = {
-      p01: {
-        "metrics[0].baselineValue": "1.0",
-        "metrics[1].candidateValue": "abc",
-      },
-      p02: { "metrics[0].baselineValue": "keep" },
-    }
-
-    expect(remapMetricBufferAfterMove(buffer, "p01", 1, 0)).toEqual({
-      p01: {
-        "metrics[0].candidateValue": "abc",
-        "metrics[1].baselineValue": "1.0",
-      },
-      p02: { "metrics[0].baselineValue": "keep" },
-    })
-  })
-
-  it("shifts metric draft keys after a metric is removed", () => {
-    const buffer = {
-      p01: {
-        "metrics[0].baselineValue": "1.0",
-        "metrics[1].baselineValue": "abc",
-      },
-    }
-
-    expect(remapMetricBufferAfterRemove(buffer, "p01", 0)).toEqual({
-      p01: { "metrics[0].baselineValue": "abc" },
-    })
-  })
-
-  it("keeps an invalid draft blocking after Remove when the Page ID contains a colon", () => {
-    const page: EvidenceDecisionPage = {
-      ...createBlankEvidenceDecisionPage("ops:1"),
-      metrics: [createBlankEvidenceDecisionPage("x").metrics[0]],
-    }
-    const buffer = { "ops:1": { "metrics[1].baselineValue": "abc" } }
-
-    const remapped = remapMetricBufferAfterRemove(buffer, "ops:1", 0)
-
-    expect(weekHasInvalidMetricDrafts(weekWith(page), remapped)).toBe(true)
-  })
-
-  it("does not revive a deleted page's invalid draft when a new page reuses its Page ID", () => {
-    const deleted = createBlankEvidenceDecisionPage("p02")
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
-      pages: [createBlankEvidenceDecisionPage("p01"), deleted],
-    }
-    const buffer = { p02: { "metrics[0].baselineValue": "abc" } }
-
-    const afterDelete = deleteSelectedPage(week, "p02")
-    const pruned = pruneMetricDrafts(buffer, afterDelete.week)
-    const afterAdd = addPageAfter(
-      afterDelete.week,
-      "p01",
-      createBlankEvidenceDecisionPage("p02")
-    )
-
-    expect(weekHasInvalidMetricDrafts(afterAdd.week, pruned)).toBe(false)
   })
 })

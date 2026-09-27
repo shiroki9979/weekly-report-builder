@@ -10,21 +10,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  addPageAfter,
   createBlankAddablePage,
-  deleteSelectedPage,
-  moveSelectedPage,
   nextPageId,
   type AddableLayout,
   type AddableTwoColumnPanelKind,
-  type PageLifecycleResult,
 } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 type PageLifecycleControlsProps = {
   week: WeekDocument
   selectedPageId: string
-  onChange: (result: PageLifecycleResult) => void
+  onAdd: (page: WeekPage) => void
+  onDelete: (pageId: string) => void
+  onMove: (pageId: string, direction: "up" | "down") => void
   disabled?: boolean
 }
 
@@ -38,7 +36,9 @@ const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
 export function PageLifecycleControls({
   week,
   selectedPageId,
-  onChange,
+  onAdd,
+  onDelete,
+  onMove,
   disabled,
 }: PageLifecycleControlsProps) {
   const [layout, setLayout] = useState<AddableLayout>("two-column")
@@ -149,13 +149,7 @@ export function PageLifecycleControls({
             disabled={disabled}
             onClick={() => {
               const id = nextPageId(week.pages.map((page) => page.id))
-              onChange(
-                addPageAfter(
-                  week,
-                  selectedPageId,
-                  createBlankAddablePage(id, layout, panelKind)
-                )
-              )
+              onAdd(createBlankAddablePage(id, layout, panelKind))
             }}
           >
             Add page
@@ -169,7 +163,7 @@ export function PageLifecycleControls({
           variant="outline"
           size="sm"
           disabled={disabled || !canMoveUp}
-          onClick={() => onChange(moveSelectedPage(week, selectedPageId, "up"))}
+          onClick={() => onMove(selectedPageId, "up")}
         >
           Move up
         </Button>
@@ -178,9 +172,7 @@ export function PageLifecycleControls({
           variant="outline"
           size="sm"
           disabled={disabled || !canMoveDown}
-          onClick={() =>
-            onChange(moveSelectedPage(week, selectedPageId, "down"))
-          }
+          onClick={() => onMove(selectedPageId, "down")}
         >
           Move down
         </Button>
@@ -215,7 +207,7 @@ export function PageLifecycleControls({
             variant="destructive"
             size="sm"
             onClick={() => {
-              onChange(deleteSelectedPage(week, selectedPageId))
+              onDelete(selectedPageId)
               setDeleteOpen(false)
             }}
           >

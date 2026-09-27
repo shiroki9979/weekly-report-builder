@@ -160,7 +160,7 @@ test("does not treat a complete evidence-backed decision as missing content on c
   ).toHaveCount(0)
 })
 
-test("blocks copy when a metric draft is invalid", async ({ page }) => {
+test("blocks copy when a Metric Input is invalid", async ({ page }) => {
   await openDecisionWeek(page)
   await unlockEditor(page)
   await page.getByRole("textbox", { name: "Baseline" }).fill("abc")
