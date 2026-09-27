@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useState } from "react"
 import { describe, expect, it } from "vitest"
@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import {
+  addSessionMetric,
   addSessionPage,
   createEditingSession,
   deleteSessionPage,
@@ -79,6 +80,8 @@ function LifecycleHarness({
           read: (location) => readMetricInput(session, location),
           write: (location, raw) =>
             setSession((current) => writeMetricInput(current, location, raw)),
+          add: (pageId) =>
+            setSession((current) => addSessionMetric(current, pageId)),
           move: (move) =>
             setSession((current) => moveSessionMetric(current, move)),
           remove: (metric) =>
@@ -176,7 +179,7 @@ describe("workshop page lifecycle", () => {
     )
   })
 
-  it("adds an evidence-backed decision page and shows its editor", async () => {
+  it("adds an evidence-backed decision page and restores a removed metric", async () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
@@ -191,6 +194,15 @@ describe("workshop page lifecycle", () => {
     expect(
       screen.getByRole("button", { name: "Add interpretation" })
     ).toBeInTheDocument()
+
+    await user.click(
+      within(screen.getByRole("group", { name: "Metric 2" })).getByRole(
+        "button",
+        { name: "Remove" }
+      )
+    )
+    await user.click(screen.getByRole("button", { name: "Add metric" }))
+    expect(screen.getByRole("group", { name: "Metric 2" })).toBeInTheDocument()
   })
 
   it("adds a next-actions page and shows its editor", async () => {

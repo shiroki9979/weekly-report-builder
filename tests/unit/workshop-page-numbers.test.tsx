@@ -14,6 +14,7 @@ import type { WeekDocument } from "@/lib/week-document"
 const noMetricControls: MetricEditorControls = {
   read: () => "",
   write: () => {},
+  add: () => {},
   move: () => {},
   remove: () => {},
   readiness: () => [],

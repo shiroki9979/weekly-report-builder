@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  addSessionMetric,
   addSessionPage,
   canSaveSession,
   createEditingSession,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/editing-session"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import {
-  addDecisionMetric,
+  blankMetric,
   setDecisionMetricFormat,
   setDecisionMetricLabel,
 } from "@/lib/evidence-decision-editor"
@@ -300,7 +301,76 @@ describe("Editing Session", () => {
     ).toBe("1.50")
   })
 
-  it("allows a metric field edit and a metric append through the content entry", () => {
+  it("rejects a prepended metric so existing Metric Input keeps its owner", () => {
+    const document = week(["p01"])
+    const page = document.pages[0]
+    if (page.layout !== "evidence-decision")
+      throw new Error("Unexpected layout")
+    page.metrics = [{ ...page.metrics[0], label: "Original" }]
+    let session = createEditingSession(document)
+    session = writeMetricInput(
+      session,
+      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+      "bad"
+    )
+    const original = session.week
+
+    expect(() =>
+      editSessionContent(session, (current) => {
+        const next = structuredClone(current)
+        const page = next.pages[0]
+        if (page.layout !== "evidence-decision")
+          throw new Error("Unexpected layout")
+        page.metrics.unshift(blankMetric())
+        return next
+      })
+    ).toThrow("Metric changes require a dedicated Editing Session operation")
+    expect(session.week).toBe(original)
+    expect(
+      readMetricInput(session, {
+        pageId: "p01",
+        metricIndex: 0,
+        field: "baselineValue",
+      })
+    ).toBe("bad")
+  })
+
+  it("rejects an in-place metric insertion without changing the open week", () => {
+    const document = week(["p01"])
+    const page = document.pages[0]
+    if (page.layout !== "evidence-decision")
+      throw new Error("Unexpected layout")
+    page.metrics = [page.metrics[0]]
+    let session = createEditingSession(document)
+    session = writeMetricInput(
+      session,
+      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+      "bad"
+    )
+    const original = session.week
+
+    expect(() =>
+      editSessionContent(session, (current) => {
+        const page = current.pages[0]
+        if (page.layout !== "evidence-decision")
+          throw new Error("Unexpected layout")
+        page.metrics.unshift(blankMetric())
+        return current
+      })
+    ).toThrow()
+    expect(session.week).toBe(original)
+    expect(session.week?.pages[0]).toHaveProperty("metrics.length", 1)
+    expect(Object.isFrozen(original?.pages[0])).toBe(false)
+    expect(
+      readMetricInput(session, {
+        pageId: "p01",
+        metricIndex: 0,
+        field: "baselineValue",
+      })
+    ).toBe("bad")
+  })
+
+  it("appends a metric without changing existing Metric Input", () => {
     const document = week(["p01"])
     const page = document.pages[0]
     if (page.layout !== "evidence-decision")
@@ -310,11 +380,28 @@ describe("Editing Session", () => {
     session = editSessionContent(session, (current) =>
       setDecisionMetricLabel(current, 0, 0, "Updated")
     )
-    session = editSessionContent(session, (current) =>
-      addDecisionMetric(current, 0)
+    session = writeMetricInput(
+      session,
+      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+      "bad"
     )
+    session = addSessionMetric(session, "p01")
     expect(session.week?.pages[0]).toHaveProperty("metrics.0.label", "Updated")
     expect(session.week?.pages[0]).toHaveProperty("metrics.length", 2)
+    expect(
+      readMetricInput(session, {
+        pageId: "p01",
+        metricIndex: 0,
+        field: "baselineValue",
+      })
+    ).toBe("bad")
+    expect(
+      readMetricInput(session, {
+        pageId: "p01",
+        metricIndex: 1,
+        field: "baselineValue",
+      })
+    ).toBe("")
   })
 
   it("allows one metric's format fields to change together", () => {
