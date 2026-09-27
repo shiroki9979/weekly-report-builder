@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import {
@@ -8,6 +15,7 @@ import {
   moveCommitment,
   removeCommitment,
   setCommitmentField,
+  setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
@@ -35,6 +43,30 @@ export function NextActionsEditorForm({
       readOnly={readOnly}
       invalidPaths={invalidPaths}
     >
+      <div className="space-y-2">
+        <Label htmlFor="next-actions-variant">Composition</Label>
+        <Select
+          value={page.variant ?? "columns"}
+          disabled={readOnly}
+          onValueChange={(value) => {
+            if (value === "rows" || value === "columns") {
+              onChange((currentWeek) =>
+                setNextActionsVariant(currentWeek, pageIndex, value)
+              )
+            }
+          }}
+        >
+          <SelectTrigger id="next-actions-variant">
+            <SelectValue>
+              {page.variant === "rows" ? "Rows" : "Columns"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="rows">Rows</SelectItem>
+            <SelectItem value="columns">Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">Commitments</p>
         <Button
