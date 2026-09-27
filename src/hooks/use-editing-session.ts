@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
+  addSessionMetric,
   addSessionPage,
   beginSessionCreate,
   beginSessionOpen,
@@ -94,6 +95,7 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       read: (location) => readMetricInput(session, location),
       write: (location, raw) =>
         update((current) => writeMetricInput(current, location, raw)),
+      add: (pageId) => update((current) => addSessionMetric(current, pageId)),
       move: (move) => update((current) => moveSessionMetric(current, move)),
       remove: (metric) =>
         update((current) => removeSessionMetric(current, metric)),

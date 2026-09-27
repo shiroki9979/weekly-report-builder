@@ -13,7 +13,6 @@ import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import type { MetricEditorControls } from "@/lib/editing-session"
 import {
   addDecisionInterpretation,
-  addDecisionMetric,
   moveDecisionInterpretation,
   removeDecisionInterpretation,
   setDecisionInterpretation,
@@ -76,9 +75,7 @@ export function EvidenceDecisionEditorForm({
           variant="outline"
           size="sm"
           disabled={!canAddEntry(page.metrics, CARDINALITY.comparisonMetrics)}
-          onClick={() =>
-            onChange((currentWeek) => addDecisionMetric(currentWeek, pageIndex))
-          }
+          onClick={() => metricControls.add(page.id)}
         >
           Add metric
         </Button>

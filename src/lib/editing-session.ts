@@ -19,6 +19,7 @@ import {
   type PageMoveDirection,
 } from "./page-lifecycle"
 import {
+  addDecisionMetric,
   moveDecisionMetric,
   removeDecisionMetric,
   setDecisionMetricValue,
@@ -76,6 +77,7 @@ export function sessionOperationSnapshot(
 export type MetricEditorControls = {
   read: (location: MetricInputLocation) => string
   write: (location: MetricInputLocation, raw: string) => void
+  add: (pageId: string) => void
   move: (move: MetricMove) => void
   remove: (metric: MetricLocation) => void
   readiness: (pageId: string) => ExportIssue[]
@@ -215,14 +217,15 @@ export function editSessionContent(
   session: EditingSession,
   update: (week: WeekDocument) => WeekDocument
 ): EditingSession {
-  const week = requireWeek(session)
-  const next = update(week)
-  if (changesPageStructure(week, next)) {
+  // 用凍結副本作比較基準，避免回呼原地修改時連傳入的 Session 一起改掉。
+  const baseline = freezeDeep(structuredClone(requireWeek(session)))
+  const next = update(baseline)
+  if (changesPageStructure(baseline, next)) {
     throw new Error(
       "Page changes require a dedicated Editing Session operation"
     )
   }
-  if (changesMetricsUnsafely(week, next)) {
+  if (changesMetricsUnsafely(baseline, next)) {
     throw new Error(
       "Metric changes require a dedicated Editing Session operation"
     )
@@ -258,25 +261,17 @@ function changesMetricsUnsafely(
   })
 }
 
-// Metric Input 以 Metric 索引定位；會讓索引錯位或繞過 Metric Input 的改動必須走專用操作。
-// 先排除刪減，其後的判斷才能以 before 的索引讀取 after
+// Metric Input 以 Metric 索引定位；數量變更只能走專用操作，避免複製後的前插與尾加無法區分。
 function hasUnsafeMetricChange(
   before: ComparisonMetric[],
   after: ComparisonMetric[]
 ): boolean {
   return (
-    removesMetrics(before, after) ||
+    before.length !== after.length ||
     reordersMetrics(before, after) ||
     changesSeveralMetrics(before, after) ||
     changesMetricValues(before, after)
   )
-}
-
-function removesMetrics(
-  before: ComparisonMetric[],
-  after: ComparisonMetric[]
-): boolean {
-  return after.length < before.length
 }
 
 function reordersMetrics(
@@ -381,6 +376,17 @@ export function moveSessionMetric(
     week: next,
     metricInput: remapMetricInputAfterMove(session.metricInput, move),
   }
+}
+
+export function addSessionMetric(
+  session: EditingSession,
+  pageId: string
+): EditingSession {
+  const { week, pageIndex } = requireMetric(session, {
+    pageId,
+    metricIndex: 0,
+  })
+  return { ...session, week: addDecisionMetric(week, pageIndex) }
 }
 
 export function removeSessionMetric(
