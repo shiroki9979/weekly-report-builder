@@ -16,6 +16,7 @@ export type ExportVisiblePagesDeps = {
   adapter: CaptureAdapter
   download: (blob: Blob, fileName: string) => void
   metricBuffer?: MetricDraftBuffer
+  signal?: AbortSignal
 }
 
 export async function exportVisiblePages(
@@ -26,11 +27,23 @@ export async function exportVisiblePages(
   const skipped: SkippedExportPage[] = []
 
   for (const page of week.pages) {
+    if (deps.signal?.aborted) {
+      break
+    }
     if (page.hidden) {
       continue
     }
 
-    const result = await exportPage(week, page, deps.adapter, deps.metricBuffer)
+    const result = await exportPage(
+      week,
+      page,
+      deps.adapter,
+      deps.metricBuffer,
+      deps.signal
+    )
+    if (deps.signal?.aborted) {
+      break
+    }
     if (result.kind === "blocked") {
       skipped.push({ pageId: page.id, issues: result.issues })
       continue
