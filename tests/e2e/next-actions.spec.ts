@@ -100,7 +100,9 @@ test("skips an overflowing next-actions page during batch export", async ({
   await unlockEditor(page)
   await page.getByRole("button", { name: "Download PNGs" }).click()
   const skipped = page.getByRole("status").filter({ hasText: "Skipped pages" })
-  await expect(skipped).toContainText("p04: Overflowing Page")
+  await expect(skipped).toContainText(
+    "p04: Page overflows the 1280 × 720 capture stage"
+  )
   await expect(skipped).not.toContainText("p01:")
   await expect(skipped).not.toContainText("p02:")
   await expect(skipped).not.toContainText("p03:")

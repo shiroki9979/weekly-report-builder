@@ -26,10 +26,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import {
-  ExportControls,
-  StageCaptureHost,
-} from "@/components/workshop/export-controls"
+import { ExportControls } from "@/components/workshop/export-controls"
 import {
   MetricDraftProvider,
   useMetricDraft,
@@ -222,22 +219,18 @@ function WorkshopShellBody() {
   const error = loadStatus.kind === "error" ? loadStatus.message : null
 
   const selectedPage = week?.pages[selectedPageIndex] ?? null
-  const captureHostRef = useRef<HTMLDivElement>(null)
   const previewStageRef = useRef<HTMLDivElement>(null)
   const {
-    capturePage,
     exporting,
     copying,
-    exportError,
-    exportWarning,
-    clipboardError,
+    exportResult,
+    resultIsError,
     downloadVisiblePages,
     copyCurrentPage,
   } = useStageExport({
     monday: selectedMonday,
     week,
     selectedPage,
-    captureHostRef,
     metricBuffer: buffer,
   })
 
@@ -470,9 +463,8 @@ function WorkshopShellBody() {
                 onCopy={() => void copyCurrentPage()}
                 exporting={exporting}
                 copying={copying}
-                exportError={exportError}
-                exportWarning={exportWarning}
-                clipboardError={clipboardError}
+                exportResult={exportResult}
+                resultIsError={resultIsError}
                 disabled={loading || !week}
               />
             </div>
@@ -529,11 +521,6 @@ function WorkshopShellBody() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      <StageCaptureHost
-        page={capturePage}
-        week={week}
-        hostRef={captureHostRef}
-      />
     </div>
   )
 }

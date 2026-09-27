@@ -1,7 +1,7 @@
 # HTML 全幅頁（16:9 逃生口）
 
 建立日期：2026-09-03  
-最後更新：2026-09-10
+最後更新：2026-09-27
 狀態：implemented（v0.1.0）
 
 Grill 共識（2026-09-03）。已於 v0.1.0 實作。
@@ -100,4 +100,4 @@ Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 - 產品仍是 solo 編輯工坊 → PNG → 團隊 deck，不是簡報播放器。
 - `html-to-image` 對 Shadow DOM 不穩，故預覽／capture 兩種掛法是刻意的，不是暫時 hack 到可以省略。
 - Token 繼承：自訂屬性會穿過 shadow；class 選擇器不會。這是 Q13 選「只有變數」的技術含義。
-- Fetch error、timeout 與 capture 失敗的 Error PNG／skip 政策見 [HTML Page error-PNG](html-page-error-png.md)（尚未實作）。
+- Fetch error、timeout 與 capture 失敗的現行 block／skip 政策見 [HTML Page export failure policy](html-page-error-png.md)。

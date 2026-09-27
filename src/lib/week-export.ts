@@ -1,103 +1,161 @@
-import type { MetricDraftBuffer } from "./metric-draft-buffer"
+import { errorMessage } from "./export-errors"
+import { formatExportIssues, type ExportIssue } from "./export-readiness"
 import {
-  assessExportEligibility,
-  type CaptureAssessment,
-  type ExportIssue,
-} from "./export-readiness"
-import {
-  isHtmlWeekPage,
-  isSupportedStagePage,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+  exportPage,
+  type ExportPageDeps,
+  type PageGateResult,
+} from "./export-page-gate"
+import type { WeekDocument, WeekPage } from "./week-document"
 
 export type SkippedExportPage = {
   pageId: string
   issues: ExportIssue[]
 }
 
-export function listExportablePages(week: WeekDocument): WeekPage[] {
-  return week.pages.filter((page) => !page.hidden && isSupportedStagePage(page))
+export type FailedExportPage = {
+  pageId: string
+  reason: string
 }
 
-export function listSkippedPages(week: WeekDocument): WeekPage[] {
-  return week.pages.filter(
-    (page) => !page.hidden && !isSupportedStagePage(page)
-  )
+export type BatchExportResult = {
+  monday: string
+  selectedCount: number
+  downloadsTriggered: number
+  skipped: SkippedExportPage[]
+  failed: FailedExportPage | null
+  notAttempted: number
+  stopReason: string | null
 }
 
 export function exportFileName(monday: string, pageId: string): string {
   return `${monday}-${pageId}.png`
 }
 
-export type ExportVisiblePagesDeps = {
-  capture: (element: HTMLElement) => Promise<Blob>
+export type ExportVisiblePagesDeps = ExportPageDeps & {
   download: (blob: Blob, fileName: string) => void
-  renderPage: (page: WeekPage) => Promise<HTMLElement>
-  measureCapture: (element: HTMLElement) => Promise<CaptureAssessment>
-  metricBuffer?: MetricDraftBuffer
+  beforePages?: () => void
 }
 
+const EXPORT_FAILED = "Export failed"
+
+type PageOutcome =
+  | { kind: "downloaded" }
+  | { kind: "skipped"; issues: ExportIssue[] }
+  | { kind: "failed"; reason: string }
+
+type BatchRun = {
+  monday: string
+  week: WeekDocument
+  deps: ExportVisiblePagesDeps
+}
+
+// 不會 reject：任何失敗都記入結果，已觸發的下載與略過頁面才能完整回報。
 export async function exportVisiblePages(
   monday: string,
   week: WeekDocument,
   deps: ExportVisiblePagesDeps
-): Promise<SkippedExportPage[]> {
-  const skipped: SkippedExportPage[] = []
-
-  for (const page of week.pages) {
-    if (page.hidden) {
-      continue
-    }
-
-    const withoutCapture = assessExportEligibility(
-      page,
-      undefined,
-      deps.metricBuffer
-    )
-    const blockedBeforeRender = withoutCapture.issues.some(
-      (issue) => issue.code !== "measurement-failed"
-    )
-    if (!withoutCapture.eligible && blockedBeforeRender) {
-      skipped.push({ pageId: page.id, issues: withoutCapture.issues })
-      continue
-    }
-
-    if (isHtmlWeekPage(page)) {
-      const element = await deps.renderPage(page)
-      const blob = await deps.capture(element)
-      deps.download(blob, exportFileName(monday, page.id))
-      continue
-    }
-
-    const element = await deps.renderPage(page)
-    const capture = await deps.measureCapture(element)
-    const assessment = assessExportEligibility(page, capture, deps.metricBuffer)
-    if (!assessment.eligible) {
-      skipped.push({ pageId: page.id, issues: assessment.issues })
-      continue
-    }
-
-    const blob = await deps.capture(element)
-    deps.download(blob, exportFileName(monday, page.id))
+): Promise<BatchExportResult> {
+  const pages = week.pages.filter((page) => !page.hidden)
+  const outcome: BatchExportResult = {
+    monday,
+    selectedCount: pages.length,
+    downloadsTriggered: 0,
+    skipped: [],
+    failed: null,
+    notAttempted: pages.length,
+    stopReason: null,
   }
 
-  return skipped
+  try {
+    deps.beforePages?.()
+  } catch (cause: unknown) {
+    outcome.stopReason = errorMessage(cause, EXPORT_FAILED)
+    return outcome
+  }
+
+  const run: BatchRun = { monday, week, deps }
+  for (const page of pages) {
+    if (deps.signal?.aborted) break
+    const gateResult = await passPageThroughGate(run, page)
+    // 截圖完成後操作仍可能已被中止；中止後不得再觸發任何輸出。
+    if (deps.signal?.aborted) break
+    recordPageOutcome(outcome, page.id, deliverPage(run, page.id, gateResult))
+    if (outcome.failed) break
+  }
+
+  return outcome
 }
 
-function formatExportIssueReason(issue: ExportIssue): string {
-  const reason =
-    issue.code === "missing-content"
-      ? "Draft Page"
-      : issue.code === "overflow"
-        ? "Overflowing Page"
-        : issue.code === "invalid-content"
-          ? "invalid content"
-          : issue.code === "measurement-failed"
-            ? "measurement failed"
-            : "unsupported"
+async function passPageThroughGate(
+  run: BatchRun,
+  page: WeekPage
+): Promise<PageGateResult> {
+  try {
+    return await exportPage(run.week, page, run.deps)
+  } catch (cause: unknown) {
+    return { kind: "failed", cause }
+  }
+}
 
-  return issue.path ? `${issue.path} (${reason})` : reason
+function deliverPage(
+  run: BatchRun,
+  pageId: string,
+  result: PageGateResult
+): PageOutcome {
+  if (result.kind === "blocked") {
+    return { kind: "skipped", issues: result.issues }
+  }
+  if (result.kind === "failed") {
+    return { kind: "failed", reason: errorMessage(result.cause, EXPORT_FAILED) }
+  }
+  return triggerDownload(run, pageId, result.blob)
+}
+
+function triggerDownload(
+  run: BatchRun,
+  pageId: string,
+  blob: Blob
+): PageOutcome {
+  try {
+    run.deps.download(blob, exportFileName(run.monday, pageId))
+    return { kind: "downloaded" }
+  } catch (cause: unknown) {
+    return {
+      kind: "failed",
+      reason: `Download trigger failed: ${errorMessage(cause, EXPORT_FAILED)}`,
+    }
+  }
+}
+
+function recordPageOutcome(
+  outcome: BatchExportResult,
+  pageId: string,
+  pageOutcome: PageOutcome
+): void {
+  outcome.notAttempted--
+  if (pageOutcome.kind === "downloaded") {
+    outcome.downloadsTriggered++
+  } else if (pageOutcome.kind === "skipped") {
+    outcome.skipped.push({ pageId, issues: pageOutcome.issues })
+  } else {
+    outcome.failed = { pageId, reason: pageOutcome.reason }
+    outcome.stopReason = pageOutcome.reason
+  }
+}
+
+export function formatBatchExportResult(result: BatchExportResult): string {
+  const summary = `Export for ${result.monday}: Downloads triggered: ${result.downloadsTriggered}; Skipped: ${result.skipped.length}; Failed: ${result.failed ? 1 : 0}; Not attempted: ${result.notAttempted}.`
+  const skipped = formatSkippedExportWarning(result.skipped)
+  const details = [
+    skipped,
+    result.failed
+      ? `Failed page: ${result.failed.pageId}: ${result.failed.reason}`
+      : null,
+    result.stopReason && !result.failed
+      ? `Stopped: ${result.stopReason}`
+      : null,
+  ].filter(Boolean)
+  return details.length ? `${summary} ${details.join("; ")}` : summary
 }
 
 export function formatSkippedExportWarning(
@@ -109,7 +167,7 @@ export function formatSkippedExportWarning(
 
   const details = skipped
     .map((entry) => {
-      const reasons = entry.issues.map(formatExportIssueReason).join(", ")
+      const reasons = formatExportIssues(entry.issues)
       return `${entry.pageId}: ${reasons}`
     })
     .join("; ")
