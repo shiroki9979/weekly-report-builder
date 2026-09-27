@@ -49,6 +49,85 @@ const complete: TrendTargetPage = {
 }
 
 describe("Trend & Target", () => {
+  it("commits an observation entered before its starting Monday once dating is valid", () => {
+    let session = createEditingSession({
+      start: "2026-07-20",
+      end: "2026-07-24",
+      pages: [
+        {
+          ...complete,
+          startMonday: null,
+          observations: [{ state: "unfilled" }, { state: "unfilled" }],
+        },
+      ],
+    })
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "observations[0].value" },
+      "0"
+    )
+    expect(
+      readTrendInput(session, { pageId: "p01", path: "observations[0].value" })
+    ).toBe("0")
+    expect(canSaveSession(session).allowed).toBe(false)
+
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "startMonday" },
+      ""
+    )
+    expect(session.week?.pages[0]).toMatchObject({
+      startMonday: null,
+      observations: [{ state: "unfilled" }, { state: "unfilled" }],
+    })
+
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "startMonday" },
+      "2026-07-06"
+    )
+
+    expect(session.week?.pages[0]).toMatchObject({
+      startMonday: "2026-07-06",
+      observations: [{ state: "measured", value: 0 }, { state: "unfilled" }],
+    })
+    expect(
+      readTrendInput(session, { pageId: "p01", path: "observations[0].value" })
+    ).toBe("0")
+    expect(canSaveSession(session).allowed).toBe(true)
+    expect(parseWeekDocument(session.week).pages[0]).toMatchObject({
+      observations: [{ state: "measured", value: 0 }, { state: "unfilled" }],
+    })
+  })
+
+  it("keeps close large-magnitude y-axis ticks distinct and identifies their offset", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 1_000_000_000_000 },
+        { state: "measured", value: 1_000_000_000_001 },
+      ],
+      target: 1_000_000_000_001,
+    }
+    const { container } = render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-20",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    const ticks = [...container.querySelectorAll("svg .editorial-trend-axis")]
+      .slice(0, 5)
+      .map((node) => node.textContent)
+    expect(new Set(ticks).size).toBe(5)
+    expect(
+      container.querySelector(".editorial-trend-axis-offset")
+    ).toHaveTextContent("1e+12")
+  })
+
   it("maintains endpoint dates and raw input without moving retained evidence", () => {
     const week = {
       start: "2027-01-11",
