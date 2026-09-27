@@ -95,7 +95,7 @@ describe("useEditingSession", () => {
     expect(result.current.save.message).toBeNull()
     expect(result.current.week).toBeNull()
     await ready(result)
-    expect(result.current.metricBuffer).toEqual({})
+    expect(result.current.operationSnapshot()?.metricInput).toEqual({})
     expect(result.current.week?.start).toBe(older)
   })
 
@@ -153,7 +153,7 @@ describe("useEditingSession", () => {
     expect(result.current.week?.start).toBe(next)
     expect(result.current.weeks).toContain(next)
     expect(result.current.save.message).toBeNull()
-    expect(result.current.metricBuffer).toEqual({})
+    expect(result.current.operationSnapshot()?.metricInput).toEqual({})
     expect(result.current.create.creating).toBe(false)
   })
 

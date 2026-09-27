@@ -15,14 +15,14 @@
 
 | #   | 候選                                              | 強度            | 依賴類別         | 狀態                                                                                                                                                                         |
 | --- | ------------------------------------------------- | --------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Editing Session module                            | Strong          | in-process       | 已規格化（[#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)）                                                                                            |
+| 1   | Editing Session module                            | Strong          | in-process       | 已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)；[規格 #37](https://github.com/shiroki9979/weekly-report-builder/issues/37)、實作票 #38～#40 |
 | 2   | Export gate module                                | Strong          | mock             | 已實作於 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)；[規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、實作票 #32～#35 |
 | 3   | 以 Page ID 為範圍的頁面編輯                       | Worth exploring | in-process       | 候選                                                                                                                                                                         |
 | 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process       | 候選                                                                                                                                                                         |
 | 5   | Week store 成為真的 seam                          | Worth exploring | ports & adapters | 候選                                                                                                                                                                         |
 | 6   | 每種 Structured Layout 一個 module                | Speculative     | in-process       | 候選                                                                                                                                                                         |
 
-初次審查建議先做 1（已規格化為 #37）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；做完同時削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
+初次審查建議先做 1（現已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；完成後削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 
 決定實作時開 GitHub Issue 並在「狀態」欄連結；否決時寫下理由，避免之後的審查重提。
 
@@ -30,9 +30,9 @@
 
 typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week 草稿 module」，因與 Draft Page 撞名而改名；Editing Session 與 Metric Input 的定義見 [CONTEXT.md](../../CONTEXT.md)。
 
-- **相關 module**：`src/components/workshop/workshop-shell.tsx`（`WorkshopShellBody`）、`src/components/workshop/metric-draft-context.tsx`、`src/lib/metric-draft-buffer.ts`、`src/components/workshop/evidence-decision-editor-form.tsx`（`applyMetricMove`、`applyMetricRemove`、`MetricNumberField`）、`src/hooks/use-week-editor.ts`、`src/hooks/use-week-save.ts`、`src/hooks/use-week-create.ts`。`metricBuffer` 參數另穿過 `export-readiness.ts`、`use-stage-export.ts`、`week-export.ts`、`editorial-page-editor-chrome.tsx` 與 `content-readiness-summary.tsx`。
+- **審查時相關 module（歷史快照）**：`src/components/workshop/workshop-shell.tsx`（`WorkshopShellBody`）、已刪除的 `metric-draft-context.tsx`、`metric-draft-buffer.ts`、`use-week-editor.ts`、`use-week-save.ts`、`use-week-create.ts`，以及 `evidence-decision-editor-form.tsx`。當時 `metricBuffer` 參數另穿過 export 與 editor chrome；現由 `src/lib/editing-session.ts`、`src/hooks/use-editing-session.ts` 及 `src/lib/week-store.ts` 負責編輯狀態與週次存取，Export hook 只接收 snapshot 來源。
 - **問題**：編輯中的 Week Document 分住兩個倉：`useWeekEditor` 的 `week` 與 `MetricDraftProvider` 的 buffer。兩倉的不變條件由呼叫端手動維持：shell 負責切週清空、lifecycle 後 `pruneMetricDrafts`、Save 前 `weekHasInvalidMetricDrafts`；Evidence-backed Decision 表單負責 Move／Remove 時 remap。存檔與建週的狀態又分在 `useWeekSave`、`useWeekCreate` 與 shell 的 `draftSaveError`，切週時沒有人重設。
-- **做法**：一個 Editing Session module 同時持有 typed Week Document、raw 草稿、選取的 Page ID 與存檔／建週狀態。編輯、lifecycle、切週、Save 都穿過它，prune、remap、清空與重設成為 implementation 細節，對外只提供已套草稿的 readiness。
+- **做法**：Editing Session 同時持有 typed Week Document、Metric Input、選取的 Page ID 與載入／存檔／建週狀態。編輯、lifecycle、切週、Save 都穿過它，清理、重新對應與重設成為 implementation 細節；對外提供已套 Metric Input 的 readiness 與 Copy／batch 使用的唯讀 operation snapshot。
 - **證據**：
   - Evidence-backed Decision 上線（`0773cfb`）後，三個 fix commit 各補一個漏接點：`06fdda6`（Move／Remove remap）、`c819ed5`（草稿改以 Page ID 分層）、`e5a6d2b`（lifecycle 後 prune、切週清空）。`e5a6d2b` 的修正全落在 shell，沒動 buffer module。
   - Remove 先 remap buffer，再跑可能 throw 的 reducer（`assertCanRemoveEntry`）；兩倉不是原子更新，只靠按鈕 disabled 擋住。
@@ -40,9 +40,9 @@ typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week �
   - `useWeekSave`、`useWeekCreate` 各只有 `useWeekEditor` 一個呼叫端，deletion test 判定為 shallow；它們以 callback 把「過期結果怎麼擋」與「訊息何時清」交回呼叫端。
   - `useWeekEditor` 直接回傳 React 的 `setWeek`，shell 原樣交給表單當 `onChange`，任何呼叫端都能繞過規則換掉整份 Week Document。
   - `tests/unit/evidence-decision.test.ts` 的 "does not revive a deleted page's invalid draft…" 手動重演 shell 的 delete → prune → add 順序，shell 漏呼叫 prune 時它照樣通過。沒有任何測試渲染 `MetricDraftProvider`；context 預設值是 no-op，`page-lifecycle-controls.test.tsx` 在 provider 外渲染表單，草稿寫入在那裡被靜默丟掉。切週清空、Save 擋下與 lifecycle prune 都沒有測試。
-- **收益**：locality，雙倉不變條件只在一處；shell 少掉 4 個同步點；兩倉更新變成原子；切週不再殘留舊訊息；leverage，`metricBuffer` 不再層層傳遞；漏接類 bug 在 module 的 interface 測試中現形。
-- **既有決定**：保留 [Editorial Layout Family 規格](../specs/editorial-layout-family.md) 規定的「以 Page ID 與 field path 為 key 的 raw buffer」，只改由誰負責同步。
-- **狀態**：2026-09-27 grilling 定案，規格見 [#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)，拆為 [#38](https://github.com/shiroki9979/weekly-report-builder/issues/38) → [#39](https://github.com/shiroki9979/weekly-report-builder/issues/39) → [#40](https://github.com/shiroki9979/weekly-report-builder/issues/40)；#40 另被 Export gate 的 [#34](https://github.com/shiroki9979/weekly-report-builder/issues/34) 擋住，由 Editing Session 提供唯讀 operation snapshot。
+- **收益**：locality，Week Document 與 Metric Input 的不變條件只在一處；更新成為原子操作；切週不再殘留舊訊息；Export hook 不再接收獨立 Metric Input；漏接類 bug 在 module 的 interface 測試中現形。
+- **既有決定**：保留 [Editorial Layout Family 規格](../specs/editorial-layout-family.md) 規定的 Page ID 與 field path 鍵值，改由 Editing Session 持有 Metric Input。
+- **狀態**：2026-09-27 設計定案，規格見 [#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)，實作票 [#38](https://github.com/shiroki9979/weekly-report-builder/issues/38) → [#39](https://github.com/shiroki9979/weekly-report-builder/issues/39) → [#40](https://github.com/shiroki9979/weekly-report-builder/issues/40) 已納入 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)。Editing Session 供應唯讀 operation snapshot，Export gate 契約維持不變。
 
 ## 2. Export gate module
 

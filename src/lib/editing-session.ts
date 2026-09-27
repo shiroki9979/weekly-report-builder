@@ -41,6 +41,37 @@ export type EditingSession = {
   readonly createError: string | null
 }
 
+type DeepReadonly<T> = T extends object
+  ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+  : T
+
+export type SessionOperationSnapshot = Readonly<{
+  monday: string
+  week: DeepReadonly<WeekDocument>
+  selectedPageId: string | null
+  metricInput: MetricInputMap
+}>
+
+function freezeDeep<T extends object>(value: T): DeepReadonly<T> {
+  Object.freeze(value)
+  for (const nested of Object.values(value)) {
+    if (nested && typeof nested === "object") freezeDeep(nested)
+  }
+  return value as DeepReadonly<T>
+}
+
+export function sessionOperationSnapshot(
+  session: EditingSession
+): SessionOperationSnapshot | null {
+  if (!session.week || session.loadStatus.kind !== "ready") return null
+  return freezeDeep({
+    monday: session.selectedMonday,
+    week: structuredClone(session.week),
+    selectedPageId: session.selectedPageId,
+    metricInput: structuredClone(session.metricInput),
+  })
+}
+
 export type SessionLoadStatus =
   | { kind: "loading" }
   | { kind: "empty" }
