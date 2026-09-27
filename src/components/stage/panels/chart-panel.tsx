@@ -27,8 +27,8 @@ export function ChartPanelView({ panel }: ChartPanelViewProps) {
         ))}
       </div>
       <div className="stage-chart">
-        {stacks.map((stack) => (
-          <div className="stage-chart-col" key={stack.category}>
+        {stacks.map((stack, stackIndex) => (
+          <div className="stage-chart-col" key={stackIndex}>
             <div className="stage-chart-stack">
               {stack.bars.map((bar, barIndex) => (
                 <div

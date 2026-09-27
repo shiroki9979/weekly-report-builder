@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 公開 Demo Week Set 新增 Trend & Target 的雙向目標、缺測末週和 Next Actions Rows／Columns 對照；補上首次使用與分享檢查指引（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- Trend & Target 的日期範圍可手動增減端點並跨週沿用量測歷史；12 週上限不自動刪除舊資料（[#46](https://github.com/shiroki9979/weekly-report-builder/issues/46)）。
 - Trend & Target 支援明確缺測週次的編輯、儲存與匯出；缺測保留週次並切斷折線，末週缺測摘要顯示 No data（[#45](https://github.com/shiroki9979/weekly-report-builder/issues/45)）。
 - Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
 - 新增 Trend & Target 已量測週次的正式編輯、儲存、預覽與 PNG 匯出流程，含固定目標、日期與無效輸入檢核（[#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)）。
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 封存四視圖版型原型與 A/D 決策紀錄，移除開發用原型入口與指令，正式示例改由 Workshop 提供（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 匯出失敗訊息以 `Download trigger failed:`／`Clipboard write failed:` 標示輸出寫入失敗，與頁面就緒問題區分（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)）。
 - 匯出顯示原週次的批次結果摘要，保留中途失敗前已觸發下載與略過原因，並區分失敗當頁與未處理頁；Copy 成功訊息於剪貼簿寫入完成後顯示（[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
@@ -31,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 新週 clone 清空標題後，Page 下拉選單以 Page ID 顯示草稿頁，避免多頁示例出現無名稱的選項（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 複製週次將 chart 類別清空時，圖表以位置識別欄位，避免空白類別產生重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
 - Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。

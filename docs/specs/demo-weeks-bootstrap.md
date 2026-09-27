@@ -1,10 +1,12 @@
 # Demo weeks bootstrap
 
 建立日期：2026-09-12
-最後更新：2026-09-12
+最後更新：2026-09-28
 狀態：approved
 
 本文件記錄 `weeks/` 私有化與 demo 初始資料的 Grill 共識，並作為後續實作與驗收的 source of truth。
+
+內容範圍註記：以下五頁是初次 bootstrap 的驗收基線。[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47) 將公開 Demo Week Set 擴為十頁，新增 Trend & Target 與 Next Actions Rows；既有只在 `weeks/` 缺失時 seed 的契約不變。
 
 ---
 
@@ -83,7 +85,7 @@ Workshop 先列出可用週次再載入最新 Week Document，不再依賴固定
 
 - Committed bootstrap source 使用頂層 `demo/`，並完整鏡像 `weeks/` 的目錄結構。
 - 文件將這組可公開的合成內容稱為 **Demo Week Set**；它不是 JavaScript object，也不是產品領域模型。
-- Demo Week Set 包含五頁，依序涵蓋 Two-column Layout、Weekly Overview、Evidence-backed Decision、Next Actions 與 HTML Page。
+- 初版 Demo Week Set 包含五頁，依序涵蓋 Two-column Layout、Weekly Overview、Evidence-backed Decision、Next Actions 與 HTML Page；後續版型示例接在這五頁之後。
 
 ### Test data boundaries
 

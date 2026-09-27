@@ -6,6 +6,7 @@ import {
   isEvidenceDecisionPage,
   isHtmlWeekPage,
   isNextActionsPage,
+  isTrendTargetPage,
   isTwoColumnWeekPage,
   isWeeklyOverviewPage,
   parseWeekDocument,
@@ -14,20 +15,25 @@ import {
 const demoWeekPath = resolve(import.meta.dirname, "../../demo/2026-01-05.json")
 
 describe("Demo Week Set", () => {
-  it("is accepted by the production parser with all five layouts and HTML asset", () => {
+  it("provides public production examples for both selected layouts", () => {
     const week = parseWeekDocument(
       JSON.parse(readFileSync(demoWeekPath, "utf8"))
     )
 
     expect(week.start).toBe("2026-01-05")
     expect(week.end).toBe("2026-01-09")
-    expect(week.pages).toHaveLength(5)
+    expect(week.pages).toHaveLength(10)
     expect(week.pages.map((page) => page.layout)).toEqual([
       "two-column",
       "weekly-overview",
       "evidence-decision",
       "next-actions",
       "html",
+      "trend-target",
+      "trend-target",
+      "trend-target",
+      "next-actions",
+      "next-actions",
     ])
 
     expect(isTwoColumnWeekPage(week.pages[0])).toBe(true)
@@ -35,6 +41,52 @@ describe("Demo Week Set", () => {
     expect(isEvidenceDecisionPage(week.pages[2])).toBe(true)
     expect(isNextActionsPage(week.pages[3])).toBe(true)
     expect(isHtmlWeekPage(week.pages[4])).toBe(true)
+    const [lower, higher, noData, rows, mixedRows] = week.pages.slice(5)
+    expect(isTrendTargetPage(lower)).toBe(true)
+    expect(isTrendTargetPage(higher)).toBe(true)
+    expect(isTrendTargetPage(noData)).toBe(true)
+    expect(isNextActionsPage(rows)).toBe(true)
+    expect(isNextActionsPage(mixedRows)).toBe(true)
+    if (
+      !isTrendTargetPage(lower) ||
+      !isTrendTargetPage(higher) ||
+      !isTrendTargetPage(noData) ||
+      !isNextActionsPage(rows) ||
+      !isNextActionsPage(mixedRows)
+    )
+      throw new Error("expected complete layout examples")
+    expect(lower.direction).toBe("at-most")
+    expect(lower.observations.at(-1)).toEqual({
+      state: "measured",
+      value: 8.04,
+    })
+    expect(higher.direction).toBe("at-least")
+    expect(
+      higher.observations.some(
+        (item) => item.state === "measured" && item.value < 0
+      )
+    ).toBe(true)
+    expect(
+      higher.observations.some(
+        (item) => item.state === "measured" && item.value === 0
+      )
+    ).toBe(true)
+    expect(noData.observations.at(-1)).toEqual({ state: "missing" })
+    expect(
+      noData.observations.filter((item) => item.state === "measured").length
+    ).toBeGreaterThanOrEqual(2)
+    expect(rows.variant).toBe("rows")
+    expect(rows.commitments).toEqual(
+      week.pages[3] && isNextActionsPage(week.pages[3])
+        ? week.pages[3].commitments
+        : []
+    )
+    expect(mixedRows.variant).toBe("rows")
+    expect(
+      mixedRows.commitments.some((item) =>
+        /[\u4e00-\u9fff]/u.test(item.outcome)
+      )
+    ).toBe(true)
 
     const htmlPage = week.pages[4]
     if (!isHtmlWeekPage(htmlPage)) {
