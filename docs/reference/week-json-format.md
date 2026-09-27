@@ -1,7 +1,7 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-26
+最後更新：2026-09-28
 
 ---
 
@@ -32,7 +32,7 @@ weeks/YYYY-MM-DD/<htmlFile>
 | 欄位             | 型別      | 必填 | 說明                                                                                                              |
 | ---------------- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------- |
 | `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                                          |
-| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"` 或 `"next-actions"`                          |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`        |
 | `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                          |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                        |
 | `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                     |
@@ -132,6 +132,24 @@ Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順�
 | `checkpoint` | `string` | 是   |
 
 Clone 時保留 collection 長度，清除每個 Commitment 的 title／outcome／checkpoint。
+
+### `layout: "trend-target"`
+
+Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八個 `unfilled` 位置；現階段編輯器能填入 `measured` 值，明確缺測的編輯控制由 [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45) 補上。
+
+| 欄位                 | 型別                        | 必填 | 說明                                                                                                                            |
+| -------------------- | --------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `metric`             | `object`                    | 是   | `label`、`unit`、`unitPosition`、`unitSpacing`、`precision`；格式選項同 Comparison Metric，預設為一位小數、單位置後、以空格分隔 |
+| `startMonday`        | `string \| null`            | 是   | 真實 ISO 週一；未設定時只能有 `unfilled` 位置                                                                                   |
+| `observations`       | `TrendObservation[]`        | 是   | 2–12 個連續週次位置；日期由 `startMonday` 起以 UTC 每次加七天                                                                   |
+| `target`             | `number \| null`            | 是   | 有限的固定門檻；`null` 是草稿                                                                                                   |
+| `direction`          | `"at-most"` \| `"at-least"` | 是   | 包含等號的比較方向                                                                                                              |
+| `interpretation`     | `string`                    | 是   | 對趨勢的文字解讀                                                                                                                |
+| `measurementContext` | `string`                    | 是   | 投影片上可見的量測來源／條件                                                                                                    |
+
+每個觀測位置是 `{ "state": "measured", "value": <finite number> }`、`{ "state": "missing" }` 或 `{ "state": "unfilled" }`。只有 `measured` 能有 `value`；允許負數與零。Parser 拒絕無效日期、列舉值、非有限數字及非量測狀態中隱藏的數值。
+
+可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Week Document 的 `start`，且通過 Stage fit。現階段包含 `missing` 的頁面暫時不能匯出。Clone 保留 metric、目標、觀測日期與數值、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
 
 ### SlideItem
 

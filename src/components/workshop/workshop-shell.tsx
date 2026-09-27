@@ -43,6 +43,7 @@ import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 import type {
   MetricEditorControls,
+  TrendEditorControls,
   SessionLoadStatus,
 } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
@@ -67,6 +68,7 @@ type EditorSidebarProps = {
   week: WeekDocument | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
   metricControls: MetricEditorControls
+  trendControls: TrendEditorControls
   selection: PageSelection
   loadStatus: SessionLoadStatus
   save: ToolbarSaveControls
@@ -81,6 +83,7 @@ function EditorSidebar({
   week,
   editContent,
   metricControls,
+  trendControls,
   selection,
   loadStatus,
   save,
@@ -165,6 +168,7 @@ function EditorSidebar({
               pageIndex={selection.pageIndex}
               onChange={editContent}
               metricControls={metricControls}
+              trendControls={trendControls}
               readOnly={!editMode}
             />
           </>
@@ -184,6 +188,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
     operationSnapshot,
     editContent,
     metricControls,
+    trendControls,
     addPage,
     deletePage,
     movePage,
@@ -390,6 +395,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
             week={week}
             editContent={editContent}
             metricControls={metricControls}
+            trendControls={trendControls}
             selection={{
               pageIndex: selectedPageIndex,
               pageId: selectedPageId,

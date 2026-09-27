@@ -159,6 +159,13 @@ function clearPage(page: WeekPage): WeekPage {
       hidden: actions.hidden,
       notes: undefined,
     }),
+    trendTarget: (trend) => ({
+      ...trend,
+      title: "",
+      interpretation: "",
+      notes: undefined,
+      showPageNumber: undefined,
+    }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
       layout: twoColumn.layout,
