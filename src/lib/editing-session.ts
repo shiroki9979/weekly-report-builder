@@ -23,6 +23,7 @@ import {
 import {
   isEvidenceDecisionPage,
   isStructuredWeekPage,
+  type ComparisonMetric,
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
@@ -50,6 +51,12 @@ export type SessionOperationSnapshot = Readonly<{
   week: DeepReadonly<WeekDocument>
   selectedPageId: string | null
   metricInput: MetricInputMap
+}>
+
+export type MetricInputLocation = Readonly<{
+  pageId: string
+  metricIndex: number
+  field: MetricValueField
 }>
 
 function freezeDeep<T extends object>(value: T): DeepReadonly<T> {
@@ -205,6 +212,38 @@ function metricLocation(
   return { week, pageIndex, page }
 }
 
+function changedMetricFields(
+  before: ComparisonMetric,
+  after: ComparisonMetric
+): (keyof ComparisonMetric)[] {
+  return (Object.keys(before) as (keyof ComparisonMetric)[]).filter(
+    (field) => before[field] !== after[field]
+  )
+}
+
+function hasUnsupportedMetricChange(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  if (after.length < before.length) return true
+  if (
+    after.some((metric, index) => {
+      const oldIndex = before.indexOf(metric)
+      return oldIndex !== -1 && oldIndex !== index
+    })
+  )
+    return true
+  // Metric 沒有獨立 ID；一般內容更新限改一個欄位，避免複製物件後換位使輸入錯置。
+  const changes = before.flatMap((metric, index) =>
+    changedMetricFields(metric, after[index])
+  )
+  return (
+    changes.length > 1 ||
+    changes.includes("baselineValue") ||
+    changes.includes("candidateValue")
+  )
+}
+
 export function editSessionContent(
   session: EditingSession,
   update: (week: WeekDocument) => WeekDocument
@@ -229,13 +268,7 @@ export function editSessionContent(
       if (!isEvidenceDecisionPage(page) || !isEvidenceDecisionPage(nextPage)) {
         return false
       }
-      return (
-        nextPage.metrics.length < page.metrics.length ||
-        nextPage.metrics.some((metric, index) => {
-          const oldIndex = page.metrics.indexOf(metric)
-          return oldIndex !== -1 && oldIndex !== index
-        })
-      )
+      return hasUnsupportedMetricChange(page.metrics, nextPage.metrics)
     })
   ) {
     throw new Error(
@@ -257,9 +290,7 @@ export function selectSessionPage(
 
 export function readMetricInput(
   session: EditingSession,
-  pageId: string,
-  metricIndex: number,
-  field: MetricValueField
+  { pageId, metricIndex, field }: MetricInputLocation
 ): string {
   const { page } = metricLocation(session, pageId, metricIndex)
   return (
@@ -276,9 +307,7 @@ export function readMetricInput(
 
 export function writeMetricInput(
   session: EditingSession,
-  pageId: string,
-  metricIndex: number,
-  field: MetricValueField,
+  { pageId, metricIndex, field }: MetricInputLocation,
   raw: string
 ): EditingSession {
   const { week, pageIndex } = metricLocation(session, pageId, metricIndex)

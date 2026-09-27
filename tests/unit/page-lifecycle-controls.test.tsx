@@ -76,12 +76,9 @@ function LifecycleHarness({
           setSession((current) => editSessionContent(current, update))
         }
         metricControls={{
-          read: (pageId, index, field) =>
-            readMetricInput(session, pageId, index, field),
-          write: (pageId, index, field, raw) =>
-            setSession((current) =>
-              writeMetricInput(current, pageId, index, field, raw)
-            ),
+          read: (location) => readMetricInput(session, location),
+          write: (location, raw) =>
+            setSession((current) => writeMetricInput(current, location, raw)),
           move: (pageId, from, to) =>
             setSession((current) =>
               moveSessionMetric(current, pageId, from, to)

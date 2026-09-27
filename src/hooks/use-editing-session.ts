@@ -24,10 +24,10 @@ import {
   setSessionWeeks,
   writeMetricInput,
   type EditingSession,
+  type MetricInputLocation,
   type SessionOperationSnapshot,
 } from "@/lib/editing-session"
 import type { ExportIssue } from "@/lib/export-readiness"
-import type { MetricValueField } from "@/lib/metric-input"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
@@ -39,17 +39,8 @@ export type EditingSessionResult = {
   week: WeekDocument | null
   operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
-  readMetricInput: (
-    pageId: string,
-    metricIndex: number,
-    field: MetricValueField
-  ) => string
-  writeMetricInput: (
-    pageId: string,
-    metricIndex: number,
-    field: MetricValueField,
-    raw: string
-  ) => void
+  readMetricInput: (location: MetricInputLocation) => string
+  writeMetricInput: (location: MetricInputLocation, raw: string) => void
   moveMetric: (pageId: string, fromIndex: number, toIndex: number) => void
   removeMetric: (pageId: string, metricIndex: number) => void
   addPage: (page: WeekPage) => void
@@ -153,7 +144,10 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
 
   const saveWeek = useCallback(async () => {
     const current = sessionRef.current
-    if (!current.week) return
+    if (!current.week) {
+      update((session) => failSessionSave(session, "No week is open"))
+      return
+    }
     const gate = canSaveSession(current)
     update(() => gate.session)
     if (!gate.allowed) return
@@ -241,10 +235,9 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
     operationSnapshot: () => sessionOperationSnapshot(sessionRef.current),
     editContent: (change) =>
       update((current) => editSessionContent(current, change)),
-    readMetricInput: (pageId, index, field) =>
-      readMetricInput(session, pageId, index, field),
-    writeMetricInput: (pageId, index, field, raw) =>
-      update((current) => writeMetricInput(current, pageId, index, field, raw)),
+    readMetricInput: (location) => readMetricInput(session, location),
+    writeMetricInput: (location, raw) =>
+      update((current) => writeMetricInput(current, location, raw)),
     moveMetric: (pageId, from, to) =>
       update((current) => moveSessionMetric(current, pageId, from, to)),
     removeMetric: (pageId, index) =>

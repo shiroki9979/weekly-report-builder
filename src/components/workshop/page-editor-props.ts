@@ -1,15 +1,10 @@
 import type { Panel, WeekDocument, WeekPage } from "@/lib/week-document"
 import type { ExportIssue } from "@/lib/export-readiness"
-import type { MetricValueField } from "@/lib/metric-input"
+import type { MetricInputLocation } from "@/lib/editing-session"
 
 export type MetricEditorControls = {
-  read: (pageId: string, metricIndex: number, field: MetricValueField) => string
-  write: (
-    pageId: string,
-    metricIndex: number,
-    field: MetricValueField,
-    raw: string
-  ) => void
+  read: (location: MetricInputLocation) => string
+  write: (location: MetricInputLocation, raw: string) => void
   move: (pageId: string, fromIndex: number, toIndex: number) => void
   remove: (pageId: string, metricIndex: number) => void
   readiness: (pageId: string) => ExportIssue[]
