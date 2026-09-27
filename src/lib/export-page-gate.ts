@@ -1,5 +1,5 @@
 import { abortError, errorMessage } from "./export-errors"
-import type { MetricDraftBuffer } from "./metric-draft-buffer"
+import type { MetricInputMap } from "./metric-input"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -34,7 +34,7 @@ export type CaptureAdapter = {
 
 export type ExportPageDeps = {
   adapter: CaptureAdapter
-  metricBuffer?: MetricDraftBuffer
+  metricBuffer?: MetricInputMap
   signal?: AbortSignal
 }
 
@@ -92,7 +92,7 @@ export async function exportPage(
 
 function preflightIssues(
   page: WeekPage,
-  metricBuffer: MetricDraftBuffer
+  metricBuffer: MetricInputMap
 ): ExportIssue[] {
   if (!isSupportedStagePage(page)) {
     return assessExportEligibility(page).issues

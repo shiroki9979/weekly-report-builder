@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   LockIcon,
   MoonIcon,
@@ -27,11 +21,8 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { ExportControls } from "@/components/workshop/export-controls"
-import {
-  MetricDraftProvider,
-  useMetricDraft,
-} from "@/components/workshop/metric-draft-context"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
+import type { MetricEditorControls } from "@/components/workshop/page-editor-props"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
@@ -48,16 +39,11 @@ import {
   type WeekEditorLoadStatus,
 } from "@/hooks/use-week-editor"
 import {
-  pruneMetricDrafts,
-  weekHasInvalidMetricDrafts,
-} from "@/lib/metric-draft-buffer"
-import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
 } from "@/lib/overflow-measurement"
-import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
-import type { WeekDocument } from "@/lib/week-document"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 
 export const EMPTY_STORE_MESSAGE =
@@ -67,7 +53,9 @@ type PageSelection = {
   pageIndex: number
   pageId: string | null
   onSelect: (index: number) => void
-  onLifecycle: (result: PageLifecycleResult) => void
+  onAdd: (page: WeekPage) => void
+  onDelete: (pageId: string) => void
+  onMove: (pageId: string, direction: "up" | "down") => void
 }
 
 type EditorSidebarProps = {
@@ -75,7 +63,8 @@ type EditorSidebarProps = {
   selectedMonday: string
   onWeekChange: (monday: string) => void
   week: WeekDocument | null
-  setWeek: Dispatch<SetStateAction<WeekDocument | null>>
+  editContent: (update: (week: WeekDocument) => WeekDocument) => void
+  metricControls: MetricEditorControls
   selection: PageSelection
   loadStatus: WeekEditorLoadStatus
   save: ToolbarSaveControls
@@ -88,7 +77,8 @@ function EditorSidebar({
   selectedMonday,
   onWeekChange,
   week,
-  setWeek,
+  editContent,
+  metricControls,
   selection,
   loadStatus,
   save,
@@ -145,9 +135,7 @@ function EditorSidebar({
               show: week?.showPageNumbers ?? true,
               disabled: !editable,
               onChange: (show) =>
-                setWeek((current) =>
-                  current ? setWeekShowPageNumbers(current, show) : null
-                ),
+                editContent((current) => setWeekShowPageNumbers(current, show)),
             }}
           />
         )}
@@ -163,7 +151,9 @@ function EditorSidebar({
               <PageLifecycleControls
                 week={week}
                 selectedPageId={selection.pageId}
-                onChange={selection.onLifecycle}
+                onAdd={selection.onAdd}
+                onDelete={selection.onDelete}
+                onMove={selection.onMove}
                 disabled={!editMode}
               />
             ) : null}
@@ -171,7 +161,8 @@ function EditorSidebar({
             <PageEditorForm
               week={week}
               pageIndex={selection.pageIndex}
-              onChange={setWeek}
+              onChange={editContent}
+              metricControls={metricControls}
               readOnly={!editMode}
             />
           </>
@@ -183,36 +174,33 @@ function EditorSidebar({
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell() {
-  return (
-    <MetricDraftProvider>
-      <WorkshopShellBody />
-    </MetricDraftProvider>
-  )
+  return <WorkshopShellBody />
 }
 
 function WorkshopShellBody() {
-  const { buffer, replaceBuffer } = useMetricDraft()
-  const [draftSaveError, setDraftSaveError] = useState<string | null>(null)
   const {
     weeks,
     selectedMonday,
     setSelectedMonday,
     week,
-    setWeek,
+    metricBuffer,
+    editContent,
+    readMetricInput,
+    writeMetricInput,
+    moveMetric,
+    removeMetric,
+    addPage,
+    deletePage,
+    movePage,
+    readiness,
     selectedPageIndex,
     setSelectedPageIndex,
     selectedPageId,
-    setSelectedPageId,
     loadStatus,
     suggestedMonday,
     save,
     create,
   } = useWeekEditor()
-
-  // 草稿以 Page ID 索引，而不同週次會重用 p01 等 id；切週必須清空，否則上一週的非法輸入會出現在新週並擋住 Save
-  useEffect(() => {
-    replaceBuffer({})
-  }, [replaceBuffer, selectedMonday])
 
   const loading = loadStatus.kind === "loading"
   const emptyStore = loadStatus.kind === "empty"
@@ -231,7 +219,7 @@ function WorkshopShellBody() {
     monday: selectedMonday,
     week,
     selectedPage,
-    metricBuffer: buffer,
+    metricBuffer,
   })
 
   const editorPanelRef = usePanelRef()
@@ -411,30 +399,28 @@ function WorkshopShellBody() {
             selectedMonday={selectedMonday}
             onWeekChange={setSelectedMonday}
             week={week}
-            setWeek={setWeek}
+            editContent={editContent}
+            metricControls={{
+              read: readMetricInput,
+              write: writeMetricInput,
+              move: moveMetric,
+              remove: removeMetric,
+              readiness,
+            }}
             selection={{
               pageIndex: selectedPageIndex,
               pageId: selectedPageId,
               onSelect: setSelectedPageIndex,
-              onLifecycle: (result) => {
-                replaceBuffer(pruneMetricDrafts(buffer, result.week))
-                setWeek(result.week)
-                setSelectedPageId(result.selectedPageId)
-              },
+              onAdd: addPage,
+              onDelete: deletePage,
+              onMove: movePage,
             }}
             loadStatus={loadStatus}
             save={{
               saving: save.saving,
               message: save.message,
-              error: save.error ?? draftSaveError,
-              onSave: () => {
-                if (week && weekHasInvalidMetricDrafts(week, buffer)) {
-                  setDraftSaveError("Fix invalid metric values before saving")
-                  return
-                }
-                setDraftSaveError(null)
-                void save.saveWeek()
-              },
+              error: save.error,
+              onSave: () => void save.saveWeek(),
             }}
             create={{
               creating: create.creating,

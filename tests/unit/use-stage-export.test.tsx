@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useStageExport } from "@/hooks/use-stage-export"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
+import type { MetricInputMap } from "@/lib/metric-input"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -32,7 +32,7 @@ function ExportTestComponent({
   exportRef?: {
     current: ReturnType<typeof useStageExport> | null
   }
-  metricBuffer?: MetricDraftBuffer
+  metricBuffer?: MetricInputMap
 }) {
   const exportState = useStageExport({
     monday: week.start,
@@ -371,7 +371,7 @@ describe("useStageExport", () => {
     expect(exportRef.current?.exportResult).toMatch(/title/i)
   })
 
-  it("blocks copy of a complete evidence-decision page with an invalid metric draft", async () => {
+  it("blocks copy of a complete evidence-decision page with an invalid Metric Input", async () => {
     const page: EvidenceDecisionPage = {
       id: "p01",
       layout: "evidence-decision",

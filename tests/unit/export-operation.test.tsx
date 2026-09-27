@@ -6,7 +6,7 @@ import { useStageExport } from "@/hooks/use-stage-export"
 import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
+import type { MetricInputMap } from "@/lib/metric-input"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
@@ -29,7 +29,7 @@ function OperationHarness({
   monday: string
   week: WeekDocument
   selectedPage: WeekPage
-  metricBuffer?: MetricDraftBuffer
+  metricBuffer?: MetricInputMap
   commandsRef: { current: Commands | null }
 }) {
   const operation = useStageExport({ monday, week, selectedPage, metricBuffer })
@@ -200,7 +200,7 @@ describe("export operation lifecycle", () => {
     ])
   })
 
-  it("keeps raw metric drafts and selects a fresh Copy target after the previous operation", async () => {
+  it("keeps raw Metric Input and selects a fresh Copy target after the previous operation", async () => {
     const firstCapture = deferred<Blob>()
     const week: WeekDocument = {
       start: "2026-08-24",

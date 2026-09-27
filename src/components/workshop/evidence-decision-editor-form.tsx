@@ -10,30 +10,17 @@ import {
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
-import { useMetricDraft } from "@/components/workshop/metric-draft-context"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
   moveDecisionInterpretation,
-  moveDecisionMetric,
   removeDecisionInterpretation,
-  removeDecisionMetric,
   setDecisionInterpretation,
   setDecisionMetricFormat,
   setDecisionMetricLabel,
   setDecisionMetricUnit,
-  setDecisionMetricValue,
   setDecisionVerdict,
 } from "@/lib/evidence-decision-editor"
-import {
-  metricDraftPath,
-  readMetricDraft,
-  remapMetricBufferAfterMove,
-  remapMetricBufferAfterRemove,
-  type MetricDraftPath,
-} from "@/lib/metric-draft-buffer"
-import { issuePathsFor } from "@/lib/export-readiness"
-import { parseMetricInput } from "@/lib/metric-format"
 import {
   canAddEntry,
   canRemoveEntry,
@@ -46,22 +33,16 @@ export function EvidenceDecisionEditorForm({
   pageIndex,
   page,
   onChange,
+  metricControls,
   readOnly = false,
 }: PageEditorProps<EvidenceDecisionPage>) {
-  const { buffer, replaceBuffer } = useMetricDraft()
-  const invalidPaths = issuePathsFor(page, buffer)
-
-  function applyMetricMove(fromIndex: number, toIndex: number) {
-    replaceBuffer(
-      remapMetricBufferAfterMove(buffer, page.id, fromIndex, toIndex)
-    )
-    onChange(moveDecisionMetric(week, pageIndex, fromIndex, toIndex))
+  if (!metricControls) {
+    throw new Error("Metric editor controls are required")
   }
-
-  function applyMetricRemove(metricIndex: number) {
-    replaceBuffer(remapMetricBufferAfterRemove(buffer, page.id, metricIndex))
-    onChange(removeDecisionMetric(week, pageIndex, metricIndex))
-  }
+  const readinessIssues = metricControls.readiness(page.id)
+  const invalidPaths = new Set(
+    readinessIssues.flatMap((issue) => (issue.path ? [issue.path] : []))
+  )
 
   return (
     <EditorialPageEditorChrome
@@ -71,7 +52,7 @@ export function EvidenceDecisionEditorForm({
       onChange={onChange}
       readOnly={readOnly}
       invalidPaths={invalidPaths}
-      metricBuffer={buffer}
+      readinessIssues={readinessIssues}
     >
       <div className="space-y-2">
         <Label htmlFor="decision-verdict">Verdict</Label>
@@ -80,7 +61,9 @@ export function EvidenceDecisionEditorForm({
           value={page.verdict}
           aria-invalid={invalidPaths.has("verdict") || undefined}
           onChange={(event) =>
-            onChange(setDecisionVerdict(week, pageIndex, event.target.value))
+            onChange((currentWeek) =>
+              setDecisionVerdict(currentWeek, pageIndex, event.target.value)
+            )
           }
         />
       </div>
@@ -92,7 +75,9 @@ export function EvidenceDecisionEditorForm({
           variant="outline"
           size="sm"
           disabled={!canAddEntry(page.metrics, CARDINALITY.comparisonMetrics)}
-          onClick={() => onChange(addDecisionMetric(week, pageIndex))}
+          onClick={() =>
+            onChange((currentWeek) => addDecisionMetric(currentWeek, pageIndex))
+          }
         >
           Add metric
         </Button>
@@ -109,7 +94,9 @@ export function EvidenceDecisionEditorForm({
               variant="outline"
               size="sm"
               disabled={metricIndex === 0}
-              onClick={() => applyMetricMove(metricIndex, metricIndex - 1)}
+              onClick={() =>
+                metricControls.move(page.id, metricIndex, metricIndex - 1)
+              }
             >
               Move up
             </Button>
@@ -118,7 +105,9 @@ export function EvidenceDecisionEditorForm({
               variant="outline"
               size="sm"
               disabled={metricIndex === page.metrics.length - 1}
-              onClick={() => applyMetricMove(metricIndex, metricIndex + 1)}
+              onClick={() =>
+                metricControls.move(page.id, metricIndex, metricIndex + 1)
+              }
             >
               Move down
             </Button>
@@ -129,7 +118,7 @@ export function EvidenceDecisionEditorForm({
               disabled={
                 !canRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)
               }
-              onClick={() => applyMetricRemove(metricIndex)}
+              onClick={() => metricControls.remove(page.id, metricIndex)}
             >
               Remove
             </Button>
@@ -143,9 +132,9 @@ export function EvidenceDecisionEditorForm({
                 invalidPaths.has(`metrics[${metricIndex}].label`) || undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setDecisionMetricLabel(
-                    week,
+                    currentWeek,
                     pageIndex,
                     metricIndex,
                     event.target.value
@@ -157,39 +146,19 @@ export function EvidenceDecisionEditorForm({
           <MetricNumberField
             id={`metric-${metricIndex}-baseline`}
             label="Baseline"
-            pageId={page.id}
-            path={metricDraftPath(metricIndex, "baselineValue")}
-            typedValue={metric.baselineValue}
+            value={metricControls.read(page.id, metricIndex, "baselineValue")}
             invalid={invalidPaths.has(`metrics[${metricIndex}].baselineValue`)}
-            onTypedValue={(value) =>
-              onChange(
-                setDecisionMetricValue(
-                  week,
-                  pageIndex,
-                  metricIndex,
-                  "baselineValue",
-                  value
-                )
-              )
+            onChange={(raw) =>
+              metricControls.write(page.id, metricIndex, "baselineValue", raw)
             }
           />
           <MetricNumberField
             id={`metric-${metricIndex}-candidate`}
             label="Candidate"
-            pageId={page.id}
-            path={metricDraftPath(metricIndex, "candidateValue")}
-            typedValue={metric.candidateValue}
+            value={metricControls.read(page.id, metricIndex, "candidateValue")}
             invalid={invalidPaths.has(`metrics[${metricIndex}].candidateValue`)}
-            onTypedValue={(value) =>
-              onChange(
-                setDecisionMetricValue(
-                  week,
-                  pageIndex,
-                  metricIndex,
-                  "candidateValue",
-                  value
-                )
-              )
+            onChange={(raw) =>
+              metricControls.write(page.id, metricIndex, "candidateValue", raw)
             }
           />
           <div className="space-y-2">
@@ -198,9 +167,9 @@ export function EvidenceDecisionEditorForm({
               id={`metric-${metricIndex}-unit`}
               value={metric.unit}
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setDecisionMetricUnit(
-                    week,
+                    currentWeek,
                     pageIndex,
                     metricIndex,
                     event.target.value
@@ -217,10 +186,15 @@ export function EvidenceDecisionEditorForm({
               value={metric.unitPosition}
               onValueChange={(value) => {
                 if (value === "before" || value === "after") {
-                  onChange(
-                    setDecisionMetricFormat(week, pageIndex, metricIndex, {
-                      unitPosition: value,
-                    })
+                  onChange((currentWeek) =>
+                    setDecisionMetricFormat(
+                      currentWeek,
+                      pageIndex,
+                      metricIndex,
+                      {
+                        unitPosition: value,
+                      }
+                    )
                   )
                 }
               }}
@@ -242,10 +216,15 @@ export function EvidenceDecisionEditorForm({
               value={metric.unitSpacing}
               onValueChange={(value) => {
                 if (value === "none" || value === "space") {
-                  onChange(
-                    setDecisionMetricFormat(week, pageIndex, metricIndex, {
-                      unitSpacing: value,
-                    })
+                  onChange((currentWeek) =>
+                    setDecisionMetricFormat(
+                      currentWeek,
+                      pageIndex,
+                      metricIndex,
+                      {
+                        unitSpacing: value,
+                      }
+                    )
                   )
                 }
               }}
@@ -265,10 +244,15 @@ export function EvidenceDecisionEditorForm({
               value={String(metric.precision)}
               onValueChange={(value) => {
                 if (value === "0" || value === "1" || value === "2") {
-                  onChange(
-                    setDecisionMetricFormat(week, pageIndex, metricIndex, {
-                      precision: Number(value) as 0 | 1 | 2,
-                    })
+                  onChange((currentWeek) =>
+                    setDecisionMetricFormat(
+                      currentWeek,
+                      pageIndex,
+                      metricIndex,
+                      {
+                        precision: Number(value) as 0 | 1 | 2,
+                      }
+                    )
                   )
                 }
               }}
@@ -295,7 +279,11 @@ export function EvidenceDecisionEditorForm({
           disabled={
             !canAddEntry(page.interpretations, CARDINALITY.interpretations)
           }
-          onClick={() => onChange(addDecisionInterpretation(week, pageIndex))}
+          onClick={() =>
+            onChange((currentWeek) =>
+              addDecisionInterpretation(currentWeek, pageIndex)
+            )
+          }
         >
           Add interpretation
         </Button>
@@ -316,9 +304,9 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={interpretationIndex === 0}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveDecisionInterpretation(
-                    week,
+                    currentWeek,
                     pageIndex,
                     interpretationIndex,
                     interpretationIndex - 1
@@ -334,9 +322,9 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={interpretationIndex === page.interpretations.length - 1}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveDecisionInterpretation(
-                    week,
+                    currentWeek,
                     pageIndex,
                     interpretationIndex,
                     interpretationIndex + 1
@@ -357,9 +345,9 @@ export function EvidenceDecisionEditorForm({
                 )
               }
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   removeDecisionInterpretation(
-                    week,
+                    currentWeek,
                     pageIndex,
                     interpretationIndex
                   )
@@ -378,9 +366,9 @@ export function EvidenceDecisionEditorForm({
               undefined
             }
             onChange={(event) =>
-              onChange(
+              onChange((currentWeek) =>
                 setDecisionInterpretation(
-                  week,
+                  currentWeek,
                   pageIndex,
                   interpretationIndex,
                   event.target.value
@@ -397,43 +385,24 @@ export function EvidenceDecisionEditorForm({
 function MetricNumberField({
   id,
   label,
-  pageId,
-  path,
-  typedValue,
+  value,
   invalid,
-  onTypedValue,
+  onChange,
 }: {
   id: string
   label: string
-  pageId: string
-  path: MetricDraftPath
-  typedValue: number | null
+  value: string
   invalid: boolean
-  onTypedValue: (value: number | null) => void
+  onChange: (raw: string) => void
 }) {
-  const { buffer, setRaw } = useMetricDraft()
-  const display =
-    readMetricDraft(buffer, pageId, path) ??
-    (typedValue === null ? "" : String(typedValue))
-
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
-        value={display}
+        value={value}
         aria-invalid={invalid || undefined}
-        onChange={(event) => {
-          const raw = event.target.value
-          setRaw(pageId, path, raw)
-          const parsed = parseMetricInput(raw)
-          if (parsed.status === "empty") {
-            onTypedValue(null)
-          }
-          if (parsed.status === "valid") {
-            onTypedValue(parsed.value)
-          }
-        }}
+        onChange={(event) => onChange(event.target.value)}
       />
     </div>
   )
