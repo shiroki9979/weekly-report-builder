@@ -46,21 +46,14 @@
 | [Layout 家族原型](explanation/layout-prototype.md)               | 歷史 800 × 450 驗證與 production adoption 指標 |
 | [架構加深候選](explanation/architecture-deepening-candidates.md) | 2026-09-27 審查找出的 module 加深候選與證據    |
 
-## Specs（尚未落地的功能規格）
-
-給實作 agent 的完整規格。
-
-| 文件                                                | 說明                                              |
-| --------------------------------------------------- | ------------------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)            | `layout: "html"` 16:9 逃生口                      |
-| [HTML Page error-PNG](specs/html-page-error-png.md) | HTML fetch／timeout／capture 失敗政策（尚未實作） |
-
 ## Specs（已落地）
 
-已實作、仍作為 layout 規則來源的規格。
+已實作、仍供維護與驗收參照的規格。
 
 | 文件                                                                            | 說明                                       |
 | ------------------------------------------------------------------------------- | ------------------------------------------ |
+| [HTML 全幅頁](specs/html-page-layout.md)                                        | `layout: "html"` 16:9 逃生口               |
+| [HTML Page export failure policy](specs/html-page-error-png.md)                 | HTML 載入／截圖失敗政策與共用 Export gate  |
 | [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | Editorial Layout Family 的 production 規格 |
 
 ## 其他
