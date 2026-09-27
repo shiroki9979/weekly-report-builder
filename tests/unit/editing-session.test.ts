@@ -12,6 +12,7 @@ import {
   readMetricInput,
   removeSessionMetric,
   selectSessionPage,
+  sessionOperationSnapshot,
   sessionReadiness,
   writeMetricInput,
 } from "@/lib/editing-session"
@@ -106,6 +107,26 @@ describe("Editing Session", () => {
     expect(session.selectedPageId).toBe("p02")
     expect(session.week?.pages.map((page) => page.id)).toEqual(["p02", "p01"])
     expect(readMetricInput(session, "p02", 0, "baselineValue")).toBe("2.00")
+  })
+
+  it("keeps a read-only operation snapshot after metric, page, and week changes", () => {
+    let session = createEditingSession(week(["p01", "p02"]))
+    session = selectSessionPage(session, "p02")
+    session = writeMetricInput(session, "p02", 0, "baselineValue", "1.50")
+    const snapshot = sessionOperationSnapshot(session)!
+
+    session = writeMetricInput(session, "p02", 0, "baselineValue", "bad")
+    session = moveSessionPage(session, "p02", "up")
+    session = deleteSessionPage(session, "p01")
+    session = openSessionWeek(session, week(["other"]))
+
+    expect(snapshot.monday).toBe("2026-08-24")
+    expect(snapshot.selectedPageId).toBe("p02")
+    expect(snapshot.week.pages.map((page) => page.id)).toEqual(["p01", "p02"])
+    expect(snapshot.metricInput.p02["metrics[0].baselineValue"]).toBe("1.50")
+    expect(Object.isFrozen(snapshot.week.pages[1])).toBe(true)
+    expect(Object.isFrozen(snapshot.metricInput.p02)).toBe(true)
+    expect(session.week?.pages.map((page) => page.id)).toEqual(["other"])
   })
 
   it("rejects metric removal through the general content edit entry", () => {

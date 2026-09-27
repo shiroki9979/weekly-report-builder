@@ -265,7 +265,7 @@ const METRIC_VALUE_LABELS: Record<MetricValueField, string> = {
   candidateValue: "Candidate value",
 }
 
-// 非法 raw 草稿優先於 typed 值：草稿未能寫回 JSON，typed 值只是上一個合法值
+// 非法 Metric Input 優先於 typed 值：輸入未能寫回 JSON，typed 值只是上一個合法值
 function assessMetricValue(
   page: EvidenceDecisionPage,
   metricIndex: number,

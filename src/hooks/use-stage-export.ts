@@ -6,19 +6,16 @@ import {
 } from "@/lib/browser-capture-adapter"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
+import type { SessionOperationSnapshot } from "@/lib/editing-session"
 import { errorMessage } from "@/lib/export-errors"
 import { exportPage } from "@/lib/export-page-gate"
 import { formatExportIssues } from "@/lib/export-readiness"
 import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
-import type { MetricInputMap } from "@/lib/metric-input"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import { exportVisiblePages } from "@/lib/week-export"
 
 type UseStageExportOptions = {
-  monday: string
-  week: WeekDocument | null
-  selectedPage?: WeekPage | null
-  metricBuffer?: MetricInputMap
+  operationSnapshot: () => SessionOperationSnapshot | null
 }
 
 type ExportCommandResult =
@@ -28,19 +25,11 @@ type ExportCommandResult =
   | { kind: "disposed" }
 
 type OperationSnapshot = {
-  monday: string
-  week: WeekDocument
-  selectedPage: WeekPage | null
-  metricBuffer: MetricInputMap
+  data: SessionOperationSnapshot
   controller: AbortController
 }
 
-export function useStageExport({
-  monday,
-  week,
-  selectedPage,
-  metricBuffer = {},
-}: UseStageExportOptions) {
+export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
   const [lastResult, setLastResult] = useState<ExportResult | null>(null)
@@ -56,34 +45,37 @@ export function useStageExport({
     }
   }, [])
 
-  const start = useCallback(():
-    { kind: "started"; operation: OperationSnapshot } | ExportCommandResult => {
-    if (disposedRef.current) {
-      return { kind: "disposed" }
-    }
-    if (activeRef.current) {
-      return { kind: "busy" }
-    }
-    if (!week) {
-      return { kind: "unavailable" }
-    }
+  const start = useCallback(
+    (
+      requireSelectedPage = false
+    ):
+      | { kind: "started"; operation: OperationSnapshot }
+      | ExportCommandResult => {
+      if (disposedRef.current) {
+        return { kind: "disposed" }
+      }
+      if (activeRef.current) {
+        return { kind: "busy" }
+      }
+      const data = operationSnapshot()
+      if (
+        !data ||
+        (requireSelectedPage &&
+          !data.week.pages.some((page) => page.id === data.selectedPageId))
+      ) {
+        return { kind: "unavailable" }
+      }
 
-    // 編輯器可能直接修改巢狀頁面或草稿；操作必須保留接受當下的完整資料。
-    const snapshotWeek = structuredClone(week)
-    const operation: OperationSnapshot = {
-      monday,
-      week: snapshotWeek,
-      selectedPage: selectedPage
-        ? (snapshotWeek.pages.find((page) => page.id === selectedPage.id) ??
-          structuredClone(selectedPage))
-        : null,
-      metricBuffer: structuredClone(metricBuffer),
-      controller: new AbortController(),
-    }
-    activeRef.current = operation
-    setLastResult(null)
-    return { kind: "started", operation }
-  }, [metricBuffer, monday, selectedPage, week])
+      const operation: OperationSnapshot = {
+        data,
+        controller: new AbortController(),
+      }
+      activeRef.current = operation
+      setLastResult(null)
+      return { kind: "started", operation }
+    },
+    [operationSnapshot]
+  )
 
   const isActive = useCallback(
     (operation: OperationSnapshot) =>
@@ -106,17 +98,18 @@ export function useStageExport({
         return started
       }
       const { operation } = started
+      const { data } = operation
 
       setExporting(true)
 
       try {
         const result = await exportVisiblePages(
-          operation.monday,
-          operation.week,
+          data.monday,
+          data.week as WeekDocument,
           {
             adapter: browserCaptureAdapter,
             download: downloadBlob,
-            metricBuffer: operation.metricBuffer,
+            metricBuffer: data.metricInput,
             signal: operation.controller.signal,
             beforePages: assertCaptureHostAvailable,
           }
@@ -133,15 +126,15 @@ export function useStageExport({
 
   const copyCurrentPage =
     useCallback(async (): Promise<ExportCommandResult> => {
-      if (!selectedPage && !activeRef.current) {
-        return { kind: "unavailable" }
-      }
-      const started = start()
+      const started = start(true)
       if (started.kind !== "started") {
         return started
       }
       const { operation } = started
-      const page = operation.selectedPage
+      const { data } = operation
+      const page = data.week.pages.find(
+        (entry) => entry.id === data.selectedPageId
+      )
       if (!page) {
         finish(operation)
         return { kind: "unavailable" }
@@ -150,18 +143,22 @@ export function useStageExport({
       setCopying(true)
 
       try {
-        const result = await exportPage(operation.week, page, {
-          adapter: browserCaptureAdapter,
-          metricBuffer: operation.metricBuffer,
-          signal: operation.controller.signal,
-        })
+        const result = await exportPage(
+          data.week as WeekDocument,
+          page as WeekPage,
+          {
+            adapter: browserCaptureAdapter,
+            metricBuffer: data.metricInput,
+            signal: operation.controller.signal,
+          }
+        )
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
         if (result.kind === "blocked") {
           setLastResult({
             kind: "copy",
-            monday: operation.monday,
+            monday: data.monday,
             pageId: page.id,
             error: formatExportIssues(result.issues),
           })
@@ -183,7 +180,7 @@ export function useStageExport({
         }
         setLastResult({
           kind: "copy",
-          monday: operation.monday,
+          monday: data.monday,
           pageId: page.id,
           error: null,
         })
@@ -193,7 +190,7 @@ export function useStageExport({
         }
         setLastResult({
           kind: "copy",
-          monday: operation.monday,
+          monday: data.monday,
           pageId: page.id,
           error: errorMessage(cause, "Failed to copy image to clipboard"),
         })
@@ -201,7 +198,7 @@ export function useStageExport({
         finish(operation)
       }
       return { kind: "completed" }
-    }, [finish, isActive, selectedPage, start])
+    }, [finish, isActive, start])
 
   const summary = summarizeExportResult(lastResult)
   return {

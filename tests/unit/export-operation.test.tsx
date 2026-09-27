@@ -6,7 +6,14 @@ import { useStageExport } from "@/hooks/use-stage-export"
 import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricInputMap } from "@/lib/metric-input"
+import {
+  createEditingSession,
+  moveSessionPage,
+  selectSessionPage,
+  sessionOperationSnapshot,
+  writeMetricInput,
+  type EditingSession,
+} from "@/lib/editing-session"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
@@ -23,16 +30,24 @@ function OperationHarness({
   monday,
   week,
   selectedPage,
-  metricBuffer,
+  session,
   commandsRef,
 }: {
   monday: string
   week: WeekDocument
   selectedPage: WeekPage
-  metricBuffer?: MetricInputMap
+  session?: EditingSession
   commandsRef: { current: Commands | null }
 }) {
-  const operation = useStageExport({ monday, week, selectedPage, metricBuffer })
+  const operation = useStageExport({
+    operationSnapshot: () =>
+      sessionOperationSnapshot(
+        session ?? {
+          ...selectSessionPage(createEditingSession(week), selectedPage.id),
+          selectedMonday: monday,
+        }
+      ),
+  })
   useEffect(() => {
     commandsRef.current = operation
   })
@@ -200,7 +215,7 @@ describe("export operation lifecycle", () => {
     ])
   })
 
-  it("keeps raw Metric Input and selects a fresh Copy target after the previous operation", async () => {
+  it("keeps the starting Metric Input and pages while later session edits set a fresh Copy target", async () => {
     const firstCapture = deferred<Blob>()
     const week: WeekDocument = {
       start: "2026-08-24",
@@ -237,12 +252,19 @@ describe("export operation lifecycle", () => {
       dispose: vi.fn(),
     }))
     const commandsRef: { current: Commands | null } = { current: null }
+    let session = writeMetricInput(
+      createEditingSession(week),
+      "p02",
+      0,
+      "baselineValue",
+      "invalid"
+    )
     const view = render(
       <OperationHarness
         monday="2026-08-24"
         week={week}
         selectedPage={week.pages[0]}
-        metricBuffer={{ p02: { "metrics[0].baselineValue": "invalid" } }}
+        session={session}
         commandsRef={commandsRef}
       />
     )
@@ -252,12 +274,15 @@ describe("export operation lifecycle", () => {
     })
     await waitFor(() => expect(prepare).toHaveBeenCalledOnce())
 
+    session = writeMetricInput(session, "p02", 0, "baselineValue", "2.00")
+    session = moveSessionPage(session, "p02", "up")
+    session = selectSessionPage(session, "p02")
     view.rerender(
       <OperationHarness
         monday="2026-08-24"
         week={week}
-        selectedPage={week.pages[1]}
-        metricBuffer={{}}
+        selectedPage={session.week!.pages[0]}
+        session={session}
         commandsRef={commandsRef}
       />
     )
@@ -268,6 +293,7 @@ describe("export operation lifecycle", () => {
     expect(commandsRef.current!.exportResult).toContain("p02")
     expect(commandsRef.current!.exportResult).toContain("baselineValue")
     expect(prepare).toHaveBeenCalledOnce()
+    expect(session.week?.pages.map((page) => page.id)).toEqual(["p02", "p01"])
 
     await act(async () => {
       expect(await commandsRef.current!.copyCurrentPage()).toEqual({

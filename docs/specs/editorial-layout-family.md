@@ -2,7 +2,7 @@
 
 建立日期：2026-09-10
 
-最後更新：2026-09-10
+最後更新：2026-09-27
 
 狀態：approved
 
@@ -364,7 +364,7 @@ Issue path 使用不含 `$` 的 JSON-style path：object fields 以 dot 分隔�
 - 尅读取 `assessContentReadiness` 的結果；不得在 form 內複製 validation logic。
 - 對應 controls 設定 `aria-invalid`；錯誤摘要使用可被輔助技術宣告的語意。
 - 合法 Draft Page 的 Save 仍可用；Copy 阻擋並顯示原因。
-- Metric input 使用以 Page ID 與 field path 為 key 的 editor-local raw string buffer，以便切換頁面後仍保留輸入中的小數。空白 commit 為 `null`；可解析為 finite、非負 number 才更新 typed Week Document。其他非空輸入顯示 `invalid-content`、設定 `aria-invalid`，並阻擋 Save 與 Copy；batch export 將該 Page 視為 invalid 並略過，避免保存非法 schema 或輸出舊值。Parser、`parseMetricInput` 與 readiness 共用 numeric validation helper，不各自重寫規則。
+- Editing Session 持有以 Page ID 與 field path 為 key 的 Metric Input，切換頁面後仍保留輸入文字，例如 `1.50`。空白輸入寫為 `null`；只有可解析為 finite、非負 number 的輸入才更新 typed Week Document。其他非空輸入顯示 `invalid-content`、設定 `aria-invalid`，並阻擋 Save 與 Copy；batch export 將該 Page 視為 invalid 並略過，避免保存非法 schema 或輸出舊值。Parser、`parseMetricInput` 與 readiness 共用 numeric validation helper，不各自重寫規則。
 
 ## Overflow readiness
 
