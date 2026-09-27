@@ -105,3 +105,13 @@ _Avoid_: Array index, layout page number
 **Week Label**:
 The ISO date range from Monday through Friday that identifies the reporting week.
 _Avoid_: Stored week text, localized date label
+
+## Authoring
+
+**Editing Session**:
+The Workshop's unsaved working state for one open Week Document, lasting from opening that week until another week is opened; saving does not end it.
+_Avoid_: Week Draft, working copy, unsaved week
+
+**Metric Input**:
+The verbatim text an author typed for a Comparison Metric value, kept for the rest of the Editing Session. An invalid Metric Input blocks Save and Copy, and batch export skips its page.
+_Avoid_: Metric draft, raw buffer

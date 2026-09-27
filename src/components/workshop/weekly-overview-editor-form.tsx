@@ -66,10 +66,14 @@ export function WeeklyOverviewEditorForm({
         outcome={page.lead}
         invalidPaths={invalidPaths}
         onTextChange={(field, value) =>
-          onChange(setOverviewLeadField(week, pageIndex, field, value))
+          onChange((currentWeek) =>
+            setOverviewLeadField(currentWeek, pageIndex, field, value)
+          )
         }
         onStatusChange={(field, value) =>
-          onChange(setOverviewLeadStatus(week, pageIndex, field, value))
+          onChange((currentWeek) =>
+            setOverviewLeadStatus(currentWeek, pageIndex, field, value)
+          )
         }
       />
 
@@ -80,7 +84,11 @@ export function WeeklyOverviewEditorForm({
           variant="outline"
           size="sm"
           disabled={!canAddSupporting}
-          onClick={() => onChange(addSupportingOutcome(week, pageIndex))}
+          onClick={() =>
+            onChange((currentWeek) =>
+              addSupportingOutcome(currentWeek, pageIndex)
+            )
+          }
         >
           Add supporting outcome
         </Button>
@@ -95,9 +103,9 @@ export function WeeklyOverviewEditorForm({
           outcome={outcome}
           invalidPaths={invalidPaths}
           onTextChange={(field, value) =>
-            onChange(
+            onChange((currentWeek) =>
               setOverviewSupportingField(
-                week,
+                currentWeek,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -106,9 +114,9 @@ export function WeeklyOverviewEditorForm({
             )
           }
           onStatusChange={(field, value) =>
-            onChange(
+            onChange((currentWeek) =>
               setOverviewSupportingStatus(
-                week,
+                currentWeek,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -123,7 +131,9 @@ export function WeeklyOverviewEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange(makeLead(week, pageIndex, supportingIndex))
+                  onChange((currentWeek) =>
+                    makeLead(currentWeek, pageIndex, supportingIndex)
+                  )
                 }
               >
                 Make lead
@@ -134,9 +144,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === 0}
                 onClick={() =>
-                  onChange(
+                  onChange((currentWeek) =>
                     moveSupportingOutcome(
-                      week,
+                      currentWeek,
                       pageIndex,
                       supportingIndex,
                       supportingIndex - 1
@@ -152,9 +162,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === page.supporting.length - 1}
                 onClick={() =>
-                  onChange(
+                  onChange((currentWeek) =>
                     moveSupportingOutcome(
-                      week,
+                      currentWeek,
                       pageIndex,
                       supportingIndex,
                       supportingIndex + 1
@@ -175,8 +185,12 @@ export function WeeklyOverviewEditorForm({
                   )
                 }
                 onClick={() =>
-                  onChange(
-                    removeSupportingOutcome(week, pageIndex, supportingIndex)
+                  onChange((currentWeek) =>
+                    removeSupportingOutcome(
+                      currentWeek,
+                      pageIndex,
+                      supportingIndex
+                    )
                   )
                 }
               >

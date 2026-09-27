@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useStageExport } from "@/hooks/use-stage-export"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
+import {
+  createEditingSession,
+  sessionOperationSnapshot,
+  writeMetricInput,
+  type EditingSession,
+} from "@/lib/editing-session"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
@@ -26,19 +31,17 @@ vi.mock("@/lib/clipboard-image", () => ({
 function ExportTestComponent({
   week,
   exportRef,
-  metricBuffer,
+  session,
 }: {
   week: WeekDocument
   exportRef?: {
     current: ReturnType<typeof useStageExport> | null
   }
-  metricBuffer?: MetricDraftBuffer
+  session?: EditingSession
 }) {
   const exportState = useStageExport({
-    monday: week.start,
-    week,
-    selectedPage: week.pages[0],
-    metricBuffer,
+    operationSnapshot: () =>
+      sessionOperationSnapshot(session ?? createEditingSession(week)),
   })
 
   useEffect(() => {
@@ -371,7 +374,7 @@ describe("useStageExport", () => {
     expect(exportRef.current?.exportResult).toMatch(/title/i)
   })
 
-  it("blocks copy of a complete evidence-decision page with an invalid metric draft", async () => {
+  it("blocks copy of a complete evidence-decision page with an invalid Metric Input", async () => {
     const page: EvidenceDecisionPage = {
       id: "p01",
       layout: "evidence-decision",
@@ -398,11 +401,16 @@ describe("useStageExport", () => {
     const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
       current: null,
     }
+    const session = writeMetricInput(
+      createEditingSession(week),
+      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+      "abc"
+    )
     render(
       <ExportTestComponent
         week={week}
         exportRef={exportRef}
-        metricBuffer={{ p01: { "metrics[0].baselineValue": "abc" } }}
+        session={session}
       />
     )
 

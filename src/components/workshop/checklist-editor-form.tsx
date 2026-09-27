@@ -38,8 +38,8 @@ export function ChecklistEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange(
-              setChecklistPanelTitle(week, pageIndex, event.target.value)
+            onChange((currentWeek) =>
+              setChecklistPanelTitle(currentWeek, pageIndex, event.target.value)
             )
           }
         />
@@ -52,7 +52,11 @@ export function ChecklistEditorForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => onChange(addChecklistItem(week, pageIndex))}
+            onClick={() =>
+              onChange((currentWeek) =>
+                addChecklistItem(currentWeek, pageIndex)
+              )
+            }
           >
             Add item
           </Button>
@@ -68,9 +72,9 @@ export function ChecklistEditorForm({
                 id={`checklist-item-checked-${itemIndex}`}
                 checked={item.checked ?? false}
                 onCheckedChange={(checked) =>
-                  onChange(
+                  onChange((currentWeek) =>
                     setChecklistItemChecked(
-                      week,
+                      currentWeek,
                       pageIndex,
                       itemIndex,
                       checked === true
@@ -86,9 +90,9 @@ export function ChecklistEditorForm({
                   undefined
                 }
                 onChange={(event) =>
-                  onChange(
+                  onChange((currentWeek) =>
                     setChecklistItemLabel(
-                      week,
+                      currentWeek,
                       pageIndex,
                       itemIndex,
                       event.target.value
@@ -105,7 +109,9 @@ export function ChecklistEditorForm({
                 !canRemoveEntry(panel.items, CARDINALITY.checklistItems)
               }
               onClick={() =>
-                onChange(removeChecklistItem(week, pageIndex, itemIndex))
+                onChange((currentWeek) =>
+                  removeChecklistItem(currentWeek, pageIndex, itemIndex)
+                )
               }
             >
               Remove
