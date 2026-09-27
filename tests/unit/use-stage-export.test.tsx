@@ -403,9 +403,7 @@ describe("useStageExport", () => {
     }
     const session = writeMetricInput(
       createEditingSession(week),
-      "p01",
-      0,
-      "baselineValue",
+      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "abc"
     )
     render(

@@ -146,19 +146,33 @@ export function EvidenceDecisionEditorForm({
           <MetricNumberField
             id={`metric-${metricIndex}-baseline`}
             label="Baseline"
-            value={metricControls.read(page.id, metricIndex, "baselineValue")}
+            value={metricControls.read({
+              pageId: page.id,
+              metricIndex,
+              field: "baselineValue",
+            })}
             invalid={invalidPaths.has(`metrics[${metricIndex}].baselineValue`)}
             onChange={(raw) =>
-              metricControls.write(page.id, metricIndex, "baselineValue", raw)
+              metricControls.write(
+                { pageId: page.id, metricIndex, field: "baselineValue" },
+                raw
+              )
             }
           />
           <MetricNumberField
             id={`metric-${metricIndex}-candidate`}
             label="Candidate"
-            value={metricControls.read(page.id, metricIndex, "candidateValue")}
+            value={metricControls.read({
+              pageId: page.id,
+              metricIndex,
+              field: "candidateValue",
+            })}
             invalid={invalidPaths.has(`metrics[${metricIndex}].candidateValue`)}
             onChange={(raw) =>
-              metricControls.write(page.id, metricIndex, "candidateValue", raw)
+              metricControls.write(
+                { pageId: page.id, metricIndex, field: "candidateValue" },
+                raw
+              )
             }
           />
           <div className="space-y-2">
