@@ -79,6 +79,9 @@ export async function exportPage(
   metricBuffer: MetricDraftBuffer = {},
   signal?: AbortSignal
 ): Promise<PageGateResult> {
+  if (signal?.aborted) {
+    return { kind: "failed", cause: signal.reason }
+  }
   if (!isSupportedStagePage(page)) {
     return { kind: "blocked", issues: assessExportEligibility(page).issues }
   }
