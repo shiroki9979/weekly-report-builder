@@ -5,8 +5,19 @@ import { describe, expect, it } from "vitest"
 
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
+import {
+  addSessionPage,
+  createEditingSession,
+  deleteSessionPage,
+  editSessionContent,
+  moveSessionMetric,
+  moveSessionPage,
+  readMetricInput,
+  removeSessionMetric,
+  sessionReadiness,
+  writeMetricInput,
+} from "@/lib/editing-session"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
 
 function sampleWeek(): WeekDocument {
@@ -35,13 +46,11 @@ function LifecycleHarness({
 }: {
   initialWeek?: WeekDocument
 }) {
-  const [week, setWeek] = useState(initialWeek)
-  const [selectedPageId, setSelectedPageId] = useState(week.pages[0].id)
-
-  const onChange = (result: PageLifecycleResult) => {
-    setWeek(result.week)
-    setSelectedPageId(result.selectedPageId)
-  }
+  const [session, setSession] = useState(() =>
+    createEditingSession(initialWeek)
+  )
+  const week = session.week!
+  const selectedPageId = session.selectedPageId!
 
   return (
     <div>
@@ -52,12 +61,37 @@ function LifecycleHarness({
       <PageLifecycleControls
         week={week}
         selectedPageId={selectedPageId}
-        onChange={onChange}
+        onAdd={(page) => setSession((current) => addSessionPage(current, page))}
+        onDelete={(pageId) =>
+          setSession((current) => deleteSessionPage(current, pageId))
+        }
+        onMove={(pageId, direction) =>
+          setSession((current) => moveSessionPage(current, pageId, direction))
+        }
       />
       <PageEditorForm
         week={week}
         pageIndex={week.pages.findIndex((page) => page.id === selectedPageId)}
-        onChange={setWeek}
+        onChange={(update) =>
+          setSession((current) => editSessionContent(current, update))
+        }
+        metricControls={{
+          read: (pageId, index, field) =>
+            readMetricInput(session, pageId, index, field),
+          write: (pageId, index, field, raw) =>
+            setSession((current) =>
+              writeMetricInput(current, pageId, index, field, raw)
+            ),
+          move: (pageId, from, to) =>
+            setSession((current) =>
+              moveSessionMetric(current, pageId, from, to)
+            ),
+          remove: (pageId, index) =>
+            setSession((current) =>
+              removeSessionMetric(current, pageId, index)
+            ),
+          readiness: (pageId) => sessionReadiness(session, pageId),
+        }}
       />
     </div>
   )

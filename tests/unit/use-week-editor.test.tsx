@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useWeekEditor } from "@/hooks/use-week-editor"
+import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
 
 import { jsonResponse } from "./support/json-response"
@@ -218,6 +219,38 @@ describe("useWeekEditor", () => {
 
     expect(result.current.loadStatus).toEqual({ kind: "ready" })
     expect(result.current.week?.pages[0]?.title).toBe("Latest week")
+  })
+
+  it("blocks Save for invalid Metric Input and clears it when another week opens", async () => {
+    const latest = {
+      ...weekDocument(LATEST_MONDAY, "Latest week"),
+      pages: [createBlankEvidenceDecisionPage("p01")],
+    }
+    mockWeeksFetch({
+      weeks: [OLDER_MONDAY, LATEST_MONDAY],
+      documents: {
+        [OLDER_MONDAY]: weekDocument(OLDER_MONDAY, "Older week"),
+        [LATEST_MONDAY]: latest,
+      },
+    })
+    const { result } = renderHook(() => useWeekEditor())
+    await waitFor(() =>
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
+    )
+
+    act(() => result.current.writeMetricInput("p01", 0, "baselineValue", "bad"))
+    await act(async () => result.current.save.saveWeek())
+    expect(result.current.save.error).toBe(
+      "Fix invalid metric values before saving"
+    )
+    expect(fetchedUrls()).not.toContain(`/api/weeks/${LATEST_MONDAY}`)
+
+    act(() => result.current.setSelectedMonday(OLDER_MONDAY))
+    await waitFor(() =>
+      expect(result.current.loadStatus).toEqual({ kind: "ready" })
+    )
+    expect(result.current.metricBuffer).toEqual({})
+    expect(result.current.save.error).toBeNull()
   })
 
   it("ignores a stale save refresh after selecting another week", async () => {

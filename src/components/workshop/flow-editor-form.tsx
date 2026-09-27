@@ -46,7 +46,9 @@ export function FlowEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange(setFlowPanelTitle(week, pageIndex, event.target.value))
+            onChange((currentWeek) =>
+              setFlowPanelTitle(currentWeek, pageIndex, event.target.value)
+            )
           }
         />
       </div>
@@ -58,7 +60,9 @@ export function FlowEditorForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => onChange(addFlowStep(week, pageIndex))}
+            onClick={() =>
+              onChange((currentWeek) => addFlowStep(currentWeek, pageIndex))
+            }
           >
             Add step
           </Button>
@@ -82,9 +86,9 @@ export function FlowEditorForm({
                   undefined
                 }
                 onChange={(event) =>
-                  onChange(
+                  onChange((currentWeek) =>
                     setFlowStepLabel(
-                      week,
+                      currentWeek,
                       pageIndex,
                       stepIndex,
                       event.target.value
@@ -99,9 +103,9 @@ export function FlowEditorForm({
                 id={`flow-step-caption-${stepIndex}`}
                 value={step.caption ?? ""}
                 onChange={(event) =>
-                  onChange(
+                  onChange((currentWeek) =>
                     setFlowStepCaption(
-                      week,
+                      currentWeek,
                       pageIndex,
                       stepIndex,
                       event.target.value
@@ -119,9 +123,9 @@ export function FlowEditorForm({
                     return
                   }
 
-                  onChange(
+                  onChange((currentWeek) =>
                     setFlowStepVariant(
-                      week,
+                      currentWeek,
                       pageIndex,
                       stepIndex,
                       next as "default" | "ok" | ""
@@ -149,8 +153,13 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={stepIndex === 0}
                 onClick={() =>
-                  onChange(
-                    moveFlowStep(week, pageIndex, stepIndex, stepIndex - 1)
+                  onChange((currentWeek) =>
+                    moveFlowStep(
+                      currentWeek,
+                      pageIndex,
+                      stepIndex,
+                      stepIndex - 1
+                    )
                   )
                 }
               >
@@ -162,8 +171,13 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={stepIndex === panel.steps.length - 1}
                 onClick={() =>
-                  onChange(
-                    moveFlowStep(week, pageIndex, stepIndex, stepIndex + 1)
+                  onChange((currentWeek) =>
+                    moveFlowStep(
+                      currentWeek,
+                      pageIndex,
+                      stepIndex,
+                      stepIndex + 1
+                    )
                   )
                 }
               >
@@ -175,7 +189,9 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={!canRemoveEntry(panel.steps, CARDINALITY.flowSteps)}
                 onClick={() =>
-                  onChange(removeFlowStep(week, pageIndex, stepIndex))
+                  onChange((currentWeek) =>
+                    removeFlowStep(currentWeek, pageIndex, stepIndex)
+                  )
                 }
               >
                 Remove

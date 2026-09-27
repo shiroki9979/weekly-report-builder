@@ -17,7 +17,7 @@ type PageNumberSelectProps = {
   week: WeekDocument
   pageIndex: number
   disabled?: boolean
-  onChange: (week: WeekDocument) => void
+  onChange: (update: (week: WeekDocument) => WeekDocument) => void
 }
 
 /** 頁面級頁碼顯示設定（可繼承週層級預設，或單獨強制顯示／隱藏） */
@@ -60,7 +60,9 @@ export function PageNumberSelect({
           } else {
             next = undefined
           }
-          onChange(setPageShowPageNumber(week, pageIndex, next))
+          onChange((currentWeek) =>
+            setPageShowPageNumber(currentWeek, pageIndex, next)
+          )
         }}
       >
         <SelectTrigger id="page-number-visibility" className="w-full">

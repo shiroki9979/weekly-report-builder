@@ -288,7 +288,7 @@ describe("assessExportEligibility", () => {
     ).toEqual({ eligible: true, issues: [] })
   })
 
-  it("merges invalid metric drafts into content issues without capturing", () => {
+  it("merges invalid Metric Input into content issues without capturing", () => {
     const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
 
     expect(
