@@ -1,7 +1,7 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-09-23
+最後更新：2026-09-28
 
 ---
 
@@ -22,7 +22,7 @@
 - 若來源週次包含 `layout: "html"` 逃生口頁面，其引用的 `.html` 檔案會原樣拷貝至新週目錄（`weeks/YYYY-MM-DD/<htmlFile>`）；JSON 內的 `htmlFile` 相對檔名維持不變，`title` 與 `notes` 比照雙欄頁清空
 - 若來源週次包含 Weekly Overview，clone 會保留 workstream 與 Supporting 數量，清除當週數字與結論文字
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
-- 若來源週次包含 Next Actions，clone 會保留 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
+- 若來源週次包含 Next Actions，clone 會保留 Rows／Columns 選擇與 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
 - `start` / `end` 自動設為該週週一至週五
 - 新週不複製上一週的 `showPageNumbers` 與 Editorial 頁的 `showPageNumber`，Editorial 頁碼回到預設顯示；HTML Page 逐頁開啟，沿用上一週該頁的 `showPageNumber`
 

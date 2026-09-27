@@ -117,9 +117,10 @@ Clone 時保留 label／unit／format，baseline／candidate 重設為 `null`，
 
 Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順序派生，不寫入 JSON。
 
-| 欄位          | 型別           | 必填 | 說明   |
-| ------------- | -------------- | ---- | ------ |
-| `commitments` | `Commitment[]` | 是   | 2–4 筆 |
+| 欄位          | 型別                    | 必填 | 說明                                            |
+| ------------- | ----------------------- | ---- | ----------------------------------------------- |
+| `variant`     | `"rows"` \| `"columns"` | 否   | 既有文件省略時讀為 `columns`；新增頁預設 `rows` |
+| `commitments` | `Commitment[]`          | 是   | 2–4 筆                                          |
 
 新增頁預設三個空白 Commitments。
 
@@ -131,7 +132,7 @@ Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順�
 | `outcome`    | `string` | 是   |
 | `checkpoint` | `string` | 是   |
 
-Clone 時保留 collection 長度，清除每個 Commitment 的 title／outcome／checkpoint。
+在編輯器的 **Composition** 可手動切換 Rows／Columns，不更動 Commitments 的內容或順序。Clone 時保留 variant 與 collection 長度，清除每個 Commitment 的 title／outcome／checkpoint。
 
 ### SlideItem
 

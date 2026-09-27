@@ -154,6 +154,7 @@ function clearPage(page: WeekPage): WeekPage {
     nextActions: (actions) => ({
       id: actions.id,
       layout: "next-actions",
+      variant: actions.variant ?? "columns",
       title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,

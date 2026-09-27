@@ -133,6 +133,7 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
   return {
     id,
     layout: "next-actions",
+    variant: "rows",
     title: "",
     commitments: [blankCommitment(), blankCommitment(), blankCommitment()],
   }
