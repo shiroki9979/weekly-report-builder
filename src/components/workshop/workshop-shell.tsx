@@ -223,9 +223,8 @@ function WorkshopShellBody() {
   const {
     exporting,
     copying,
-    exportError,
-    exportWarning,
-    clipboardError,
+    exportResult,
+    resultIsError,
     downloadVisiblePages,
     copyCurrentPage,
   } = useStageExport({
@@ -464,9 +463,8 @@ function WorkshopShellBody() {
                 onCopy={() => void copyCurrentPage()}
                 exporting={exporting}
                 copying={copying}
-                exportError={exportError}
-                exportWarning={exportWarning}
-                clipboardError={clipboardError}
+                exportResult={exportResult}
+                resultIsError={resultIsError}
                 disabled={loading || !week}
               />
             </div>
