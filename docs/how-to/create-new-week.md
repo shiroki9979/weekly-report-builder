@@ -38,6 +38,8 @@
 
 `demo/` 是 Git 追蹤的公開範例來源；你編輯與 Create week 寫入的永遠是被忽略的本機 `weeks/`。忽略該目錄與從目前 index 移除它，不會刪除舊 commits 裡的 Git 物件。
 
+若 Trend & Target 已達 12 週，先確認要移除的最早或最新端點，再補入新週。保留的 Measured／Missing 仍對應原日期；新增位置是 Unfilled，完成量測或明確標記 Missing 後才可匯出。不要把上一週的結論當成新週結論。
+
 ## 相關文件
 
 - API 細節：[開發伺服器 API — POST](../reference/dev-server-api.md#post-apiweeksmonday)

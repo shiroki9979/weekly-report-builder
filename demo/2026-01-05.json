@@ -5,7 +5,7 @@
     {
       "id": "p01",
       "layout": "two-column",
-      "title": "Harbor Grid · 5–9 Jan 2026",
+      "title": "Harbor Grid · fictional demo · 5–9 Jan 2026",
       "items": [
         {
           "heading": "Platform: one changelog gate",
@@ -47,13 +47,16 @@
     {
       "id": "p02",
       "layout": "weekly-overview",
-      "title": "The cut process held, and the forecast pilot opened.",
+      "title": "Fictional cut process held, and the pilot opened.",
       "lead": {
         "workstream": "Platform",
         "figure": "1 gate",
         "result": "Staging and production now share one changelog checklist before promote.",
         "impact": "Reviewers stopped comparing notes that lived in different docs.",
-        "status": { "label": "On track", "tone": "positive" }
+        "status": {
+          "label": "On track",
+          "tone": "positive"
+        }
       },
       "supporting": [
         {
@@ -61,14 +64,20 @@
           "figure": "3 sites",
           "result": "Day-ahead confidence bands sit on one shared board.",
           "impact": "Operators can compare sites without a side spreadsheet.",
-          "status": { "label": "Live", "tone": "positive" }
+          "status": {
+            "label": "Live",
+            "tone": "positive"
+          }
         },
         {
           "workstream": "Ops",
           "figure": "0 Sev-1",
           "result": "On-call stayed with documentation and the dry-run cutover.",
           "impact": "The week did not spend reserve on incidents.",
-          "status": { "label": "Quiet", "tone": "neutral" }
+          "status": {
+            "label": "Quiet",
+            "tone": "neutral"
+          }
         }
       ],
       "notes": "Lead with the gate; the pilot and quiet on-call are supporting evidence."
@@ -76,7 +85,7 @@
     {
       "id": "p03",
       "layout": "evidence-decision",
-      "title": "Keep the single changelog gate.",
+      "title": "Fictional decision: keep the single changelog gate.",
       "verdict": "Keep one checklist before promote. Splitting notes by channel would reopen drift.",
       "metrics": [
         {
@@ -107,7 +116,7 @@
     {
       "id": "p04",
       "layout": "next-actions",
-      "title": "Expand the pilot and rehearse the cut.",
+      "title": "Expand the fictional pilot and rehearse the cut.",
       "commitments": [
         {
           "title": "Add a fourth sample site",
@@ -130,9 +139,226 @@
     {
       "id": "p05",
       "layout": "html",
-      "title": "Forecast · Sample throughput",
+      "title": "Fictional forecast · sample throughput",
       "htmlFile": "p05.html",
       "notes": "Full-bleed HTML for the three fictional sites on the forecast board."
+    },
+    {
+      "id": "p06",
+      "layout": "trend-target",
+      "title": "Fictional export time improved; the target remains unmet.",
+      "metric": {
+        "label": "Mean export duration",
+        "unit": "s",
+        "unitPosition": "after",
+        "unitSpacing": "space",
+        "precision": 1
+      },
+      "startMonday": "2025-10-20",
+      "observations": [
+        {
+          "state": "measured",
+          "value": 10.6
+        },
+        {
+          "state": "measured",
+          "value": 10.3
+        },
+        {
+          "state": "measured",
+          "value": 10.1
+        },
+        {
+          "state": "measured",
+          "value": 9.8
+        },
+        {
+          "state": "measured",
+          "value": 9.6
+        },
+        {
+          "state": "measured",
+          "value": 9.1
+        },
+        {
+          "state": "missing"
+        },
+        {
+          "state": "measured",
+          "value": 8.7
+        },
+        {
+          "state": "measured",
+          "value": 8.5
+        },
+        {
+          "state": "measured",
+          "value": 8.3
+        },
+        {
+          "state": "measured",
+          "value": 8.1
+        },
+        {
+          "state": "measured",
+          "value": 8.04
+        }
+      ],
+      "target": 8,
+      "direction": "at-most",
+      "interpretation": "The latest sample is still 0.04 s above the inclusive ceiling. The missing week is not interpolated.",
+      "measurementContext": "Fictional Harbor Grid sample: mean of 100 scripted exports collected each Monday; seconds per export.",
+      "notes": "Fictional public demo: replace all figures and source details before presenting real results."
+    },
+    {
+      "id": "p07",
+      "layout": "trend-target",
+      "title": "虛構試點：淨完成檢查數由負轉正。",
+      "metric": {
+        "label": "淨完成檢查數",
+        "unit": "件",
+        "unitPosition": "after",
+        "unitSpacing": "space",
+        "precision": 0
+      },
+      "startMonday": "2025-11-17",
+      "observations": [
+        {
+          "state": "measured",
+          "value": -3
+        },
+        {
+          "state": "measured",
+          "value": -2
+        },
+        {
+          "state": "measured",
+          "value": -1
+        },
+        {
+          "state": "measured",
+          "value": 0
+        },
+        {
+          "state": "measured",
+          "value": 0
+        },
+        {
+          "state": "measured",
+          "value": 1
+        },
+        {
+          "state": "measured",
+          "value": 3
+        },
+        {
+          "state": "measured",
+          "value": 4
+        }
+      ],
+      "target": 0,
+      "direction": "at-least",
+      "interpretation": "零值符合含等號的下限；最新虛構週比目標多完成四件。",
+      "measurementContext": "虛構試點：每週一以模擬記錄計算完成檢查減去重開檢查，單位為件。",
+      "notes": "Fictional public demo: replace all figures and source details before presenting real results."
+    },
+    {
+      "id": "p08",
+      "layout": "trend-target",
+      "title": "Fictional final-week reading is unavailable.",
+      "metric": {
+        "label": "Mean export duration",
+        "unit": "s",
+        "unitPosition": "after",
+        "unitSpacing": "space",
+        "precision": 1
+      },
+      "startMonday": "2025-11-17",
+      "observations": [
+        {
+          "state": "measured",
+          "value": 9.6
+        },
+        {
+          "state": "measured",
+          "value": 9.1
+        },
+        {
+          "state": "missing"
+        },
+        {
+          "state": "measured",
+          "value": 8.7
+        },
+        {
+          "state": "measured",
+          "value": 8.5
+        },
+        {
+          "state": "measured",
+          "value": 8.3
+        },
+        {
+          "state": "measured",
+          "value": 8.1
+        },
+        {
+          "state": "missing"
+        }
+      ],
+      "target": 8,
+      "direction": "at-most",
+      "interpretation": "No sample was collected for the final Monday; the prior reading does not describe this week.",
+      "measurementContext": "Fictional Harbor Grid sample: mean of 100 scripted exports each Monday when available; no run on 2026-01-05.",
+      "notes": "Fictional public demo: replace all figures and source details before presenting real results."
+    },
+    {
+      "id": "p09",
+      "layout": "next-actions",
+      "variant": "rows",
+      "title": "Fictional pilot actions · same commitments in Rows.",
+      "commitments": [
+        {
+          "title": "Add a fourth sample site",
+          "outcome": "The day-ahead window stays comparable across four fictional sites.",
+          "checkpoint": "Fourth site visible on the board before Friday."
+        },
+        {
+          "title": "Dry-run the changelog gate",
+          "outcome": "The promote checklist is rehearsed on a throwaway alias.",
+          "checkpoint": "Alias dry-run signed off by Thursday."
+        },
+        {
+          "title": "File the quiet-week ops note",
+          "outcome": "The next on-call handoff includes the dry-run link.",
+          "checkpoint": "Note posted in the ops channel by Wednesday."
+        }
+      ],
+      "notes": "Compare with p04 Columns: the same ordered fictional commitments, no re-entry."
+    },
+    {
+      "id": "p10",
+      "layout": "next-actions",
+      "variant": "rows",
+      "title": "虛構專案：下週確認交付與驗證。",
+      "commitments": [
+        {
+          "title": "Review 站點資料接入",
+          "outcome": "North 與 South 的模擬資料都使用同一套欄位定義，方便值班人員逐站核對。",
+          "checkpoint": "週四前完成 schema review，附上兩站的 sample log。"
+        },
+        {
+          "title": "Rehearse 切版流程",
+          "outcome": "以測試 alias 演練回退與批准步驟，確保團隊看得懂 cutover 的結果。",
+          "checkpoint": "週五前在演練紀錄中標記 pass/fail 與 owner。"
+        },
+        {
+          "title": "更新 on-call handoff",
+          "outcome": "把虛構試點的例外處理與人工檢查點寫入交接摘要，避免下週重新追問。",
+          "checkpoint": "週五交班前由 Ops review 並記錄回覆。"
+        }
+      ],
+      "notes": "Fictional mixed-language content for Rows fit and reading review."
     }
   ]
 }

@@ -40,28 +40,24 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                                             | 說明                                                 |
-| ---------------------------------------------------------------- | ---------------------------------------------------- |
-| [工坊架構](explanation/workshop-architecture.md)                 | 工坊殼 vs 16:9 stage、資料流                         |
-| [Layout 家族原型](explanation/layout-prototype.md)               | 歷史 800 × 450 驗證與 production adoption 指標       |
-| [Slide 設計研究](explanation/slide-design-research.md)           | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據 |
-| [架構加深候選](explanation/architecture-deepening-candidates.md) | 2026-09-27 審查找出的 module 加深候選與證據          |
-
-## Specs（設計中）
-
-記錄已確認的設計方向與尚待決策的範圍。
-
-- [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)：Q1–Q22 決策已發布為 [規格 #42](https://github.com/shiroki9979/weekly-report-builder/issues/42) 與實作票 #43–#47；測試邊界、子票與原生阻擋關係已確認。
+| 文件                                                                  | 說明                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------- |
+| [工坊架構](explanation/workshop-architecture.md)                      | 工坊殼 vs 16:9 stage、資料流                         |
+| [Layout 家族原型](explanation/layout-prototype.md)                    | 歷史 800 × 450 驗證與 production adoption 指標       |
+| [Slide 設計研究](explanation/slide-design-research.md)                | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據 |
+| [Trend / Rows 原型決策](explanation/trend-target-layout-prototype.md) | 四視圖 A/D 決策、封存來源與生產驗證紀錄              |
+| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據          |
 
 ## Specs（已落地）
 
 已實作、仍供維護與驗收參照的規格。
 
-| 文件                                                                            | 說明                                       |
-| ------------------------------------------------------------------------------- | ------------------------------------------ |
-| [HTML 全幅頁](specs/html-page-layout.md)                                        | `layout: "html"` 16:9 逃生口               |
-| [HTML Page export failure policy](specs/html-page-error-png.md)                 | HTML 載入／截圖失敗政策與共用 Export gate  |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | Editorial Layout Family 的 production 規格 |
+| 文件                                                                                | 說明                                                                                                      |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)                                            | `layout: "html"` 16:9 逃生口                                                                              |
+| [HTML Page export failure policy](specs/html-page-error-png.md)                     | HTML 載入／截圖失敗政策與共用 Export gate                                                                 |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)     | Editorial Layout Family 的 production 規格                                                                |
+| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md) | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)） |
 
 ## 其他
 

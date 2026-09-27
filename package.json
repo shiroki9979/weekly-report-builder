@@ -9,7 +9,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prototype:layouts": "vite --open '/?prototype=layouts'",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\"",

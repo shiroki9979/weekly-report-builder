@@ -150,6 +150,8 @@ Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八�
 
 每個觀測位置是 `{ "state": "measured", "value": <finite number> }`、`{ "state": "missing" }` 或 `{ "state": "unfilled" }`。只有 `measured` 能有 `value`；允許負數與零。Parser 拒絕無效日期、列舉值、非有限數字及非量測狀態中隱藏的數值。
 
+公開虛構示例在 [`demo/2026-01-05.json`](../../demo/2026-01-05.json)：`p06` 為 12 週 at-most 與精確比較、`p07` 為含負數和零的 at-least、`p08` 為末週 Missing。`p04` 未設 variant，對照 `p09` 的相同 Commitments、Rows 版面；`p10` 展示中英混合文字。
+
 可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Week Document 的 `start`，且通過 Stage fit。`missing` 保留週次位置並切斷折線；最後一週為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
 
 ### SlideItem

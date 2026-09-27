@@ -158,6 +158,6 @@ GitHub Issues is the implementation tracker. Native sub-issue and blocking relat
 | [#46](https://github.com/shiroki9979/weekly-report-builder/issues/46) | Maintain dated Trend windows across weekly reports                 | [#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)                                                                                                                                               |
 | [#47](https://github.com/shiroki9979/weekly-report-builder/issues/47) | Ship public demo reports for both layouts and retire the prototype | [#43](https://github.com/shiroki9979/weekly-report-builder/issues/43), [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45), [#46](https://github.com/shiroki9979/weekly-report-builder/issues/46) |
 
-### Review the prototype
+### Prototype record
 
-Run `pnpm prototype:layouts` and use the development URL with `?prototype=layouts`. Views A/B compare full-width and side-summary Trend; views C/D compare existing Columns and Rows using identical Commitments. A and D are the selected production directions. The development-only prototype uses fictional prepared scenarios and does not save week data.
+The selected A/D verdict and the archived four-view source are recorded in [Trend & Target layout prototype](../explanation/trend-target-layout-prototype.md). Author and export the implemented layouts through the normal Workshop.
