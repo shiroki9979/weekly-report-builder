@@ -16,33 +16,15 @@ test("keeps the original Page Position and download week after switching weeks",
   week.pages[0].showPageNumber = true
   writeFileSync(weekPath, JSON.stringify(week))
 
-  await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
-  await page.getByRole("option", { name: "2026-08-31" }).click()
-  await expect(
-    page.getByRole("heading", { name: "Valid HTML Page" })
-  ).toBeVisible()
-
-  let releaseRequest!: () => void
-  let requestStarted!: () => void
-  const requestStartedPromise = new Promise<void>((resolve) => {
-    requestStarted = resolve
-  })
-  const releasePromise = new Promise<void>((resolve) => {
-    releaseRequest = resolve
-  })
-  await page.route("**/weeks/2026-08-31/ok.html", async (route) => {
-    requestStarted()
-    await releasePromise
-    await route.continue()
-  })
+  await openHtmlWeek(page)
+  const request = await holdHtmlRequest(page)
   const downloads: string[] = []
   page.on("download", (download) =>
     downloads.push(download.suggestedFilename())
   )
 
   await page.getByRole("button", { name: "Download PNGs" }).click()
-  await requestStartedPromise
+  await request.started
   await expect(
     page.getByRole("button", { name: "Copy to clipboard" })
   ).toBeDisabled()
@@ -54,7 +36,7 @@ test("keeps the original Page Position and download week after switching weeks",
   await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
   await expect(capture).toContainText("1 / 2")
 
-  releaseRequest()
+  request.release()
   await expect
     .poll(() => downloads)
     .toEqual(["2026-08-31-p01.png", "2026-08-31-p02.png"])
