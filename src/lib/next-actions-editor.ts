@@ -17,6 +17,14 @@ export function blankCommitment(): Commitment {
   return { title: "", outcome: "", checkpoint: "" }
 }
 
+export function setNextActionsVariant(
+  week: WeekDocument,
+  pageIndex: number,
+  variant: "columns" | "rows"
+): WeekDocument {
+  return updateNextActions(week, pageIndex, (page) => ({ ...page, variant }))
+}
+
 export function setCommitmentField(
   week: WeekDocument,
   pageIndex: number,
