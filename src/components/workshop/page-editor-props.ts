@@ -5,7 +5,7 @@ export type PageEditorProps<P extends WeekPage = WeekPage> = {
   week: WeekDocument
   pageIndex: number
   page: P
-  onChange: (week: WeekDocument) => void
+  onChange: (update: (week: WeekDocument) => WeekDocument) => void
   readOnly?: boolean
 }
 

@@ -1,4 +1,4 @@
-import { errorMessage } from "./export-errors"
+import { errorMessage } from "./error-message"
 import { formatExportIssues, type ExportIssue } from "./export-readiness"
 import {
   exportPage,

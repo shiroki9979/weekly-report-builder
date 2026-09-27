@@ -18,11 +18,13 @@ import {
 } from "./week-document"
 
 import {
-  invalidMetricDraftMessage,
-  metricDraftPath,
-  type MetricDraftBuffer,
+  invalidMetricInputMessage,
+  METRIC_VALUE_FIELDS,
+  metricInputPath,
+  type MetricInputLocation,
+  type MetricInputMap,
   type MetricValueField,
-} from "./metric-draft-buffer"
+} from "./metric-input"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   type OverflowMeasurement,
@@ -265,17 +267,17 @@ const METRIC_VALUE_LABELS: Record<MetricValueField, string> = {
   candidateValue: "Candidate value",
 }
 
-// 非法 raw 草稿優先於 typed 值：草稿未能寫回 JSON，typed 值只是上一個合法值
+// 非法 Metric Input 優先於 typed 值：輸入未能寫回 JSON，typed 值只是上一個合法值
 function assessMetricValue(
   page: EvidenceDecisionPage,
-  metricIndex: number,
-  field: MetricValueField,
-  metricBuffer: MetricDraftBuffer
+  location: MetricInputLocation,
+  metricInput: MetricInputMap
 ): ExportIssue[] {
-  const path = metricDraftPath(metricIndex, field)
-  const draftMessage = invalidMetricDraftMessage(metricBuffer, page.id, path)
-  if (draftMessage !== null) {
-    return [invalid(path, draftMessage)]
+  const { metricIndex, field } = location
+  const path = metricInputPath(metricIndex, field)
+  const inputMessage = invalidMetricInputMessage(metricInput, location)
+  if (inputMessage !== null) {
+    return [invalid(path, inputMessage)]
   }
 
   const value = page.metrics[metricIndex][field]
@@ -291,7 +293,7 @@ function assessMetricValue(
 
 function assessEvidenceDecision(
   page: EvidenceDecisionPage,
-  metricBuffer: MetricDraftBuffer
+  metricInput: MetricInputMap
 ): ExportIssue[] {
   const issues: ExportIssue[] = []
 
@@ -309,8 +311,13 @@ function assessEvidenceDecision(
       )
     }
     issues.push(
-      ...assessMetricValue(page, index, "baselineValue", metricBuffer),
-      ...assessMetricValue(page, index, "candidateValue", metricBuffer)
+      ...METRIC_VALUE_FIELDS.flatMap((field) =>
+        assessMetricValue(
+          page,
+          { pageId: page.id, metricIndex: index, field },
+          metricInput
+        )
+      )
     )
   })
 
@@ -356,13 +363,13 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
   page: StructuredWeekPage,
-  metricBuffer: MetricDraftBuffer = {}
+  metricInput: MetricInputMap = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
     weeklyOverview: assessWeeklyOverview,
     evidenceDecision: (decision) =>
-      assessEvidenceDecision(decision, metricBuffer),
+      assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
     html: () => [],
     unknown: () => [],
@@ -379,7 +386,7 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricBuffer: MetricDraftBuffer = {}
+  metricInput: MetricInputMap = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -397,7 +404,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessContentReadiness(page, metricBuffer)
+  const contentIssues = assessContentReadiness(page, metricInput)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }
@@ -449,17 +456,12 @@ export function formatExportIssues(issues: ExportIssue[]): string {
   return issues.map(formatExportIssue).join("; ")
 }
 
-export function issuePathsFor(
-  page: WeekPage,
-  metricBuffer: MetricDraftBuffer = {}
-): Set<string> {
-  if (!isStructuredWeekPage(page)) {
-    return new Set()
-  }
-
-  return new Set(
-    assessContentReadiness(page, metricBuffer)
-      .map((issue) => issue.path)
-      .filter((path): path is string => path !== undefined)
+export function issuePathsFor(page: WeekPage): Set<string> {
+  return issuePaths(
+    isStructuredWeekPage(page) ? assessContentReadiness(page) : []
   )
+}
+
+export function issuePaths(issues: ExportIssue[]): Set<string> {
+  return new Set(issues.flatMap((issue) => (issue.path ? [issue.path] : [])))
 }

@@ -7,7 +7,18 @@ import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { MetricEditorControls } from "@/lib/editing-session"
 import type { WeekDocument } from "@/lib/week-document"
+
+// 這些頁面沒有 Comparison Metric，表單不會呼叫 Metric 控制
+const noMetricControls: MetricEditorControls = {
+  read: () => "",
+  write: () => {},
+  add: () => {},
+  move: () => {},
+  remove: () => {},
+  readiness: () => [],
+}
 
 function sampleWeek(showPageNumbers?: boolean): WeekDocument {
   return {
@@ -123,9 +134,12 @@ describe("PageNumberSelect", () => {
         <PageNumberSelect
           week={week}
           pageIndex={0}
-          onChange={(next) => {
-            updatedWeek = next
-            setWeek(next)
+          onChange={(update) => {
+            setWeek((current) => {
+              const next = update(current)
+              updatedWeek = next
+              return next
+            })
           }}
         />
       )
@@ -166,7 +180,14 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
 
   it("renders page number select in PageEditorForm for html page", () => {
     const week = sampleWeek(true)
-    render(<PageEditorForm week={week} pageIndex={0} onChange={() => {}} />)
+    render(
+      <PageEditorForm
+        week={week}
+        pageIndex={0}
+        onChange={() => {}}
+        metricControls={noMetricControls}
+      />
+    )
 
     expect(
       screen.getByRole("combobox", { name: "Page number" })
@@ -197,7 +218,14 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
       ],
     }
 
-    render(<PageEditorForm week={week} pageIndex={0} onChange={() => {}} />)
+    render(
+      <PageEditorForm
+        week={week}
+        pageIndex={0}
+        onChange={() => {}}
+        metricControls={noMetricControls}
+      />
+    )
 
     expect(
       screen.queryByRole("combobox", { name: "Page number" })
