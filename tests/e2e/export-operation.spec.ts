@@ -62,4 +62,9 @@ test("keeps the original Stage Page Position and download week after switching w
   await expect(
     page.getByRole("button", { name: "Download PNGs" })
   ).toBeEnabled()
+  await expect(
+    page.getByRole("status").filter({ hasText: "Downloads triggered" })
+  ).toContainText(
+    "Export for 2026-08-31: Downloads triggered: 2; Skipped: 0; Failed: 0; Not attempted: 0."
+  )
 })

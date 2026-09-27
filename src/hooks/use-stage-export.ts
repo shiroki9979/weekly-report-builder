@@ -9,7 +9,9 @@ import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import {
   exportVisiblePages,
+  formatBatchExportResult,
   formatSkippedExportWarning,
+  type BatchExportResult,
 } from "@/lib/week-export"
 
 type UseStageExportOptions = {
@@ -33,6 +35,10 @@ type OperationSnapshot = {
   controller: AbortController
 }
 
+type ExportResult =
+  | { kind: "batch"; data: BatchExportResult }
+  | { kind: "copy"; monday: string; pageId: string; error: string | null }
+
 export function useStageExport({
   monday,
   week,
@@ -41,9 +47,7 @@ export function useStageExport({
 }: UseStageExportOptions) {
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
-  const [exportWarning, setExportWarning] = useState<string | null>(null)
-  const [clipboardError, setClipboardError] = useState<string | null>(null)
+  const [lastResult, setLastResult] = useState<ExportResult | null>(null)
   const activeRef = useRef<OperationSnapshot | null>(null)
   const disposedRef = useRef(false)
 
@@ -80,6 +84,7 @@ export function useStageExport({
       controller: new AbortController(),
     }
     activeRef.current = operation
+    setLastResult(null)
     return operation
   }, [metricBuffer, monday, selectedPage, week])
 
@@ -105,11 +110,9 @@ export function useStageExport({
       }
 
       setExporting(true)
-      setExportError(null)
-      setExportWarning(null)
 
       try {
-        const skipped = await exportVisiblePages(
+        const result = await exportVisiblePages(
           operation.monday,
           operation.week,
           {
@@ -117,22 +120,36 @@ export function useStageExport({
             download: downloadBlob,
             metricBuffer: operation.metricBuffer,
             signal: operation.controller.signal,
+            beforePages: () => {
+              if (!document.body) throw new Error("Capture host unavailable")
+            },
           }
         )
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
-        const warning = formatSkippedExportWarning(skipped)
-        setExportWarning(
-          warning ? `Export for ${operation.monday}: ${warning}` : null
-        )
+        setLastResult({ kind: "batch", data: result })
       } catch (cause: unknown) {
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
-        const message =
-          cause instanceof Error ? cause.message : "Failed to export PNG files"
-        setExportError(`Export for ${operation.monday}: ${message}`)
+        setLastResult({
+          kind: "batch",
+          data: {
+            monday: operation.monday,
+            selected: operation.week.pages.filter((page) => !page.hidden)
+              .length,
+            downloadsTriggered: 0,
+            skipped: [],
+            failed: null,
+            notAttempted: operation.week.pages.filter((page) => !page.hidden)
+              .length,
+            stopReason:
+              cause instanceof Error
+                ? cause.message
+                : "Failed to export PNG files",
+          },
+        })
       } finally {
         finish(operation)
       }
@@ -155,7 +172,6 @@ export function useStageExport({
       }
 
       setCopying(true)
-      setClipboardError(null)
 
       try {
         const result = await exportPage(
@@ -169,9 +185,12 @@ export function useStageExport({
           return { kind: "disposed" }
         }
         if (result.kind === "blocked") {
-          setClipboardError(
-            `Copy ${page.id} from ${operation.monday}: ${formatExportIssues(result.issues)}`
-          )
+          setLastResult({
+            kind: "copy",
+            monday: operation.monday,
+            pageId: page.id,
+            error: formatExportIssues(result.issues),
+          })
           return { kind: "completed" }
         }
         if (result.kind === "failed") {
@@ -181,6 +200,12 @@ export function useStageExport({
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
+        setLastResult({
+          kind: "copy",
+          monday: operation.monday,
+          pageId: page.id,
+          error: null,
+        })
       } catch (cause: unknown) {
         if (!isActive(operation)) {
           return { kind: "disposed" }
@@ -189,9 +214,12 @@ export function useStageExport({
           cause instanceof Error
             ? cause.message
             : "Failed to copy image to clipboard"
-        setClipboardError(
-          `Copy ${page.id} from ${operation.monday}: ${message}`
-        )
+        setLastResult({
+          kind: "copy",
+          monday: operation.monday,
+          pageId: page.id,
+          error: message,
+        })
       } finally {
         finish(operation)
       }
@@ -201,9 +229,32 @@ export function useStageExport({
   return {
     exporting,
     copying,
-    exportError,
-    exportWarning,
-    clipboardError,
+    exportResult:
+      lastResult?.kind === "batch"
+        ? formatBatchExportResult(lastResult.data)
+        : lastResult?.kind === "copy"
+          ? lastResult.error
+            ? `Copy ${lastResult.pageId} from ${lastResult.monday}: ${lastResult.error}`
+            : `Copied ${lastResult.pageId} from ${lastResult.monday} to clipboard.`
+          : null,
+    resultIsError:
+      lastResult?.kind === "batch"
+        ? lastResult.data.stopReason !== null
+        : lastResult?.kind === "copy"
+          ? lastResult.error !== null
+          : false,
+    exportError:
+      lastResult?.kind === "batch" && lastResult.data.stopReason
+        ? `Export for ${lastResult.data.monday}: ${lastResult.data.stopReason}`
+        : null,
+    exportWarning:
+      lastResult?.kind === "batch" && lastResult.data.skipped.length
+        ? `Export for ${lastResult.data.monday}: ${formatSkippedExportWarning(lastResult.data.skipped)}`
+        : null,
+    clipboardError:
+      lastResult?.kind === "copy" && lastResult.error
+        ? `Copy ${lastResult.pageId} from ${lastResult.monday}: ${lastResult.error}`
+        : null,
     downloadVisiblePages,
     copyCurrentPage,
   }
