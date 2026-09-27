@@ -28,35 +28,129 @@ import {
 } from "./week-document"
 
 export type EditingSession = {
+  readonly weeks: string[]
+  readonly selectedMonday: string
+  readonly loadStatus: SessionLoadStatus
   readonly week: WeekDocument | null
   readonly metricInput: MetricInputMap
   readonly selectedPageId: string | null
   readonly saveError: string | null
+  readonly saving: boolean
+  readonly savedMessage: string | null
+  readonly creating: boolean
+  readonly createError: string | null
 }
+
+export type SessionLoadStatus =
+  | { kind: "loading" }
+  | { kind: "empty" }
+  | { kind: "error"; message: string }
+  | { kind: "ready" }
 
 export function createEditingSession(
   week: WeekDocument | null = null
 ): EditingSession {
   return {
+    weeks: [],
+    selectedMonday: week?.start ?? "",
+    loadStatus: week ? { kind: "ready" } : { kind: "loading" },
     week,
     metricInput: {},
     selectedPageId: week?.pages[0]?.id ?? null,
     saveError: null,
+    saving: false,
+    savedMessage: null,
+    creating: false,
+    createError: null,
   }
 }
 
 export function openSessionWeek(
-  _session: EditingSession,
+  session: EditingSession,
   week: WeekDocument | null
 ): EditingSession {
-  return createEditingSession(week)
+  return {
+    ...createEditingSession(week),
+    weeks: session.weeks,
+    selectedMonday: week?.start ?? session.selectedMonday,
+  }
 }
 
-export function applySavedSessionWeek(
+export function beginSessionOpen(
+  session: EditingSession,
+  monday: string
+): EditingSession {
+  return {
+    ...openSessionWeek(session, null),
+    selectedMonday: monday,
+    loadStatus: { kind: "loading" },
+  }
+}
+
+export function finishSessionOpen(
   session: EditingSession,
   week: WeekDocument
 ): EditingSession {
-  return { ...session, week }
+  return { ...openSessionWeek(session, week), loadStatus: { kind: "ready" } }
+}
+
+export function failSessionOpen(
+  session: EditingSession,
+  message: string
+): EditingSession {
+  return {
+    ...openSessionWeek(session, null),
+    loadStatus: { kind: "error", message },
+  }
+}
+
+export function setSessionWeeks(
+  session: EditingSession,
+  weeks: string[]
+): EditingSession {
+  return {
+    ...session,
+    weeks,
+    loadStatus: weeks.length ? session.loadStatus : { kind: "empty" },
+  }
+}
+
+export function beginSessionSave(session: EditingSession): EditingSession {
+  return {
+    ...session,
+    saving: true,
+    saveError: null,
+    savedMessage: null,
+  }
+}
+
+export function finishSessionSave(session: EditingSession): EditingSession {
+  return { ...session, saving: false, savedMessage: "Saved" }
+}
+
+export function failSessionSave(
+  session: EditingSession,
+  message: string
+): EditingSession {
+  return { ...session, saving: false, saveError: message }
+}
+
+export function beginSessionCreate(session: EditingSession): EditingSession {
+  return {
+    ...session,
+    creating: true,
+    createError: null,
+    saving: false,
+    saveError: null,
+    savedMessage: null,
+  }
+}
+
+export function failSessionCreate(
+  session: EditingSession,
+  message: string
+): EditingSession {
+  return { ...session, creating: false, createError: message }
 }
 
 function requireWeek(session: EditingSession): WeekDocument {
