@@ -200,8 +200,8 @@ describe("export operation commandsRef", () => {
       firstCapture.resolve(new Blob(["png"]))
       await batch
     })
-    expect(commandsRef.current!.exportWarning).toContain("p02")
-    expect(commandsRef.current!.exportWarning).toContain("baselineValue")
+    expect(commandsRef.current!.exportResult).toContain("p02")
+    expect(commandsRef.current!.exportResult).toContain("baselineValue")
     expect(prepare).toHaveBeenCalledOnce()
 
     await act(async () => {

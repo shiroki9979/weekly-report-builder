@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 核准 Export gate 設計與四張依賴工作票，定義 Copy／batch 共用流程、HTML 失敗政策、操作快照與部分結果摘要；程式實作另由 #32～#35 交付（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)）。
+- 實作 Export gate 與四張依賴工作票，Copy／batch 共用截圖流程、HTML 失敗政策、操作快照與部分結果摘要（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、#32～#35）。
 - Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複，且建立新週時沿用該頁設定；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 
 ### Changed
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
 - Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
 - 刪除頁面時一併清除該頁的 Comparison Metric 草稿，新頁重用同一個 Page ID 不會讓舊的非法輸入復活；切換週次時清空草稿，避免上一週的輸入出現在新週並擋住 Save。

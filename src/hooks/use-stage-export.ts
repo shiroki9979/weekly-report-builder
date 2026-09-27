@@ -10,7 +10,6 @@ import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import {
   exportVisiblePages,
   formatBatchExportResult,
-  formatSkippedExportWarning,
   type BatchExportResult,
 } from "@/lib/week-export"
 
@@ -243,18 +242,6 @@ export function useStageExport({
         : lastResult?.kind === "copy"
           ? lastResult.error !== null
           : false,
-    exportError:
-      lastResult?.kind === "batch" && lastResult.data.stopReason
-        ? `Export for ${lastResult.data.monday}: ${lastResult.data.stopReason}`
-        : null,
-    exportWarning:
-      lastResult?.kind === "batch" && lastResult.data.skipped.length
-        ? `Export for ${lastResult.data.monday}: ${formatSkippedExportWarning(lastResult.data.skipped)}`
-        : null,
-    clipboardError:
-      lastResult?.kind === "copy" && lastResult.error
-        ? `Copy ${lastResult.pageId} from ${lastResult.monday}: ${lastResult.error}`
-        : null,
     downloadVisiblePages,
     copyCurrentPage,
   }
