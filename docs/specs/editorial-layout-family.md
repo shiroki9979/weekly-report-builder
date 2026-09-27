@@ -519,7 +519,7 @@ Playwright 的引入只服務真實 browser layout 與 Workshop flow；純 domai
 - Week Label 與 Page Position 在 preview、Copy、batch capture 一致；Hidden Page 在 preview/Copy 顯示 `Hidden` 且不進 batch export。
 - Page Position 對所有 supported non-hidden pages 保持穩定；Draft／Overflow 被略過時允許 batch 輸出保留編號缺口。
 - Copy 與 batch 使用同一組 typed Export Readiness reason codes；capture measurement failure 必須 fail closed。
-- 合法 Draft 可 Save；未完成的 metric raw input 可保留於 editor，但非法非空輸入阻擋 Save 與 Copy，batch export 略過該 Page。
+- 合法 Draft 可 Save；Editing Session 保留未完成的 Metric Input，但非法非空輸入阻擋 Save 與 Copy，batch export 略過該 Page。
 - Clone 保留結構、清除週次內容，且 Decision 的未填數值為 `null`。
 - Decision metric 依 precision、unit position 與 spacing 決定顯示；`null` 顯示 em dash 且不得冒充數值零。
 - Stage 在 min/default/max cardinality 與英文、中文、混合 fixtures 下無未偵測裁切。
