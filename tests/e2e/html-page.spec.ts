@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import { expect, test, type Page } from "@playwright/test"
 
 import { resetE2eWeeks } from "./weeks-reset"
@@ -38,9 +39,20 @@ test("previews, copies, and batch-exports a valid HTML Page", async ({
   ).toHaveCount(0)
 
   await unlockEditor(page)
+  const downloadPromise = page.waitForEvent("download")
   await page.getByRole("button", { name: "Download PNGs" }).click()
+  const download = await downloadPromise
+  const pngPath = await download.path()
+  expect(download.suggestedFilename()).toBe("2026-08-31-p01.png")
+  expect(pngPath).not.toBeNull()
+  const png = await readFile(pngPath!)
+  expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
+  expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([2560, 1440])
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
+  ).toHaveCount(0)
+  await expect(
+    page.locator("[aria-hidden='true'] [data-stage-capture-root]")
   ).toHaveCount(0)
 })
 
