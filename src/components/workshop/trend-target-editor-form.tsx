@@ -13,11 +13,20 @@ import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import type { TrendEditorControls } from "@/lib/editing-session"
 import { issuePaths } from "@/lib/export-readiness"
-import { observationMonday } from "@/lib/trend-target"
+import { isCalendarMonday, observationMonday } from "@/lib/trend-target"
 import { typedPageUpdater } from "@/lib/update-week-page"
 import { isTrendTargetPage, type TrendTargetPage } from "@/lib/week-document"
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
+
+function proposedRange(start: string, length: number): string | null {
+  if (!isCalendarMonday(start)) return null
+  try {
+    return `${start} – ${observationMonday(start, length - 1)}`
+  } catch {
+    return null
+  }
+}
 
 type Props = PageEditorProps<TrendTargetPage> & {
   trendControls: TrendEditorControls
@@ -33,6 +42,16 @@ export function TrendTargetEditorForm({
 }: Props) {
   const issues = trendControls.readiness(page.id)
   const paths = issuePaths(issues)
+  const pendingStart = trendControls.read({
+    pageId: page.id,
+    path: "startMonday",
+  })
+  const entered = page.observations.some((entry) => entry.state !== "unfilled")
+  const dateProposal =
+    entered && page.startMonday && pendingStart !== page.startMonday
+      ? proposedRange(pendingStart, page.observations.length)
+      : null
+  const rangeReady = !!page.startMonday && pendingStart === page.startMonday
   const update = (change: (current: TrendTargetPage) => TrendTargetPage) =>
     onChange((current) => updateTrendPage(current, pageIndex, change))
   const format = (
@@ -68,7 +87,7 @@ export function TrendTargetEditorForm({
         <Input
           id="trend-start"
           placeholder="YYYY-MM-DD"
-          value={trendControls.read({ pageId: page.id, path: "startMonday" })}
+          value={pendingStart}
           aria-invalid={paths.has("startMonday") || undefined}
           onChange={(event) =>
             trendControls.write(
@@ -78,14 +97,76 @@ export function TrendTargetEditorForm({
           }
         />
         <p className="text-xs text-muted-foreground">
-          Set a Monday before entering values. Re-dating entered values will be
-          available later.
+          Set a Monday before entering values. Changing the date of entered
+          weeks requires confirmation.
         </p>
+        {dateProposal && page.startMonday && (
+          <div
+            className="space-y-2 rounded-md border p-3"
+            role="group"
+            aria-label="Review date change"
+          >
+            <p>
+              Current observed weeks:{" "}
+              {proposedRange(page.startMonday, page.observations.length)}
+            </p>
+            <p>Proposed observed weeks: {dateProposal}</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={() => trendControls.confirmRedate(page.id)}
+              >
+                Confirm new dates
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => trendControls.cancelRedate(page.id)}
+              >
+                Cancel date change
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
       <fieldset className="space-y-2 rounded-md border p-3">
         <legend className="px-1 text-sm font-medium">
           Weekly observations
         </legend>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!rangeReady || page.observations.length >= 12}
+            onClick={() => trendControls.endpoint(page.id, "prepend")}
+          >
+            Add earlier week
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!rangeReady || page.observations.length >= 12}
+            onClick={() => trendControls.endpoint(page.id, "append")}
+          >
+            Add later week
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!rangeReady || page.observations.length <= 2}
+            onClick={() => trendControls.endpoint(page.id, "remove-first")}
+          >
+            Remove earliest week
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!rangeReady || page.observations.length <= 2}
+            onClick={() => trendControls.endpoint(page.id, "remove-last")}
+          >
+            Remove latest week
+          </Button>
+        </div>
         {page.observations.map((entry, index) => {
           const path = `observations[${index}].value` as const
           const label = page.startMonday
