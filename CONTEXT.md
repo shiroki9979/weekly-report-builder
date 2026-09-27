@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 Weekly Report Builder is an authoring workspace for composing Week Pages, reviewing them on a presentation Stage, and exporting them for a shared deck.
 
@@ -12,6 +12,10 @@ Weekly Report Builder is an authoring workspace for composing Week Pages, review
 A reusable Week Page format organized around a recurring communication job and supported throughout authoring, preview, weekly reuse, and export.
 _Avoid_: Production layout, template
 
+**Layout Variant**:
+An alternative composition of a Structured Layout that preserves its communication job and content meaning.
+_Avoid_: New layout, theme
+
 **Editorial Layout Family**:
 The three Structured Layouts—Weekly Overview, Evidence-backed Decision, and Next Actions—that communicate what changed, what the evidence supports, and what happens next.
 _Avoid_: Prototype layouts, three layouts
@@ -19,6 +23,10 @@ _Avoid_: Prototype layouts, three layouts
 **Two-column Layout**:
 The existing general-purpose Structured Layout that presents three narrative items beside a panel. It coexists with the Editorial Layout Family.
 _Avoid_: Legacy layout, deprecated layout
+
+**Trend & Target**:
+A Structured Layout that presents one metric's weekly time series against a fixed target threshold.
+_Avoid_: Trend panel, KPI dashboard
 
 **HTML Page**:
 A one-off Week Page whose Stage content is supplied as standalone HTML instead of a Structured Layout.
@@ -37,6 +45,22 @@ _Avoid_: Status color, traffic light
 **Comparison Metric**:
 A named measure that compares numeric baseline and candidate values expressed with one shared unit and display format.
 _Avoid_: Bar, chart value
+
+**Weekly Observation**:
+A position in a Trend & Target series associated with one reporting week. It contains a measured value, a Missing Observation, or an Unfilled Observation.
+_Avoid_: Chart point, data row
+
+**Missing Observation**:
+An author's explicit statement that a weekly measurement is unavailable. It differs from both a measured zero and unfinished authoring.
+_Avoid_: Empty value, zero
+
+**Unfilled Observation**:
+A Weekly Observation for which neither a measured value nor an explicit missing state has been authored.
+_Avoid_: Missing observation, zero
+
+**Measurement Context**:
+Visible author-written context describing the source or measurement conditions of a Trend & Target series, so its evidence can be understood without a speaker.
+_Avoid_: Speaker notes, hidden metadata
 
 **Commitment**:
 A priority action that pairs an intended outcome with a verification checkpoint.
@@ -67,6 +91,10 @@ _Avoid_: Comparison chart, decision dashboard
 **Next Actions**:
 A Structured Layout containing between two and four ordered Commitments.
 _Avoid_: Task board, checklist
+
+**Next Actions Rows**:
+A Layout Variant of Next Actions that presents ordered Commitments in full-width rows, with each action and intended outcome beside its verification checkpoint.
+_Avoid_: Action table, task list
 
 ## Page context
 
