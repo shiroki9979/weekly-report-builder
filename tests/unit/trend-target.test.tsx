@@ -14,6 +14,7 @@ import {
   openSessionWeek,
   readTrendInput,
   sessionReadiness,
+  setTrendObservationState,
   writeTrendInput,
 } from "@/lib/editing-session"
 import { exportPage } from "@/lib/export-page-gate"
@@ -96,6 +97,20 @@ describe("Trend & Target", () => {
     expect(() =>
       parseWeekDocument({
         ...week,
+        pages: [
+          {
+            ...complete,
+            observations: [
+              { state: "unfilled", value: 0 },
+              { state: "measured", value: 1 },
+            ],
+          },
+        ],
+      })
+    ).toThrow(/observations\[0\]/)
+    expect(() =>
+      parseWeekDocument({
+        ...week,
         pages: [{ ...complete, startMonday: "2026-07-07" }],
       })
     ).toThrow(/startMonday/)
@@ -137,7 +152,7 @@ describe("Trend & Target", () => {
     ).toBeInTheDocument()
   })
 
-  it("rejects missing observations for export until the follow-up slice", () => {
+  it("exports an interior or final Missing observation when two measurements remain", async () => {
     const page: TrendTargetPage = {
       ...complete,
       observations: [
@@ -146,12 +161,226 @@ describe("Trend & Target", () => {
         { state: "measured", value: 8 },
       ],
     }
-    expect(assessContentReadiness(page, {}, "2026-07-20")).toContainEqual(
+    expect(assessContentReadiness(page, {}, "2026-07-20")).toEqual([])
+    const lastMissing: TrendTargetPage = {
+      ...page,
+      observations: [...page.observations, { state: "missing" }],
+    }
+    expect(assessContentReadiness(lastMissing, {}, "2026-07-27")).toEqual([])
+    const adapter = fakeAdapter()
+    const week = {
+      start: "2026-07-27",
+      end: "2026-07-31",
+      pages: [lastMissing],
+    }
+    expect((await exportPage(week, lastMissing, { adapter })).kind).toBe(
+      "captured"
+    )
+    const restored = parseWeekDocument(JSON.parse(JSON.stringify(week)))
+    expect(restored.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9 },
+        { state: "missing" },
+        { state: "measured", value: 8 },
+        { state: "missing" },
+      ],
+    })
+    expect(
+      cloneWeekFromPrevious(restored, "2026-08-03").pages[0]
+    ).toMatchObject({
+      observations: lastMissing.observations,
+      startMonday: "2026-07-06",
+      measurementContext: complete.measurementContext,
+      title: "",
+      interpretation: "",
+    })
+  })
+
+  it("marks a missing gap and summarizes the final displayed week without falling back", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 0 },
+        { state: "missing" },
+        { state: "measured", value: 8 },
+        { state: "missing" },
+      ],
+    }
+    const { rerender } = render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-27",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    expect(screen.getByText("No data")).toBeInTheDocument()
+    expect(screen.getByText("× No observation")).toBeInTheDocument()
+    expect(screen.getAllByLabelText("No observation")).toHaveLength(2)
+    expect(
+      screen.getByText(
+        "Measurement Context: p95 exports, 100 requests each Monday."
+      )
+    ).toBeInTheDocument()
+    rerender(
+      <StageSlide
+        page={{
+          ...page,
+          observations: [
+            ...page.observations.slice(0, -1),
+            { state: "unfilled" },
+          ],
+        }}
+        context={{
+          weekLabel: "2026-07-27",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    expect(screen.getByText("Not entered")).toBeInTheDocument()
+    expect(screen.queryByText("No data")).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText("No observation")).toHaveLength(1)
+  })
+
+  it("changes one observation to Missing and back without retaining its value or pending error", () => {
+    const week = { start: "2026-07-20", end: "2026-07-24", pages: [complete] }
+    let session = createEditingSession(week)
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "observations[1].value" },
+      "bad"
+    )
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "target" },
+      "oops"
+    )
+    expect(canSaveSession(session).allowed).toBe(false)
+    session = setTrendObservationState(
+      session,
+      { pageId: "p01", index: 1 },
+      "missing"
+    )
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "missing" },
+        { state: "measured", value: 8.04 },
+      ],
+    })
+    expect(session.metricInput.p01?.["observations[1].value"]).toBeUndefined()
+    expect(canSaveSession(session).allowed).toBe(false)
+    expect(sessionReadiness(session, "p01")).toContainEqual(
+      expect.objectContaining({ path: "target", code: "invalid-content" })
+    )
+    session = setTrendObservationState(
+      session,
+      { pageId: "p01", index: 1 },
+      "unfilled"
+    )
+    expect(
+      readTrendInput(session, { pageId: "p01", path: "observations[1].value" })
+    ).toBe("")
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "unfilled" },
+        { state: "measured", value: 8.04 },
+      ],
+    })
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "observations[1].value" },
+      "0"
+    )
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "measured", value: 0 },
+        { state: "measured", value: 8.04 },
+      ],
+    })
+    session = writeTrendInput(
+      session,
+      { pageId: "p01", path: "observations[1].value" },
+      ""
+    )
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "unfilled" },
+        { state: "measured", value: 8.04 },
+      ],
+    })
+  })
+
+  it("blocks all-Missing, one-measurement, Unfilled and missing-context drafts while batch continues", async () => {
+    const allMissing: TrendTargetPage = {
+      ...complete,
+      observations: Array.from({ length: 3 }, () => ({ state: "missing" })),
+    }
+    const oneMeasured: TrendTargetPage = {
+      ...allMissing,
+      observations: [
+        { state: "measured", value: 0 },
+        { state: "missing" },
+        { state: "missing" },
+      ],
+    }
+    const unfilled: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 0 },
+        { state: "measured", value: 8 },
+        { state: "unfilled" },
+      ],
+    }
+    const noContext: TrendTargetPage = { ...complete, measurementContext: "" }
+    expect(assessContentReadiness(allMissing, {}, "2026-07-20")).toContainEqual(
       expect.objectContaining({
-        path: "observations[1]",
-        code: "invalid-content",
+        path: "observations",
+        message: "At least two measured observations are required",
       })
     )
+    expect(
+      assessContentReadiness(oneMeasured, {}, "2026-07-20")
+    ).toContainEqual(
+      expect.objectContaining({
+        path: "observations",
+        message: "At least two measured observations are required",
+      })
+    )
+    expect(assessContentReadiness(unfilled, {}, "2026-07-20")).toContainEqual(
+      expect.objectContaining({
+        path: "observations[2]",
+        message: "Observation is unfilled",
+      })
+    )
+    expect(assessContentReadiness(noContext, {}, "2026-07-20")).toContainEqual(
+      expect.objectContaining({
+        path: "measurementContext",
+        message: "Measurement Context is required",
+      })
+    )
+    const week = {
+      start: "2026-07-20",
+      end: "2026-07-24",
+      pages: [
+        { ...allMissing, id: "p01" },
+        { ...oneMeasured, id: "p02" },
+        { ...complete, id: "p03" },
+      ],
+    }
+    const downloaded: string[] = []
+    const result = await exportVisiblePages(week.start, week, {
+      adapter: fakeAdapter(),
+      download: (_blob, filename) => downloaded.push(filename),
+    })
+    expect(result.skipped.map((entry) => entry.pageId)).toEqual(["p01", "p02"])
+    expect(downloaded).toEqual(["2026-07-20-p03.png"])
   })
 
   it("accepts inclusive targets and preserves zero and signed values at both series limits", () => {

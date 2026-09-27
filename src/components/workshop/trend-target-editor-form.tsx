@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -94,7 +95,7 @@ export function TrendTargetEditorForm({
             <div key={index} className="space-y-1">
               <Label htmlFor={`trend-value-${index}`}>{label}</Label>
               {entry.state === "missing" ? (
-                <p>No observation — editing arrives in a later update.</p>
+                <p>No observation</p>
               ) : (
                 <Input
                   id={`trend-value-${index}`}
@@ -113,6 +114,21 @@ export function TrendTargetEditorForm({
                   }
                 />
               )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={readOnly || !page.startMonday}
+                aria-label={`${entry.state === "missing" ? "Enter value" : "No observation"} for ${label}`}
+                onClick={() =>
+                  trendControls.setObservationState(
+                    { pageId: page.id, index },
+                    entry.state === "missing" ? "unfilled" : "missing"
+                  )
+                }
+              >
+                {entry.state === "missing" ? "Enter value" : "No observation"}
+              </Button>
             </div>
           )
         })}
