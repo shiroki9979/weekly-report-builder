@@ -9,6 +9,7 @@ import {
   type FlowPanel,
   type EvidenceDecisionPage,
   type NextActionsPage,
+  type TrendTargetPage,
   type Outcome,
   type StructuredWeekPage,
   type TablePanel,
@@ -16,6 +17,8 @@ import {
   type WeekPage,
   type WeeklyOverviewPage,
 } from "./week-document"
+import { isCalendarMonday, trendBounds, trendEndMonday } from "./trend-target"
+import { trendInputError } from "./trend-input"
 
 import {
   invalidMetricInputMessage,
@@ -360,10 +363,110 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
   return issues
 }
 
+function assessTrendTarget(
+  page: TrendTargetPage,
+  inputs: MetricInputMap,
+  reportingMonday?: string
+): ExportIssue[] {
+  const issues: ExportIssue[] = []
+  for (const [path, value, label] of [
+    ["title", page.title, "Title"],
+    ["metric.label", page.metric.label, "Metric label"],
+    ["interpretation", page.interpretation, "Interpretation"],
+    ["measurementContext", page.measurementContext, "Measurement Context"],
+  ] as const) {
+    if (isBlank(value)) issues.push(missing(path, `${label} is required`))
+  }
+  for (const path of [
+    "startMonday",
+    "target",
+    ...page.observations.map(
+      (_, index) => `observations[${index}].value` as const
+    ),
+  ] as const) {
+    const message = trendInputError(page, inputs, path)
+    if (message) issues.push(invalid(path, message))
+  }
+  if (!page.startMonday)
+    issues.push(missing("startMonday", "Starting Monday is required"))
+  else if (!isCalendarMonday(page.startMonday))
+    issues.push(
+      invalid("startMonday", "Starting Monday must be a real calendar Monday")
+    )
+  else {
+    try {
+      const end = trendEndMonday(page)
+      if (!reportingMonday || !isCalendarMonday(reportingMonday))
+        issues.push(invalid("observations", "Reporting Monday is unavailable"))
+      else if (end && end > reportingMonday)
+        issues.push(
+          invalid(
+            "observations",
+            `Observed range ends ${end}, after reporting week ${reportingMonday}`
+          )
+        )
+    } catch {
+      issues.push(
+        invalid("observations", "Trend range exceeds supported ISO dates")
+      )
+    }
+  }
+  if (page.target === null) issues.push(missing("target", "Target is required"))
+  else if (!Number.isFinite(page.target))
+    issues.push(invalid("target", "Target must be finite"))
+  if (
+    ![0, 1, 2].includes(page.metric.precision) ||
+    !["before", "after"].includes(page.metric.unitPosition) ||
+    !["none", "space"].includes(page.metric.unitSpacing)
+  )
+    issues.push(invalid("metric", "Metric format is invalid"))
+  if (page.direction !== "at-most" && page.direction !== "at-least")
+    issues.push(invalid("direction", "Target direction is invalid"))
+  if (page.observations.length < 2 || page.observations.length > 12)
+    issues.push(
+      invalid("observations", "Trend requires 2 to 12 weekly positions")
+    )
+  let measured = 0
+  page.observations.forEach((entry, index) => {
+    if (entry.state === "unfilled")
+      issues.push(missing(`observations[${index}]`, "Observation is unfilled"))
+    if (entry.state === "missing")
+      issues.push(
+        invalid(
+          `observations[${index}]`,
+          "Missing observations are available in a later update"
+        )
+      )
+    if (entry.state === "measured") {
+      measured++
+      if (!Number.isFinite(entry.value))
+        issues.push(
+          invalid(`observations[${index}].value`, "Measurement must be finite")
+        )
+    }
+  })
+  if (measured < 2)
+    issues.push(
+      missing("observations", "At least two measured observations are required")
+    )
+  try {
+    trendBounds(page)
+  } catch (cause) {
+    issues.push(
+      invalid(
+        "observations",
+        cause instanceof Error ? cause.message : "Trend axis calculation failed"
+      )
+    )
+  }
+  return issues
+}
+
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
   page: StructuredWeekPage,
-  metricInput: MetricInputMap = {}
+  metricInput: MetricInputMap = {},
+  reportingMonday?: string
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
@@ -371,6 +474,8 @@ export function assessContentReadiness(
     evidenceDecision: (decision) =>
       assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
+    trendTarget: (trend) =>
+      assessTrendTarget(trend, metricInput, reportingMonday),
     html: () => [],
     unknown: () => [],
   })
@@ -386,7 +491,8 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricInput: MetricInputMap = {}
+  metricInput: MetricInputMap = {},
+  reportingMonday?: string
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -404,7 +510,11 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessContentReadiness(page, metricInput)
+  const contentIssues = assessContentReadiness(
+    page,
+    metricInput,
+    reportingMonday
+  )
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }

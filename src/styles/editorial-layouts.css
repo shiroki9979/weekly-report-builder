@@ -420,3 +420,130 @@
   .editorial-checkpoint {
   font-size: 1.45cqw;
 }
+
+.editorial-trend {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editorial-trend-chart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+}
+
+.editorial-trend-chart figcaption {
+  color: var(--blue);
+  font-size: clamp(10px, 1.25cqw, 16px);
+  font-weight: 700;
+}
+
+.editorial-trend-chart svg {
+  display: block;
+  flex: 1;
+  width: 100%;
+  height: 0;
+  min-height: 0;
+}
+
+.editorial-trend-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.editorial-trend-axis {
+  fill: var(--mute);
+  font-size: 15px;
+}
+
+.editorial-trend-target {
+  stroke: var(--warn-ink);
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
+}
+
+.editorial-trend-line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 3;
+}
+
+.editorial-trend-point {
+  fill: var(--blue);
+  stroke: white;
+  stroke-width: 2;
+}
+
+.editorial-trend-legend {
+  display: flex;
+  gap: 1.4em;
+  color: var(--ink);
+  font-size: clamp(9px, 1.1cqw, 14px);
+}
+
+.editorial-trend-legend-observed::before,
+.editorial-trend-legend-target::before {
+  display: inline-block;
+  width: 1.5em;
+  margin-right: 0.35em;
+  border-top: 3px solid var(--blue);
+  content: "";
+  vertical-align: middle;
+}
+
+.editorial-trend-legend-target::before {
+  border-color: var(--warn-ink);
+  border-top-style: dashed;
+}
+
+.editorial-trend-range,
+.editorial-trend-context {
+  margin: 0.4em 0 0;
+  color: var(--mute);
+  font-size: clamp(9px, 1.1cqw, 14px);
+}
+
+.editorial-trend-summary {
+  display: grid;
+  grid-template-columns: 0.85fr 0.85fr 1.5fr;
+  gap: 3%;
+  align-items: start;
+  padding: 1.3% 0;
+  border-top: 1px solid var(--line);
+}
+
+.editorial-trend-label {
+  margin: 0;
+  color: var(--mute);
+  font-size: clamp(9px, 1cqw, 13px);
+}
+
+.editorial-trend-value {
+  margin: 0.18em 0;
+  color: var(--blue-deep);
+  font-size: clamp(15px, 2.1cqw, 27px);
+  font-weight: 700;
+}
+
+.editorial-trend-status,
+.editorial-trend-direction,
+.editorial-trend-interpretation,
+.editorial-trend-exact {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(10px, 1.25cqw, 16px);
+  line-height: 1.3;
+}
+
+.editorial-trend-status {
+  font-weight: 700;
+}
+
+.editorial-trend-exact {
+  color: var(--warn-ink);
+  font-weight: 700;
+}
