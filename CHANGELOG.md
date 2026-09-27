@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 修正 Trend & Target 先輸入觀測值、後設定起始週時畫面與儲存資料不一致，以及大數值小差距的 Y 軸刻度重複問題（`src/lib/editing-session.ts`、`src/components/stage/trend-target-slide.tsx`）。
 - 新週 clone 清空標題後，Page 下拉選單以 Page ID 顯示草稿頁，避免多頁示例出現無名稱的選項（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 複製週次將 chart 類別清空時，圖表以位置識別欄位，避免空白類別產生重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
