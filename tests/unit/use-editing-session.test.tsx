@@ -46,6 +46,17 @@ async function ready(result: {
 }
 
 describe("useEditingSession", () => {
+  it("reports saving without an open week", async () => {
+    const backend = new InMemoryWeekStore()
+    const { result } = renderHook(() => useEditingSession(backend))
+    await waitFor(() =>
+      expect(result.current.loadStatus).toEqual({ kind: "empty" })
+    )
+
+    await act(() => result.current.save.saveWeek())
+    expect(result.current.save.error).toBe("No week is open")
+  })
+
   it("opens the latest listed week and suggests the following Monday", async () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
@@ -83,13 +94,20 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.writeMetricInput("p01", 0, "baselineValue", "1.50")
+      result.current.writeMetricInput(
+        { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+        "1.50"
+      )
     )
     await act(() => result.current.save.saveWeek())
     expect(result.current.save.message).toBe("Saved")
-    expect(result.current.readMetricInput("p01", 0, "baselineValue")).toBe(
-      "1.50"
-    )
+    expect(
+      result.current.readMetricInput({
+        pageId: "p01",
+        metricIndex: 0,
+        field: "baselineValue",
+      })
+    ).toBe("1.50")
     expect(result.current.selectedPageId).toBe("p01")
     act(() => result.current.setSelectedMonday(older))
     expect(result.current.save.message).toBeNull()
@@ -103,7 +121,12 @@ describe("useEditingSession", () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
-    act(() => result.current.writeMetricInput("p01", 0, "baselineValue", "bad"))
+    act(() =>
+      result.current.writeMetricInput(
+        { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+        "bad"
+      )
+    )
     await act(() => result.current.save.saveWeek())
     expect(result.current.save.error).toBe(
       "Fix invalid metric values before saving"
@@ -145,7 +168,10 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.writeMetricInput("p01", 0, "baselineValue", "1.50")
+      result.current.writeMetricInput(
+        { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+        "1.50"
+      )
     )
     await act(() => result.current.save.saveWeek())
     await act(() => result.current.create.createWeek(next))
