@@ -440,7 +440,19 @@ export function writeTrendInput(
     return { ...session, metricInput }
   let next: TrendTargetPage
   if (location.path === "startMonday") {
-    next = { ...page, startMonday: raw === "" ? null : raw }
+    const observations = page.observations.map((entry, index) => {
+      const pending = readTrendInputText(metricInput, {
+        pageId: page.id,
+        path: `observations[${index}].value`,
+      })
+      const value = pending === undefined ? null : parseTrendNumber(pending)
+      return raw !== "" &&
+        entry.state === "unfilled" &&
+        typeof value === "number"
+        ? ({ state: "measured", value } as const)
+        : entry
+    })
+    next = { ...page, startMonday: raw === "" ? null : raw, observations }
   } else if (location.path === "target") {
     next = { ...page, target: parseTrendNumber(raw) as number | null }
   } else {

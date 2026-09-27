@@ -1,5 +1,8 @@
 # weekly-report-builder
 
+Created: 2026-08-31
+Last updated: 2026-09-28
+
 Personal weekly-report workshop: edit the week in a form, preview slides at 16:9, export PNGs, and paste them into the team’s shared deck. Solo use only.
 
 Not a presenter, not multi-user, not a CMS, and not a replacement for the team deck.
