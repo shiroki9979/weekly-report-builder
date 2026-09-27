@@ -3,6 +3,7 @@ import { useEffect } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useStageExport } from "@/hooks/use-stage-export"
+import { downloadBlob } from "@/lib/download-blob"
 import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
@@ -63,13 +64,17 @@ describe("useStageExport", () => {
     vi.restoreAllMocks()
   })
 
-  it("waits for HTML slide to settle to error state and captures stage-warning instead of loading placeholder", async () => {
-    // 模擬 HTML 片段檔案不存在（404），以驗證 capture host 會等待至結算為 error 警告再執行截圖
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
-    } as Response)
+  it("skips a 404 HTML Page, then captures the next page without a warning PNG", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => "<h1>Ready</h1>",
+      } as Response)
 
     const week: WeekDocument = {
       start: "2026-08-24",
@@ -80,6 +85,12 @@ describe("useStageExport", () => {
           layout: "html",
           title: "Missing Slide",
           htmlFile: "missing.html",
+        },
+        {
+          id: "p04",
+          layout: "html",
+          title: "Ready Slide",
+          htmlFile: "ready.html",
         },
       ],
     }
@@ -100,13 +111,15 @@ describe("useStageExport", () => {
       await exportRef.current?.downloadVisiblePages()
     })
 
-    // 截圖應包含 stage-warning 錯誤訊息，而非載入中的 stage-placeholder
-    expect(capturedHtml).toContain("stage-warning")
-    expect(capturedHtml).toContain(
-      "Failed to load HTML file: missing.html (status 404)"
-    )
+    expect(stageCapture.captureStageToPng).toHaveBeenCalledOnce()
+    expect(capturedHtml).toContain("Ready")
+    expect(capturedHtml).not.toContain("stage-warning")
     expect(capturedHtml).not.toContain("stage-placeholder")
     expect(capturedHtml).not.toContain("Loading HTML slide")
+    expect(exportRef.current?.exportWarning).toContain(
+      "p03: Failed to load HTML file: missing.html (status 404)"
+    )
+    expect(downloadBlob).toHaveBeenCalledOnce()
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
     ).toBeNull()
@@ -156,7 +169,33 @@ describe("useStageExport", () => {
     ).toBeNull()
   })
 
-  it("reports an error instead of capturing a slide that never finishes loading", async () => {
+  it.each([
+    ["invalid reference", "../bad.html", "Invalid HTML file: ../bad.html"],
+    ["network error", "offline.html", "Network unavailable"],
+  ])("blocks Copy for an %s", async (_scenario, htmlFile, reason) => {
+    if (htmlFile === "offline.html") {
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error(reason))
+    }
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [{ id: "p03", layout: "html", title: "Broken", htmlFile }],
+    }
+    const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
+      current: null,
+    }
+    render(<ExportTestComponent week={week} exportRef={exportRef} />)
+
+    await act(async () => {
+      await exportRef.current?.copyCurrentPage()
+    })
+
+    expect(exportRef.current?.clipboardError).toBe(reason)
+    expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
+    expect(downloadBlob).not.toHaveBeenCalled()
+  })
+
+  it("skips a slide that never finishes loading", async () => {
     vi.useFakeTimers()
     vi.clearAllMocks()
     vi.spyOn(globalThis, "fetch").mockImplementation(
@@ -192,8 +231,9 @@ describe("useStageExport", () => {
     })
 
     expect(stageCapture.captureStageToPng).not.toHaveBeenCalled()
-    expect(exportRef.current?.exportError).toBe(
-      "Timed out waiting for HTML slide to load"
+    expect(exportRef.current?.exportError).toBeNull()
+    expect(exportRef.current?.exportWarning).toContain(
+      "p03: HTML load timed out after 3000 ms"
     )
     expect(
       document.querySelector("[aria-hidden='true'] .stage-root")
@@ -201,6 +241,10 @@ describe("useStageExport", () => {
   })
 
   it("uses and disposes an owned canonical capture root after capture fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => "<p>Ready</p>",
+    } as Response)
     const week: WeekDocument = {
       start: "2026-08-24",
       end: "2026-08-28",
@@ -209,7 +253,7 @@ describe("useStageExport", () => {
           id: "p03",
           layout: "html",
           title: "Invalid",
-          htmlFile: "../bad.html",
+          htmlFile: "ready.html",
         },
       ],
     }
@@ -236,6 +280,10 @@ describe("useStageExport", () => {
   })
 
   it("reports a missing canonical root and removes the temporary host", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => "<p>Ready</p>",
+    } as Response)
     const originalQuerySelector = HTMLElement.prototype.querySelector
     vi.spyOn(HTMLElement.prototype, "querySelector").mockImplementation(
       function (this: HTMLElement, selector: string) {
@@ -252,7 +300,7 @@ describe("useStageExport", () => {
           id: "p03",
           layout: "html",
           title: "Invalid",
-          htmlFile: "../bad.html",
+          htmlFile: "ready.html",
         },
       ],
     }
@@ -294,7 +342,7 @@ describe("useStageExport", () => {
     })
 
     expect(exportRef.current?.exportWarning).toBe(
-      "Skipped pages: p04: unsupported"
+      "Skipped pages: p04: This layout cannot be exported"
     )
   })
 
