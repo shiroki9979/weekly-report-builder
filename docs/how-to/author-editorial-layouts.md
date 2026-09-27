@@ -35,7 +35,9 @@ Copy 與 **Download PNGs** 只輸出 Content-complete 且不 overflow 的頁。D
 4. 在 Stage 核對最新一週的數值與狀態、四捨五入造成歧義時的精確比較，以及觀測日期範圍。最後觀測週不得晚於 Week Document 的報告週一。
 5. 儲存頁面。Copy 與 batch 共用內容完整性和 Stage fit 判定；尚未修正的無效數字或日期輸入會阻擋 Save／Copy，batch 則略過該頁。
 
-已有量測後變更起始日期，以及缺測編輯與區間增減，分別由 [#46](https://github.com/shiroki9979/weekly-report-builder/issues/46) 和 [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45) 提供。目前載入的 Missing 狀態會保留，但不能匯出。
+跨週沿用時，原本的日期、量測、目標、格式與 Measurement Context 都會保留；結論與 Interpretation 會清空。手動按 **Add earlier week**／**Add later week** 加入未填週次，或按 **Remove earliest week**／**Remove latest week** 移除端點。保留的量測仍對應原日期；範圍限 2–12 週，滿 12 週時先自行移除端點再延伸，不會自動刪除舊資料。新增週次填妥結果與本週結論後，再儲存及匯出。
+
+已輸入量測或 Missing 的序列若要更改 **Starting Monday**，先核對畫面列出的目前與提議日期範圍，再選 **Confirm new dates**；按 **Cancel date change** 保留原日期。清空已有內容的起始日期會保留原量測並阻擋 Save／Copy／batch，直到恢復有效日期或逐列清空所有觀測。缺測編輯由 [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45) 提供；目前載入的 Missing 狀態會保留，但不能匯出。
 
 ## 相關文件
 
