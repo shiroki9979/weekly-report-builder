@@ -1,4 +1,5 @@
 import { validateHtmlFileName } from "./html-page"
+import { isCalendarMonday, observationMonday } from "./trend-target"
 
 export type SlideItem = {
   heading: string
@@ -69,6 +70,7 @@ export type SlideLayout =
   | "weekly-overview"
   | "evidence-decision"
   | "next-actions"
+  | "trend-target"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
 export type WeekPageChrome = {
@@ -151,6 +153,27 @@ export type NextActionsPage = WeekPageChrome & {
   commitments: Commitment[]
 }
 
+export type TrendObservation =
+  | { state: "measured"; value: number }
+  | { state: "missing" }
+  | { state: "unfilled" }
+
+export type TrendTargetPage = WeekPageChrome & {
+  id: string
+  layout: "trend-target"
+  title: string
+  metric: Pick<
+    ComparisonMetric,
+    "label" | "unit" | "unitPosition" | "unitSpacing" | "precision"
+  >
+  startMonday: string | null
+  observations: TrendObservation[]
+  target: number | null
+  direction: "at-most" | "at-least"
+  interpretation: string
+  measurementContext: string
+}
+
 export type UnknownWeekPage = WeekPageChrome & {
   id: string
   layout: string
@@ -163,6 +186,7 @@ export type StructuredWeekPage =
   | WeeklyOverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
+  | TrendTargetPage
 
 export type WeekPage =
   | TwoColumnWeekPage
@@ -170,6 +194,7 @@ export type WeekPage =
   | WeeklyOverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
+  | TrendTargetPage
   | UnknownWeekPage
 
 export type WeekDocument = {
@@ -210,6 +235,10 @@ export function isNextActionsPage(page: WeekPage): page is NextActionsPage {
   return page.layout === "next-actions" && "commitments" in page
 }
 
+export function isTrendTargetPage(page: WeekPage): page is TrendTargetPage {
+  return page.layout === "trend-target" && "observations" in page
+}
+
 export function isStructuredWeekPage(
   page: WeekPage
 ): page is StructuredWeekPage {
@@ -217,7 +246,8 @@ export function isStructuredWeekPage(
     isTwoColumnWeekPage(page) ||
     isWeeklyOverviewPage(page) ||
     isEvidenceDecisionPage(page) ||
-    isNextActionsPage(page)
+    isNextActionsPage(page) ||
+    isTrendTargetPage(page)
   )
 }
 
@@ -234,6 +264,7 @@ export function isSupportedStagePage(page: WeekPage): boolean {
     weeklyOverview: () => true,
     evidenceDecision: () => true,
     nextActions: () => true,
+    trendTarget: () => true,
     twoColumn: (twoColumn) =>
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
@@ -245,6 +276,7 @@ const PAGE_NUMBER_LAYOUTS = new Set([
   "weekly-overview",
   "evidence-decision",
   "next-actions",
+  "trend-target",
 ])
 
 /**
@@ -281,6 +313,7 @@ type WeekPageMatchers<T> = {
   weeklyOverview: (page: WeeklyOverviewPage) => T
   evidenceDecision: (page: EvidenceDecisionPage) => T
   nextActions: (page: NextActionsPage) => T
+  trendTarget: (page: TrendTargetPage) => T
   unknown: (page: WeekPage) => T
 }
 
@@ -303,6 +336,9 @@ export function matchWeekPage<T>(
   }
   if (isNextActionsPage(page)) {
     return matchers.nextActions(page)
+  }
+  if (isTrendTargetPage(page)) {
+    return matchers.trendTarget(page)
   }
   return matchers.unknown(page)
 }
@@ -339,6 +375,12 @@ export const CARDINALITY = {
     noun: "interpretation",
   },
   commitments: { min: 2, max: 4, owner: "Next Actions", noun: "commitment" },
+  trendObservations: {
+    min: 2,
+    max: 12,
+    owner: "Trend & Target",
+    noun: "observation",
+  },
   twoColumnItems: { min: 3, max: 3, owner: "Two-column", noun: "item" },
   tableRows: { min: 1, owner: "Table", noun: "row" },
   tableColumns: { min: 1, owner: "Table", noun: "column" },
@@ -834,6 +876,102 @@ function invalidNextActionsVariant(field: string): never {
   throw new Error(`Invalid week document: ${field} must be columns or rows`)
 }
 
+function parseTrendTargetPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): TrendTargetPage {
+  const metric = readRecord(value.metric, `${field}.metric`)
+  const unitPosition = readNonEmptyString(
+    metric.unitPosition,
+    `${field}.metric.unitPosition`
+  )
+  const unitSpacing = readNonEmptyString(
+    metric.unitSpacing,
+    `${field}.metric.unitSpacing`
+  )
+  const precision = metric.precision
+  const direction = readNonEmptyString(value.direction, `${field}.direction`)
+  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition))
+    throw new Error(`Invalid week document: ${field}.metric.unitPosition`)
+  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing))
+    throw new Error(`Invalid week document: ${field}.metric.unitSpacing`)
+  if (
+    typeof precision !== "number" ||
+    !PRECISIONS.has(precision as ComparisonMetric["precision"])
+  )
+    throw new Error(`Invalid week document: ${field}.metric.precision`)
+  if (direction !== "at-most" && direction !== "at-least")
+    throw new Error(`Invalid week document: ${field}.direction`)
+  const startMonday = value.startMonday
+  if (
+    startMonday !== null &&
+    (typeof startMonday !== "string" || !isCalendarMonday(startMonday))
+  ) {
+    throw new Error(
+      `Invalid week document: ${field}.startMonday must be a Monday`
+    )
+  }
+  const entries = readEntries(
+    value.observations,
+    `${field}.observations`,
+    CARDINALITY.trendObservations
+  )
+  const observations = entries.map((entry, index): TrendObservation => {
+    const path = `${field}.observations[${index}]`
+    const observation = readRecord(entry, path)
+    if (observation.state === "measured")
+      return {
+        state: "measured",
+        value: readNumber(observation.value, `${path}.value`),
+      }
+    if (
+      (observation.state === "missing" || observation.state === "unfilled") &&
+      !Object.hasOwn(observation, "value")
+    )
+      return { state: observation.state }
+    throw new Error(`Invalid week document: ${path}`)
+  })
+  if (
+    startMonday === null &&
+    observations.some((entry) => entry.state !== "unfilled")
+  ) {
+    throw new Error(
+      `Invalid week document: ${field}.startMonday is required for entered observations`
+    )
+  }
+  if (startMonday !== null) {
+    try {
+      observationMonday(startMonday, observations.length - 1)
+    } catch {
+      throw new Error(
+        `Invalid week document: ${field}.observations exceed supported ISO dates`
+      )
+    }
+  }
+  return withChrome(chrome, "trend-target", {
+    metric: {
+      label: readString(metric.label, `${field}.metric.label`),
+      unit: readString(metric.unit, `${field}.metric.unit`),
+      unitPosition: unitPosition as UnitPosition,
+      unitSpacing: unitSpacing as UnitSpacing,
+      precision: precision as ComparisonMetric["precision"],
+    },
+    startMonday,
+    observations,
+    target:
+      value.target === null
+        ? null
+        : readNumber(value.target, `${field}.target`),
+    direction,
+    interpretation: readString(value.interpretation, `${field}.interpretation`),
+    measurementContext: readString(
+      value.measurementContext,
+      `${field}.measurementContext`
+    ),
+  })
+}
+
 function parseHtmlPage(
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
@@ -883,6 +1021,7 @@ const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
   "weekly-overview": parseWeeklyOverviewPage,
   "evidence-decision": parseEvidenceDecisionPage,
   "next-actions": parseNextActionsPage,
+  "trend-target": parseTrendTargetPage,
 }
 
 function isKnownLayout(layout: string): layout is SlideLayout {

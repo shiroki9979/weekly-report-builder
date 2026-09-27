@@ -9,6 +9,7 @@ import type {
   WeeklyOverviewPage,
   EvidenceDecisionPage,
   NextActionsPage,
+  TrendTargetPage,
 } from "./week-document"
 import { CARDINALITY } from "./week-document"
 import { blankMetric } from "./evidence-decision-editor"
@@ -139,8 +140,33 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
   }
 }
 
+export function createBlankTrendTargetPage(id: string): TrendTargetPage {
+  return {
+    id,
+    layout: "trend-target",
+    title: "",
+    metric: {
+      label: "",
+      unit: "",
+      unitPosition: "after",
+      unitSpacing: "space",
+      precision: 1,
+    },
+    startMonday: null,
+    observations: Array.from({ length: 8 }, () => ({ state: "unfilled" })),
+    target: null,
+    direction: "at-most",
+    interpretation: "",
+    measurementContext: "",
+  }
+}
+
 export type AddableLayout =
-  "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
+  | "two-column"
+  | "weekly-overview"
+  | "evidence-decision"
+  | "next-actions"
+  | "trend-target"
 
 const BLANK_PAGE_FACTORIES: Record<
   AddableLayout,
@@ -150,6 +176,7 @@ const BLANK_PAGE_FACTORIES: Record<
   "weekly-overview": createBlankWeeklyOverviewPage,
   "evidence-decision": createBlankEvidenceDecisionPage,
   "next-actions": createBlankNextActionsPage,
+  "trend-target": createBlankTrendTargetPage,
 }
 
 export function createBlankAddablePage(

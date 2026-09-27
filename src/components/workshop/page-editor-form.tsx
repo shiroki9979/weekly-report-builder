@@ -13,9 +13,13 @@ import type {
   PageEditorProps,
   PanelEditorProps,
 } from "@/components/workshop/page-editor-props"
-import type { MetricEditorControls } from "@/lib/editing-session"
+import type {
+  MetricEditorControls,
+  TrendEditorControls,
+} from "@/lib/editing-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
+import { TrendTargetEditorForm } from "@/components/workshop/trend-target-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
   addTableColumn,
@@ -42,6 +46,7 @@ import {
 
 type PageEditorFormProps = Omit<PageEditorProps, "page"> & {
   metricControls: MetricEditorControls
+  trendControls: TrendEditorControls
 }
 
 export function PageEditorForm({
@@ -49,6 +54,7 @@ export function PageEditorForm({
   pageIndex,
   onChange,
   metricControls,
+  trendControls,
   readOnly = false,
 }: PageEditorFormProps) {
   const page = week.pages[pageIndex]
@@ -73,6 +79,13 @@ export function PageEditorForm({
     ),
     nextActions: (actions) => (
       <NextActionsEditorForm {...editor} page={actions} />
+    ),
+    trendTarget: (trend) => (
+      <TrendTargetEditorForm
+        {...editor}
+        page={trend}
+        trendControls={trendControls}
+      />
     ),
     unknown: () => (
       <p className="text-sm text-muted-foreground" role="status">

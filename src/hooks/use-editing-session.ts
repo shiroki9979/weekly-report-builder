@@ -18,14 +18,17 @@ import {
   moveSessionMetric,
   moveSessionPage,
   readMetricInput,
+  readTrendInput,
   removeSessionMetric,
   selectSessionPage,
   sessionReadiness,
   sessionOperationSnapshot,
   setSessionWeeks,
   writeMetricInput,
+  writeTrendInput,
   type EditingSession,
   type MetricEditorControls,
+  type TrendEditorControls,
   type SessionOperationSnapshot,
 } from "@/lib/editing-session"
 import { errorMessage } from "@/lib/error-message"
@@ -42,6 +45,7 @@ export type EditingSessionResult = {
   operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
   metricControls: MetricEditorControls
+  trendControls: TrendEditorControls
   addPage: (page: WeekPage) => void
   deletePage: (pageId: string) => void
   movePage: (pageId: string, direction: PageMoveDirection) => void
@@ -99,6 +103,12 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       move: (move) => update((current) => moveSessionMetric(current, move)),
       remove: (metric) =>
         update((current) => removeSessionMetric(current, metric)),
+      readiness: (pageId) => sessionReadiness(session, pageId),
+    },
+    trendControls: {
+      read: (location) => readTrendInput(session, location),
+      write: (location, raw) =>
+        update((current) => writeTrendInput(current, location, raw)),
       readiness: (pageId) => sessionReadiness(session, pageId),
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),
