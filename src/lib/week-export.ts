@@ -76,32 +76,39 @@ export async function exportVisiblePages(
   const run: BatchRun = { monday, week, deps }
   for (const page of pages) {
     if (deps.signal?.aborted) break
-    const pageOutcome = await exportOnePage(run, page)
+    const gateResult = await passPageThroughGate(run, page)
+    // 截圖完成後操作仍可能已被中止；中止後不得再觸發任何輸出。
     if (deps.signal?.aborted) break
-    recordPageOutcome(outcome, page.id, pageOutcome)
+    recordPageOutcome(outcome, page.id, deliverPage(run, page.id, gateResult))
     if (outcome.failed) break
   }
 
   return outcome
 }
 
-async function exportOnePage(
+async function passPageThroughGate(
   run: BatchRun,
   page: WeekPage
-): Promise<PageOutcome> {
-  let result: PageGateResult
+): Promise<PageGateResult> {
   try {
-    result = await exportPage(run.week, page, run.deps)
+    return await exportPage(run.week, page, run.deps)
   } catch (cause: unknown) {
-    return { kind: "failed", reason: errorMessage(cause, EXPORT_FAILED) }
+    return { kind: "failed", cause }
   }
+}
+
+function deliverPage(
+  run: BatchRun,
+  pageId: string,
+  result: PageGateResult
+): PageOutcome {
   if (result.kind === "blocked") {
     return { kind: "skipped", issues: result.issues }
   }
   if (result.kind === "failed") {
     return { kind: "failed", reason: errorMessage(result.cause, EXPORT_FAILED) }
   }
-  return triggerDownload(run, page.id, result.blob)
+  return triggerDownload(run, pageId, result.blob)
 }
 
 function triggerDownload(

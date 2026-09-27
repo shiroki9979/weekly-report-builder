@@ -130,6 +130,27 @@ describe("batch export", () => {
     expect(adapter.prepare).not.toHaveBeenCalled()
   })
 
+  it("triggers no download when the operation aborts after a page is captured", async () => {
+    const controller = new AbortController()
+    const adapter: CaptureAdapter = {
+      prepare: async () => ({
+        measure: async () => ({ status: "fit" }),
+        capture: async () => new Blob(["png"]),
+        dispose: () => controller.abort(),
+      }),
+    }
+    const download = vi.fn()
+
+    const result = await exportVisiblePages(week.start, week, {
+      adapter,
+      download,
+      signal: controller.signal,
+    })
+
+    expect(download).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ downloadsTriggered: 0, notAttempted: 2 })
+  })
+
   it("preserves filenames and numbering gaps while silently excluding Hidden Pages", async () => {
     const adapter = fakeAdapter()
     const download = vi.fn()
