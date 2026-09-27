@@ -1,7 +1,7 @@
 # Author Editorial Layouts
 
 建立日期：2026-09-10  
-最後更新：2026-09-10
+最後更新：2026-09-28
 
 ---
 
@@ -19,7 +19,7 @@
 
 - **Weekly Overview**：一個 Lead Outcome 與 1–3 個 Supporting Outcomes。Supporting 可 Add／Move／Remove／Make lead。
 - **Evidence-backed Decision**：Verdict、1–2 個 Comparison Metric、1–2 則 interpretation。Metric 數值可留空（`null`）；非法非空輸入會擋 Save／Copy，batch 略過該頁。
-- **Next Actions**：2–4 個 Commitment。畫面上的 01／02… 編號隨順序派生，不寫進 JSON。
+- **Next Actions**：2–4 個 Commitment。新增頁預設 Rows；既有未記錄 variant 的頁面維持 Columns。使用 **Composition** 在 Rows／Columns 間切換，內容與順序不變。畫面上的 01／02… 編號隨順序派生，不寫進 JSON。
 
 右側 16:9 預覽即時同步。Canonical overflow 以 1280 × 720 capture Stage 為準。
 

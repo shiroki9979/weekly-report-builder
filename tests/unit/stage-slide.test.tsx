@@ -202,6 +202,33 @@ describe("StageSlide", () => {
     ).toBeInTheDocument()
   })
 
+  it("shows aligned action and checkpoint headings for Rows", () => {
+    const page: NextActionsPage = {
+      id: "p01",
+      layout: "next-actions",
+      variant: "rows",
+      title: "Act on the review delay",
+      commitments: [
+        {
+          title: "Reduce the queue",
+          outcome: "Fewer aged reviews",
+          checkpoint: "Median ≤ 5 days",
+        },
+        {
+          title: "Keep a reserve",
+          outcome: "Capacity stays available",
+          checkpoint: "Reserve review Friday",
+        },
+      ],
+    }
+
+    render(<StageSlide page={page} context={weekContext} />)
+    expect(screen.getByText("Action & intended outcome")).toBeInTheDocument()
+    expect(screen.getByText("Verification checkpoint")).toBeInTheDocument()
+    expect(screen.getByText("Median ≤ 5 days")).toBeInTheDocument()
+    expect(screen.getByText("Reserve review Friday")).toBeInTheDocument()
+  })
+
   it("warns for an unknown layout without rendering it as a two-column slide", () => {
     const week = parseWeekDocument({
       start: "2026-08-24",

@@ -146,6 +146,7 @@ export type Commitment = {
 export type NextActionsPage = WeekPageChrome & {
   id: string
   layout: "next-actions"
+  variant?: "columns" | "rows"
   title: string
   commitments: Commitment[]
 }
@@ -817,10 +818,20 @@ function parseNextActionsPage(
   )
 
   return withChrome(chrome, "next-actions", {
+    variant:
+      value.variant === undefined
+        ? "columns"
+        : value.variant === "columns" || value.variant === "rows"
+          ? value.variant
+          : invalidNextActionsVariant(`${field}.variant`),
     commitments: commitments.map((commitment, commitmentIndex) =>
       parseCommitment(commitment, `${field}.commitments[${commitmentIndex}]`)
     ),
   })
+}
+
+function invalidNextActionsVariant(field: string): never {
+  throw new Error(`Invalid week document: ${field} must be columns or rows`)
 }
 
 function parseHtmlPage(

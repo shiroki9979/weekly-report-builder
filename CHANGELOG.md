@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
 - 新增僅供開發環境使用的 Trend & Target／Next Actions Rows 四視圖比較原型，支援預設情境、尺寸與鍵盤切換（`pnpm prototype:layouts`）。
 - 核准 Trend & Target 與 Next Actions Rows 正式實作規格，記錄觀測狀態、目標判定與週次沿用規則，並建立五張實作票（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)、#43～#47）。
 - 新增 Slide 設計研究，整理口頭報告與自行閱讀的設計原則、一手來源及新 Structured Layout 的評估依據（[研究筆記](docs/explanation/slide-design-research.md)）。
