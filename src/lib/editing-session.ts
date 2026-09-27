@@ -96,6 +96,10 @@ export type MetricEditorControls = {
 export type TrendEditorControls = {
   read: (location: TrendInputLocation) => string
   write: (location: TrendInputLocation, raw: string) => void
+  setObservationState: (
+    location: { pageId: string; index: number },
+    state: "missing" | "unfilled"
+  ) => void
   readiness: (pageId: string) => ExportIssue[]
 }
 
@@ -434,6 +438,35 @@ export function writeTrendInput(
   const pages = [...week.pages]
   pages[pageIndex] = next
   return { ...session, week: { ...week, pages }, metricInput }
+}
+
+export function setTrendObservationState(
+  session: EditingSession,
+  location: { pageId: string; index: number },
+  state: "missing" | "unfilled"
+): EditingSession {
+  const week = requireWeek(session)
+  const pageIndex = week.pages.findIndex(
+    (entry) => entry.id === location.pageId
+  )
+  const page = week.pages[pageIndex]
+  if (!page || !isTrendTargetPage(page))
+    throw new Error(`Unknown Trend & Target page: ${location.pageId}`)
+  if (!page.observations[location.index])
+    throw new Error(`Unknown Trend observation: ${location.index}`)
+  if (state === "missing" && !page.startMonday)
+    throw new Error("Set starting Monday before entering observations")
+  const observations = [...page.observations]
+  observations[location.index] = { state }
+  const pages = [...week.pages]
+  pages[pageIndex] = { ...page, observations }
+  const pageInput = { ...session.metricInput[location.pageId] }
+  delete pageInput[`observations[${location.index}].value`]
+  return {
+    ...session,
+    week: { ...week, pages },
+    metricInput: { ...session.metricInput, [location.pageId]: pageInput },
+  }
 }
 
 export function moveSessionMetric(

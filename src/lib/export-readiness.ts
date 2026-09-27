@@ -430,13 +430,6 @@ function assessTrendTarget(
   page.observations.forEach((entry, index) => {
     if (entry.state === "unfilled")
       issues.push(missing(`observations[${index}]`, "Observation is unfilled"))
-    if (entry.state === "missing")
-      issues.push(
-        invalid(
-          `observations[${index}]`,
-          "Missing observations are available in a later update"
-        )
-      )
     if (entry.state === "measured") {
       measured++
       if (!Number.isFinite(entry.value))

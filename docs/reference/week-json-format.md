@@ -136,7 +136,7 @@ Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順�
 
 ### `layout: "trend-target"`
 
-Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八個 `unfilled` 位置；現階段編輯器能填入 `measured` 值，明確缺測的編輯控制由 [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45) 補上。
+Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八個 `unfilled` 位置；編輯器可填入 `measured` 值或明確標記 `missing`。
 
 | 欄位                 | 型別                        | 必填 | 說明                                                                                                                            |
 | -------------------- | --------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -150,7 +150,7 @@ Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八�
 
 每個觀測位置是 `{ "state": "measured", "value": <finite number> }`、`{ "state": "missing" }` 或 `{ "state": "unfilled" }`。只有 `measured` 能有 `value`；允許負數與零。Parser 拒絕無效日期、列舉值、非有限數字及非量測狀態中隱藏的數值。
 
-可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Week Document 的 `start`，且通過 Stage fit。現階段包含 `missing` 的頁面暫時不能匯出。Clone 保留 metric、目標、觀測日期與數值、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
+可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Week Document 的 `start`，且通過 Stage fit。`missing` 保留週次位置並切斷折線；最後一週為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
 
 ### SlideItem
 

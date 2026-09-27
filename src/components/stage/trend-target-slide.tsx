@@ -143,6 +143,20 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
               cy={y(entry.value)}
               r={index === page.observations.length - 1 ? 6 : 4}
             />
+          ) : entry.state === "missing" ? (
+            <text
+              key={index}
+              className="editorial-trend-missing"
+              aria-label="No observation"
+              fill="#8a5508"
+              fontSize="20"
+              fontWeight="700"
+              textAnchor="middle"
+              x={x(index)}
+              y={bottom - 3}
+            >
+              ×
+            </text>
           ) : null
         )}
         {page.startMonday
@@ -181,6 +195,11 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
         <span className="editorial-trend-legend-target">
           Target {targetLabel}
         </span>
+        {page.observations.some((entry) => entry.state === "missing") ? (
+          <span className="editorial-trend-legend-missing">
+            × No observation
+          </span>
+        ) : null}
       </div>
       <p className="editorial-trend-range">
         Observed weeks: {first ?? "—"} – {last ?? "—"}
