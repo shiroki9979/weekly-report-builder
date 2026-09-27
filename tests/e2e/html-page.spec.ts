@@ -89,6 +89,11 @@ test("blocks a 404 HTML Page and exports the next batch page", async ({
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
   ).toContainText("p01: Failed to load HTML file: missing.html")
+  await expect(
+    page.getByRole("status").filter({ hasText: "Downloads triggered" })
+  ).toContainText(
+    "Downloads triggered: 1; Skipped: 1; Failed: 0; Not attempted: 0."
+  )
   expect(downloads).toEqual(["2026-07-27-p02.png"])
   await expect(
     page.locator("[aria-hidden='true'] [data-stage-capture-root]")

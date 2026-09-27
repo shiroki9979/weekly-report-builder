@@ -3,23 +3,23 @@
 建立日期：2026-09-10  
 最後更新：2026-09-27
 
-狀態：design decisions confirmed（Q1–Q11 recorded; implementation not started）
+狀態：implemented（Q1–Q11 recorded; #32–#35 delivered）
 
 Follow-up to [`docs/specs/html-page-layout.md`](html-page-layout.md) and the non-goal in [`docs/specs/editorial-layout-family.md`](editorial-layout-family.md): Editorial Layout Family production adoption does not change HTML Page fetch, sanitization, timeout, or capture-failure handling.
 
-This spec inventories the existing Preview / Copy / batch behavior and records decisions confirmed during the Export gate module design interview on 2026-09-27. The agreed scope combines the shared export flow refactor with failure-policy changes. **This document describes the target design; implementation has not started.**
+This spec records the 2026-09-10 baseline and decisions confirmed during the Export gate module design interview on 2026-09-27. The shared export flow, failure policy, operation snapshot, and partial-result summary are implemented.
 
 ---
 
 ## Problem Statement
 
-HTML Pages skip Structured Layout completeness and overflow gates. Preview, Copy, and batch still fetch, sanitize, wait for settle, and capture. Failures today are inconsistent: a 404 becomes an error PNG and other pages continue; a hung fetch aborts the whole batch; sanitization never throws; `html-to-image` throws fail the operation.
+HTML Pages skip Structured Layout completeness and overflow gates. Preview, Copy, and batch fetch, sanitize, wait for settle, and capture. At the 2026-09-10 baseline, a 404 became an error PNG and other pages continued; a hung fetch aborted the whole batch; sanitization did not throw; `html-to-image` failures stopped the operation.
 
 The confirmed policy blocks individual copy of an HTML Load Failure and skips it in batch export, without producing a warning PNG. Page failures and operation failures need distinct handling so a failed page does not discard previously accumulated results.
 
-## Inventory (current, 2026-09-10)
+## Historical inventory (2026-09-10 baseline)
 
-Seams: `src/lib/html-page.ts`, `src/components/stage/html-slide.tsx`, `src/hooks/use-stage-export.ts` (`waitForSlideSettled`, 3000 ms), `src/lib/week-export.ts`, `src/lib/export-readiness.ts` (`assessExportEligibility` lets HTML through), `src/lib/stage-capture.ts`.
+Baseline seams: `src/lib/html-page.ts`, `src/components/stage/html-slide.tsx`, `src/hooks/use-stage-export.ts` (`waitForSlideSettled`, 3000 ms), `src/lib/week-export.ts`, `src/lib/export-readiness.ts` (`assessExportEligibility` lets HTML through), `src/lib/stage-capture.ts`.
 
 HTML Pages are **not** Overflowing Pages. `assessExportEligibility` returns `{ eligible: true }` without capture. Copy and batch still render the page, wait until `data-status` is not `loading`, then capture.
 
@@ -32,7 +32,7 @@ HTML Pages are **not** Overflowing Pages. `assessExportEligibility` returns `{ e
 | Sanitization                            | `sanitizeHtmlFragment` does not throw. Scripts/`on*`/dangerous tags stripped; empty or style-only input can yield `""`. Preview may be blank. | Captures whatever remains (including empty).                                               | Same.                                                                    |
 | Capture library throw (`html-to-image`) | N/A                                                                                                                                           | `clipboardError`; no skip list.                                                            | `exportError`; remaining pages are not processed.                        |
 
-Tests that lock this inventory:
+Historical tests that locked this inventory before implementation:
 
 - `tests/unit/html-slide.test.tsx`: invalid path and 404 → error status.
 - `tests/unit/use-stage-export.test.tsx`: 404 waits for error then captures the warning; hang → `exportError` timeout, `captureStageToPng` not called.
@@ -179,7 +179,7 @@ One issue formatter supplies code/path/message wording. Copy and batch provide t
 - Use Red → Green → Refactor vertical slices through the shared gate and operation interface. Fake capture sessions and output adapters cover phase failures, ordering, timeouts, result accounting, snapshot isolation, mutual exclusion, and late completion.
 - Browser-adapter integration tests cover actual host creation/disposal, HTML loading/error/ready signals, and the canonical root contract. Existing HTML warning-PNG tests must change to assert block/skip and no capture.
 - A focused Playwright check covers a successful real PNG, Structured Layout fit/overflow, HTML failure with batch continuation, and editing/week switching while an operation uses its original context. This exercises browser ownership and layout behavior that a DOM-free fake cannot validate.
-- Run the affected unit/integration tests, typecheck, lint, production build, and focused browser checks. No implementation or test changes have been made during this interview.
+- Run the affected unit/integration tests, typecheck, lint, production build, and focused browser checks.
 
 ## Delivery status
 
@@ -194,7 +194,7 @@ The ticket breakdown and blocking edges are confirmed. All four implementation i
 | [#34](https://github.com/shiroki9979/weekly-report-builder/issues/34) | Stable operation snapshots, mutual exclusion, and disposal                   | #32        |
 | [#35](https://github.com/shiroki9979/weekly-report-builder/issues/35) | Partial-result summaries and combined regression coverage                    | #33, #34   |
 
-Blocking edges use GitHub native issue dependencies and are also recorded in each ticket body. The initial implementation frontier is #32; #33 and #34 become available after it, and #35 requires both. Runtime implementation has not started. The parent spec #31 and earlier discovery issue #11 were not modified during ticket publication.
+Blocking edges use GitHub native issue dependencies and are also recorded in each ticket body. The implementation followed #32, then #33 and #34, then #35.
 
 ## Related
 

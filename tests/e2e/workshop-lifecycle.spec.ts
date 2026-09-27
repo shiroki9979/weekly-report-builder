@@ -58,7 +58,7 @@ test("blocks copy of a draft page and skips overflow during batch export", async
   await page.getByRole("button", { name: "Download PNGs" }).click()
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
-  ).toContainText("p02: Overflowing Page")
+  ).toContainText("p02: Page overflows the 1280 × 720 capture stage")
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
   ).toContainText("p03:")
