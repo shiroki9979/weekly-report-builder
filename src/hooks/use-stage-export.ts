@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
+import {
+  assertCaptureHostAvailable,
+  browserCaptureAdapter,
+} from "@/lib/browser-capture-adapter"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
+import { errorMessage } from "@/lib/export-errors"
 import { exportPage } from "@/lib/export-page-gate"
 import { formatExportIssues } from "@/lib/export-readiness"
+import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
 import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
-import {
-  exportVisiblePages,
-  formatBatchExportResult,
-  type BatchExportResult,
-} from "@/lib/week-export"
+import { exportVisiblePages } from "@/lib/week-export"
 
 type UseStageExportOptions = {
   monday: string
@@ -34,10 +35,6 @@ type OperationSnapshot = {
   controller: AbortController
 }
 
-type ExportResult =
-  | { kind: "batch"; data: BatchExportResult }
-  | { kind: "copy"; monday: string; pageId: string; error: string | null }
-
 export function useStageExport({
   monday,
   week,
@@ -59,7 +56,8 @@ export function useStageExport({
     }
   }, [])
 
-  const start = useCallback((): OperationSnapshot | ExportCommandResult => {
+  const start = useCallback(():
+    { kind: "started"; operation: OperationSnapshot } | ExportCommandResult => {
     if (disposedRef.current) {
       return { kind: "disposed" }
     }
@@ -84,7 +82,7 @@ export function useStageExport({
     }
     activeRef.current = operation
     setLastResult(null)
-    return operation
+    return { kind: "started", operation }
   }, [metricBuffer, monday, selectedPage, week])
 
   const isActive = useCallback(
@@ -103,10 +101,11 @@ export function useStageExport({
 
   const downloadVisiblePages =
     useCallback(async (): Promise<ExportCommandResult> => {
-      const operation = start()
-      if (!("controller" in operation)) {
-        return operation
+      const started = start()
+      if (started.kind !== "started") {
+        return started
       }
+      const { operation } = started
 
       setExporting(true)
 
@@ -119,36 +118,13 @@ export function useStageExport({
             download: downloadBlob,
             metricBuffer: operation.metricBuffer,
             signal: operation.controller.signal,
-            beforePages: () => {
-              if (!document.body) throw new Error("Capture host unavailable")
-            },
+            beforePages: assertCaptureHostAvailable,
           }
         )
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
         setLastResult({ kind: "batch", data: result })
-      } catch (cause: unknown) {
-        if (!isActive(operation)) {
-          return { kind: "disposed" }
-        }
-        setLastResult({
-          kind: "batch",
-          data: {
-            monday: operation.monday,
-            selected: operation.week.pages.filter((page) => !page.hidden)
-              .length,
-            downloadsTriggered: 0,
-            skipped: [],
-            failed: null,
-            notAttempted: operation.week.pages.filter((page) => !page.hidden)
-              .length,
-            stopReason:
-              cause instanceof Error
-                ? cause.message
-                : "Failed to export PNG files",
-          },
-        })
       } finally {
         finish(operation)
       }
@@ -160,10 +136,11 @@ export function useStageExport({
       if (!selectedPage && !activeRef.current) {
         return { kind: "unavailable" }
       }
-      const operation = start()
-      if (!("controller" in operation)) {
-        return operation
+      const started = start()
+      if (started.kind !== "started") {
+        return started
       }
+      const { operation } = started
       const page = operation.selectedPage
       if (!page) {
         finish(operation)
@@ -173,13 +150,11 @@ export function useStageExport({
       setCopying(true)
 
       try {
-        const result = await exportPage(
-          operation.week,
-          page,
-          browserCaptureAdapter,
-          operation.metricBuffer,
-          operation.controller.signal
-        )
+        const result = await exportPage(operation.week, page, {
+          adapter: browserCaptureAdapter,
+          metricBuffer: operation.metricBuffer,
+          signal: operation.controller.signal,
+        })
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
@@ -195,7 +170,14 @@ export function useStageExport({
         if (result.kind === "failed") {
           throw result.cause
         }
-        await copyImageToClipboard(result.blob, navigator.clipboard)
+        try {
+          await copyImageToClipboard(result.blob, navigator.clipboard)
+        } catch (cause: unknown) {
+          throw new Error(
+            `Clipboard write failed: ${errorMessage(cause, "Clipboard write rejected")}`,
+            { cause }
+          )
+        }
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
@@ -209,15 +191,11 @@ export function useStageExport({
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
-        const message =
-          cause instanceof Error
-            ? cause.message
-            : "Failed to copy image to clipboard"
         setLastResult({
           kind: "copy",
           monday: operation.monday,
           pageId: page.id,
-          error: message,
+          error: errorMessage(cause, "Failed to copy image to clipboard"),
         })
       } finally {
         finish(operation)
@@ -225,23 +203,12 @@ export function useStageExport({
       return { kind: "completed" }
     }, [finish, isActive, selectedPage, start])
 
+  const summary = summarizeExportResult(lastResult)
   return {
     exporting,
     copying,
-    exportResult:
-      lastResult?.kind === "batch"
-        ? formatBatchExportResult(lastResult.data)
-        : lastResult?.kind === "copy"
-          ? lastResult.error
-            ? `Copy ${lastResult.pageId} from ${lastResult.monday}: ${lastResult.error}`
-            : `Copied ${lastResult.pageId} from ${lastResult.monday} to clipboard.`
-          : null,
-    resultIsError:
-      lastResult?.kind === "batch"
-        ? lastResult.data.stopReason !== null
-        : lastResult?.kind === "copy"
-          ? lastResult.error !== null
-          : false,
+    exportResult: summary?.message ?? null,
+    resultIsError: summary?.isError ?? false,
     downloadVisiblePages,
     copyCurrentPage,
   }

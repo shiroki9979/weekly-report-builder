@@ -1,19 +1,28 @@
-import type { MetricDraftBuffer } from "./metric-draft-buffer"
+import { errorMessage } from "./export-errors"
 import { formatExportIssues, type ExportIssue } from "./export-readiness"
-import { exportPage, type CaptureAdapter } from "./export-page-gate"
-import type { WeekDocument } from "./week-document"
+import {
+  exportPage,
+  type ExportPageDeps,
+  type PageGateResult,
+} from "./export-page-gate"
+import type { WeekDocument, WeekPage } from "./week-document"
 
 export type SkippedExportPage = {
   pageId: string
   issues: ExportIssue[]
 }
 
+export type FailedExportPage = {
+  pageId: string
+  reason: string
+}
+
 export type BatchExportResult = {
   monday: string
-  selected: number
+  selectedCount: number
   downloadsTriggered: number
   skipped: SkippedExportPage[]
-  failed: { pageId: string; reason: string } | null
+  failed: FailedExportPage | null
   notAttempted: number
   stopReason: string | null
 }
@@ -22,14 +31,25 @@ export function exportFileName(monday: string, pageId: string): string {
   return `${monday}-${pageId}.png`
 }
 
-export type ExportVisiblePagesDeps = {
-  adapter: CaptureAdapter
+export type ExportVisiblePagesDeps = ExportPageDeps & {
   download: (blob: Blob, fileName: string) => void
-  metricBuffer?: MetricDraftBuffer
-  signal?: AbortSignal
   beforePages?: () => void
 }
 
+const EXPORT_FAILED = "Export failed"
+
+type PageOutcome =
+  | { kind: "downloaded" }
+  | { kind: "skipped"; issues: ExportIssue[] }
+  | { kind: "failed"; reason: string }
+
+type BatchRun = {
+  monday: string
+  week: WeekDocument
+  deps: ExportVisiblePagesDeps
+}
+
+// 不會 reject：任何失敗都記入結果，已觸發的下載與略過頁面才能完整回報。
 export async function exportVisiblePages(
   monday: string,
   week: WeekDocument,
@@ -38,7 +58,7 @@ export async function exportVisiblePages(
   const pages = week.pages.filter((page) => !page.hidden)
   const outcome: BatchExportResult = {
     monday,
-    selected: pages.length,
+    selectedCount: pages.length,
     downloadsTriggered: 0,
     skipped: [],
     failed: null,
@@ -49,60 +69,71 @@ export async function exportVisiblePages(
   try {
     deps.beforePages?.()
   } catch (cause: unknown) {
-    outcome.stopReason = errorMessage(cause)
+    outcome.stopReason = errorMessage(cause, EXPORT_FAILED)
     return outcome
   }
 
+  const run: BatchRun = { monday, week, deps }
   for (const page of pages) {
-    if (deps.signal?.aborted) {
-      break
-    }
-
-    let result
-    try {
-      result = await exportPage(
-        week,
-        page,
-        deps.adapter,
-        deps.metricBuffer,
-        deps.signal
-      )
-    } catch (cause: unknown) {
-      outcome.failed = { pageId: page.id, reason: errorMessage(cause) }
-      outcome.stopReason = outcome.failed.reason
-      outcome.notAttempted--
-      break
-    }
-    if (deps.signal?.aborted) {
-      break
-    }
-    if (result.kind === "blocked") {
-      outcome.skipped.push({ pageId: page.id, issues: result.issues })
-      outcome.notAttempted--
-      continue
-    }
-    if (result.kind === "failed") {
-      outcome.failed = { pageId: page.id, reason: errorMessage(result.cause) }
-      outcome.stopReason = outcome.failed.reason
-      outcome.notAttempted--
-      break
-    }
-    try {
-      deps.download(result.blob, exportFileName(monday, page.id))
-      outcome.downloadsTriggered++
-    } catch (cause: unknown) {
-      outcome.failed = { pageId: page.id, reason: errorMessage(cause) }
-      outcome.stopReason = outcome.failed.reason
-    }
-    outcome.notAttempted--
+    if (deps.signal?.aborted) break
+    const pageOutcome = await exportOnePage(run, page)
+    if (deps.signal?.aborted) break
+    recordPageOutcome(outcome, page.id, pageOutcome)
     if (outcome.failed) break
   }
 
   return outcome
 }
 
-function errorMessage(cause: unknown): string {
-  return cause instanceof Error ? cause.message : "Export failed"
+async function exportOnePage(
+  run: BatchRun,
+  page: WeekPage
+): Promise<PageOutcome> {
+  let result: PageGateResult
+  try {
+    result = await exportPage(run.week, page, run.deps)
+  } catch (cause: unknown) {
+    return { kind: "failed", reason: errorMessage(cause, EXPORT_FAILED) }
+  }
+  if (result.kind === "blocked") {
+    return { kind: "skipped", issues: result.issues }
+  }
+  if (result.kind === "failed") {
+    return { kind: "failed", reason: errorMessage(result.cause, EXPORT_FAILED) }
+  }
+  return triggerDownload(run, page.id, result.blob)
+}
+
+function triggerDownload(
+  run: BatchRun,
+  pageId: string,
+  blob: Blob
+): PageOutcome {
+  try {
+    run.deps.download(blob, exportFileName(run.monday, pageId))
+    return { kind: "downloaded" }
+  } catch (cause: unknown) {
+    return {
+      kind: "failed",
+      reason: `Download trigger failed: ${errorMessage(cause, EXPORT_FAILED)}`,
+    }
+  }
+}
+
+function recordPageOutcome(
+  outcome: BatchExportResult,
+  pageId: string,
+  pageOutcome: PageOutcome
+): void {
+  outcome.notAttempted--
+  if (pageOutcome.kind === "downloaded") {
+    outcome.downloadsTriggered++
+  } else if (pageOutcome.kind === "skipped") {
+    outcome.skipped.push({ pageId, issues: pageOutcome.issues })
+  } else {
+    outcome.failed = { pageId, reason: pageOutcome.reason }
+    outcome.stopReason = pageOutcome.reason
+  }
 }
 
 export function formatBatchExportResult(result: BatchExportResult): string {

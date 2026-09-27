@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 匯出失敗訊息以 `Download trigger failed:`／`Clipboard write failed:` 標示輸出寫入失敗，與頁面就緒問題區分（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)）。
 - 匯出顯示原週次的批次結果摘要，保留中途失敗前已觸發下載與略過原因，並區分失敗當頁與未處理頁；Copy 成功訊息於剪貼簿寫入完成後顯示（[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
 - Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。

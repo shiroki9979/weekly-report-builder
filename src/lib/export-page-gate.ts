@@ -1,3 +1,4 @@
+import { abortError, errorMessage } from "./export-errors"
 import type { MetricDraftBuffer } from "./metric-draft-buffer"
 import {
   assessContentReadiness,
@@ -19,12 +20,22 @@ export type CaptureSession = {
   dispose: () => void
 }
 
+export type HtmlLoadFailure = { kind: "html-load-failed"; message: string }
+
+export type PreparedCapture = CaptureSession | HtmlLoadFailure
+
 export type CaptureAdapter = {
   prepare: (
     week: WeekDocument,
     page: WeekPage,
     signal?: AbortSignal
-  ) => Promise<CaptureSession | { kind: "html-load-failed"; message: string }>
+  ) => Promise<PreparedCapture>
+}
+
+export type ExportPageDeps = {
+  adapter: CaptureAdapter
+  metricBuffer?: MetricDraftBuffer
+  signal?: AbortSignal
 }
 
 export type PageGateResult =
@@ -32,35 +43,191 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
-const MEASUREMENT_TIMEOUT_MS = 5000
-const CAPTURE_TIMEOUT_MS = 15000
-const PREPARATION_TIMEOUT_MS = 5000
+type PhaseLimit = { phase: string; timeoutMs: number }
 
-function abortError(): DOMException {
-  return new DOMException("Export was aborted", "AbortError")
+const MEASUREMENT_LIMIT: PhaseLimit = {
+  phase: "Capture measurement",
+  timeoutMs: 5000,
+}
+const CAPTURE_LIMIT: PhaseLimit = { phase: "PNG generation", timeoutMs: 15000 }
+// 需大於 adapter 內部 HTML 載入（3000 ms）與繪製等待（1000 ms）的總和，
+// HTML 逾時才會先被歸類為 html-load-failed，而非整個操作失敗。
+const PREPARATION_LIMIT: PhaseLimit = {
+  phase: "Capture preparation",
+  timeoutMs: 5000,
 }
 
-function causeMessage(cause: unknown, fallback: string): string {
-  return cause instanceof Error ? cause.message : fallback
+export function isHtmlLoadFailure(
+  prepared: PreparedCapture
+): prepared is HtmlLoadFailure {
+  return "kind" in prepared && prepared.kind === "html-load-failed"
+}
+
+export async function exportPage(
+  week: WeekDocument,
+  page: WeekPage,
+  deps: ExportPageDeps
+): Promise<PageGateResult> {
+  if (deps.signal?.aborted) {
+    return { kind: "failed", cause: deps.signal.reason }
+  }
+  const readinessIssues = preflightIssues(page, deps.metricBuffer ?? {})
+  if (readinessIssues.length > 0) {
+    return { kind: "blocked", issues: readinessIssues }
+  }
+
+  try {
+    const prepared = await prepareSession(week, page, deps)
+    if (isHtmlLoadFailure(prepared)) {
+      return {
+        kind: "blocked",
+        issues: [{ code: "html-load-failed", message: prepared.message }],
+      }
+    }
+    return await captureFromSession(prepared, page, deps)
+  } catch (cause: unknown) {
+    return { kind: "failed", cause }
+  }
+}
+
+function preflightIssues(
+  page: WeekPage,
+  metricBuffer: MetricDraftBuffer
+): ExportIssue[] {
+  if (!isSupportedStagePage(page)) {
+    return assessExportEligibility(page).issues
+  }
+  if (isStructuredWeekPage(page)) {
+    return assessContentReadiness(page, metricBuffer)
+  }
+  return []
+}
+
+async function prepareSession(
+  week: WeekDocument,
+  page: WeekPage,
+  deps: ExportPageDeps
+): Promise<PreparedCapture> {
+  const pending = deps.adapter.prepare(week, page, deps.signal)
+  let accepted = false
+  try {
+    const prepared = await runPhase(
+      () => pending,
+      PREPARATION_LIMIT,
+      deps.signal
+    )
+    accepted = true
+    return prepared
+  } finally {
+    if (!accepted) disposeLateSession(pending, page)
+  }
+}
+
+function disposeLateSession(
+  pending: Promise<PreparedCapture>,
+  page: WeekPage
+): void {
+  // 逾時或中止已回報為操作失敗；遲到的 session 需清理且不得進入後續頁面。
+  // 遲到的錯誤不再影響結果，但仍留下紀錄供除錯。
+  void pending
+    .then((late) => {
+      if (!isHtmlLoadFailure(late)) late.dispose()
+    })
+    .catch((cause: unknown) => {
+      console.warn(`Discarded late capture preparation for ${page.id}`, cause)
+    })
+}
+
+async function captureFromSession(
+  session: CaptureSession,
+  page: WeekPage,
+  deps: ExportPageDeps
+): Promise<PageGateResult> {
+  try {
+    const issues = await measurementIssues(session, page, deps)
+    if (issues.length > 0) {
+      return { kind: "blocked", issues }
+    }
+    return await capturePng(session, deps.signal)
+  } finally {
+    session.dispose()
+  }
+}
+
+async function measurementIssues(
+  session: CaptureSession,
+  page: WeekPage,
+  deps: ExportPageDeps
+): Promise<ExportIssue[]> {
+  if (isHtmlWeekPage(page)) {
+    return []
+  }
+
+  let measurement: CaptureAssessment
+  try {
+    measurement = await runPhase(
+      () => session.measure(),
+      MEASUREMENT_LIMIT,
+      deps.signal
+    )
+  } catch (cause: unknown) {
+    if (deps.signal?.aborted) throw cause
+    return [
+      {
+        code: "measurement-failed",
+        message: errorMessage(cause, "Capture measurement failed"),
+      },
+    ]
+  }
+
+  const assessment = assessExportEligibility(
+    page,
+    measurement,
+    deps.metricBuffer ?? {}
+  )
+  return assessment.eligible ? [] : assessment.issues
+}
+
+async function capturePng(
+  session: CaptureSession,
+  signal?: AbortSignal
+): Promise<PageGateResult> {
+  try {
+    return {
+      kind: "captured",
+      blob: await runPhase(() => session.capture(), CAPTURE_LIMIT, signal),
+    }
+  } catch (cause: unknown) {
+    if (signal?.aborted) throw cause
+    return {
+      kind: "blocked",
+      issues: [
+        {
+          code: "capture-failed",
+          message: errorMessage(cause, "PNG generation failed"),
+        },
+      ],
+    }
+  }
 }
 
 async function runPhase<T>(
   run: () => Promise<T>,
-  timeoutMs: number | undefined,
-  signal?: AbortSignal,
-  phase = "Operation"
+  limit: PhaseLimit,
+  signal?: AbortSignal
 ): Promise<T> {
   if (signal?.aborted) throw abortError()
 
   let timeout: ReturnType<typeof setTimeout> | undefined
   let onAbort: (() => void) | undefined
   const interruption = new Promise<never>((_resolve, reject) => {
-    if (timeoutMs !== undefined) {
-      timeout = setTimeout(
-        () => reject(new Error(`${phase} timed out after ${timeoutMs} ms`)),
-        timeoutMs
-      )
-    }
+    timeout = setTimeout(
+      () =>
+        reject(
+          new Error(`${limit.phase} timed out after ${limit.timeoutMs} ms`)
+        ),
+      limit.timeoutMs
+    )
     onAbort = () => reject(abortError())
     signal?.addEventListener("abort", onAbort, { once: true })
   })
@@ -68,128 +235,7 @@ async function runPhase<T>(
   try {
     return await Promise.race([run(), interruption])
   } finally {
-    if (timeout !== undefined) clearTimeout(timeout)
+    clearTimeout(timeout)
     if (onAbort) signal?.removeEventListener("abort", onAbort)
-  }
-}
-
-async function prepareSession(
-  adapter: CaptureAdapter,
-  week: WeekDocument,
-  page: WeekPage,
-  signal?: AbortSignal
-): ReturnType<CaptureAdapter["prepare"]> {
-  const pending = adapter.prepare(week, page, signal)
-  let accepted = false
-  try {
-    const prepared = await runPhase(
-      () => pending,
-      PREPARATION_TIMEOUT_MS,
-      signal,
-      "Capture preparation"
-    )
-    accepted = true
-    return prepared
-  } finally {
-    if (!accepted) {
-      // 逾時或中止後若 adapter 才交出 session，需清理它且不得進入後續頁面。
-      void pending
-        .then((late) => {
-          if (!("kind" in late)) late.dispose()
-        })
-        .catch(() => undefined)
-    }
-  }
-}
-
-export async function exportPage(
-  week: WeekDocument,
-  page: WeekPage,
-  adapter: CaptureAdapter,
-  metricBuffer: MetricDraftBuffer = {},
-  signal?: AbortSignal
-): Promise<PageGateResult> {
-  if (signal?.aborted) {
-    return { kind: "failed", cause: signal.reason }
-  }
-  if (!isSupportedStagePage(page)) {
-    return { kind: "blocked", issues: assessExportEligibility(page).issues }
-  }
-
-  if (isStructuredWeekPage(page)) {
-    const issues = assessContentReadiness(page, metricBuffer)
-    if (issues.length > 0) {
-      return { kind: "blocked", issues }
-    }
-  }
-
-  try {
-    const prepared = await prepareSession(adapter, week, page, signal)
-    if ("kind" in prepared) {
-      return {
-        kind: "blocked",
-        issues: [{ code: "html-load-failed", message: prepared.message }],
-      }
-    }
-    const session = prepared
-    try {
-      if (!isHtmlWeekPage(page)) {
-        let measurement: CaptureAssessment
-        try {
-          measurement = await runPhase(
-            () => session.measure(),
-            MEASUREMENT_TIMEOUT_MS,
-            signal,
-            "Capture measurement"
-          )
-        } catch (cause: unknown) {
-          if (signal?.aborted) throw cause
-          return {
-            kind: "blocked",
-            issues: [
-              {
-                code: "measurement-failed",
-                message: causeMessage(cause, "Capture measurement failed"),
-              },
-            ],
-          }
-        }
-        const assessment = assessExportEligibility(
-          page,
-          measurement,
-          metricBuffer
-        )
-        if (!assessment.eligible) {
-          return { kind: "blocked", issues: assessment.issues }
-        }
-      }
-
-      try {
-        return {
-          kind: "captured",
-          blob: await runPhase(
-            () => session.capture(),
-            CAPTURE_TIMEOUT_MS,
-            signal,
-            "PNG generation"
-          ),
-        }
-      } catch (cause: unknown) {
-        if (signal?.aborted) throw cause
-        return {
-          kind: "blocked",
-          issues: [
-            {
-              code: "capture-failed",
-              message: causeMessage(cause, "PNG generation failed"),
-            },
-          ],
-        }
-      }
-    } finally {
-      session.dispose()
-    }
-  } catch (cause: unknown) {
-    return { kind: "failed", cause }
   }
 }

@@ -27,7 +27,7 @@
 - **排除**：已勾選 **Hide page from export** 的頁面（靜默略過；見 [隱藏不需匯出的頁面](hide-pages-from-export.md)）
 - **略過並列出原因**：未知 layout、`fields` panel、Draft Page、Overflowing Page、非法 metric 草稿、HTML 載入失敗，以及量測或 PNG 產生失敗。其餘合格頁仍會輸出。
 
-下載觸發或共用 capture 設施發生錯誤時，批次停止；摘要保留已觸發下載與已略過頁、標示失敗的當頁和後續未處理頁。全數略過或沒有可見頁時，摘要會明確顯示 **Downloads triggered: 0**。匯出途中可繼續編輯或切週；結果仍歸屬開始匯出時的週次。
+下載觸發或共用 capture 設施發生錯誤時，批次停止；摘要保留已觸發下載與已略過頁、標示失敗的當頁和後續未處理頁。失敗原因以 `Download trigger failed:` 開頭時，代表瀏覽器下載觸發失敗而非頁面內容問題；Copy 的 `Clipboard write failed:` 同理。全數略過或沒有可見頁時，摘要會明確顯示 **Downloads triggered: 0**。匯出途中可繼續編輯或切週；結果仍歸屬開始匯出時的週次。
 
 Copy 目前頁時，若該頁是 Draft、Overflowing、量測／PNG 產生失敗或 HTML 載入失敗，會阻擋並顯示原因。HTML Page 不套用 Structured Layout 的內容與 overflow gate。
 

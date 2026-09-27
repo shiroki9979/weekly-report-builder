@@ -10,14 +10,17 @@ import {
 } from "./overflow-measurement"
 import { createStagePageContext } from "./stage-page-context"
 import { captureStageToPng } from "./stage-capture"
-import type { CaptureAdapter } from "./export-page-gate"
+import { abortError } from "./export-errors"
+import type { CaptureAdapter, HtmlLoadFailure } from "./export-page-gate"
 import { isHtmlWeekPage } from "./week-document"
 
 const OFFSCREEN_LEFT_PX = -10000
 const PAINT_SETTLE_TIMEOUT_MS = 1000
+const HTML_LOAD_TIMEOUT_MS = 3000
+const HTML_STATUS_POLL_MS = 16
 
-function abortError(): DOMException {
-  return new DOMException("Export was aborted", "AbortError")
+export function assertCaptureHostAvailable(): void {
+  if (!document.body) throw new Error("Capture host unavailable")
 }
 
 function waitForPaint(signal?: AbortSignal): Promise<void> {
@@ -48,25 +51,23 @@ function waitForPaint(signal?: AbortSignal): Promise<void> {
 async function waitForSlideSettled(
   host: HTMLElement,
   signal?: AbortSignal
-): Promise<{ kind: "ready" } | { kind: "html-load-failed"; message: string }> {
+): Promise<{ kind: "ready" } | HtmlLoadFailure> {
   const slide = () => host.querySelector("[data-status]")
   const startTime = Date.now()
 
   while (slide()?.getAttribute("data-status") === "loading") {
-    if (signal?.aborted)
-      throw new DOMException("Export was aborted", "AbortError")
-    if (Date.now() - startTime >= 3000) {
+    if (signal?.aborted) throw abortError()
+    if (Date.now() - startTime >= HTML_LOAD_TIMEOUT_MS) {
       return {
         kind: "html-load-failed",
-        message: "HTML load timed out after 3000 ms",
+        message: `HTML load timed out after ${HTML_LOAD_TIMEOUT_MS} ms`,
       }
     }
     // React 需有機會提交 HTML 非同步載入後的狀態，截圖才不會包含載入佔位內容。
-    await new Promise((resolve) => setTimeout(resolve, 16))
+    await new Promise((resolve) => setTimeout(resolve, HTML_STATUS_POLL_MS))
   }
 
-  if (signal?.aborted)
-    throw new DOMException("Export was aborted", "AbortError")
+  if (signal?.aborted) throw abortError()
   const element = slide()
   if (!element) throw new Error("HTML slide status not found")
   if (element.getAttribute("data-status") === "error") {
@@ -80,8 +81,7 @@ async function waitForSlideSettled(
 
 export const browserCaptureAdapter: CaptureAdapter = {
   async prepare(week, page, signal) {
-    if (signal?.aborted)
-      throw new DOMException("Export was aborted", "AbortError")
+    if (signal?.aborted) throw abortError()
     const host = document.createElement("div")
     host.setAttribute("aria-hidden", "true")
     host.style.cssText = `pointer-events:none;position:fixed;opacity:0;left:${OFFSCREEN_LEFT_PX}px;top:0;width:${CAPTURE_STAGE_WIDTH}px`
@@ -101,8 +101,7 @@ export const browserCaptureAdapter: CaptureAdapter = {
     signal?.addEventListener("abort", dispose, { once: true })
 
     try {
-      if (signal?.aborted)
-        throw new DOMException("Export was aborted", "AbortError")
+      if (signal?.aborted) throw abortError()
       const mountedRoot = createRoot(host)
       root = mountedRoot
       flushSync(() => {
@@ -124,8 +123,7 @@ export const browserCaptureAdapter: CaptureAdapter = {
         }
       }
       await waitForPaint(signal)
-      if (signal?.aborted)
-        throw new DOMException("Export was aborted", "AbortError")
+      if (signal?.aborted) throw abortError()
 
       const stageRoot = host.querySelector(`[${STAGE_CAPTURE_ROOT_ATTR}]`)
       if (!(stageRoot instanceof HTMLElement)) {
