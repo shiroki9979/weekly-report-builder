@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react"
 import { WorkshopShell } from "@/components/workshop/workshop-shell"
+import { httpWeekStore } from "@/lib/week-store"
 
 const LayoutPrototype = import.meta.env.DEV
   ? lazy(() => import("@/components/stage/prototype/layout-prototype"))
@@ -16,7 +17,7 @@ export function App() {
       </Suspense>
     )
   }
-  return <WorkshopShell />
+  return <WorkshopShell weekStore={httpWeekStore} />
 }
 
 export default App

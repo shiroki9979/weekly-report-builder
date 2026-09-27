@@ -42,7 +42,9 @@ export function NextActionsEditorForm({
           variant="outline"
           size="sm"
           disabled={!canAddEntry(page.commitments, CARDINALITY.commitments)}
-          onClick={() => onChange(addCommitment(week, pageIndex))}
+          onClick={() =>
+            onChange((currentWeek) => addCommitment(currentWeek, pageIndex))
+          }
         >
           Add commitment
         </Button>
@@ -63,9 +65,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === 0}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveCommitment(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex - 1
@@ -81,9 +83,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === page.commitments.length - 1}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveCommitment(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex + 1
@@ -101,7 +103,9 @@ export function NextActionsEditorForm({
                 !canRemoveEntry(page.commitments, CARDINALITY.commitments)
               }
               onClick={() =>
-                onChange(removeCommitment(week, pageIndex, commitmentIndex))
+                onChange((currentWeek) =>
+                  removeCommitment(currentWeek, pageIndex, commitmentIndex)
+                )
               }
             >
               Remove
@@ -119,9 +123,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "title",
@@ -143,9 +147,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "outcome",
@@ -168,9 +172,9 @@ export function NextActionsEditorForm({
                 ) || undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "checkpoint",
