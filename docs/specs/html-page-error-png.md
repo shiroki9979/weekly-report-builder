@@ -70,7 +70,7 @@ Preview continues to show its existing error warning or loading placeholder. The
 
 ## Confirmed operation behavior
 
-- Fix the Week Document, raw metric drafts, selected Copy page, reporting week, and page context at operation start.
+- Copy and batch capture the Editing Session's read-only operation snapshot at start: Week Document, Metric Input, selected Page ID, and selected Monday. Page context is derived from that Week Document.
 - Editing and switching weeks remain available. Subsequent changes do not alter the running operation; results identify the original week.
 - HTML assets are loaded when their page is processed, rather than included in the authoring-data snapshot.
 - Copy and batch share one mutual-exclusion guard. Reject requests while busy; do not queue them. The UI also disables the export buttons while busy.
@@ -121,7 +121,7 @@ The single-page gate and its browser adapter implement the confirmed behavior. T
 
 ### Shared single-page interface
 
-Copy and batch call one DOM-independent single-page gate with the page, Stage context, and raw metric drafts from the operation snapshot. Its result distinguishes a captured PNG, a blocked page with structured issues, and an operation failure. A captured PNG is not yet a completed download or clipboard write.
+Copy and batch call one DOM-independent single-page gate with the page, Stage context, and Metric Input from the Editing Session's operation snapshot. Its result distinguishes a captured PNG, a blocked page with structured issues, and an operation failure. A captured PNG is not yet a completed download or clipboard write.
 
 The gate owns support/content checks, HTML versus Structured Layout policy, measurement assessment, and PNG generation sequencing. It reuses existing content rules and stops before rendering when content is invalid. Callers do not filter a synthetic `measurement-failed` issue to discover whether they should render.
 
