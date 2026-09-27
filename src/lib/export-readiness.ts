@@ -33,7 +33,9 @@ export type ExportIssueCode =
   | "missing-content"
   | "invalid-content"
   | "overflow"
+  | "html-load-failed"
   | "measurement-failed"
+  | "capture-failed"
 
 export type ExportIssue = {
   code: ExportIssueCode
@@ -439,12 +441,12 @@ export function assessExportEligibility(
   return { eligible: true, issues: [] }
 }
 
+export function formatExportIssue(issue: ExportIssue): string {
+  return issue.path ? `${issue.path}: ${issue.message}` : issue.message
+}
+
 export function formatExportIssues(issues: ExportIssue[]): string {
-  return issues
-    .map((issue) =>
-      issue.path ? `${issue.path}: ${issue.message}` : issue.message
-    )
-    .join("; ")
+  return issues.map(formatExportIssue).join("; ")
 }
 
 export function issuePathsFor(

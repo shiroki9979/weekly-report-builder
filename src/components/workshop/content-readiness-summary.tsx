@@ -1,6 +1,9 @@
 import type { MetricDraftBuffer } from "@/lib/metric-draft-buffer"
 import { contentReadinessHeading } from "@/lib/content-readiness-copy"
-import { assessContentReadiness } from "@/lib/export-readiness"
+import {
+  assessContentReadiness,
+  formatExportIssue,
+} from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
 type ContentReadinessSummaryProps = {
@@ -31,7 +34,7 @@ export function ContentReadinessSummary({
       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
         {issues.map((issue) => (
           <li key={`${issue.code}:${issue.path ?? issue.message}`}>
-            {issue.path ? `${issue.path}: ${issue.message}` : issue.message}
+            {formatExportIssue(issue)}
           </li>
         ))}
       </ul>

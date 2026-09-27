@@ -1,24 +1,25 @@
-# HTML Page error-PNG behavior
+# HTML Page export failure policy
 
 建立日期：2026-09-10  
-最後更新：2026-09-10  
-狀態：draft（policy pending triage; do not mark `ready-for-agent` until policy is confirmed）
+最後更新：2026-09-27
+
+狀態：implemented（Q1–Q11 recorded; #32–#35 delivered）
 
 Follow-up to [`docs/specs/html-page-layout.md`](html-page-layout.md) and the non-goal in [`docs/specs/editorial-layout-family.md`](editorial-layout-family.md): Editorial Layout Family production adoption does not change HTML Page fetch, sanitization, timeout, or capture-failure handling.
 
-This spec inventories current Preview / Copy / batch behavior, then proposes a policy for a later implementation ticket. **This document does not authorize runtime changes.**
+This spec records the 2026-09-10 baseline and decisions confirmed during the Export gate module design interview on 2026-09-27. The shared export flow, failure policy, operation snapshot, and partial-result summary are implemented.
 
 ---
 
 ## Problem Statement
 
-HTML Pages skip Structured Layout completeness and overflow gates. Preview, Copy, and batch still fetch, sanitize, wait for settle, and capture. Failures today are inconsistent: a 404 becomes an error PNG and other pages continue; a hung fetch aborts the whole batch; sanitization never throws; `html-to-image` throws fail the operation.
+HTML Pages skip Structured Layout completeness and overflow gates. Preview, Copy, and batch fetch, sanitize, wait for settle, and capture. At the 2026-09-10 baseline, a 404 became an error PNG and other pages continued; a hung fetch aborted the whole batch; sanitization did not throw; `html-to-image` failures stopped the operation.
 
-Authors cannot tell from docs whether a broken HTML Page should appear as a warning slide in the team deck, be skipped with a Page ID reason, or stop export.
+The confirmed policy blocks individual copy of an HTML Load Failure and skips it in batch export, without producing a warning PNG. Page failures and operation failures need distinct handling so a failed page does not discard previously accumulated results.
 
-## Inventory (current, 2026-09-10)
+## Historical inventory (2026-09-10 baseline)
 
-Seams: `src/lib/html-page.ts`, `src/components/stage/html-slide.tsx`, `src/hooks/use-stage-export.ts` (`waitForSlideSettled`, 3000 ms), `src/lib/week-export.ts`, `src/lib/export-readiness.ts` (`assessExportEligibility` lets HTML through), `src/lib/stage-capture.ts`.
+Baseline seams: `src/lib/html-page.ts`, `src/components/stage/html-slide.tsx`, `src/hooks/use-stage-export.ts` (`waitForSlideSettled`, 3000 ms), `src/lib/week-export.ts`, `src/lib/export-readiness.ts` (`assessExportEligibility` lets HTML through), `src/lib/stage-capture.ts`.
 
 HTML Pages are **not** Overflowing Pages. `assessExportEligibility` returns `{ eligible: true }` without capture. Copy and batch still render the page, wait until `data-status` is not `loading`, then capture.
 
@@ -31,7 +32,7 @@ HTML Pages are **not** Overflowing Pages. `assessExportEligibility` returns `{ e
 | Sanitization                            | `sanitizeHtmlFragment` does not throw. Scripts/`on*`/dangerous tags stripped; empty or style-only input can yield `""`. Preview may be blank. | Captures whatever remains (including empty).                                               | Same.                                                                    |
 | Capture library throw (`html-to-image`) | N/A                                                                                                                                           | `clipboardError`; no skip list.                                                            | `exportError`; remaining pages are not processed.                        |
 
-Tests that lock this inventory:
+Historical tests that locked this inventory before implementation:
 
 - `tests/unit/html-slide.test.tsx`: invalid path and 404 → error status.
 - `tests/unit/use-stage-export.test.tsx`: 404 waits for error then captures the warning; hang → `exportError` timeout, `captureStageToPng` not called.
@@ -39,121 +40,165 @@ Tests that lock this inventory:
 
 ## Domain language
 
-Use existing glossary: HTML Page, Copy, batch export, Export Readiness, Overflowing Page (HTML is **not** one). Do not call a captured warning slide an Overflowing Page.
+Use [CONTEXT.md](../../CONTEXT.md): HTML Page, HTML Load Failure, Export Readiness, and Overflowing Page. HTML Load Failure is not overflow. A warning PNG describes the old output behavior, not a successful HTML Page export under the confirmed policy.
 
-Proposed HTML-only terms for the follow-up (add to `CONTEXT.md` only after triage confirms):
+## Confirmed scope
 
-**HTML Load Failure**:
-Fetch non-OK, invalid `htmlFile`, or settle timeout before `data-status` leaves `loading`.
+- Combine the Export gate module refactor with failure-policy changes.
+- Copy and batch share the complete single-page flow; a browser adapter owns capture host lifecycle, HTML settle handling, and capture root lookup.
+- Keep Structured Layout content and overflow rules. HTML Pages remain outside those rules.
+- Keep Preview behavior and sanitization behavior. Empty or fully stripped HTML remains capturable; it is not a load failure.
+- Keep Hidden Page exclusion in batch selection; individual Copy may process Hidden Pages.
+- Do not add HTML editing, replace DOMPurify or `html-to-image`, or expand into the other architecture candidates.
 
-**Error PNG**:
-A PNG of the production `stage-warning` (or equivalent) captured instead of the HTML fragment.
+## Confirmed failure policy
 
-## Goals
+These decisions replace the earlier proposed policy that retained warning PNGs and reused `measurement-failed` for unrelated failures.
 
-- One documented policy per failure for Preview (advisory), Copy, and batch.
-- Batch must not abort remaining eligible pages because one HTML Page hung or failed capture, unless triage explicitly keeps fail-the-operation.
-- Reason codes and fixtures so a later ticket can implement without rediscovering this inventory.
-- No change to Structured Layout Export Readiness, overflow measurement, or Editorial Layout Family behavior.
+| Situation                                                             | Copy                              | Batch                                       |
+| --------------------------------------------------------------------- | --------------------------------- | ------------------------------------------- |
+| Invalid HTML file reference, HTTP failure, or other HTML load failure | Block with reason; no warning PNG | Skip with Page ID and reason; continue      |
+| HTML load timeout                                                     | Block with reason; no loading PNG | Skip with Page ID and reason; continue      |
+| Structured Layout measurement failure                                 | Block with reason                 | Skip with Page ID and reason; continue      |
+| PNG generation failure on either page type                            | Block with reason                 | Skip with Page ID and reason; continue      |
+| Shared capture host or capture root missing                           | Stop and report operation failure | Stop; preserve previously processed results |
+| Clipboard write or download-trigger exception                         | Report write failure              | Stop; preserve previously processed results |
 
-## Non-goals
+Existing unsupported, Draft Page, invalid raw input, and Overflowing Page blocks remain. Page failures must not erase earlier skipped-page reasons. Stopping an operation cannot undo downloads already triggered.
 
-- Changing fetch, sanitize, timeout, or capture in the same PR as this spec.
-- Applying Structured Layout completeness or overflow gates to HTML Pages.
-- Online HTML editing, relative images, or external CSS files.
-- Replacing DOMPurify or `html-to-image`.
+Preview continues to show its existing error warning or loading placeholder. The export timeout does not impose a new timeout on Preview.
 
-## Proposed policy (pending triage)
+## Confirmed operation behavior
 
-Recommendations below are the default if triage accepts them. Until then, **keep current runtime**.
+- Fix the Week Document, raw metric drafts, selected Copy page, reporting week, and page context at operation start.
+- Editing and switching weeks remain available. Subsequent changes do not alter the running operation; results identify the original week.
+- HTML assets are loaded when their page is processed, rather than included in the authoring-data snapshot.
+- Copy and batch share one mutual-exclusion guard. Reject requests while busy; do not queue them. The UI also disables the export buttons while busy.
+- The browser adapter renders from the operation snapshot rather than the currently selected week.
 
-### 1. Invalid `htmlFile` and fetch non-OK
+## Confirmed reason codes
 
-**Keep Error PNG** for Preview (warning), Copy, and batch.
+| Code                 | Meaning                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| `unsupported`        | Unsupported layout or panel                                            |
+| `missing-content`    | Required authored content is missing                                   |
+| `invalid-content`    | Authored content or raw metric input violates content rules            |
+| `overflow`           | Structured Layout exceeds the canonical capture Stage                  |
+| `html-load-failed`   | Invalid HTML file reference, failed load request, or HTML load timeout |
+| `measurement-failed` | Actual Structured Layout measurement failure                           |
+| `capture-failed`     | PNG generation rejection or timeout, for either page type              |
 
-Rationale: `html-page-layout.md` already requires an English stage warning, not a silent blank. Capturing that warning matches Copy/batch with Preview and is locked by existing tests.
+Missing measurement is an internal workflow state, not an actual measurement failure to expose or filter out at Copy/batch call sites. HTML Pages do not undergo Structured Layout measurement. Missing shared host/root and output-write exceptions are operation failures, distinct from the page issues above.
 
-Do **not** skip these pages in batch. Do **not** introduce a new Export Issue for 404.
+## Confirmed result presentation
 
-### 2. Fetch hang (settle timeout)
+- Show a compact summary for the original reporting week, with counts for downloads triggered, skipped pages, failed pages, and pages not attempted.
+- List Page ID and reason for exceptions, rather than listing every successful page. Hidden Pages do not participate in the counts.
+- Use wording such as `Downloads triggered`, not `Files saved`: the browser download adapter cannot verify file persistence.
+- Preserve earlier outcomes when an operation stops. The stopped page and the reason for stopping remain visible alongside previous skipped-page reasons.
+- Copy, batch, and editor summaries share individual reason wording. Each surface retains its own heading and context; batch adds Page IDs, while Copy identifies the target page and reporting week.
+- Editor summaries remain content checks plus advisory preview measurements; sharing wording does not cause canonical capture or HTML loading in the editor.
 
-**Change (follow-up):** treat as ineligible, do not capture a loading placeholder.
+## Confirmed timeout policy
 
-- Copy: block; show a structured reason (not a raw thrown `exportError` string only).
-- Batch: skip the page with Page ID + reason; **continue** remaining pages.
-- Preview: keep the loading placeholder; optional advisory after the same timeout is out of scope unless triage asks for it.
+| Phase                         | Limit    | Failure handling                                  |
+| ----------------------------- | -------- | ------------------------------------------------- |
+| HTML load                     | 3000 ms  | `html-load-failed`; block Copy or skip in batch   |
+| Structured Layout measurement | 5000 ms  | `measurement-failed`; block Copy or skip in batch |
+| PNG generation                | 15000 ms | `capture-failed`; block Copy or skip in batch     |
 
-Timeout budget: keep **3000 ms** for HTML settle (distinct from overflow measurement’s 5000 ms). Document both constants in the implementation ticket.
+PNG's 15-second limit is an initial policy value, not a measured performance guarantee. It starts when PNG generation begins and does not include previous loading or measurement phases.
 
-### 3. Sanitization
+The screenshot library cannot guarantee complete cancellation. On timeout, isolate the old page, discard any late resolution or rejection, and continue batch without sending the late PNG to a download or clipboard sink. Late work must not mutate the next page's host, clear a newer operation's state, or release another operation's mutual-exclusion guard.
 
-**Keep non-throwing.** Empty or fully stripped fragments remain eligible HTML Pages. No Error PNG solely because sanitization removed scripts.
+These limits do not impose new timeouts on Preview or clipboard writes. A clipboard write remains busy until the platform promise settles; disposal behavior is defined in the module design below. The phase limits are not a guarantee of a fixed total operation duration.
 
-If sanitization ever threw, that would be a bug; the follow-up must not add a throw path.
-
-### 4. Capture library failure
-
-**Change (follow-up):** align with Structured Layout measurement-failed: Copy blocks; batch skips and continues. Do not abort the whole batch.
-
-HTML still skips overflow measurement. This only covers `captureStageToPng` throwing after the slide has settled.
-
-### Policy summary
-
-| Failure            | Preview              | Copy              | Batch (proposed)                |
-| ------------------ | -------------------- | ----------------- | ------------------------------- |
-| Invalid `htmlFile` | Warning              | Error PNG         | Error PNG, continue             |
-| Fetch non-OK       | Warning              | Error PNG         | Error PNG, continue             |
-| Fetch hang         | Loading (unchanged)  | Block, no PNG     | Skip + continue; no loading PNG |
-| Sanitize           | Blank or stripped OK | Capture remainder | Capture remainder               |
-| Capture throw      | N/A                  | Block             | Skip + continue                 |
-
-## Reason codes
-
-Do not overload `overflow`. HTML remains outside overflow.
-
-For hang and capture-library failure only (404 stays Error PNG, no skip reason):
-
-| Code                 | When                                             | Message (English)                                                                                                                                         |
-| -------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `measurement-failed` | HTML settle timeout or `captureStageToPng` throw | Reuse existing code. Timeout: `Timed out waiting for HTML slide to load`. Capture throw: existing `Failed to capture stage as PNG` or the thrown message. |
-
-Triage alternative: a dedicated `html-load-failed` code. Prefer **reusing `measurement-failed`** so Copy/batch skip formatting stays one list. If reused, implementation must still skip HTML hang **before** calling `html-to-image`, and must not call overflow measurement.
-
-404 / invalid path: **no** Export Issue; they produce Error PNGs.
+Capture preparation has a separate 5000 ms safety bound. If a background tab suppresses animation frames, the browser adapter proceeds with its committed DOM after at most 1000 ms; abort removes the temporary host. A stalled adapter that exceeds the safety bound stops the operation, and any session returned later is disposed without capture or output. The bound exceeds the adapter's 3000 ms HTML load limit plus its 1000 ms paint settle, so an HTML load timeout is reported as `html-load-failed` before the safety bound applies. A late preparation rejection does not change the result; it is logged as a console warning for debugging.
 
 ## Module design
 
-Keep HTML out of `assessContentReadiness`. Follow-up should:
+The single-page gate and its browser adapter implement the confirmed behavior. The browser adapter owns a temporary React root for each prepared capture session, as selected in Q11.
 
-1. Keep `waitForSlideSettled` as the HTML settle seam (3 s).
-2. On timeout, return a `CaptureAssessment`-compatible `{ status: "measurement-failed", message }` (or throw a typed error that export orchestration maps to `measurement-failed`) instead of failing `exportVisiblePages` entirely.
-3. Catch `capture` throws per page in `exportVisiblePages` / Copy, map to skip / block, continue batch.
-4. Leave `preloadHtmlFragment` and `sanitizeHtmlFragment` signatures unchanged.
+### Shared single-page interface
 
-Copy and batch must share this mapping; Preview stays advisory.
+Copy and batch call one DOM-independent single-page gate with the page, Stage context, and raw metric drafts from the operation snapshot. Its result distinguishes a captured PNG, a blocked page with structured issues, and an operation failure. A captured PNG is not yet a completed download or clipboard write.
 
-## Testing Decisions (follow-up implementation)
+The gate owns support/content checks, HTML versus Structured Layout policy, measurement assessment, and PNG generation sequencing. It reuses existing content rules and stops before rendering when content is invalid. Callers do not filter a synthetic `measurement-failed` issue to discover whether they should render.
 
-Vitest, no Playwright required unless hang-in-browser is added later.
+The browser adapter prepares a page capture session and hides its DOM nodes, HTML status/error protocol, canonical root lookup, and disposal. The gate may measure or capture that prepared session; tests supply an in-memory fake at the same seam. HTML load failure is communicated explicitly rather than inferred by parsing English error text. No Week JSON schema change is needed.
 
-1. Invalid `htmlFile` and 404: Copy and batch still capture warning PNG; other pages continue. (Keep existing tests.)
-2. Hung fetch: Copy sets `clipboardError` with the timeout message / `measurement-failed`; `captureStageToPng` not called. Batch skips that Page ID, downloads later eligible pages, no `exportError`.
-3. Sanitizer still does not throw; empty fragment still captured.
-4. `capture` rejection on an HTML Page: batch skip + continue; Copy blocks.
-5. Structured Layout overflow/draft skip tests remain green.
+Check shared host/root availability before measurement or PNG generation. A missing shared root must remain an operation failure even though the current low-level measurement helper reports a missing root as `measurement-failed`.
 
-Fixtures: missing `htmlFile`, in-flight never-resolving `fetch`, existing 404 mock, capture mock that rejects.
+### Operation and output ownership
 
-## Delivery
+The operation controller owns the start snapshot, Copy/batch mutual exclusion, result state, and disposal on unmount. Batch selects non-hidden pages and sends captured PNGs to the existing download adapter; Copy sends one captured PNG to the existing clipboard adapter. Neither output flow rebuilds page eligibility rules.
 
-One follow-up ticket after triage confirms the table in **Proposed policy**. That ticket may be labelled `ready-for-agent` only after policy is confirmed. This spec stays `needs-triage` until then.
+Each request made while busy receives an explicit busy result without clearing or replacing the active operation's progress/result. Request queues, automatic retry, resume, and a new cancellation button are outside this scope. A new user-triggered operation takes a fresh snapshot.
 
-## Open questions for triage
+Switching weeks does not dispose the active operation. Unmounting the owning Workshop does: abort owned HTML requests, release hosts, stop scheduling pages or output writes, and suppress late state updates. An output write already invoked cannot be undone. Timed-out page work must use a distinct session from subsequent work; its cleanup cannot touch the new session.
 
-1. Confirm Error PNG for 404 vs skip-with-reason (recommendation: keep Error PNG).
-2. Confirm hang and capture-throw skip remaining pages instead of failing the operation (recommendation: skip).
-3. Reuse `measurement-failed` vs add `html-load-failed` (recommendation: reuse).
-4. Whether Preview should stop showing a spinner after 3 s (recommendation: no, out of scope).
+Snapshot both the selected Monday and the Week Document. Continue to obtain Stage context from the existing `createStagePageContext` using the snapshot; preserve current filename and HTML-resource date semantics. Resolving mismatched document dates versus selected Monday belongs to architecture candidate 4 and is excluded here.
+
+### Browser host ownership
+
+Use an **adapter-owned temporary React root**. Create an offscreen host for each prepared capture session, render the existing Stage renderer, then unmount and remove that host on disposal. The shell passes data and invokes commands; it supplies no capture ref, capture page, host JSX, or additional capture Provider.
+
+Current Stage renderers have no React Provider dependency, and their CSS is available in the same document. The adapter must explicitly own commit and cleanup behavior; a new root does not inherit the application's StrictMode wrapper. Reuse `StageFrame`/`StageSlide`, the canonical capture dimensions, and the existing production capture-root data attribute. Copy/batch must not query DOM status or locate roots themselves.
+
+The alternative was a Provider with an internal portal, preserving ancestry and lifecycle/context behavior in the application's React tree. It was not selected because it adds a required shell wrapper without satisfying a current Stage dependency. Revisit that trade-off only if a real Stage Provider dependency appears.
+
+### Result accounting and wording
+
+The terminal batch result assigns each non-hidden page exactly one outcome:
+
+- Download triggered: the download adapter returned without throwing.
+- Skipped: the gate returned page issues, including HTML load, measurement, and PNG generation failure.
+- Failed: the page being processed when an operation-level failure occurred.
+- Not attempted: remaining pages after that stop.
+
+Output-write failures carry a `Download trigger failed:` (batch) or `Clipboard write failed:` (Copy) prefix so they are not read as page readiness issues.
+
+These counts sum to the snapshot's non-hidden page count. Preserve Page IDs and structured reasons for skipped/failed pages, plus the stop reason. A shared operation failure before any page begins has no failed page; all selected pages remain not attempted.
+
+Keep only the current or most recent operation result, labelled with its source week; a new accepted operation replaces it. A history screen and complete per-page success table are outside this scope. An all-skipped or empty selection must say that no downloads were triggered, rather than claiming files were exported. Copy reports success only after clipboard writing resolves.
+
+One issue formatter supplies code/path/message wording. Copy and batch provide their own context; editor summaries retain their content-specific headings and consume the same individual reason wording. Keep existing content issue order; new runtime failures appear only when the operation reaches that phase.
+
+## Acceptance scenarios to carry into implementation
+
+1. Invalid HTML references, 404, network failure, and hung HTML loads block Copy and skip in batch without calling PNG capture; later pages continue.
+2. Sanitization remains non-throwing; empty sanitized content is still capturable.
+3. PNG generation rejection skips the page in batch and blocks Copy for HTML and Structured Layouts.
+4. Missing shared capture infrastructure or a download-trigger exception stops batch while preserving previous results.
+5. Hidden exclusion, Draft Page, invalid raw input, overflow, and genuine measurement-failure rules remain covered.
+6. Editing, page reordering/deletion, and week switching during export do not change the operation's data or page context.
+7. Overlapping Copy/batch requests do not overwrite the active capture host or enqueue work.
+8. PNG generation exceeding 15 seconds skips/blocks with `capture-failed`; a subsequent late resolve/reject neither writes output nor changes the next page's host or operation state.
+9. Summary counts cover all and only non-hidden snapshot pages; an all-skipped or empty batch does not report successful file export.
+10. Workshop unmount disposes hosts and owned HTML requests; late work does not schedule further pages or output writes. An already-invoked output write is not rolled back.
+11. Shared wording preserves Page ID, field path, and actionable reason while editor summaries remain independent of capture execution.
+
+### Validation plan
+
+- Use Red → Green → Refactor vertical slices through the shared gate and operation interface. Fake capture sessions and output adapters cover phase failures, ordering, timeouts, result accounting, snapshot isolation, mutual exclusion, and late completion.
+- Browser-adapter integration tests cover actual host creation/disposal, HTML loading/error/ready signals, and the canonical root contract. Existing HTML warning-PNG tests must change to assert block/skip and no capture.
+- A focused Playwright check covers a successful real PNG, Structured Layout fit/overflow, HTML failure with batch continuation, and editing/week switching while an operation uses its original context. This exercises browser ownership and layout behavior that a DOM-free fake cannot validate.
+- Run the affected unit/integration tests, typecheck, lint, production build, and focused browser checks.
+
+## Delivery status
+
+Q1–Q11 are recorded and the design interview has no remaining open decisions. The complete spec is published as [#31](https://github.com/shiroki9979/weekly-report-builder/issues/31), labelled `ready-for-agent`.
+
+The ticket breakdown and blocking edges are confirmed. All four implementation issues are published with `ready-for-agent`:
+
+| Issue                                                                 | Delivers                                                                     | Blocked by |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------- |
+| [#32](https://github.com/shiroki9979/weekly-report-builder/issues/32) | Behavior-preserving shared capture flow with adapter-owned roots             | None       |
+| [#33](https://github.com/shiroki9979/weekly-report-builder/issues/33) | Recoverable page-failure policies, bounded capture waits, and shared reasons | #32        |
+| [#34](https://github.com/shiroki9979/weekly-report-builder/issues/34) | Stable operation snapshots, mutual exclusion, and disposal                   | #32        |
+| [#35](https://github.com/shiroki9979/weekly-report-builder/issues/35) | Partial-result summaries and combined regression coverage                    | #33, #34   |
+
+Blocking edges use GitHub native issue dependencies and are also recorded in each ticket body. The implementation followed #32, then #33 and #34, then #35.
 
 ## Related
 

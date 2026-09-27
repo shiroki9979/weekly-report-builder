@@ -11,10 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 實作 Export gate 與四張依賴工作票，Copy／batch 共用截圖流程、HTML 失敗政策、操作快照與部分結果摘要（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、#32～#35）。
 - Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複，且建立新週時沿用該頁設定；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 
 ### Changed
 
+- 匯出失敗訊息以 `Download trigger failed:`／`Clipboard write failed:` 標示輸出寫入失敗，與頁面就緒問題區分（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)）。
+- 匯出顯示原週次的批次結果摘要，保留中途失敗前已觸發下載與略過原因，並區分失敗當頁與未處理頁；Copy 成功訊息於剪貼簿寫入完成後顯示（[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
 - Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。
 - `pnpm typecheck` 改用 `tsc -b --noEmit`，實際檢查 app 與 node 兩個 TypeScript project。
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
 - Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
 - 刪除頁面時一併清除該頁的 Comparison Metric 草稿，新頁重用同一個 Page ID 不會讓舊的非法輸入復活；切換週次時清空草稿，避免上一週的輸入出現在新週並擋住 Save。
