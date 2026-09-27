@@ -56,7 +56,7 @@ test("previews, copies, and batch-exports a valid HTML Page", async ({
   ).toHaveCount(0)
 })
 
-test("captures a 404 HTML Page warning and continues the batch", async ({
+test("blocks a 404 HTML Page and exports the next batch page", async ({
   page,
 }) => {
   await page.goto("/")
@@ -73,13 +73,25 @@ test("captures a 404 HTML Page warning and continues the batch", async ({
     page.getByRole("button", { name: "Copy to clipboard" })
   ).toBeEnabled()
   await expect(
-    page.getByRole("status").filter({ hasText: "Skipped pages" })
-  ).toHaveCount(0)
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Failed to load HTML file: missing.html" })
+  ).toBeVisible()
 
   await unlockEditor(page)
+  const downloads: string[] = []
+  page.on("download", (download) =>
+    downloads.push(download.suggestedFilename())
+  )
+  const nextDownload = page.waitForEvent("download")
   await page.getByRole("button", { name: "Download PNGs" }).click()
+  await nextDownload
   await expect(
     page.getByRole("status").filter({ hasText: "Skipped pages" })
+  ).toContainText("p01: Failed to load HTML file: missing.html")
+  expect(downloads).toEqual(["2026-07-27-p02.png"])
+  await expect(
+    page.locator("[aria-hidden='true'] [data-stage-capture-root]")
   ).toHaveCount(0)
 })
 
