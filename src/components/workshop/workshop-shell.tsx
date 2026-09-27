@@ -34,16 +34,15 @@ import {
 } from "@/components/workshop/workshop-toolbar"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
-import {
-  useWeekEditor,
-  type WeekEditorLoadStatus,
-} from "@/hooks/use-week-editor"
+import { useEditingSession } from "@/hooks/use-editing-session"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
 } from "@/lib/overflow-measurement"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { WeekStore } from "@/lib/week-store"
+import type { SessionLoadStatus } from "@/lib/editing-session"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 
 export const EMPTY_STORE_MESSAGE =
@@ -66,7 +65,7 @@ type EditorSidebarProps = {
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
   metricControls: MetricEditorControls
   selection: PageSelection
-  loadStatus: WeekEditorLoadStatus
+  loadStatus: SessionLoadStatus
   save: ToolbarSaveControls
   create: ToolbarCreateControls
 }
@@ -173,11 +172,11 @@ function EditorSidebar({
 }
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
-export function WorkshopShell() {
-  return <WorkshopShellBody />
+export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
+  return <WorkshopShellBody weekStore={weekStore} />
 }
 
-function WorkshopShellBody() {
+function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
   const {
     weeks,
     selectedMonday,
@@ -200,7 +199,7 @@ function WorkshopShellBody() {
     suggestedMonday,
     save,
     create,
-  } = useWeekEditor()
+  } = useEditingSession(weekStore)
 
   const loading = loadStatus.kind === "loading"
   const emptyStore = loadStatus.kind === "empty"
