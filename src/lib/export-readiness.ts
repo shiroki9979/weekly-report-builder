@@ -19,7 +19,9 @@ import {
 
 import {
   invalidMetricInputMessage,
+  METRIC_VALUE_FIELDS,
   metricInputPath,
+  type MetricInputLocation,
   type MetricInputMap,
   type MetricValueField,
 } from "./metric-input"
@@ -268,16 +270,12 @@ const METRIC_VALUE_LABELS: Record<MetricValueField, string> = {
 // 非法 Metric Input 優先於 typed 值：輸入未能寫回 JSON，typed 值只是上一個合法值
 function assessMetricValue(
   page: EvidenceDecisionPage,
-  metricIndex: number,
-  field: MetricValueField,
+  location: MetricInputLocation,
   metricInput: MetricInputMap
 ): ExportIssue[] {
+  const { metricIndex, field } = location
   const path = metricInputPath(metricIndex, field)
-  const inputMessage = invalidMetricInputMessage(metricInput, {
-    pageId: page.id,
-    metricIndex,
-    field,
-  })
+  const inputMessage = invalidMetricInputMessage(metricInput, location)
   if (inputMessage !== null) {
     return [invalid(path, inputMessage)]
   }
@@ -313,8 +311,13 @@ function assessEvidenceDecision(
       )
     }
     issues.push(
-      ...assessMetricValue(page, index, "baselineValue", metricInput),
-      ...assessMetricValue(page, index, "candidateValue", metricInput)
+      ...METRIC_VALUE_FIELDS.flatMap((field) =>
+        assessMetricValue(
+          page,
+          { pageId: page.id, metricIndex: index, field },
+          metricInput
+        )
+      )
     )
   })
 

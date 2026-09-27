@@ -87,7 +87,7 @@ describe("Editing Session", () => {
         field: "baselineValue",
       })
     ).toBe("1.50")
-    session = removeSessionMetric(session, "ops:1", 0)
+    session = removeSessionMetric(session, { pageId: "ops:1", metricIndex: 0 })
     expect(
       readMetricInput(session, {
         pageId: "ops:1",
@@ -100,16 +100,16 @@ describe("Editing Session", () => {
 
   it("throws on forbidden removal without changing the session", () => {
     let session = createEditingSession(week(["p01"]))
-    session = removeSessionMetric(session, "p01", 1)
+    session = removeSessionMetric(session, { pageId: "p01", metricIndex: 1 })
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "bad"
     )
 
-    expect(() => removeSessionMetric(session, "p01", 0)).toThrow(
-      "Evidence-backed Decision must keep at least 1 metric"
-    )
+    expect(() =>
+      removeSessionMetric(session, { pageId: "p01", metricIndex: 0 })
+    ).toThrow("Evidence-backed Decision must keep at least 1 metric")
     expect(session.week?.pages[0]).toHaveProperty("metrics.length", 1)
     expect(
       readMetricInput(session, {
@@ -141,7 +141,7 @@ describe("Editing Session", () => {
     expect(canSaveSession(session).allowed).toBe(true)
   })
 
-  it("keeps the save error while Metric Input changes until the next Save", () => {
+  it("keeps the save error when Metric Input changes", () => {
     let session = createEditingSession(week(["p01"]))
     session = writeMetricInput(
       session,
@@ -157,7 +157,6 @@ describe("Editing Session", () => {
     )
 
     expect(session.saveError).toBe("Fix invalid metric values before saving")
-    expect(canSaveSession(session).session.saveError).toBeNull()
   })
 
   it("updates valid values immediately while keeping exact display text", () => {

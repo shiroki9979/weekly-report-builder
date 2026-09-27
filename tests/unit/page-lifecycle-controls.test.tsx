@@ -81,10 +81,8 @@ function LifecycleHarness({
             setSession((current) => writeMetricInput(current, location, raw)),
           move: (move) =>
             setSession((current) => moveSessionMetric(current, move)),
-          remove: (pageId, index) =>
-            setSession((current) =>
-              removeSessionMetric(current, pageId, index)
-            ),
+          remove: (metric) =>
+            setSession((current) => removeSessionMetric(current, metric)),
           readiness: (pageId) => sessionReadiness(session, pageId),
         }}
       />
