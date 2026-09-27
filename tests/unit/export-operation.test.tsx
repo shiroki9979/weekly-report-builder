@@ -12,6 +12,7 @@ import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 vi.mock("@/lib/browser-capture-adapter", () => ({
   browserCaptureAdapter: { prepare: vi.fn() },
+  assertCaptureHostAvailable: vi.fn(),
 }))
 vi.mock("@/lib/download-blob", () => ({ downloadBlob: vi.fn() }))
 vi.mock("@/lib/clipboard-image", () => ({ copyImageToClipboard: vi.fn() }))
@@ -46,7 +47,7 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
-describe("export operation commandsRef", () => {
+describe("export operation lifecycle", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(browserCaptureAdapter.prepare).mockReset()
@@ -133,6 +134,70 @@ describe("export operation commandsRef", () => {
     expect(commandsRef.current!.exportResult).toBe(
       "Export for 2026-08-24: Downloads triggered: 2; Skipped: 0; Failed: 0; Not attempted: 0."
     )
+  })
+
+  it("exports every starting page with its original position after a page is deleted mid-batch", async () => {
+    const firstCapture = deferred<Blob>()
+    const week: WeekDocument = {
+      start: "2026-08-18",
+      end: "2026-08-22",
+      pages: [
+        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
+        { id: "p02", layout: "html", title: "Second", htmlFile: "second.html" },
+      ],
+    }
+    const seen: string[] = []
+    vi.mocked(browserCaptureAdapter.prepare).mockImplementation(
+      async (document, page) => {
+        seen.push(
+          `${page.id}:${createStagePageContext(document, page.id).pageLabel}`
+        )
+        return {
+          measure: async () => ({ status: "fit" }),
+          capture: () =>
+            page.id === "p01"
+              ? firstCapture.promise
+              : Promise.resolve(new Blob(["png"])),
+          dispose: vi.fn(),
+        }
+      }
+    )
+    const commandsRef: { current: Commands | null } = { current: null }
+    const view = render(
+      <OperationHarness
+        monday="2026-08-18"
+        week={week}
+        selectedPage={week.pages[0]}
+        commandsRef={commandsRef}
+      />
+    )
+
+    let batch!: ReturnType<Commands["downloadVisiblePages"]>
+    act(() => {
+      batch = commandsRef.current!.downloadVisiblePages()
+    })
+    await waitFor(() => expect(seen).toHaveLength(1))
+
+    const afterDeletion: WeekDocument = { ...week, pages: [week.pages[0]] }
+    week.pages.splice(1, 1)
+    view.rerender(
+      <OperationHarness
+        monday="2026-08-18"
+        week={afterDeletion}
+        selectedPage={afterDeletion.pages[0]}
+        commandsRef={commandsRef}
+      />
+    )
+    await act(async () => {
+      firstCapture.resolve(new Blob(["png"]))
+      await batch
+    })
+
+    expect(seen).toEqual(["p01:1 / 2", "p02:2 / 2"])
+    expect(vi.mocked(downloadBlob).mock.calls.map((call) => call[1])).toEqual([
+      "2026-08-18-p01.png",
+      "2026-08-18-p02.png",
+    ])
   })
 
   it("keeps raw metric drafts and selects a fresh Copy target after the previous operation", async () => {
@@ -301,7 +366,7 @@ describe("export operation commandsRef", () => {
       "p02: This layout cannot be exported"
     )
     expect(commandsRef.current!.exportResult).toContain(
-      "Failed page: p03: Downloads blocked"
+      "Failed page: p03: Download trigger failed: Downloads blocked"
     )
 
     await act(async () => {
@@ -309,6 +374,42 @@ describe("export operation commandsRef", () => {
     })
     expect(commandsRef.current!.exportResult).toBe(
       "Copied p01 from 2026-08-24 to clipboard."
+    )
+  })
+
+  it("labels a rejected clipboard write as an output failure rather than a page issue", async () => {
+    vi.mocked(browserCaptureAdapter.prepare).mockResolvedValue({
+      measure: async () => ({ status: "fit" }),
+      capture: async () => new Blob(["png"]),
+      dispose: vi.fn(),
+    })
+    vi.mocked(copyImageToClipboard).mockRejectedValueOnce(
+      new Error("Write permission denied")
+    )
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
+      ],
+    }
+    const commandsRef: { current: Commands | null } = { current: null }
+    render(
+      <OperationHarness
+        monday={week.start}
+        week={week}
+        selectedPage={week.pages[0]}
+        commandsRef={commandsRef}
+      />
+    )
+
+    await act(async () => {
+      await commandsRef.current!.copyCurrentPage()
+    })
+
+    expect(commandsRef.current!.resultIsError).toBe(true)
+    expect(commandsRef.current!.exportResult).toBe(
+      "Copy p01 from 2026-08-24: Clipboard write failed: Write permission denied"
     )
   })
 

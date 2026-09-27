@@ -113,7 +113,7 @@ The screenshot library cannot guarantee complete cancellation. On timeout, isola
 
 These limits do not impose new timeouts on Preview or clipboard writes. A clipboard write remains busy until the platform promise settles; disposal behavior is defined in the module design below. The phase limits are not a guarantee of a fixed total operation duration.
 
-Capture preparation has a separate 5000 ms safety bound. If a background tab suppresses animation frames, the browser adapter proceeds with its committed DOM after at most 1000 ms; abort removes the temporary host. A stalled adapter that exceeds the safety bound stops the operation, and any session returned later is disposed without capture or output.
+Capture preparation has a separate 5000 ms safety bound. If a background tab suppresses animation frames, the browser adapter proceeds with its committed DOM after at most 1000 ms; abort removes the temporary host. A stalled adapter that exceeds the safety bound stops the operation, and any session returned later is disposed without capture or output. The bound exceeds the adapter's 3000 ms HTML load limit plus its 1000 ms paint settle, so an HTML load timeout is reported as `html-load-failed` before the safety bound applies. A late preparation rejection does not change the result; it is logged as a console warning for debugging.
 
 ## Module design
 
@@ -155,6 +155,8 @@ The terminal batch result assigns each non-hidden page exactly one outcome:
 - Skipped: the gate returned page issues, including HTML load, measurement, and PNG generation failure.
 - Failed: the page being processed when an operation-level failure occurred.
 - Not attempted: remaining pages after that stop.
+
+Output-write failures carry a `Download trigger failed:` (batch) or `Clipboard write failed:` (Copy) prefix so they are not read as page readiness issues.
 
 These counts sum to the snapshot's non-hidden page count. Preserve Page IDs and structured reasons for skipped/failed pages, plus the stop reason. A shared operation failure before any page begins has no failed page; all selected pages remain not attempted.
 
