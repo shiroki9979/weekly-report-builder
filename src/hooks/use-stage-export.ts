@@ -7,11 +7,11 @@ import {
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
 import type { SessionOperationSnapshot } from "@/lib/editing-session"
-import { errorMessage } from "@/lib/export-errors"
+import { errorMessage } from "@/lib/error-message"
 import { exportPage } from "@/lib/export-page-gate"
 import { formatExportIssues } from "@/lib/export-readiness"
 import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { WeekPage } from "@/lib/week-document"
 import { exportVisiblePages } from "@/lib/week-export"
 
 type UseStageExportOptions = {
@@ -24,16 +24,22 @@ type ExportCommandResult =
   | { kind: "unavailable" }
   | { kind: "disposed" }
 
-type OperationSnapshot = {
-  data: SessionOperationSnapshot
+type ExportOperation = {
+  snapshot: SessionOperationSnapshot
   controller: AbortController
+}
+
+type StartedOperation<Target> = {
+  kind: "started"
+  operation: ExportOperation
+  target: Target
 }
 
 export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
   const [lastResult, setLastResult] = useState<ExportResult | null>(null)
-  const activeRef = useRef<OperationSnapshot | null>(null)
+  const activeRef = useRef<ExportOperation | null>(null)
   const disposedRef = useRef(false)
 
   useEffect(() => {
@@ -45,45 +51,41 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
     }
   }, [])
 
+  // 目標由快照挑出：快照沒有可操作的目標時不佔用互斥鎖，也不清掉上一次結果
   const start = useCallback(
-    (
-      requireSelectedPage = false
-    ):
-      | { kind: "started"; operation: OperationSnapshot }
-      | ExportCommandResult => {
+    <Target>(
+      pickTarget: (snapshot: SessionOperationSnapshot) => Target | undefined
+    ): StartedOperation<Target> | ExportCommandResult => {
       if (disposedRef.current) {
         return { kind: "disposed" }
       }
       if (activeRef.current) {
         return { kind: "busy" }
       }
-      const data = operationSnapshot()
-      if (
-        !data ||
-        (requireSelectedPage &&
-          !data.week.pages.some((page) => page.id === data.selectedPageId))
-      ) {
+      const snapshot = operationSnapshot()
+      const target = snapshot ? pickTarget(snapshot) : undefined
+      if (!snapshot || target === undefined) {
         return { kind: "unavailable" }
       }
 
-      const operation: OperationSnapshot = {
-        data,
+      const operation: ExportOperation = {
+        snapshot,
         controller: new AbortController(),
       }
       activeRef.current = operation
       setLastResult(null)
-      return { kind: "started", operation }
+      return { kind: "started", operation, target }
     },
     [operationSnapshot]
   )
 
   const isActive = useCallback(
-    (operation: OperationSnapshot) =>
+    (operation: ExportOperation) =>
       activeRef.current === operation && !operation.controller.signal.aborted,
     []
   )
 
-  const finish = useCallback((operation: OperationSnapshot) => {
+  const finish = useCallback((operation: ExportOperation) => {
     if (activeRef.current === operation) {
       activeRef.current = null
       setExporting(false)
@@ -93,23 +95,22 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
 
   const downloadVisiblePages =
     useCallback(async (): Promise<ExportCommandResult> => {
-      const started = start()
+      const started = start((snapshot) => snapshot.week)
       if (started.kind !== "started") {
         return started
       }
-      const { operation } = started
-      const { data } = operation
+      const { operation, target: week } = started
 
       setExporting(true)
 
       try {
         const result = await exportVisiblePages(
-          data.monday,
-          data.week as WeekDocument,
+          operation.snapshot.monday,
+          week,
           {
             adapter: browserCaptureAdapter,
             download: downloadBlob,
-            metricBuffer: data.metricInput,
+            metricInput: operation.snapshot.metricInput,
             signal: operation.controller.signal,
             beforePages: assertCaptureHostAvailable,
           }
@@ -126,19 +127,11 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
 
   const copyCurrentPage =
     useCallback(async (): Promise<ExportCommandResult> => {
-      const started = start(true)
+      const started = start(selectedPage)
       if (started.kind !== "started") {
         return started
       }
-      const { operation } = started
-      const { data } = operation
-      const page = data.week.pages.find(
-        (entry) => entry.id === data.selectedPageId
-      )
-      if (!page) {
-        finish(operation)
-        return { kind: "unavailable" }
-      }
+      const { operation, target: page } = started
 
       setCopying(true)
 
@@ -149,7 +142,7 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
         }
         setLastResult({
           kind: "copy",
-          monday: data.monday,
+          monday: operation.snapshot.monday,
           pageId: page.id,
           error: outcome.kind === "rejected" ? outcome.reason : null,
         })
@@ -170,18 +163,24 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
   }
 }
 
+function selectedPage(
+  snapshot: SessionOperationSnapshot
+): WeekPage | undefined {
+  return snapshot.week.pages.find((page) => page.id === snapshot.selectedPageId)
+}
+
 type CopyOutcome =
   | { kind: "copied" }
   | { kind: "rejected"; reason: string }
   | { kind: "aborted" }
 
 async function copyPageImage(
-  operation: OperationSnapshot,
+  operation: ExportOperation,
   page: WeekPage
 ): Promise<CopyOutcome> {
-  const result = await exportPage(operation.data.week as WeekDocument, page, {
+  const result = await exportPage(operation.snapshot.week, page, {
     adapter: browserCaptureAdapter,
-    metricBuffer: operation.data.metricInput,
+    metricInput: operation.snapshot.metricInput,
     signal: operation.controller.signal,
   })
   if (result.kind === "blocked") {

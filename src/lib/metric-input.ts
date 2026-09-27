@@ -12,6 +12,18 @@ export type PageMetricInputs = Readonly<
 // 以 Page ID 分層而非字串串接：Page ID 只要求非空，可含 `:` 等任何分隔字元
 export type MetricInputMap = Readonly<Record<string, PageMetricInputs>>
 
+export type MetricInputLocation = Readonly<{
+  pageId: string
+  metricIndex: number
+  field: MetricValueField
+}>
+
+export type MetricMove = Readonly<{
+  pageId: string
+  fromIndex: number
+  toIndex: number
+}>
+
 export const METRIC_VALUE_FIELDS = ["baselineValue", "candidateValue"] as const
 
 const METRIC_INPUT_PATH = /^metrics\[(\d+)\]\.(baselineValue|candidateValue)$/
@@ -25,28 +37,26 @@ export function metricInputPath(
 
 export function readMetricInputText(
   inputsByPage: MetricInputMap,
-  pageId: string,
-  path: MetricInputPath
+  { pageId, metricIndex, field }: MetricInputLocation
 ): string | undefined {
-  return inputsByPage[pageId]?.[path]
+  return inputsByPage[pageId]?.[metricInputPath(metricIndex, field)]
 }
 
 export function writeMetricInputText(
   inputsByPage: MetricInputMap,
-  pageId: string,
-  path: MetricInputPath,
+  { pageId, metricIndex, field }: MetricInputLocation,
   raw: string
 ): MetricInputMap {
+  const path = metricInputPath(metricIndex, field)
   return { ...inputsByPage, [pageId]: { ...inputsByPage[pageId], [path]: raw } }
 }
 
 // 非法輸入寫不回 JSON，typed 值只會停在上一個合法值；只有 Metric Input 保留使用者目前打錯的文字，所以須獨立檢查
 export function invalidMetricInputMessage(
   inputsByPage: MetricInputMap,
-  pageId: string,
-  path: MetricInputPath
+  location: MetricInputLocation
 ): string | null {
-  const raw = readMetricInputText(inputsByPage, pageId, path)
+  const raw = readMetricInputText(inputsByPage, location)
   if (raw === undefined) {
     return null
   }
@@ -64,11 +74,11 @@ export function weekHasInvalidMetricInputs(
       page.metrics.some((_, index) =>
         METRIC_VALUE_FIELDS.some(
           (field) =>
-            invalidMetricInputMessage(
-              inputsByPage,
-              page.id,
-              metricInputPath(index, field)
-            ) !== null
+            invalidMetricInputMessage(inputsByPage, {
+              pageId: page.id,
+              metricIndex: index,
+              field,
+            }) !== null
         )
       )
   )
@@ -114,9 +124,7 @@ function remapPageInputs(
 
 export function remapMetricInputAfterMove(
   inputsByPage: MetricInputMap,
-  pageId: string,
-  fromIndex: number,
-  toIndex: number
+  { pageId, fromIndex, toIndex }: MetricMove
 ): MetricInputMap {
   if (fromIndex === toIndex) {
     return inputsByPage

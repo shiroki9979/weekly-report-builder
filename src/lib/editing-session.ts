@@ -1,19 +1,21 @@
 import { assessContentReadiness, type ExportIssue } from "./export-readiness"
 import {
-  metricInputPath,
+  METRIC_VALUE_FIELDS,
   readMetricInputText,
   remapMetricInputAfterMove,
   remapMetricInputAfterRemove,
   weekHasInvalidMetricInputs,
   writeMetricInputText,
+  type MetricInputLocation,
   type MetricInputMap,
-  type MetricValueField,
+  type MetricMove,
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
 import {
   addPageAfter,
   deleteSelectedPage,
   moveSelectedPage,
+  type PageMoveDirection,
 } from "./page-lifecycle"
 import {
   moveDecisionMetric,
@@ -42,29 +44,20 @@ export type EditingSession = {
   readonly createError: string | null
 }
 
-type DeepReadonly<T> = T extends object
-  ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
-  : T
-
+// 快照在執行期深度凍結；匯出流程沿用 WeekDocument 型別，誤寫會直接拋錯而不會改到快照
 export type SessionOperationSnapshot = Readonly<{
   monday: string
-  week: DeepReadonly<WeekDocument>
+  week: WeekDocument
   selectedPageId: string | null
   metricInput: MetricInputMap
 }>
 
-export type MetricInputLocation = Readonly<{
-  pageId: string
-  metricIndex: number
-  field: MetricValueField
-}>
-
-function freezeDeep<T extends object>(value: T): DeepReadonly<T> {
+function freezeDeep<T extends object>(value: T): T {
   Object.freeze(value)
   for (const nested of Object.values(value)) {
     if (nested && typeof nested === "object") freezeDeep(nested)
   }
-  return value as DeepReadonly<T>
+  return value
 }
 
 export function sessionOperationSnapshot(
@@ -178,8 +171,6 @@ export function beginSessionCreate(session: EditingSession): EditingSession {
     ...session,
     creating: true,
     createError: null,
-    saving: false,
-    saveError: null,
     savedMessage: null,
   }
 }
@@ -212,66 +203,114 @@ function metricLocation(
   return { week, pageIndex, page }
 }
 
-function hasUnsupportedMetricChange(
-  before: ComparisonMetric[],
-  after: ComparisonMetric[]
-): boolean {
-  if (after.length < before.length) return true
-  if (
-    after.some((metric, index) => {
-      const oldIndex = before.indexOf(metric)
-      return oldIndex !== -1 && oldIndex !== index
-    })
-  )
-    return true
-  // Page updater 會複製整份文件；以欄位差異辨識一次是否改動多個既有 Metric。
-  return (
-    before.filter((metric, index) =>
-      (Object.keys(metric) as (keyof ComparisonMetric)[]).some(
-        (field) => metric[field] !== after[index][field]
-      )
-    ).length > 1 ||
-    before.some(
-      (metric, index) =>
-        metric.baselineValue !== after[index].baselineValue ||
-        metric.candidateValue !== after[index].candidateValue
-    )
-  )
-}
-
 export function editSessionContent(
   session: EditingSession,
   update: (week: WeekDocument) => WeekDocument
 ): EditingSession {
   const week = requireWeek(session)
   const next = update(week)
-  if (
-    next.pages.length !== week.pages.length ||
-    next.pages.some(
-      (page, index) =>
-        page.id !== week.pages[index].id ||
-        page.layout !== week.pages[index].layout
-    )
-  ) {
+  if (changesPageStructure(week, next)) {
     throw new Error(
       "Page changes require a dedicated Editing Session operation"
     )
   }
-  if (
-    next.pages.some((nextPage, pageIndex) => {
-      const page = week.pages[pageIndex]
-      if (!isEvidenceDecisionPage(page) || !isEvidenceDecisionPage(nextPage)) {
-        return false
-      }
-      return hasUnsupportedMetricChange(page.metrics, nextPage.metrics)
-    })
-  ) {
+  if (changesMetricsUnsafely(week, next)) {
     throw new Error(
       "Metric changes require a dedicated Editing Session operation"
     )
   }
   return { ...session, week: next }
 }
+
+function changesPageStructure(
+  before: WeekDocument,
+  after: WeekDocument
+): boolean {
+  return (
+    after.pages.length !== before.pages.length ||
+    after.pages.some(
+      (page, index) =>
+        page.id !== before.pages[index].id ||
+        page.layout !== before.pages[index].layout
+    )
+  )
+}
+
+type MetricChangeRule = (
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+) => boolean
+
+function changesMetricsUnsafely(
+  before: WeekDocument,
+  after: WeekDocument
+): boolean {
+  return after.pages.some((afterPage, pageIndex) => {
+    const beforePage = before.pages[pageIndex]
+    return (
+      isEvidenceDecisionPage(beforePage) &&
+      isEvidenceDecisionPage(afterPage) &&
+      UNSAFE_METRIC_CHANGES.some((rule) =>
+        rule(beforePage.metrics, afterPage.metrics)
+      )
+    )
+  })
+}
+
+function removesMetrics(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  return after.length < before.length
+}
+
+function reordersMetrics(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  return after.some((metric, index) => {
+    const beforeIndex = before.indexOf(metric)
+    return beforeIndex !== -1 && beforeIndex !== index
+  })
+}
+
+// Page updater 會複製整份文件，參照比對抓不到複製後的對調；以欄位差異辨識一次改動多個既有 Metric
+function changesSeveralMetrics(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  return (
+    before.filter((metric, index) => metricChanged(metric, after[index]))
+      .length > 1
+  )
+}
+
+function metricChanged(
+  before: ComparisonMetric,
+  after: ComparisonMetric
+): boolean {
+  return (Object.keys(before) as (keyof ComparisonMetric)[]).some(
+    (field) => before[field] !== after[field]
+  )
+}
+
+function changesMetricValues(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  return before.some((metric, index) =>
+    METRIC_VALUE_FIELDS.some((field) => metric[field] !== after[index][field])
+  )
+}
+
+// Metric Input 以 Metric 索引定位；會讓索引錯位或繞過 Metric Input 的改動必須走專用操作。
+// removesMetrics 須排第一：其後規則以 before 的索引讀取 after
+const UNSAFE_METRIC_CHANGES: MetricChangeRule[] = [
+  removesMetrics,
+  reordersMetrics,
+  changesSeveralMetrics,
+  changesMetricValues,
+]
 
 export function selectSessionPage(
   session: EditingSession,
@@ -285,34 +324,26 @@ export function selectSessionPage(
 
 export function readMetricInput(
   session: EditingSession,
-  { pageId, metricIndex, field }: MetricInputLocation
+  location: MetricInputLocation
 ): string {
+  const { pageId, metricIndex, field } = location
   const { page } = metricLocation(session, pageId, metricIndex)
+  const typedValue = page.metrics[metricIndex][field]
   return (
-    readMetricInputText(
-      session.metricInput,
-      pageId,
-      metricInputPath(metricIndex, field)
-    ) ??
-    (page.metrics[metricIndex][field] === null
-      ? ""
-      : String(page.metrics[metricIndex][field]))
+    readMetricInputText(session.metricInput, location) ??
+    (typedValue === null ? "" : String(typedValue))
   )
 }
 
 export function writeMetricInput(
   session: EditingSession,
-  { pageId, metricIndex, field }: MetricInputLocation,
+  location: MetricInputLocation,
   raw: string
 ): EditingSession {
+  const { pageId, metricIndex, field } = location
   const { week, pageIndex } = metricLocation(session, pageId, metricIndex)
   const parsed = parseMetricInput(raw)
-  const metricInput = writeMetricInputText(
-    session.metricInput,
-    pageId,
-    metricInputPath(metricIndex, field),
-    raw
-  )
+  const metricInput = writeMetricInputText(session.metricInput, location, raw)
   const nextWeek =
     parsed.status === "invalid"
       ? week
@@ -323,15 +354,14 @@ export function writeMetricInput(
           field,
           parsed.status === "empty" ? null : parsed.value
         )
-  return { ...session, week: nextWeek, metricInput, saveError: null }
+  return { ...session, week: nextWeek, metricInput }
 }
 
 export function moveSessionMetric(
   session: EditingSession,
-  pageId: string,
-  fromIndex: number,
-  toIndex: number
+  move: MetricMove
 ): EditingSession {
+  const { pageId, fromIndex, toIndex } = move
   const { week, pageIndex, page } = metricLocation(session, pageId, fromIndex)
   if (!page.metrics[toIndex]) {
     throw new Error(`Unknown Comparison Metric: ${pageId}[${toIndex}]`)
@@ -340,12 +370,7 @@ export function moveSessionMetric(
   return {
     ...session,
     week: next,
-    metricInput: remapMetricInputAfterMove(
-      session.metricInput,
-      pageId,
-      fromIndex,
-      toIndex
-    ),
+    metricInput: remapMetricInputAfterMove(session.metricInput, move),
   }
 }
 
@@ -406,7 +431,7 @@ export function deleteSessionPage(
 export function moveSessionPage(
   session: EditingSession,
   pageId: string,
-  direction: "up" | "down"
+  direction: PageMoveDirection
 ): EditingSession {
   const result = moveSelectedPage(requireWeek(session), pageId, direction)
   return {

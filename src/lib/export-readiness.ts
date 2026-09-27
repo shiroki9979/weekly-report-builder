@@ -270,12 +270,16 @@ function assessMetricValue(
   page: EvidenceDecisionPage,
   metricIndex: number,
   field: MetricValueField,
-  metricBuffer: MetricInputMap
+  metricInput: MetricInputMap
 ): ExportIssue[] {
   const path = metricInputPath(metricIndex, field)
-  const draftMessage = invalidMetricInputMessage(metricBuffer, page.id, path)
-  if (draftMessage !== null) {
-    return [invalid(path, draftMessage)]
+  const inputMessage = invalidMetricInputMessage(metricInput, {
+    pageId: page.id,
+    metricIndex,
+    field,
+  })
+  if (inputMessage !== null) {
+    return [invalid(path, inputMessage)]
   }
 
   const value = page.metrics[metricIndex][field]
@@ -291,7 +295,7 @@ function assessMetricValue(
 
 function assessEvidenceDecision(
   page: EvidenceDecisionPage,
-  metricBuffer: MetricInputMap
+  metricInput: MetricInputMap
 ): ExportIssue[] {
   const issues: ExportIssue[] = []
 
@@ -309,8 +313,8 @@ function assessEvidenceDecision(
       )
     }
     issues.push(
-      ...assessMetricValue(page, index, "baselineValue", metricBuffer),
-      ...assessMetricValue(page, index, "candidateValue", metricBuffer)
+      ...assessMetricValue(page, index, "baselineValue", metricInput),
+      ...assessMetricValue(page, index, "candidateValue", metricInput)
     )
   })
 
@@ -356,13 +360,13 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
   page: StructuredWeekPage,
-  metricBuffer: MetricInputMap = {}
+  metricInput: MetricInputMap = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
     weeklyOverview: assessWeeklyOverview,
     evidenceDecision: (decision) =>
-      assessEvidenceDecision(decision, metricBuffer),
+      assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
     html: () => [],
     unknown: () => [],
@@ -379,7 +383,7 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricBuffer: MetricInputMap = {}
+  metricInput: MetricInputMap = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -397,7 +401,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessContentReadiness(page, metricBuffer)
+  const contentIssues = assessContentReadiness(page, metricInput)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }
@@ -449,17 +453,12 @@ export function formatExportIssues(issues: ExportIssue[]): string {
   return issues.map(formatExportIssue).join("; ")
 }
 
-export function issuePathsFor(
-  page: WeekPage,
-  metricBuffer: MetricInputMap = {}
-): Set<string> {
-  if (!isStructuredWeekPage(page)) {
-    return new Set()
-  }
-
-  return new Set(
-    assessContentReadiness(page, metricBuffer)
-      .map((issue) => issue.path)
-      .filter((path): path is string => path !== undefined)
+export function issuePathsFor(page: WeekPage): Set<string> {
+  return issuePaths(
+    isStructuredWeekPage(page) ? assessContentReadiness(page) : []
   )
+}
+
+export function issuePaths(issues: ExportIssue[]): Set<string> {
+  return new Set(issues.flatMap((issue) => (issue.path ? [issue.path] : [])))
 }

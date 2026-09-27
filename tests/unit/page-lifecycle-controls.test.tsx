@@ -79,10 +79,8 @@ function LifecycleHarness({
           read: (location) => readMetricInput(session, location),
           write: (location, raw) =>
             setSession((current) => writeMetricInput(current, location, raw)),
-          move: (pageId, from, to) =>
-            setSession((current) =>
-              moveSessionMetric(current, pageId, from, to)
-            ),
+          move: (move) =>
+            setSession((current) => moveSessionMetric(current, move)),
           remove: (pageId, index) =>
             setSession((current) =>
               removeSessionMetric(current, pageId, index)

@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/resizable"
 import { ExportControls } from "@/components/workshop/export-controls"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
-import type { MetricEditorControls } from "@/components/workshop/page-editor-props"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
 import { PageNavigator } from "@/components/workshop/page-navigator"
 import { SpeakerNotesCue } from "@/components/workshop/speaker-notes-cue"
@@ -34,7 +33,10 @@ import {
 } from "@/components/workshop/workshop-toolbar"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
-import { useEditingSession } from "@/hooks/use-editing-session"
+import {
+  useEditingSession,
+  type MetricEditorControls,
+} from "@/hooks/use-editing-session"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
@@ -43,6 +45,7 @@ import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 import type { SessionLoadStatus } from "@/lib/editing-session"
+import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 
 export const EMPTY_STORE_MESSAGE =
@@ -54,7 +57,7 @@ type PageSelection = {
   onSelect: (index: number) => void
   onAdd: (page: WeekPage) => void
   onDelete: (pageId: string) => void
-  onMove: (pageId: string, direction: "up" | "down") => void
+  onMove: (pageId: string, direction: PageMoveDirection) => void
 }
 
 type EditorSidebarProps = {
@@ -173,10 +176,6 @@ function EditorSidebar({
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
-  return <WorkshopShellBody weekStore={weekStore} />
-}
-
-function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
   const {
     weeks,
     selectedMonday,
@@ -184,14 +183,10 @@ function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
     week,
     operationSnapshot,
     editContent,
-    readMetricInput,
-    writeMetricInput,
-    moveMetric,
-    removeMetric,
+    metricControls,
     addPage,
     deletePage,
     movePage,
-    readiness,
     selectedPageIndex,
     setSelectedPageIndex,
     selectedPageId,
@@ -394,13 +389,7 @@ function WorkshopShellBody({ weekStore }: { weekStore: WeekStore }) {
             onWeekChange={setSelectedMonday}
             week={week}
             editContent={editContent}
-            metricControls={{
-              read: readMetricInput,
-              write: writeMetricInput,
-              move: moveMetric,
-              remove: removeMetric,
-              readiness,
-            }}
+            metricControls={metricControls}
             selection={{
               pageIndex: selectedPageIndex,
               pageId: selectedPageId,

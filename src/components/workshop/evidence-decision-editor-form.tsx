@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
+import type { MetricEditorControls } from "@/hooks/use-editing-session"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
@@ -21,12 +22,17 @@ import {
   setDecisionMetricUnit,
   setDecisionVerdict,
 } from "@/lib/evidence-decision-editor"
+import { issuePaths } from "@/lib/export-readiness"
 import {
   canAddEntry,
   canRemoveEntry,
   CARDINALITY,
   type EvidenceDecisionPage,
 } from "@/lib/week-document"
+
+type EvidenceDecisionEditorFormProps = PageEditorProps<EvidenceDecisionPage> & {
+  metricControls: MetricEditorControls
+}
 
 export function EvidenceDecisionEditorForm({
   week,
@@ -35,14 +41,9 @@ export function EvidenceDecisionEditorForm({
   onChange,
   metricControls,
   readOnly = false,
-}: PageEditorProps<EvidenceDecisionPage>) {
-  if (!metricControls) {
-    throw new Error("Metric editor controls are required")
-  }
+}: EvidenceDecisionEditorFormProps) {
   const readinessIssues = metricControls.readiness(page.id)
-  const invalidPaths = new Set(
-    readinessIssues.flatMap((issue) => (issue.path ? [issue.path] : []))
-  )
+  const invalidPaths = issuePaths(readinessIssues)
 
   return (
     <EditorialPageEditorChrome
@@ -95,7 +96,11 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={metricIndex === 0}
               onClick={() =>
-                metricControls.move(page.id, metricIndex, metricIndex - 1)
+                metricControls.move({
+                  pageId: page.id,
+                  fromIndex: metricIndex,
+                  toIndex: metricIndex - 1,
+                })
               }
             >
               Move up
@@ -106,7 +111,11 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={metricIndex === page.metrics.length - 1}
               onClick={() =>
-                metricControls.move(page.id, metricIndex, metricIndex + 1)
+                metricControls.move({
+                  pageId: page.id,
+                  fromIndex: metricIndex,
+                  toIndex: metricIndex + 1,
+                })
               }
             >
               Move down
