@@ -1,4 +1,5 @@
-import { abortError, errorMessage } from "./export-errors"
+import { errorMessage } from "./error-message"
+import { abortError } from "./export-errors"
 import type { MetricInputMap } from "./metric-input"
 import {
   assessContentReadiness,
@@ -34,7 +35,7 @@ export type CaptureAdapter = {
 
 export type ExportPageDeps = {
   adapter: CaptureAdapter
-  metricBuffer?: MetricInputMap
+  metricInput?: MetricInputMap
   signal?: AbortSignal
 }
 
@@ -43,7 +44,7 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
-type GateDeps = ExportPageDeps & { metricBuffer: MetricInputMap }
+type GateDeps = ExportPageDeps & { metricInput: MetricInputMap }
 
 type PhaseLimit = { phase: string; timeoutMs: number }
 
@@ -73,8 +74,8 @@ export async function exportPage(
   if (deps.signal?.aborted) {
     return { kind: "failed", cause: deps.signal.reason }
   }
-  const gateDeps: GateDeps = { ...deps, metricBuffer: deps.metricBuffer ?? {} }
-  const readinessIssues = preflightIssues(page, gateDeps.metricBuffer)
+  const gateDeps: GateDeps = { ...deps, metricInput: deps.metricInput ?? {} }
+  const readinessIssues = preflightIssues(page, gateDeps.metricInput)
   if (readinessIssues.length > 0) {
     return { kind: "blocked", issues: readinessIssues }
   }
@@ -95,13 +96,13 @@ export async function exportPage(
 
 function preflightIssues(
   page: WeekPage,
-  metricBuffer: MetricInputMap
+  metricInput: MetricInputMap
 ): ExportIssue[] {
   if (!isSupportedStagePage(page)) {
     return assessExportEligibility(page).issues
   }
   if (isStructuredWeekPage(page)) {
-    return assessContentReadiness(page, metricBuffer)
+    return assessContentReadiness(page, metricInput)
   }
   return []
 }
@@ -186,7 +187,7 @@ async function measurementIssues(
   const assessment = assessExportEligibility(
     page,
     measurement,
-    deps.metricBuffer
+    deps.metricInput
   )
   return assessment.eligible ? [] : assessment.issues
 }

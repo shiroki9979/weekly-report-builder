@@ -22,6 +22,8 @@ export type PageLifecycleResult = {
   selectedPageId: string
 }
 
+export type PageMoveDirection = "up" | "down"
+
 const PAGE_ID_PATTERN = /^p(\d+)$/
 
 function blankItems(): TwoColumnWeekPage["items"] {
@@ -202,7 +204,7 @@ export function deleteSelectedPage(
 export function moveSelectedPage(
   week: WeekDocument,
   selectedPageId: string,
-  direction: "up" | "down"
+  direction: PageMoveDirection
 ): PageLifecycleResult {
   const selectedIndex = requirePageIndex(week, selectedPageId)
   const targetIndex = direction === "up" ? selectedIndex - 1 : selectedIndex + 1

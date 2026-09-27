@@ -14,6 +14,7 @@ import {
   nextPageId,
   type AddableLayout,
   type AddableTwoColumnPanelKind,
+  type PageMoveDirection,
 } from "@/lib/page-lifecycle"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
@@ -22,7 +23,7 @@ type PageLifecycleControlsProps = {
   selectedPageId: string
   onAdd: (page: WeekPage) => void
   onDelete: (pageId: string) => void
-  onMove: (pageId: string, direction: "up" | "down") => void
+  onMove: (pageId: string, direction: PageMoveDirection) => void
   disabled?: boolean
 }
 

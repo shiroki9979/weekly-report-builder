@@ -13,6 +13,7 @@ import type {
   PageEditorProps,
   PanelEditorProps,
 } from "@/components/workshop/page-editor-props"
+import type { MetricEditorControls } from "@/hooks/use-editing-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
@@ -39,7 +40,9 @@ import {
   type TwoColumnWeekPage,
 } from "@/lib/week-document"
 
-type PageEditorFormProps = Omit<PageEditorProps, "page">
+type PageEditorFormProps = Omit<PageEditorProps, "page"> & {
+  metricControls: MetricEditorControls
+}
 
 export function PageEditorForm({
   week,
@@ -54,7 +57,7 @@ export function PageEditorForm({
     return null
   }
 
-  const editor = { week, pageIndex, onChange, metricControls, readOnly }
+  const editor = { week, pageIndex, onChange, readOnly }
 
   return matchWeekPage(page, {
     html: (htmlPage) => <HtmlPageEditorForm {...editor} page={htmlPage} />,
@@ -62,7 +65,11 @@ export function PageEditorForm({
       <WeeklyOverviewEditorForm {...editor} page={overview} />
     ),
     evidenceDecision: (decision) => (
-      <EvidenceDecisionEditorForm {...editor} page={decision} />
+      <EvidenceDecisionEditorForm
+        {...editor}
+        page={decision}
+        metricControls={metricControls}
+      />
     ),
     nextActions: (actions) => (
       <NextActionsEditorForm {...editor} page={actions} />

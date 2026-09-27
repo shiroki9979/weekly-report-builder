@@ -66,55 +66,76 @@ describe("useEditingSession", () => {
     expect(result.current.suggestedMonday).toBe(next)
   })
 
-  it("shows an empty store separately from a list failure", async () => {
-    const emptyStore = new InMemoryWeekStore()
-    const empty = renderHook(() => useEditingSession(emptyStore))
-    await waitFor(() =>
-      expect(empty.result.current.loadStatus).toEqual({ kind: "empty" })
-    )
-    expect(empty.result.current.week).toBeNull()
-    empty.unmount()
+  it("shows an empty store without an open week", async () => {
+    const backend = new InMemoryWeekStore()
 
-    const failingStore = new InMemoryWeekStore()
-    failingStore.listWeeks = async () => {
+    const { result } = renderHook(() => useEditingSession(backend))
+
+    await waitFor(() =>
+      expect(result.current.loadStatus).toEqual({ kind: "empty" })
+    )
+    expect(result.current.week).toBeNull()
+  })
+
+  it("shows a list failure as an error without an open week", async () => {
+    const backend = new InMemoryWeekStore()
+    backend.listWeeks = async () => {
       throw new Error("List unavailable")
     }
-    const failed = renderHook(() => useEditingSession(failingStore))
+
+    const { result } = renderHook(() => useEditingSession(backend))
+
     await waitFor(() =>
-      expect(failed.result.current.loadStatus).toEqual({
+      expect(result.current.loadStatus).toEqual({
         kind: "error",
         message: "List unavailable",
       })
     )
-    expect(failed.result.current.week).toBeNull()
+    expect(result.current.week).toBeNull()
   })
 
-  it("keeps exact Metric Input and selection after saving, then clears messages and input on switch", async () => {
+  it("keeps exact Metric Input and selection after saving", async () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.writeMetricInput(
+      result.current.metricControls.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
     )
+
     await act(() => result.current.save.saveWeek())
+
     expect(result.current.save.message).toBe("Saved")
     expect(
-      result.current.readMetricInput({
+      result.current.metricControls.read({
         pageId: "p01",
         metricIndex: 0,
         field: "baselineValue",
       })
     ).toBe("1.50")
     expect(result.current.selectedPageId).toBe("p01")
-    act(() => result.current.setSelectedMonday(older))
-    expect(result.current.save.message).toBeNull()
-    expect(result.current.week).toBeNull()
+  })
+
+  it("clears the Saved message and Metric Input when another week opens", async () => {
+    const backend = store()
+    const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
-    expect(result.current.operationSnapshot()?.metricInput).toEqual({})
+    act(() =>
+      result.current.metricControls.write(
+        { pageId: "p01", metricIndex: 0, field: "baselineValue" },
+        "1.50"
+      )
+    )
+    await act(() => result.current.save.saveWeek())
+
+    act(() => result.current.setSelectedMonday(older))
+    await ready(result)
+
     expect(result.current.week?.start).toBe(older)
+    expect(result.current.save.message).toBeNull()
+    expect(result.current.operationSnapshot()?.metricInput).toEqual({})
   })
 
   it("clears invalid save errors when another week opens", async () => {
@@ -122,7 +143,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.writeMetricInput(
+      result.current.metricControls.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "bad"
       )
@@ -168,7 +189,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.writeMetricInput(
+      result.current.metricControls.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -194,6 +215,57 @@ describe("useEditingSession", () => {
     act(() => result.current.setSelectedMonday(older))
     expect(result.current.create.error).toBeNull()
     await waitFor(() => expect(result.current.week?.start).toBe(older))
+  })
+
+  it("reports a save failure that finishes after a failed create on the same week", async () => {
+    const pending = deferred<void>()
+    const backend = store()
+    backend.saveWeek = async () => {
+      await pending.promise
+      throw new Error("Disk full")
+    }
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+    let save!: Promise<void>
+    act(() => {
+      save = result.current.save.saveWeek()
+    })
+
+    await act(() => result.current.create.createWeek(latest))
+    await act(async () => {
+      pending.resolve()
+      await save
+    })
+
+    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
+    expect(result.current.save.error).toBe("Disk full")
+    expect(result.current.save.saving).toBe(false)
+  })
+
+  it("ignores a save that finishes after a created week opens", async () => {
+    const pending = deferred<void>()
+    const backend = store()
+    backend.saveWeek = async () => {
+      await pending.promise
+      throw new Error("Disk full")
+    }
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+    let save!: Promise<void>
+    act(() => {
+      save = result.current.save.saveWeek()
+    })
+
+    await act(() => result.current.create.createWeek(next))
+    await act(async () => {
+      pending.resolve()
+      await save
+    })
+
+    expect(result.current.week?.start).toBe(next)
+    expect(result.current.save.error).toBeNull()
+    expect(result.current.save.saving).toBe(false)
   })
 
   it("ignores a late create after switching weeks", async () => {
