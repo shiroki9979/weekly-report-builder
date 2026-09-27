@@ -15,7 +15,7 @@
       "items": [
         { "heading": "One", "body": "Batch should continue." },
         { "heading": "Two", "body": "A 404 HTML Page is not a Draft Page." },
-        { "heading": "Three", "body": "Capture the warning and move on." }
+        { "heading": "Three", "body": "Skip the failed page and move on." }
       ],
       "panel": {
         "kind": "table",

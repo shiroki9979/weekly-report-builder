@@ -51,6 +51,206 @@ function fakeAdapter(status: "fit" | "overflow" = "fit") {
 }
 
 describe("shared page export", () => {
+  it("blocks an explicit HTML load failure before PNG capture", async () => {
+    const capture = vi.fn()
+    const page = {
+      id: "html",
+      layout: "html" as const,
+      title: "",
+      htmlFile: "missing.html",
+    }
+    const result = await exportPage({ ...week, pages: [page] }, page, {
+      prepare: async () => ({
+        kind: "html-load-failed",
+        message: "Failed to load HTML file: missing.html (status 404)",
+      }),
+    })
+
+    expect(result).toEqual({
+      kind: "blocked",
+      issues: [
+        {
+          code: "html-load-failed",
+          message: "Failed to load HTML file: missing.html (status 404)",
+        },
+      ],
+    })
+    expect(capture).not.toHaveBeenCalled()
+  })
+
+  it.each(["html", "structured"])(
+    "blocks %s PNG rejection and disposes the session",
+    async (kind) => {
+      const page =
+        kind === "html"
+          ? {
+              id: "html",
+              layout: "html" as const,
+              title: "",
+              htmlFile: "ok.html",
+            }
+          : completePage
+      const dispose = vi.fn()
+      const result = await exportPage({ ...week, pages: [page] }, page, {
+        prepare: async () => ({
+          measure: async () => ({ status: "fit" }),
+          capture: async () => {
+            throw new Error("PNG encoder rejected")
+          },
+          dispose,
+        }),
+      })
+
+      expect(result).toEqual({
+        kind: "blocked",
+        issues: [{ code: "capture-failed", message: "PNG encoder rejected" }],
+      })
+      expect(dispose).toHaveBeenCalledOnce()
+    }
+  )
+
+  it("bounds a hung measurement at five seconds and a hung capture at fifteen seconds", async () => {
+    vi.useFakeTimers()
+    try {
+      const measure = exportPage(week, completePage, {
+        prepare: async () => ({
+          measure: () => new Promise(() => undefined),
+          capture: async () => new Blob(),
+          dispose: vi.fn(),
+        }),
+      })
+      await vi.advanceTimersByTimeAsync(5000)
+      expect(await measure).toMatchObject({
+        kind: "blocked",
+        issues: [{ code: "measurement-failed" }],
+      })
+
+      const capture = exportPage(week, completePage, {
+        prepare: async () => ({
+          measure: async () => ({ status: "fit" }),
+          capture: () => new Promise(() => undefined),
+          dispose: vi.fn(),
+        }),
+      })
+      await vi.advanceTimersByTimeAsync(15000)
+      expect(await capture).toMatchObject({
+        kind: "blocked",
+        issues: [{ code: "capture-failed" }],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("discards a timed-out PNG even when it resolves after the next page succeeds", async () => {
+    vi.useFakeTimers()
+    try {
+      let resolveLate!: (blob: Blob) => void
+      const lateCapture = new Promise<Blob>((resolve) => {
+        resolveLate = resolve
+      })
+      const download = vi.fn()
+      const dispose = vi.fn()
+      const adapter: CaptureAdapter = {
+        prepare: async (_week, page) => ({
+          measure: async () => ({ status: "fit" }),
+          capture: () =>
+            page.id === "p01"
+              ? lateCapture
+              : Promise.resolve(new Blob(["next"])),
+          dispose,
+        }),
+      }
+      const run = exportVisiblePages(week.start, week, { adapter, download })
+      await vi.advanceTimersByTimeAsync(15000)
+      const skipped = await run
+      resolveLate(new Blob(["late"]))
+      await Promise.resolve()
+
+      expect(skipped).toMatchObject([
+        { pageId: "p01", issues: [{ code: "capture-failed" }] },
+      ])
+      expect(download.mock.calls.map((call) => call[1])).toEqual([
+        "2026-08-24-p03.png",
+      ])
+      expect(dispose).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("handles late PNG rejection after timeout without stopping the next page", async () => {
+    vi.useFakeTimers()
+    try {
+      let rejectLate!: (error: Error) => void
+      const lateCapture = new Promise<Blob>((_resolve, reject) => {
+        rejectLate = reject
+      })
+      const download = vi.fn()
+      const adapter: CaptureAdapter = {
+        prepare: async (_week, page) => ({
+          measure: async () => ({ status: "fit" }),
+          capture: () =>
+            page.id === "p01"
+              ? lateCapture
+              : Promise.resolve(new Blob(["next"])),
+          dispose: vi.fn(),
+        }),
+      }
+      const run = exportVisiblePages(week.start, week, { adapter, download })
+      await vi.advanceTimersByTimeAsync(15000)
+      await run
+      rejectLate(new Error("Too late"))
+      await Promise.resolve()
+
+      expect(download.mock.calls.map((call) => call[1])).toEqual([
+        "2026-08-24-p03.png",
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("disposes a capture session immediately when the operation aborts", async () => {
+    const controller = new AbortController()
+    const dispose = vi.fn()
+    let resolveLate!: (blob: Blob) => void
+    let started!: () => void
+    const captureStarted = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    const capture = new Promise<Blob>((resolve) => {
+      resolveLate = resolve
+    })
+    const run = exportPage(
+      week,
+      completePage,
+      {
+        prepare: async () => ({
+          measure: async () => ({ status: "fit" }),
+          capture: () => {
+            started()
+            return capture
+          },
+          dispose,
+        }),
+      },
+      {},
+      controller.signal
+    )
+    await captureStarted
+    controller.abort()
+
+    expect(await run).toMatchObject({
+      kind: "failed",
+      cause: { name: "AbortError" },
+    })
+    expect(dispose).toHaveBeenCalledOnce()
+    resolveLate(new Blob(["late"]))
+    await Promise.resolve()
+    expect(dispose).toHaveBeenCalledOnce()
+  })
+
   it("captures a fit page and disposes its session", async () => {
     const dispose = vi.fn()
     const adapter: CaptureAdapter = {
@@ -104,7 +304,7 @@ describe("shared page export", () => {
     expect(dispose).toHaveBeenCalledOnce()
   })
 
-  it("returns a distinct operation failure and disposes a failed capture", async () => {
+  it("returns a page issue and disposes a failed capture", async () => {
     const dispose = vi.fn()
     const failure = new Error("Capture failed")
     const adapter: CaptureAdapter = {
@@ -118,8 +318,8 @@ describe("shared page export", () => {
     }
 
     expect(await exportPage(week, week.pages[0], adapter)).toEqual({
-      kind: "failed",
-      cause: failure,
+      kind: "blocked",
+      issues: [{ code: "capture-failed", message: failure.message }],
     })
     expect(dispose).toHaveBeenCalledOnce()
   })
@@ -214,7 +414,7 @@ describe("batch export", () => {
     ])
     expect(download).toHaveBeenCalledOnce()
     expect(formatSkippedExportWarning(skipped)).toContain(
-      "p01: title (Draft Page)"
+      "p01: title: Title is required"
     )
   })
 })
