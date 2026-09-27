@@ -150,34 +150,7 @@ export function useStageExport({
       setCopying(true)
 
       try {
-        const result = await exportPage(operation.week, page, {
-          adapter: browserCaptureAdapter,
-          metricBuffer: operation.metricBuffer,
-          signal: operation.controller.signal,
-        })
-        if (!isActive(operation)) {
-          return { kind: "disposed" }
-        }
-        if (result.kind === "blocked") {
-          setLastResult({
-            kind: "copy",
-            monday: operation.monday,
-            pageId: page.id,
-            error: formatExportIssues(result.issues),
-          })
-          return { kind: "completed" }
-        }
-        if (result.kind === "failed") {
-          throw result.cause
-        }
-        try {
-          await copyImageToClipboard(result.blob, navigator.clipboard)
-        } catch (cause: unknown) {
-          throw new Error(
-            `Clipboard write failed: ${errorMessage(cause, "Clipboard write rejected")}`,
-            { cause }
-          )
-        }
+        const outcome = await copyPageImage(operation, page)
         if (!isActive(operation)) {
           return { kind: "disposed" }
         }
@@ -185,17 +158,7 @@ export function useStageExport({
           kind: "copy",
           monday: operation.monday,
           pageId: page.id,
-          error: null,
-        })
-      } catch (cause: unknown) {
-        if (!isActive(operation)) {
-          return { kind: "disposed" }
-        }
-        setLastResult({
-          kind: "copy",
-          monday: operation.monday,
-          pageId: page.id,
-          error: errorMessage(cause, "Failed to copy image to clipboard"),
+          error: outcome.kind === "rejected" ? outcome.reason : null,
         })
       } finally {
         finish(operation)
@@ -211,5 +174,47 @@ export function useStageExport({
     resultIsError: summary?.isError ?? false,
     downloadVisiblePages,
     copyCurrentPage,
+  }
+}
+
+type CopyOutcome =
+  | { kind: "copied" }
+  | { kind: "rejected"; reason: string }
+  | { kind: "aborted" }
+
+async function copyPageImage(
+  operation: OperationSnapshot,
+  page: WeekPage
+): Promise<CopyOutcome> {
+  const result = await exportPage(operation.week, page, {
+    adapter: browserCaptureAdapter,
+    metricBuffer: operation.metricBuffer,
+    signal: operation.controller.signal,
+  })
+  if (result.kind === "blocked") {
+    return { kind: "rejected", reason: formatExportIssues(result.issues) }
+  }
+  if (result.kind === "failed") {
+    return {
+      kind: "rejected",
+      reason: errorMessage(result.cause, "Failed to copy image to clipboard"),
+    }
+  }
+  // 截圖完成後操作仍可能已被中止；中止後不得寫入剪貼簿。
+  if (operation.controller.signal.aborted) {
+    return { kind: "aborted" }
+  }
+  return writeToClipboard(result.blob)
+}
+
+async function writeToClipboard(blob: Blob): Promise<CopyOutcome> {
+  try {
+    await copyImageToClipboard(blob, navigator.clipboard)
+    return { kind: "copied" }
+  } catch (cause: unknown) {
+    return {
+      kind: "rejected",
+      reason: `Clipboard write failed: ${errorMessage(cause, "Clipboard write rejected")}`,
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
+import { isHtmlLoadFailure } from "@/lib/export-page-gate"
 import { STAGE_CAPTURE_ROOT_ATTR } from "@/lib/overflow-measurement"
 import { captureStageToPng } from "@/lib/stage-capture"
 import type { WeekDocument } from "@/lib/week-document"
@@ -50,7 +51,7 @@ describe("browserCaptureAdapter", () => {
     })
 
     const prepared = await browserCaptureAdapter.prepare(week, page)
-    if ("kind" in prepared) throw new Error(prepared.message)
+    if (isHtmlLoadFailure(prepared)) throw new Error(prepared.message)
     const measurement = await prepared.measure()
     const blob = await prepared.capture()
     prepared.dispose()
