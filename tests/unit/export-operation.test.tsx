@@ -254,9 +254,7 @@ describe("export operation lifecycle", () => {
     const commandsRef: { current: Commands | null } = { current: null }
     let session = writeMetricInput(
       createEditingSession(week),
-      "p02",
-      0,
-      "baselineValue",
+      { pageId: "p02", metricIndex: 0, field: "baselineValue" },
       "invalid"
     )
     const view = render(
@@ -274,7 +272,11 @@ describe("export operation lifecycle", () => {
     })
     await waitFor(() => expect(prepare).toHaveBeenCalledOnce())
 
-    session = writeMetricInput(session, "p02", 0, "baselineValue", "2.00")
+    session = writeMetricInput(
+      session,
+      { pageId: "p02", metricIndex: 0, field: "baselineValue" },
+      "2.00"
+    )
     session = moveSessionPage(session, "p02", "up")
     session = selectSessionPage(session, "p02")
     view.rerender(
