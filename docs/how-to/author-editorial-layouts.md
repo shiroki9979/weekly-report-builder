@@ -30,12 +30,12 @@ Copy 與 **Download PNGs** 只輸出 Content-complete 且不 overflow 的頁。D
 ## 編輯 Trend & Target
 
 1. 解鎖 **Edit**，在 **Add page** 選 **Trend & Target** 並新增頁面。新頁預設八個未填週次。
-2. 在 **Title** 寫結論、填入指標名稱，將 **Starting Monday** 設為真實的 `YYYY-MM-DD` 週一，再逐列填入有限數字。零是量測值；接受負數、小數及科學記號。
+2. 在 **Title** 寫結論、填入指標名稱，將 **Starting Monday** 設為真實的 `YYYY-MM-DD` 週一，再逐列填入有限數字。零是量測值；接受負數、小數及科學記號。沒有讀值時按該列 **No observation**；清空數值欄則是尚未完成的 Unfilled。按 **Enter value** 可把 Missing 改回空白輸入。切換狀態會清除該列舊數值與輸入錯誤。
 3. 填入固定目標，選 **At most** 或 **At least**，並設定單位、位置、空格與小數位數。補上 **Interpretation** 和投影片可見的 **Measurement Context**。
 4. 在 Stage 核對最新一週的數值與狀態、四捨五入造成歧義時的精確比較，以及觀測日期範圍。最後觀測週不得晚於 Week Document 的報告週一。
-5. 儲存頁面。Copy 與 batch 共用內容完整性和 Stage fit 判定；尚未修正的無效數字或日期輸入會阻擋 Save／Copy，batch 則略過該頁。
+5. 儲存頁面。Copy 與 batch 共用內容完整性和 Stage fit 判定；至少需要兩個已量測週次，其他週次可明確標記 Missing，但不可留 Unfilled。最後一週為 Missing 時摘要顯示 No data；尚未修正的無效數字或日期輸入會阻擋 Save／Copy，batch 則略過該頁。
 
-已有量測後變更起始日期，以及缺測編輯與區間增減，分別由 [#46](https://github.com/shiroki9979/weekly-report-builder/issues/46) 和 [#45](https://github.com/shiroki9979/weekly-report-builder/issues/45) 提供。目前載入的 Missing 狀態會保留，但不能匯出。
+已有量測後變更起始日期，以及區間增減，由 [#46](https://github.com/shiroki9979/weekly-report-builder/issues/46) 提供。
 
 ## 相關文件
 
