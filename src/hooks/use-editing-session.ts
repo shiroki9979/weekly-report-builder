@@ -6,7 +6,10 @@ import {
   beginSessionCreate,
   beginSessionOpen,
   beginSessionSave,
+  cancelTrendRedate,
   canSaveSession,
+  changeTrendEndpoint,
+  confirmTrendRedate,
   createEditingSession,
   deleteSessionPage,
   editSessionContent,
@@ -109,6 +112,12 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       read: (location) => readTrendInput(session, location),
       write: (location, raw) =>
         update((current) => writeTrendInput(current, location, raw)),
+      endpoint: (pageId, action) =>
+        update((current) => changeTrendEndpoint(current, pageId, action)),
+      confirmRedate: (pageId) =>
+        update((current) => confirmTrendRedate(current, pageId)),
+      cancelRedate: (pageId) =>
+        update((current) => cancelTrendRedate(current, pageId)),
       readiness: (pageId) => sessionReadiness(session, pageId),
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),

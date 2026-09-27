@@ -1,4 +1,8 @@
-import type { MetricInputMap, TrendInputPath } from "./metric-input"
+import type {
+  MetricInputMap,
+  PageMetricInputs,
+  TrendInputPath,
+} from "./metric-input"
 import { isCalendarMonday, observationMonday } from "./trend-target"
 import type { TrendTargetPage } from "./week-document"
 
@@ -20,6 +24,49 @@ export function writeTrendInputText(
     ...inputs,
     [location.pageId]: { ...inputs[location.pageId], [location.path]: raw },
   }
+}
+
+export function clearTrendInputText(
+  inputs: MetricInputMap,
+  { pageId, path }: TrendInputLocation
+): MetricInputMap {
+  const pageInputs = inputs[pageId]
+  if (!pageInputs || pageInputs[path] === undefined) return inputs
+  const next = { ...pageInputs }
+  delete next[path]
+  return { ...inputs, [pageId]: next }
+}
+
+export function remapTrendObservationInput(
+  inputs: MetricInputMap,
+  pageId: string,
+  endpoint: "prepend" | "append" | "remove-first" | "remove-last",
+  length: number
+): MetricInputMap {
+  const pageInputs = inputs[pageId]
+  if (!pageInputs) return inputs
+  const next: Partial<Record<keyof PageMetricInputs, string>> = {}
+  for (const [path, raw] of Object.entries(pageInputs)) {
+    const match = /^observations\[(\d+)\]\.value$/.exec(path)
+    if (!match) {
+      next[path as keyof PageMetricInputs] = raw
+      continue
+    }
+    const index = Number(match[1])
+    if (
+      (endpoint === "remove-first" && index === 0) ||
+      (endpoint === "remove-last" && index === length - 1)
+    )
+      continue
+    const shifted =
+      endpoint === "prepend"
+        ? index + 1
+        : endpoint === "remove-first"
+          ? index - 1
+          : index
+    next[`observations[${shifted}].value`] = raw
+  }
+  return { ...inputs, [pageId]: next }
 }
 
 export function parseTrendNumber(raw: string): number | null | "invalid" {

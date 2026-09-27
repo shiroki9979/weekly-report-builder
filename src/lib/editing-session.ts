@@ -12,10 +12,13 @@ import {
   type MetricMove,
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
+import { isCalendarMonday, observationMonday } from "./trend-target"
 import {
+  clearTrendInputText,
   hasInvalidTrendInput,
   parseTrendNumber,
   readTrendInputText,
+  remapTrendObservationInput,
   trendInputError,
   writeTrendInputText,
   type TrendInputLocation,
@@ -96,8 +99,14 @@ export type MetricEditorControls = {
 export type TrendEditorControls = {
   read: (location: TrendInputLocation) => string
   write: (location: TrendInputLocation, raw: string) => void
+  endpoint: (pageId: string, action: TrendEndpointAction) => void
+  confirmRedate: (pageId: string) => void
+  cancelRedate: (pageId: string) => void
   readiness: (pageId: string) => ExportIssue[]
 }
+
+export type TrendEndpointAction =
+  "prepend" | "append" | "remove-first" | "remove-last"
 
 export type SessionLoadStatus =
   | { kind: "loading" }
@@ -241,12 +250,28 @@ export function editSessionContent(
       "Page changes require a dedicated Editing Session operation"
     )
   }
+  if (changesTrendRange(baseline, next)) {
+    throw new Error(
+      "Trend range changes require a dedicated Editing Session operation"
+    )
+  }
   if (changesMetricsUnsafely(baseline, next)) {
     throw new Error(
       "Metric changes require a dedicated Editing Session operation"
     )
   }
   return { ...session, week: next }
+}
+
+function changesTrendRange(before: WeekDocument, after: WeekDocument): boolean {
+  return after.pages.some((afterPage, index) => {
+    const beforePage = before.pages[index]
+    return (
+      isTrendTargetPage(beforePage) &&
+      isTrendTargetPage(afterPage) &&
+      beforePage.observations.length !== afterPage.observations.length
+    )
+  })
 }
 
 function changesPageStructure(
@@ -406,7 +431,7 @@ export function writeTrendInput(
   const page = week.pages[pageIndex]
   if (!page || !isTrendTargetPage(page))
     throw new Error(`Unknown Trend & Target page: ${location.pageId}`)
-  const metricInput = writeTrendInputText(session.metricInput, location, raw)
+  let metricInput = writeTrendInputText(session.metricInput, location, raw)
   if (trendInputError(page, metricInput, location.path))
     return { ...session, metricInput }
   let next: TrendTargetPage
@@ -430,10 +455,120 @@ export function writeTrendInput(
         ? { state: "unfilled" }
         : { state: "measured", value: value as number }
     next = { ...page, observations }
+    if (
+      metricInput[page.id]?.startMonday === "" &&
+      observations.every((entry) => entry.state === "unfilled")
+    ) {
+      next = { ...next, startMonday: null }
+      metricInput = clearTrendInputText(metricInput, {
+        pageId: page.id,
+        path: "startMonday",
+      })
+    }
   }
   const pages = [...week.pages]
   pages[pageIndex] = next
   return { ...session, week: { ...week, pages }, metricInput }
+}
+
+function requireTrend(session: EditingSession, pageId: string) {
+  const week = requireWeek(session)
+  const pageIndex = week.pages.findIndex((entry) => entry.id === pageId)
+  const page = week.pages[pageIndex]
+  if (!page || !isTrendTargetPage(page))
+    throw new Error(`Unknown Trend & Target page: ${pageId}`)
+  return { week, pageIndex, page }
+}
+
+function replaceTrend(
+  session: EditingSession,
+  pageIndex: number,
+  page: TrendTargetPage,
+  metricInput: MetricInputMap
+): EditingSession {
+  const week = requireWeek(session)
+  const pages = [...week.pages]
+  pages[pageIndex] = page
+  return { ...session, week: { ...week, pages }, metricInput }
+}
+
+export function changeTrendEndpoint(
+  session: EditingSession,
+  pageId: string,
+  action: TrendEndpointAction
+): EditingSession {
+  const { page, pageIndex } = requireTrend(session, pageId)
+  if (
+    !page.startMonday ||
+    readTrendInput(session, { pageId, path: "startMonday" }) !==
+      page.startMonday
+  )
+    throw new Error("Set a valid starting Monday before changing the range")
+  const length = page.observations.length
+  if ((action === "prepend" || action === "append") && length >= 12)
+    throw new Error("Trend range cannot exceed twelve weeks")
+  if ((action === "remove-first" || action === "remove-last") && length <= 2)
+    throw new Error("Trend range requires at least two weeks")
+  const observations = [...page.observations]
+  let startMonday = page.startMonday
+  if (action === "prepend") {
+    startMonday = observationMonday(startMonday, -1)
+    observations.unshift({ state: "unfilled" })
+  } else if (action === "append") {
+    observationMonday(startMonday, length)
+    observations.push({ state: "unfilled" })
+  } else if (action === "remove-first") {
+    startMonday = observationMonday(startMonday, 1)
+    observations.shift()
+  } else {
+    observations.pop()
+  }
+  const inputs = remapTrendObservationInput(
+    session.metricInput,
+    pageId,
+    action,
+    length
+  )
+  return replaceTrend(
+    session,
+    pageIndex,
+    { ...page, startMonday, observations },
+    clearTrendInputText(inputs, { pageId, path: "startMonday" })
+  )
+}
+
+export function confirmTrendRedate(
+  session: EditingSession,
+  pageId: string
+): EditingSession {
+  const { page, pageIndex } = requireTrend(session, pageId)
+  const proposed = readTrendInputText(session.metricInput, {
+    pageId,
+    path: "startMonday",
+  })
+  if (!proposed || !isCalendarMonday(proposed))
+    throw new Error("Choose a valid proposed Monday")
+  observationMonday(proposed, page.observations.length - 1)
+  return replaceTrend(
+    session,
+    pageIndex,
+    { ...page, startMonday: proposed },
+    clearTrendInputText(session.metricInput, { pageId, path: "startMonday" })
+  )
+}
+
+export function cancelTrendRedate(
+  session: EditingSession,
+  pageId: string
+): EditingSession {
+  requireTrend(session, pageId)
+  return {
+    ...session,
+    metricInput: clearTrendInputText(session.metricInput, {
+      pageId,
+      path: "startMonday",
+    }),
+  }
 }
 
 export function moveSessionMetric(
