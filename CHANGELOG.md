@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Trend & Target 支援明確缺測週次的編輯、儲存與匯出；缺測保留週次並切斷折線，末週缺測摘要顯示 No data（[#45](https://github.com/shiroki9979/weekly-report-builder/issues/45)）。
 - Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
 - 新增 Trend & Target 已量測週次的正式編輯、儲存、預覽與 PNG 匯出流程，含固定目標、日期與無效輸入檢核（[#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)）。
 - 新增僅供開發環境使用的 Trend & Target／Next Actions Rows 四視圖比較原型，支援預設情境、尺寸與鍵盤切換（`pnpm prototype:layouts`）。

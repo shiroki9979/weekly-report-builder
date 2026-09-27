@@ -23,6 +23,7 @@ import {
   selectSessionPage,
   sessionReadiness,
   sessionOperationSnapshot,
+  setTrendObservationState,
   setSessionWeeks,
   writeMetricInput,
   writeTrendInput,
@@ -109,6 +110,8 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       read: (location) => readTrendInput(session, location),
       write: (location, raw) =>
         update((current) => writeTrendInput(current, location, raw)),
+      setObservationState: (location, state) =>
+        update((current) => setTrendObservationState(current, location, state)),
       readiness: (pageId) => sessionReadiness(session, pageId),
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),
