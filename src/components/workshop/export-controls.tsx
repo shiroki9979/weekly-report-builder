@@ -5,9 +5,8 @@ type ExportControlsProps = {
   onCopy: () => void
   exporting: boolean
   copying: boolean
-  exportError: string | null
-  exportWarning: string | null
-  clipboardError: string | null
+  exportResult: string | null
+  resultIsError: boolean
   disabled?: boolean
 }
 
@@ -16,9 +15,8 @@ export function ExportControls({
   onCopy,
   exporting,
   copying,
-  exportError,
-  exportWarning,
-  clipboardError,
+  exportResult,
+  resultIsError,
   disabled,
 }: ExportControlsProps) {
   return (
@@ -43,19 +41,12 @@ export function ExportControls({
           {copying ? "Copying…" : "Copy to clipboard"}
         </Button>
       </div>
-      {exportError ? (
-        <p className="text-xs text-destructive" role="alert">
-          {exportError}
-        </p>
-      ) : null}
-      {exportWarning ? (
-        <p className="text-xs text-muted-foreground" role="status">
-          {exportWarning}
-        </p>
-      ) : null}
-      {clipboardError ? (
-        <p className="text-xs text-destructive" role="alert">
-          {clipboardError}
+      {exportResult ? (
+        <p
+          className={`text-xs ${resultIsError ? "text-destructive" : "text-muted-foreground"}`}
+          role={resultIsError ? "alert" : "status"}
+        >
+          {exportResult}
         </p>
       ) : null}
     </div>
