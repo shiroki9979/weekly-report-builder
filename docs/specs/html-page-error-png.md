@@ -64,7 +64,7 @@ These decisions replace the earlier proposed policy that retained warning PNGs a
 | Shared capture host or capture root missing                           | Stop and report operation failure | Stop; preserve previously processed results |
 | Clipboard write or download-trigger exception                         | Report write failure              | Stop; preserve previously processed results |
 
-Existing unsupported, Draft Page, invalid raw input, and Overflowing Page blocks remain. Page failures must not erase earlier skipped-page reasons. Stopping an operation cannot undo downloads already triggered.
+Existing unsupported, Draft Page, invalid Metric Input, and Overflowing Page blocks remain. Page failures must not erase earlier skipped-page reasons. Stopping an operation cannot undo downloads already triggered.
 
 Preview continues to show its existing error warning or loading placeholder. The export timeout does not impose a new timeout on Preview.
 
@@ -82,7 +82,7 @@ Preview continues to show its existing error warning or loading placeholder. The
 | -------------------- | ---------------------------------------------------------------------- |
 | `unsupported`        | Unsupported layout or panel                                            |
 | `missing-content`    | Required authored content is missing                                   |
-| `invalid-content`    | Authored content or raw metric input violates content rules            |
+| `invalid-content`    | Authored content or Metric Input violates content rules                |
 | `overflow`           | Structured Layout exceeds the canonical capture Stage                  |
 | `html-load-failed`   | Invalid HTML file reference, failed load request, or HTML load timeout |
 | `measurement-failed` | Actual Structured Layout measurement failure                           |
@@ -170,7 +170,7 @@ One issue formatter supplies code/path/message wording. Copy and batch provide t
 2. Sanitization remains non-throwing; empty sanitized content is still capturable.
 3. PNG generation rejection skips the page in batch and blocks Copy for HTML and Structured Layouts.
 4. Missing shared capture infrastructure or a download-trigger exception stops batch while preserving previous results.
-5. Hidden exclusion, Draft Page, invalid raw input, overflow, and genuine measurement-failure rules remain covered.
+5. Hidden exclusion, Draft Page, invalid Metric Input, overflow, and genuine measurement-failure rules remain covered.
 6. Editing, page reordering/deletion, and week switching during export do not change the operation's data or page context.
 7. Overlapping Copy/batch requests do not overwrite the active capture host or enqueue work.
 8. PNG generation exceeding 15 seconds skips/blocks with `capture-failed`; a subsequent late resolve/reject neither writes output nor changes the next page's host or operation state.
