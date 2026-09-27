@@ -8,6 +8,7 @@ import {
   writeMetricInputText,
   type MetricInputLocation,
   type MetricInputMap,
+  type MetricLocation,
   type MetricMove,
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
@@ -70,6 +71,14 @@ export function sessionOperationSnapshot(
     selectedPageId: session.selectedPageId,
     metricInput: structuredClone(session.metricInput),
   })
+}
+
+export type MetricEditorControls = {
+  read: (location: MetricInputLocation) => string
+  write: (location: MetricInputLocation, raw: string) => void
+  move: (move: MetricMove) => void
+  remove: (metric: MetricLocation) => void
+  readiness: (pageId: string) => ExportIssue[]
 }
 
 export type SessionLoadStatus =
@@ -189,16 +198,15 @@ function requireWeek(session: EditingSession): WeekDocument {
   return session.week
 }
 
-function metricLocation(
+function requireMetric(
   session: EditingSession,
-  pageId: string,
-  index: number
+  { pageId, metricIndex }: MetricLocation
 ) {
   const week = requireWeek(session)
   const pageIndex = week.pages.findIndex((page) => page.id === pageId)
   const page = week.pages[pageIndex]
-  if (!page || !isEvidenceDecisionPage(page) || !page.metrics[index]) {
-    throw new Error(`Unknown Comparison Metric: ${pageId}[${index}]`)
+  if (!page || !isEvidenceDecisionPage(page) || !page.metrics[metricIndex]) {
+    throw new Error(`Unknown Comparison Metric: ${pageId}[${metricIndex}]`)
   }
   return { week, pageIndex, page }
 }
@@ -236,11 +244,6 @@ function changesPageStructure(
   )
 }
 
-type MetricChangeRule = (
-  before: ComparisonMetric[],
-  after: ComparisonMetric[]
-) => boolean
-
 function changesMetricsUnsafely(
   before: WeekDocument,
   after: WeekDocument
@@ -250,11 +253,23 @@ function changesMetricsUnsafely(
     return (
       isEvidenceDecisionPage(beforePage) &&
       isEvidenceDecisionPage(afterPage) &&
-      UNSAFE_METRIC_CHANGES.some((rule) =>
-        rule(beforePage.metrics, afterPage.metrics)
-      )
+      hasUnsafeMetricChange(beforePage.metrics, afterPage.metrics)
     )
   })
+}
+
+// Metric Input 以 Metric 索引定位；會讓索引錯位或繞過 Metric Input 的改動必須走專用操作。
+// 先排除刪減，其後的判斷才能以 before 的索引讀取 after
+function hasUnsafeMetricChange(
+  before: ComparisonMetric[],
+  after: ComparisonMetric[]
+): boolean {
+  return (
+    removesMetrics(before, after) ||
+    reordersMetrics(before, after) ||
+    changesSeveralMetrics(before, after) ||
+    changesMetricValues(before, after)
+  )
 }
 
 function removesMetrics(
@@ -303,15 +318,6 @@ function changesMetricValues(
   )
 }
 
-// Metric Input 以 Metric 索引定位；會讓索引錯位或繞過 Metric Input 的改動必須走專用操作。
-// removesMetrics 須排第一：其後規則以 before 的索引讀取 after
-const UNSAFE_METRIC_CHANGES: MetricChangeRule[] = [
-  removesMetrics,
-  reordersMetrics,
-  changesSeveralMetrics,
-  changesMetricValues,
-]
-
 export function selectSessionPage(
   session: EditingSession,
   pageId: string
@@ -326,8 +332,8 @@ export function readMetricInput(
   session: EditingSession,
   location: MetricInputLocation
 ): string {
-  const { pageId, metricIndex, field } = location
-  const { page } = metricLocation(session, pageId, metricIndex)
+  const { metricIndex, field } = location
+  const { page } = requireMetric(session, location)
   const typedValue = page.metrics[metricIndex][field]
   return (
     readMetricInputText(session.metricInput, location) ??
@@ -340,8 +346,8 @@ export function writeMetricInput(
   location: MetricInputLocation,
   raw: string
 ): EditingSession {
-  const { pageId, metricIndex, field } = location
-  const { week, pageIndex } = metricLocation(session, pageId, metricIndex)
+  const { metricIndex, field } = location
+  const { week, pageIndex } = requireMetric(session, location)
   const parsed = parseMetricInput(raw)
   const metricInput = writeMetricInputText(session.metricInput, location, raw)
   const nextWeek =
@@ -362,7 +368,10 @@ export function moveSessionMetric(
   move: MetricMove
 ): EditingSession {
   const { pageId, fromIndex, toIndex } = move
-  const { week, pageIndex, page } = metricLocation(session, pageId, fromIndex)
+  const { week, pageIndex, page } = requireMetric(session, {
+    pageId,
+    metricIndex: fromIndex,
+  })
   if (!page.metrics[toIndex]) {
     throw new Error(`Unknown Comparison Metric: ${pageId}[${toIndex}]`)
   }
@@ -376,20 +385,15 @@ export function moveSessionMetric(
 
 export function removeSessionMetric(
   session: EditingSession,
-  pageId: string,
-  metricIndex: number
+  metric: MetricLocation
 ): EditingSession {
-  const { week, pageIndex } = metricLocation(session, pageId, metricIndex)
+  const { week, pageIndex } = requireMetric(session, metric)
   // 先驗證版面數量限制，例外發生時原 Session 與 Metric Input 都不會改動。
-  const next = removeDecisionMetric(week, pageIndex, metricIndex)
+  const next = removeDecisionMetric(week, pageIndex, metric.metricIndex)
   return {
     ...session,
     week: next,
-    metricInput: remapMetricInputAfterRemove(
-      session.metricInput,
-      pageId,
-      metricIndex
-    ),
+    metricInput: remapMetricInputAfterRemove(session.metricInput, metric),
   }
 }
 

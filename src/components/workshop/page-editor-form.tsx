@@ -13,7 +13,7 @@ import type {
   PageEditorProps,
   PanelEditorProps,
 } from "@/components/workshop/page-editor-props"
-import type { MetricEditorControls } from "@/hooks/use-editing-session"
+import type { MetricEditorControls } from "@/lib/editing-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"

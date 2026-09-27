@@ -7,7 +7,7 @@ import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
-import type { MetricEditorControls } from "@/hooks/use-editing-session"
+import type { MetricEditorControls } from "@/lib/editing-session"
 import type { WeekDocument } from "@/lib/week-document"
 
 // 這些頁面沒有 Comparison Metric，表單不會呼叫 Metric 控制

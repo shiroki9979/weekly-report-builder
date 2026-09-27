@@ -45,6 +45,28 @@ async function ready(result: {
   )
 }
 
+// 開啟最新週後啟動一次 Save，Save 在 failSave 前保持進行中，之後以 "Disk full" 失敗
+async function renderWithPendingFailingSave() {
+  const pending = deferred<void>()
+  const backend = store()
+  backend.saveWeek = async () => {
+    await pending.promise
+    throw new Error("Disk full")
+  }
+  const { result } = renderHook(() => useEditingSession(backend))
+  await ready(result)
+  let save!: Promise<void>
+  act(() => {
+    save = result.current.save.saveWeek()
+  })
+  const failSave = () =>
+    act(async () => {
+      pending.resolve()
+      await save
+    })
+  return { result, failSave }
+}
+
 describe("useEditingSession", () => {
   it("reports saving without an open week", async () => {
     const backend = new InMemoryWeekStore()
@@ -116,6 +138,20 @@ describe("useEditingSession", () => {
       })
     ).toBe("1.50")
     expect(result.current.selectedPageId).toBe("p01")
+  })
+
+  it("clears the Saved message and the open week while another week loads", async () => {
+    const backend = store()
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+    await act(() => result.current.save.saveWeek())
+    backend.loadWeek = () => new Promise<WeekDocument>(() => {})
+
+    act(() => result.current.setSelectedMonday(older))
+
+    expect(result.current.loadStatus).toEqual({ kind: "loading" })
+    expect(result.current.save.message).toBeNull()
+    expect(result.current.week).toBeNull()
   })
 
   it("clears the Saved message and Metric Input when another week opens", async () => {
@@ -218,24 +254,10 @@ describe("useEditingSession", () => {
   })
 
   it("reports a save failure that finishes after a failed create on the same week", async () => {
-    const pending = deferred<void>()
-    const backend = store()
-    backend.saveWeek = async () => {
-      await pending.promise
-      throw new Error("Disk full")
-    }
-    const { result } = renderHook(() => useEditingSession(backend))
-    await ready(result)
-    let save!: Promise<void>
-    act(() => {
-      save = result.current.save.saveWeek()
-    })
+    const { result, failSave } = await renderWithPendingFailingSave()
 
     await act(() => result.current.create.createWeek(latest))
-    await act(async () => {
-      pending.resolve()
-      await save
-    })
+    await failSave()
 
     expect(result.current.week?.start).toBe(latest)
     expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
@@ -244,36 +266,28 @@ describe("useEditingSession", () => {
   })
 
   it("ignores a save that finishes after a created week opens", async () => {
-    const pending = deferred<void>()
-    const backend = store()
-    backend.saveWeek = async () => {
-      await pending.promise
-      throw new Error("Disk full")
-    }
-    const { result } = renderHook(() => useEditingSession(backend))
-    await ready(result)
-    let save!: Promise<void>
-    act(() => {
-      save = result.current.save.saveWeek()
-    })
+    const { result, failSave } = await renderWithPendingFailingSave()
 
     await act(() => result.current.create.createWeek(next))
-    await act(async () => {
-      pending.resolve()
-      await save
-    })
+    await failSave()
 
     expect(result.current.week?.start).toBe(next)
     expect(result.current.save.error).toBeNull()
     expect(result.current.save.saving).toBe(false)
   })
 
-  it("ignores a late create after switching weeks", async () => {
+  it("ignores a late create after switching weeks without listing weeks", async () => {
     const pending = deferred<WeekDocument>()
     const backend = store()
     backend.createWeekFromPrevious = () => pending.promise
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
+    const listWeeks = backend.listWeeks.bind(backend)
+    let listCalls = 0
+    backend.listWeeks = () => {
+      listCalls++
+      return listWeeks()
+    }
     let create!: Promise<void>
     act(() => {
       create = result.current.create.createWeek(next)
@@ -287,5 +301,6 @@ describe("useEditingSession", () => {
     expect(result.current.selectedMonday).toBe(older)
     expect(result.current.create.error).toBeNull()
     expect(result.current.create.creating).toBe(false)
+    expect(listCalls).toBe(0)
   })
 })

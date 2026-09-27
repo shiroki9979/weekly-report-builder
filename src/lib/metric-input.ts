@@ -12,11 +12,13 @@ export type PageMetricInputs = Readonly<
 // 以 Page ID 分層而非字串串接：Page ID 只要求非空，可含 `:` 等任何分隔字元
 export type MetricInputMap = Readonly<Record<string, PageMetricInputs>>
 
-export type MetricInputLocation = Readonly<{
+export type MetricLocation = Readonly<{
   pageId: string
   metricIndex: number
-  field: MetricValueField
 }>
+
+export type MetricInputLocation = MetricLocation &
+  Readonly<{ field: MetricValueField }>
 
 export type MetricMove = Readonly<{
   pageId: string
@@ -143,15 +145,14 @@ export function remapMetricInputAfterMove(
 
 export function remapMetricInputAfterRemove(
   inputsByPage: MetricInputMap,
-  pageId: string,
-  removedIndex: number
+  { pageId, metricIndex }: MetricLocation
 ): MetricInputMap {
   return remapPageInputs(inputsByPage, pageId, (slots) => {
     const padded = Array.from(
-      { length: Math.max(slots.length, removedIndex + 1) },
+      { length: Math.max(slots.length, metricIndex + 1) },
       (_, index) => slots[index]
     )
-    padded.splice(removedIndex, 1)
+    padded.splice(metricIndex, 1)
     return padded
   })
 }

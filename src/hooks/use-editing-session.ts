@@ -24,23 +24,14 @@ import {
   setSessionWeeks,
   writeMetricInput,
   type EditingSession,
+  type MetricEditorControls,
   type SessionOperationSnapshot,
 } from "@/lib/editing-session"
 import { errorMessage } from "@/lib/error-message"
-import type { ExportIssue } from "@/lib/export-readiness"
-import type { MetricInputLocation, MetricMove } from "@/lib/metric-input"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
-
-export type MetricEditorControls = {
-  read: (location: MetricInputLocation) => string
-  write: (location: MetricInputLocation, raw: string) => void
-  move: (move: MetricMove) => void
-  remove: (pageId: string, metricIndex: number) => void
-  readiness: (pageId: string) => ExportIssue[]
-}
 
 export type EditingSessionResult = {
   weeks: string[]
@@ -104,8 +95,8 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       write: (location, raw) =>
         update((current) => writeMetricInput(current, location, raw)),
       move: (move) => update((current) => moveSessionMetric(current, move)),
-      remove: (pageId, metricIndex) =>
-        update((current) => removeSessionMetric(current, pageId, metricIndex)),
+      remove: (metric) =>
+        update((current) => removeSessionMetric(current, metric)),
       readiness: (pageId) => sessionReadiness(session, pageId),
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),
@@ -212,13 +203,37 @@ function claimLatest(own: Sequence, ...watched: Sequence[]): () => boolean {
     sequences.every((sequence, index) => sequence.current === claimed[index])
 }
 
+// 開啟其他週後，舊週進行中的載入、儲存與建立結果都不得再寫回
+function expireOpenedWeekResults(lifecycle: WeekLifecycle): void {
+  lifecycle.openedWeeks.current++
+}
+
+type Outcome<T> = {
+  resolved: (value: T) => void | Promise<void>
+  rejected: (cause: unknown) => void
+}
+
+// 過期的結果不論成功或失敗都丟棄
+async function whenLatest<T>(
+  isLatest: () => boolean,
+  request: () => Promise<T>,
+  outcome: Outcome<T>
+): Promise<void> {
+  let value: T
+  try {
+    value = await request()
+  } catch (cause) {
+    if (isLatest()) outcome.rejected(cause)
+    return
+  }
+  if (isLatest()) await outcome.resolved(value)
+}
+
 function startSession(lifecycle: WeekLifecycle): () => void {
   const isLatest = claimLatest(lifecycle.openedWeeks)
   void openLatestWeek(lifecycle, isLatest)
   // 卸載或換 store 後，進行中的列表與載入結果都不得寫回
-  return () => {
-    lifecycle.openedWeeks.current++
-  }
+  return () => expireOpenedWeekResults(lifecycle)
 }
 
 async function openLatestWeek(
@@ -226,18 +241,20 @@ async function openLatestWeek(
   isLatest: () => boolean
 ): Promise<void> {
   const { store, update } = lifecycle
-  try {
-    const weeks = await store.listWeeks()
-    if (!isLatest()) return
-    update((current) => setSessionWeeks(current, weeks))
-    const latest = latestWeekMonday(weeks)
-    if (latest) void openWeek(lifecycle, latest)
-  } catch (cause) {
-    if (!isLatest()) return
-    update((current) =>
-      failSessionOpen(current, errorMessage(cause, "Failed to list week files"))
-    )
-  }
+  await whenLatest(isLatest, () => store.listWeeks(), {
+    resolved: (weeks) => {
+      update((current) => setSessionWeeks(current, weeks))
+      const latest = latestWeekMonday(weeks)
+      if (latest) void openWeek(lifecycle, latest)
+    },
+    rejected: (cause) =>
+      update((current) =>
+        failSessionOpen(
+          current,
+          errorMessage(cause, "Failed to list week files")
+        )
+      ),
+  })
 }
 
 async function openWeek(
@@ -247,16 +264,16 @@ async function openWeek(
   const { store, update } = lifecycle
   const isLatest = claimLatest(lifecycle.openedWeeks)
   update((current) => beginSessionOpen(current, monday))
-  try {
-    const week = await store.loadWeek(monday)
-    if (!isLatest()) return
-    update((current) => finishSessionOpen(current, week))
-  } catch (cause) {
-    if (!isLatest()) return
-    update((current) =>
-      failSessionOpen(current, errorMessage(cause, "Failed to load week file"))
-    )
-  }
+  await whenLatest(isLatest, () => store.loadWeek(monday), {
+    resolved: (week) => update((current) => finishSessionOpen(current, week)),
+    rejected: (cause) =>
+      update((current) =>
+        failSessionOpen(
+          current,
+          errorMessage(cause, "Failed to load week file")
+        )
+      ),
+  })
 }
 
 async function saveOpenWeek(
@@ -264,7 +281,8 @@ async function saveOpenWeek(
   session: EditingSession
 ): Promise<void> {
   const { store, update } = lifecycle
-  if (!session.week) {
+  const { week, selectedMonday } = session
+  if (!week) {
     update((current) => failSessionSave(current, "No week is open"))
     return
   }
@@ -274,16 +292,16 @@ async function saveOpenWeek(
 
   const isLatest = claimLatest(lifecycle.saves, lifecycle.openedWeeks)
   update(beginSessionSave)
-  try {
-    await store.saveWeek(session.selectedMonday, session.week)
-    if (!isLatest()) return
-    update(finishSessionSave)
-  } catch (cause) {
-    if (!isLatest()) return
-    update((current) =>
-      failSessionSave(current, errorMessage(cause, "Failed to save week file"))
-    )
-  }
+  await whenLatest(isLatest, () => store.saveWeek(selectedMonday, week), {
+    resolved: () => update(finishSessionSave),
+    rejected: (cause) =>
+      update((current) =>
+        failSessionSave(
+          current,
+          errorMessage(cause, "Failed to save week file")
+        )
+      ),
+  })
 }
 
 async function createAndOpenWeek(
@@ -292,26 +310,30 @@ async function createAndOpenWeek(
 ): Promise<void> {
   const { store, update } = lifecycle
   const isLatest = claimLatest(lifecycle.creates, lifecycle.openedWeeks)
-  update(beginSessionCreate)
-  try {
-    const week = await store.createWeekFromPrevious(monday)
-    const weeks = await store.listWeeks()
-    if (!isLatest()) return
-    // 新週真正開啟時才讓舊週的進行中結果過期；建立失敗時，舊週的 Save 結果仍要回報
-    lifecycle.openedWeeks.current++
-    update((current) =>
-      finishSessionOpen(
-        setSessionWeeks(beginSessionOpen(current, monday), weeks),
-        week
-      )
-    )
-  } catch (cause) {
-    if (!isLatest()) return
+  const failCreate = (cause: unknown) =>
     update((current) =>
       failSessionCreate(
         current,
         errorMessage(cause, "Failed to create week file")
       )
     )
-  }
+  update(beginSessionCreate)
+  // 建立後先確認仍是最新操作，過期的建立不再列出週次
+  await whenLatest(isLatest, () => store.createWeekFromPrevious(monday), {
+    resolved: (week) =>
+      whenLatest(isLatest, () => store.listWeeks(), {
+        resolved: (weeks) => {
+          // 新週真正開啟時才讓舊週的進行中結果過期；建立失敗時，舊週的 Save 結果仍要回報
+          expireOpenedWeekResults(lifecycle)
+          update((current) =>
+            finishSessionOpen(
+              setSessionWeeks(beginSessionOpen(current, monday), weeks),
+              week
+            )
+          )
+        },
+        rejected: failCreate,
+      }),
+    rejected: failCreate,
+  })
 }

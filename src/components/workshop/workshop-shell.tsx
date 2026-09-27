@@ -33,10 +33,7 @@ import {
 } from "@/components/workshop/workshop-toolbar"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
-import {
-  useEditingSession,
-  type MetricEditorControls,
-} from "@/hooks/use-editing-session"
+import { useEditingSession } from "@/hooks/use-editing-session"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
@@ -44,7 +41,10 @@ import {
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
-import type { SessionLoadStatus } from "@/lib/editing-session"
+import type {
+  MetricEditorControls,
+  SessionLoadStatus,
+} from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 

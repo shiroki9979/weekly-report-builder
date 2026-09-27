@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
-import type { MetricEditorControls } from "@/hooks/use-editing-session"
+import type { MetricEditorControls } from "@/lib/editing-session"
 import {
   addDecisionInterpretation,
   addDecisionMetric,
@@ -127,7 +127,9 @@ export function EvidenceDecisionEditorForm({
               disabled={
                 !canRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)
               }
-              onClick={() => metricControls.remove(page.id, metricIndex)}
+              onClick={() =>
+                metricControls.remove({ pageId: page.id, metricIndex })
+              }
             >
               Remove
             </Button>

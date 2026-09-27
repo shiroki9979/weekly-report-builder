@@ -254,8 +254,8 @@ describe("evidence-decision clone and readiness", () => {
 
   it("treats nonempty invalid Metric Input as invalid-content", () => {
     const page = createBlankEvidenceDecisionPage("p01")
-    const buffer = { p01: { "metrics[0].baselineValue": "abc" } }
-    const baselineIssues = assessContentReadiness(page, buffer).filter(
+    const metricInput = { p01: { "metrics[0].baselineValue": "abc" } }
+    const baselineIssues = assessContentReadiness(page, metricInput).filter(
       (issue) => issue.path === "metrics[0].baselineValue"
     )
     expect(baselineIssues).toEqual([
