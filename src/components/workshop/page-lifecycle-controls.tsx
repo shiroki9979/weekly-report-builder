@@ -93,7 +93,8 @@ export function PageLifecycleControls({
                 value === "two-column" ||
                 value === "weekly-overview" ||
                 value === "evidence-decision" ||
-                value === "next-actions"
+                value === "next-actions" ||
+                value === "trend-target"
               ) {
                 setLayout(value)
               }
@@ -110,6 +111,7 @@ export function PageLifecycleControls({
                 Evidence-backed Decision
               </SelectItem>
               <SelectItem value="next-actions">Next Actions</SelectItem>
+              <SelectItem value="trend-target">Trend &amp; Target</SelectItem>
             </SelectContent>
           </Select>
           {layout === "two-column" ? (

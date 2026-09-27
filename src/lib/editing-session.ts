@@ -13,6 +13,14 @@ import {
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
 import {
+  hasInvalidTrendInput,
+  parseTrendNumber,
+  readTrendInputText,
+  trendInputError,
+  writeTrendInputText,
+  type TrendInputLocation,
+} from "./trend-input"
+import {
   addPageAfter,
   deleteSelectedPage,
   moveSelectedPage,
@@ -26,8 +34,10 @@ import {
 } from "./evidence-decision-editor"
 import {
   isEvidenceDecisionPage,
+  isTrendTargetPage,
   isStructuredWeekPage,
   type ComparisonMetric,
+  type TrendTargetPage,
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
@@ -80,6 +90,12 @@ export type MetricEditorControls = {
   add: (pageId: string) => void
   move: (move: MetricMove) => void
   remove: (metric: MetricLocation) => void
+  readiness: (pageId: string) => ExportIssue[]
+}
+
+export type TrendEditorControls = {
+  read: (location: TrendInputLocation) => string
+  write: (location: TrendInputLocation, raw: string) => void
   readiness: (pageId: string) => ExportIssue[]
 }
 
@@ -358,6 +374,68 @@ export function writeMetricInput(
   return { ...session, week: nextWeek, metricInput }
 }
 
+export function readTrendInput(
+  session: EditingSession,
+  location: TrendInputLocation
+): string {
+  const page = requireWeek(session).pages.find(
+    (entry) => entry.id === location.pageId
+  )
+  if (!page || !isTrendTargetPage(page))
+    throw new Error(`Unknown Trend & Target page: ${location.pageId}`)
+  const pending = readTrendInputText(session.metricInput, location)
+  if (pending !== undefined) return pending
+  if (location.path === "startMonday") return page.startMonday ?? ""
+  if (location.path === "target") return page.target?.toString() ?? ""
+  const match = /^observations\[(\d+)\]\.value$/.exec(location.path)
+  const observation = match ? page.observations[Number(match[1])] : null
+  if (!observation)
+    throw new Error(`Unknown Trend observation: ${location.path}`)
+  return observation.state === "measured" ? String(observation.value) : ""
+}
+
+export function writeTrendInput(
+  session: EditingSession,
+  location: TrendInputLocation,
+  raw: string
+): EditingSession {
+  const week = requireWeek(session)
+  const pageIndex = week.pages.findIndex(
+    (entry) => entry.id === location.pageId
+  )
+  const page = week.pages[pageIndex]
+  if (!page || !isTrendTargetPage(page))
+    throw new Error(`Unknown Trend & Target page: ${location.pageId}`)
+  const metricInput = writeTrendInputText(session.metricInput, location, raw)
+  if (trendInputError(page, metricInput, location.path))
+    return { ...session, metricInput }
+  let next: TrendTargetPage
+  if (location.path === "startMonday") {
+    next = { ...page, startMonday: raw === "" ? null : raw }
+  } else if (location.path === "target") {
+    next = { ...page, target: parseTrendNumber(raw) as number | null }
+  } else {
+    const match = /^observations\[(\d+)\]\.value$/.exec(location.path)
+    const index = match ? Number(match[1]) : -1
+    if (
+      !page.observations[index] ||
+      page.observations[index].state === "missing"
+    ) {
+      throw new Error(`Unknown editable Trend observation: ${location.path}`)
+    }
+    const value = parseTrendNumber(raw)
+    const observations = [...page.observations]
+    observations[index] =
+      value === null
+        ? { state: "unfilled" }
+        : { state: "measured", value: value as number }
+    next = { ...page, observations }
+  }
+  const pages = [...week.pages]
+  pages[pageIndex] = next
+  return { ...session, week: { ...week, pages }, metricInput }
+}
+
 export function moveSessionMetric(
   session: EditingSession,
   move: MetricMove
@@ -460,7 +538,7 @@ export function sessionReadiness(
     throw new Error(`Unknown page id: ${pageId}`)
   }
   return isStructuredWeekPage(page)
-    ? assessContentReadiness(page, session.metricInput)
+    ? assessContentReadiness(page, session.metricInput, session.week?.start)
     : []
 }
 
@@ -469,11 +547,20 @@ export function canSaveSession(session: EditingSession): {
   allowed: boolean
 } {
   const week = requireWeek(session)
-  const allowed = !weekHasInvalidMetricInputs(week, session.metricInput)
+  const metricInvalid = weekHasInvalidMetricInputs(week, session.metricInput)
+  const trendInvalid = week.pages.some(
+    (page) =>
+      isTrendTargetPage(page) && hasInvalidTrendInput(page, session.metricInput)
+  )
+  const allowed = !metricInvalid && !trendInvalid
   return {
     session: {
       ...session,
-      saveError: allowed ? null : "Fix invalid metric values before saving",
+      saveError: metricInvalid
+        ? "Fix invalid metric values before saving"
+        : trendInvalid
+          ? "Fix invalid Trend & Target input before saving"
+          : null,
     },
     allowed,
   }
