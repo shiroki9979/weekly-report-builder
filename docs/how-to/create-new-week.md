@@ -1,7 +1,7 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-09-23
+最後更新：2026-09-28
 
 ---
 
@@ -22,7 +22,8 @@
 - 若來源週次包含 `layout: "html"` 逃生口頁面，其引用的 `.html` 檔案會原樣拷貝至新週目錄（`weeks/YYYY-MM-DD/<htmlFile>`）；JSON 內的 `htmlFile` 相對檔名維持不變，`title` 與 `notes` 比照雙欄頁清空
 - 若來源週次包含 Weekly Overview，clone 會保留 workstream 與 Supporting 數量，清除當週數字與結論文字
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
-- 若來源週次包含 Next Actions，clone 會保留 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
+- 若來源週次包含 Next Actions，clone 會保留 Rows／Columns 選擇與 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
+- 若來源週次包含 Trend & Target，clone 會保留帶日期的所有觀測、目標、指標格式與 Measurement Context，清除 Title、Interpretation 與 notes。新週不會自動加週或移除舊週；在編輯頁手動增減端點後填入新結果
 - `start` / `end` 自動設為該週週一至週五
 - 新週不複製上一週的 `showPageNumbers` 與 Editorial 頁的 `showPageNumber`，Editorial 頁碼回到預設顯示；HTML Page 逐頁開啟，沿用上一週該頁的 `showPageNumber`
 
@@ -36,6 +37,8 @@
 | `weeks/` 存在但沒有週次檔              | 視為有意的空 store；bootstrap 不會補檔。移除這個空目錄後再執行 `pnpm seed:weeks`。不要手動複製某個固定日期的週報。工坊會顯示 empty state，不會幫你建立第一週。 |
 
 `demo/` 是 Git 追蹤的公開範例來源；你編輯與 Create week 寫入的永遠是被忽略的本機 `weeks/`。忽略該目錄與從目前 index 移除它，不會刪除舊 commits 裡的 Git 物件。
+
+若 Trend & Target 已達 12 週，先確認要移除的最早或最新端點，再補入新週。保留的 Measured／Missing 仍對應原日期；新增位置是 Unfilled，完成量測或明確標記 Missing 後才可匯出。不要把上一週的結論當成新週結論。
 
 ## 相關文件
 

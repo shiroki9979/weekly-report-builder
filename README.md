@@ -1,5 +1,8 @@
 # weekly-report-builder
 
+Created: 2026-08-31
+Last updated: 2026-09-28
+
 Personal weekly-report workshop: edit the week in a form, preview slides at 16:9, export PNGs, and paste them into the team’s shared deck. Solo use only.
 
 Not a presenter, not multi-user, not a CMS, and not a replacement for the team deck.
@@ -7,7 +10,7 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 ## Status
 
 - **Workshop**: edit a week, preview at 16:9, export PNGs or copy one page to the clipboard.
-- **Structured Layouts**: Two-column, Weekly Overview, Evidence-backed Decision, Next Actions, plus HTML Pages.
+- **Structured Layouts**: Two-column, Weekly Overview, Evidence-backed Decision, Next Actions (Rows or Columns), and Trend & Target, plus HTML Pages.
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
@@ -32,7 +35,7 @@ Week files: `weeks/YYYY-MM-DD.json` (Monday date as filename). The Workshop list
 
 If `weeks/` exists but has no Week Documents, remove that empty directory and run `pnpm seed:weeks`. The Workshop will not create a first week for you.
 
-The disposable layout-family prototype has been retired. Author Weekly Overview, Evidence-backed Decision, and Next Actions from the workshop. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
+The public fictional Demo Week Set opens in the Workshop on a fresh install. Pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows mixed-language Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 
@@ -48,9 +51,9 @@ Workshop UI and in-app strings are **English**. Slide copy in `weeks/*.json` is 
 ## Workflow
 
 1. Open the latest week (`weeks/YYYY-MM-DD.json`; new weeks clone the previous structure with cleared copy).
-2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Editorial Layout Family pages use Weekly Overview, Evidence-backed Decision, or Next Actions — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
+2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Structured Layout pages include Weekly Overview, Evidence-backed Decision, Next Actions, and Trend & Target — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
 3. Hide pages you will not paste into the team deck. Draft and Overflowing Pages cannot be copied or batch-exported until they are Content-complete and fit the 1280 × 720 capture Stage.
-4. Export ready pages as PNG or copy the current page to the clipboard.
+4. Review each page both as a spoken slide and as a standalone image: check the conclusion, dated evidence, status, source, and action checkpoints. Export ready pages as PNG or copy the current page to the clipboard.
 
 ## Out of scope
 

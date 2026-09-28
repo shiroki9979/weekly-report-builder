@@ -6,12 +6,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { WeekDocument } from "@/lib/week-document"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 type PagePickerProps = {
   week: WeekDocument
   selectedPageIndex: number
   onSelect: (index: number) => void
+}
+
+// clone 後的新週會清空標題；以 Page ID 代替，避免下拉選單出現無名稱的選項
+function pageOptionLabel(page: WeekPage): string {
+  const label = page.title.trim() || page.id
+  return page.hidden ? `${label} (hidden)` : label
 }
 
 export function PagePicker({
@@ -42,14 +48,14 @@ export function PagePicker({
                 return value
               }
 
-              return page.hidden ? `${page.title} (hidden)` : page.title
+              return pageOptionLabel(page)
             }}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {week.pages.map((page, index) => (
             <SelectItem key={page.id} value={String(index)}>
-              {page.hidden ? `${page.title} (hidden)` : page.title}
+              {pageOptionLabel(page)}
             </SelectItem>
           ))}
         </SelectContent>

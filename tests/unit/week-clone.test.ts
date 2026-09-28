@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest"
 
 import {
   cloneWeekFromPrevious,
-  isMondayDate,
   latestWeekMonday,
   nextMondayAfter,
   weekRangeForMonday,
 } from "@/lib/week-clone"
+import { isCalendarMonday } from "@/lib/week-id"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
 import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
@@ -27,8 +27,14 @@ describe("week-clone", () => {
       start: "2026-08-31",
       end: "2026-09-04",
     })
-    expect(isMondayDate("2026-08-31")).toBe(true)
-    expect(isMondayDate("2026-09-01")).toBe(false)
+    expect(isCalendarMonday("2026-08-31")).toBe(true)
+    expect(isCalendarMonday("2026-09-01")).toBe(false)
+  })
+
+  it("rejects a nonexistent Monday instead of silently moving the reporting week", () => {
+    expect(() => weekRangeForMonday("2026-02-30")).toThrow(
+      "Invalid date: 2026-02-30"
+    )
   })
 
   it("picks the latest week and the following Monday", () => {

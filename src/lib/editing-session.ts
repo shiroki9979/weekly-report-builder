@@ -12,6 +12,7 @@ import {
   type MetricMove,
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
+import { weekHasInvalidTrendInputs } from "./trend-input"
 import {
   addPageAfter,
   deleteSelectedPage,
@@ -26,6 +27,7 @@ import {
 } from "./evidence-decision-editor"
 import {
   isEvidenceDecisionPage,
+  isTrendTargetPage,
   isStructuredWeekPage,
   type ComparisonMetric,
   type WeekDocument,
@@ -193,7 +195,7 @@ export function failSessionCreate(
   return { ...session, creating: false, createError: message }
 }
 
-function requireWeek(session: EditingSession): WeekDocument {
+export function requireWeek(session: EditingSession): WeekDocument {
   if (!session.week) {
     throw new Error("No week is open")
   }
@@ -225,12 +227,28 @@ export function editSessionContent(
       "Page changes require a dedicated Editing Session operation"
     )
   }
+  if (changesTrendRange(baseline, next)) {
+    throw new Error(
+      "Trend range changes require a dedicated Editing Session operation"
+    )
+  }
   if (changesMetricsUnsafely(baseline, next)) {
     throw new Error(
       "Metric changes require a dedicated Editing Session operation"
     )
   }
   return { ...session, week: next }
+}
+
+function changesTrendRange(before: WeekDocument, after: WeekDocument): boolean {
+  return after.pages.some((afterPage, index) => {
+    const beforePage = before.pages[index]
+    return (
+      isTrendTargetPage(beforePage) &&
+      isTrendTargetPage(afterPage) &&
+      beforePage.observations.length !== afterPage.observations.length
+    )
+  })
 }
 
 function changesPageStructure(
@@ -460,7 +478,7 @@ export function sessionReadiness(
     throw new Error(`Unknown page id: ${pageId}`)
   }
   return isStructuredWeekPage(page)
-    ? assessContentReadiness(page, session.metricInput)
+    ? assessContentReadiness(page, session.metricInput, session.week?.start)
     : []
 }
 
@@ -468,13 +486,17 @@ export function canSaveSession(session: EditingSession): {
   session: EditingSession
   allowed: boolean
 } {
-  const week = requireWeek(session)
-  const allowed = !weekHasInvalidMetricInputs(week, session.metricInput)
-  return {
-    session: {
-      ...session,
-      saveError: allowed ? null : "Fix invalid metric values before saving",
-    },
-    allowed,
-  }
+  const saveError = saveBlockReason(requireWeek(session), session.metricInput)
+  return { session: { ...session, saveError }, allowed: saveError === null }
+}
+
+function saveBlockReason(
+  week: WeekDocument,
+  inputs: MetricInputMap
+): string | null {
+  if (weekHasInvalidMetricInputs(week, inputs))
+    return "Fix invalid metric values before saving"
+  if (weekHasInvalidTrendInputs(week, inputs))
+    return "Fix invalid Trend & Target input before saving"
+  return null
 }

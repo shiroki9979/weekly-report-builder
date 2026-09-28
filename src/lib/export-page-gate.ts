@@ -75,7 +75,7 @@ export async function exportPage(
     return { kind: "failed", cause: deps.signal.reason }
   }
   const gateDeps: GateDeps = { ...deps, metricInput: deps.metricInput ?? {} }
-  const readinessIssues = preflightIssues(page, gateDeps.metricInput)
+  const readinessIssues = preflightIssues(week, page, gateDeps.metricInput)
   if (readinessIssues.length > 0) {
     return { kind: "blocked", issues: readinessIssues }
   }
@@ -88,13 +88,14 @@ export async function exportPage(
         issues: [{ code: "html-load-failed", message: prepared.message }],
       }
     }
-    return await captureFromSession(prepared, page, gateDeps)
+    return await captureFromSession(prepared, week, page, gateDeps)
   } catch (cause: unknown) {
     return { kind: "failed", cause }
   }
 }
 
 function preflightIssues(
+  week: WeekDocument,
   page: WeekPage,
   metricInput: MetricInputMap
 ): ExportIssue[] {
@@ -102,7 +103,7 @@ function preflightIssues(
     return assessExportEligibility(page).issues
   }
   if (isStructuredWeekPage(page)) {
-    return assessContentReadiness(page, metricInput)
+    return assessContentReadiness(page, metricInput, week.start)
   }
   return []
 }
@@ -144,11 +145,12 @@ function disposeLateSession(
 
 async function captureFromSession(
   session: CaptureSession,
+  week: WeekDocument,
   page: WeekPage,
   deps: GateDeps
 ): Promise<PageGateResult> {
   try {
-    const issues = await measurementIssues(session, page, deps)
+    const issues = await measurementIssues(session, week, page, deps)
     if (issues.length > 0) {
       return { kind: "blocked", issues }
     }
@@ -160,6 +162,7 @@ async function captureFromSession(
 
 async function measurementIssues(
   session: CaptureSession,
+  week: WeekDocument,
   page: WeekPage,
   deps: GateDeps
 ): Promise<ExportIssue[]> {
@@ -187,7 +190,8 @@ async function measurementIssues(
   const assessment = assessExportEligibility(
     page,
     measurement,
-    deps.metricInput
+    deps.metricInput,
+    week.start
   )
   return assessment.eligible ? [] : assessment.issues
 }

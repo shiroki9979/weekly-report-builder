@@ -9,15 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
 ### Added
 
-- 實作 Export gate 與四張依賴工作票，Copy／batch 共用截圖流程、HTML 失敗政策、操作快照與部分結果摘要（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、#32～#35）。
-- Workshop 支援週次與單頁頁碼顯示切換。Editorial 維持文流頁碼並預設顯示；HTML 頁預設不疊頁碼，需單頁開啟才疊在畫布右下，避免與片段自帶頁碼重複，且建立新週時沿用該頁設定；Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- 新增 Trend & Target：以 2–12 個連續週次呈現單一量測與固定目標，區分已量測、缺測與未填；支援日期範圍維護、跨週沿用、儲存及 PNG 匯出（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)、[#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)～[#46](https://github.com/shiroki9979/weekly-report-builder/issues/46)）。
+- Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
+- 公開 Demo Week Set 新增 Trend & Target 的雙向目標、缺測末週與 Next Actions 版型對照，並補上首次使用及分享檢查指引（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 新增共用 Export gate，讓 Copy 與批次匯出使用相同的頁面就緒及截圖規則；批次可略過未就緒頁面並回報部分結果（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)～[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
+- Workshop 支援週次與單頁頁碼顯示切換；Editorial 頁預設顯示頁碼，HTML 頁可選擇疊印頁碼，Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- 新增雙情境 Slide 設計研究及 Trend & Target／Next Actions Rows 實作規格，記錄口頭報告與自行閱讀的版型依據（[研究筆記](docs/explanation/slide-design-research.md)、[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
 
 ### Changed
 
-- 匯出失敗訊息以 `Download trigger failed:`／`Clipboard write failed:` 標示輸出寫入失敗，與頁面就緒問題區分（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)）。
-- 匯出顯示原週次的批次結果摘要，保留中途失敗前已觸發下載與略過原因，並區分失敗當頁與未處理頁；Copy 成功訊息於剪貼簿寫入完成後顯示（[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
+- 編輯與週次存取改由 Editing Session 和 Week store 管理；Copy／批次匯出使用開始操作時的資料快照，後續切週或編輯不會改動正在執行的輸出（[#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)～[#40](https://github.com/shiroki9979/weekly-report-builder/issues/40)）。
+- 匯出結果區分頁面就緒問題、剪貼簿／下載失敗及尚未處理的頁面；批次摘要保留已觸發下載與略過原因（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
+- 封存版型比較原型及 A/D 決策紀錄，移除開發用入口與指令，改由 Workshop 提供正式示例（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
 - Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。
 - `pnpm typecheck` 改用 `tsc -b --noEmit`，實際檢查 app 與 node 兩個 TypeScript project。
@@ -25,10 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Trend & Target 拒絕不存在的週一日期及數值下溢輸入；修正補填起始週後的資料顯示、極端／近值縱軸刻度與等值目標線的呈現（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
+- 修正複製新週後，無標題頁面在 Page 選單中的顯示，以及空白 chart 類別造成的重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
-- Page ID 含 `:` 時，移動或刪除 Comparison Metric 不再遺失非法草稿，Save 與 Copy 會持續阻擋（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
+- 修正 Comparison Metric 非法草稿在含 `:` 的 Page ID、移動／刪除項目、刪除頁面或切換週次時的歸屬；Save 與 Copy 不會誤用舊值（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
-- 刪除頁面時一併清除該頁的 Comparison Metric 草稿，新頁重用同一個 Page ID 不會讓舊的非法輸入復活；切換週次時清空草稿，避免上一週的輸入出現在新週並擋住 Save。
 
 ## [0.2.0] - 2026-09-18
 
@@ -92,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 消毒 HTML 逃生口時啟用 DOMPurify SVG profile，避免 inline 圖表被剝成空白投影片
 
-[Unreleased]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/shiroki9979/weekly-report-builder/releases/tag/v0.1.0

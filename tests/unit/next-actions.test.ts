@@ -6,6 +6,7 @@ import {
   moveCommitment,
   removeCommitment,
   setCommitmentField,
+  setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
 import { cloneWeekFromPrevious } from "@/lib/week-clone"
@@ -25,6 +26,39 @@ function actions(week: WeekDocument): NextActionsPage {
 }
 
 describe("next-actions schema", () => {
+  it("reads omitted variants as Columns and rejects invalid supplied variants", () => {
+    const source = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "next-actions",
+          title: "Plan",
+          commitments: [
+            { title: "One", outcome: "First", checkpoint: "Done" },
+            { title: "Two", outcome: "Second", checkpoint: "Done" },
+          ],
+        },
+      ],
+    }
+    expect(actions(parseWeekDocument(source)).variant).toBe("columns")
+    expect(
+      actions(
+        parseWeekDocument({
+          ...source,
+          pages: [{ ...source.pages[0], variant: "rows" }],
+        })
+      ).variant
+    ).toBe("rows")
+    expect(() =>
+      parseWeekDocument({
+        ...source,
+        pages: [{ ...source.pages[0], variant: "grid" }],
+      })
+    ).toThrow(/variant/)
+  })
+
   it("parses a draft and strips extra fields", () => {
     const doc = parseWeekDocument({
       start: "2026-08-24",
@@ -55,6 +89,7 @@ describe("next-actions schema", () => {
     expect(doc.pages[0]).toEqual({
       id: "p01",
       layout: "next-actions",
+      variant: "columns",
       title: "Five-day reviews.",
       commitments: [
         {
@@ -115,11 +150,29 @@ describe("next-actions schema", () => {
 describe("next-actions factory and editor", () => {
   it("creates three blank commitments", () => {
     const page = createBlankNextActionsPage("p02")
+    expect(page.variant).toBe("rows")
     expect(page.commitments).toEqual([
       { title: "", outcome: "", checkpoint: "" },
       { title: "", outcome: "", checkpoint: "" },
       { title: "", outcome: "", checkpoint: "" },
     ])
+  })
+
+  it("switches composition without changing authored commitments or metadata", () => {
+    const initial = createBlankNextActionsPage("p01")
+    const authored = {
+      ...initial,
+      title: "Plan",
+      notes: "Talk",
+      commitments: [
+        { title: "One", outcome: "First", checkpoint: "At noon" },
+        { title: "Two", outcome: "Second", checkpoint: "On Friday" },
+      ],
+    }
+    const changed = actions(
+      setNextActionsVariant(weekWith(authored), 0, "columns")
+    )
+    expect(changed).toEqual({ ...authored, variant: "columns" })
   })
 
   it("enforces commitment bounds and updates fields", () => {
@@ -175,11 +228,21 @@ describe("next-actions clone and readiness", () => {
       throw new Error("expected next-actions")
     }
     expect(page.title).toBe("")
+    expect(page.variant).toBe("columns")
     expect(page.notes).toBeUndefined()
     expect(page.commitments).toEqual([
       { title: "", outcome: "", checkpoint: "" },
       { title: "", outcome: "", checkpoint: "" },
     ])
+  })
+
+  it("retains Rows after cloning and parsing the next week", () => {
+    const previous = weekWith({
+      ...createBlankNextActionsPage("p01"),
+      title: "Next steps",
+    })
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    expect(actions(parseWeekDocument(cloned)).variant).toBe("rows")
   })
 
   it("lists missing commitment fields after title", () => {
