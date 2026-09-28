@@ -779,6 +779,26 @@ function parseComparisonMetric(
     throw new Error(`Invalid week document: ${field} must be an object`)
   }
 
+  const format = parseMetricFormat(value, field)
+  return {
+    label: readString(value.label, `${field}.label`),
+    baselineValue: parseNullableMetricValue(
+      value.baselineValue,
+      `${field}.baselineValue`
+    ),
+    candidateValue: parseNullableMetricValue(
+      value.candidateValue,
+      `${field}.candidateValue`
+    ),
+    unit: readString(value.unit, `${field}.unit`),
+    ...format,
+  }
+}
+
+function parseMetricFormat(
+  value: Record<string, unknown>,
+  field: string
+): Pick<ComparisonMetric, "unitPosition" | "unitSpacing" | "precision"> {
   const unitPosition = readNonEmptyString(
     value.unitPosition,
     `${field}.unitPosition`
@@ -803,16 +823,6 @@ function parseComparisonMetric(
   }
 
   return {
-    label: readString(value.label, `${field}.label`),
-    baselineValue: parseNullableMetricValue(
-      value.baselineValue,
-      `${field}.baselineValue`
-    ),
-    candidateValue: parseNullableMetricValue(
-      value.candidateValue,
-      `${field}.candidateValue`
-    ),
-    unit: readString(value.unit, `${field}.unit`),
     unitPosition: unitPosition as UnitPosition,
     unitSpacing: unitSpacing as UnitSpacing,
     precision: value.precision as ComparisonMetric["precision"],
@@ -917,30 +927,11 @@ function parseTrendMetric(
   field: string
 ): TrendTargetPage["metric"] {
   const metric = readRecord(value, field)
-  const unitPosition = readNonEmptyString(
-    metric.unitPosition,
-    `${field}.unitPosition`
-  )
-  const unitSpacing = readNonEmptyString(
-    metric.unitSpacing,
-    `${field}.unitSpacing`
-  )
-  const precision = metric.precision
-  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition))
-    throw new Error(`Invalid week document: ${field}.unitPosition`)
-  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing))
-    throw new Error(`Invalid week document: ${field}.unitSpacing`)
-  if (
-    typeof precision !== "number" ||
-    !PRECISIONS.has(precision as ComparisonMetric["precision"])
-  )
-    throw new Error(`Invalid week document: ${field}.precision`)
+  const format = parseMetricFormat(metric, field)
   return {
     label: readString(metric.label, `${field}.label`),
     unit: readString(metric.unit, `${field}.unit`),
-    unitPosition: unitPosition as UnitPosition,
-    unitSpacing: unitSpacing as UnitSpacing,
-    precision: precision as ComparisonMetric["precision"],
+    ...format,
   }
 }
 

@@ -101,6 +101,58 @@ test("authors, saves, reloads, copies, and exports a measured Trend & Target pag
   expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([2560, 1440])
 })
 
+test("keeps the target line visible when every observation meets it exactly", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Edit", exact: true }).click()
+  await page.getByRole("combobox", { name: "Add page" }).click()
+  await page.getByRole("option", { name: "Trend & Target" }).click()
+  await page.getByRole("button", { name: "Add page" }).click()
+  await page
+    .getByRole("textbox", { name: "Starting Monday" })
+    .fill("2026-07-13")
+  for (let index = 1; index <= 8; index++) {
+    await page
+      .getByRole("textbox", { name: new RegExp(`Week ${index} ·`) })
+      .fill("8")
+  }
+  await page.getByRole("textbox", { name: "Fixed target" }).fill("8")
+
+  const plot = page
+    .getByTestId("stage-frame")
+    .locator(".editorial-trend-chart svg")
+  const sample = await plot.evaluate((svg) => {
+    const target = svg.querySelector(".editorial-trend-target")
+    if (!target) throw new Error("Target line is missing")
+    const point = (svg as SVGSVGElement).createSVGPoint()
+    point.x = Number(target.getAttribute("x1")) + 16
+    point.y = Number(target.getAttribute("y1"))
+    const screenPoint = point.matrixTransform(svg.getScreenCTM()!)
+    const bounds = svg.getBoundingClientRect()
+    return {
+      x: Math.round(screenPoint.x - bounds.left),
+      y: Math.round(screenPoint.y - bounds.top),
+    }
+  })
+  const screenshot = await plot.screenshot()
+  const pixel = await page.evaluate(
+    async ({ png, x, y }) => {
+      const image = new Image()
+      image.src = `data:image/png;base64,${png}`
+      await image.decode()
+      const canvas = document.createElement("canvas")
+      canvas.width = image.width
+      canvas.height = image.height
+      const context = canvas.getContext("2d")!
+      context.drawImage(image, 0, 0)
+      return [...context.getImageData(x, y, 1, 1).data]
+    },
+    { png: screenshot.toString("base64"), ...sample }
+  )
+  expect(pixel[0]).toBeGreaterThan(pixel[2])
+})
+
 test("authors explicit missing weeks, retains a measured zero, and exports a gap", async ({
   page,
 }) => {
