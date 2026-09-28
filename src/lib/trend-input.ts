@@ -116,19 +116,24 @@ export function remapTrendObservationInput(
   return { ...inputs, [pageId]: next }
 }
 
-export function parseTrendNumber(raw: string): number | null | "invalid" {
+export function parseTrendNumber(
+  raw: string
+): number | null | "invalid" | "underflow" {
   const text = raw.trim()
   if (!text) return null
   if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text))
     return "invalid"
   const value = Number(text)
-  return Number.isFinite(value) ? value : "invalid"
+  if (!Number.isFinite(value)) return "invalid"
+  // 非零係數若下溢成 0，會把量測誤存為真正的零值。
+  if (value === 0 && /[1-9]/.test(text.split(/[eE]/, 1)[0])) return "underflow"
+  return value
 }
 
 // 呼叫端須先通過 trendInputError；非法原文走到這裡代表流程有誤，須拋錯而非寫入 JSON
 export function requireTrendNumber(raw: string): number | null {
   const value = parseTrendNumber(raw)
-  if (value === "invalid") throw new Error(`Invalid Trend number: ${raw}`)
+  if (typeof value === "string") throw new Error(`Invalid Trend number: ${raw}`)
   return value
 }
 
@@ -151,9 +156,9 @@ export function trendInputError(
   if (path === "startMonday") return startMondayInputError(page, raw)
   if (path !== "target" && raw.trim() && !page.startMonday)
     return "Set starting Monday before entering observations"
-  return parseTrendNumber(raw) === "invalid"
-    ? "Enter a finite signed number"
-    : null
+  const parsed = parseTrendNumber(raw)
+  if (parsed === "underflow") return "Number is too small to represent"
+  return parsed === "invalid" ? "Enter a finite signed number" : null
 }
 
 function startMondayInputError(

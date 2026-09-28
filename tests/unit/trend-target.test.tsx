@@ -946,6 +946,43 @@ describe("Trend & Target", () => {
     })
   })
 
+  it("keeps nonzero scientific input that underflows to zero pending", () => {
+    let session = createEditingSession({
+      start: "2026-07-20",
+      end: "2026-07-24",
+      pages: [complete],
+    })
+    const location = { pageId: "p01", path: "observations[2].value" } as const
+
+    session = writeTrendInput(session, location, "1e-324")
+    expect(readTrendInput(session, location)).toBe("1e-324")
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "measured", value: 8.8 },
+        { state: "measured", value: 8.04 },
+      ],
+    })
+    expect(canSaveSession(session).allowed).toBe(false)
+    expect(sessionReadiness(session, "p01")).toContainEqual(
+      expect.objectContaining({
+        path: location.path,
+        code: "invalid-content",
+        message: "Number is too small to represent",
+      })
+    )
+
+    session = writeTrendInput(session, location, "0e-324")
+    expect(session.week?.pages[0]).toMatchObject({
+      observations: [
+        { state: "measured", value: 9.2 },
+        { state: "measured", value: 8.8 },
+        { state: "measured", value: 0 },
+      ],
+    })
+    expect(canSaveSession(session).allowed).toBe(true)
+  })
+
   it("keeps invalid signed input visible and blocks save, Copy, and batch preflight", async () => {
     const week = { start: "2026-07-20", end: "2026-07-24", pages: [complete] }
     let session = createEditingSession(week)

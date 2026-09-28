@@ -153,6 +153,57 @@ test("keeps the target line visible when every observation meets it exactly", as
   expect(pixel[0]).toBeGreaterThan(pixel[2])
 })
 
+test("keeps extreme finite y-axis ticks readable inside the plot", async ({
+  page,
+}) => {
+  await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
+  await page.goto("/")
+  await page.getByRole("button", { name: "Edit", exact: true }).click()
+  await page.getByRole("combobox", { name: "Add page" }).click()
+  await page.getByRole("option", { name: "Trend & Target" }).click()
+  await page.getByRole("button", { name: "Add page" }).click()
+  await page
+    .getByRole("textbox", { name: "Title", exact: true })
+    .fill("The measurement held steady.")
+  await page
+    .getByRole("textbox", { name: "Metric label" })
+    .fill("Measured count")
+  await page
+    .getByRole("textbox", { name: "Starting Monday" })
+    .fill("2026-07-13")
+  for (let index = 1; index <= 8; index++) {
+    await page
+      .getByRole("textbox", { name: new RegExp(`Week ${index} ·`) })
+      .fill("1e18")
+  }
+  await page.getByRole("textbox", { name: "Fixed target" }).fill("1e18")
+  await page
+    .getByRole("textbox", { name: "Interpretation" })
+    .fill("No change was measured.")
+  await page
+    .getByRole("textbox", { name: "Measurement Context" })
+    .fill("Fictional weekly count.")
+
+  const ticks = await page
+    .getByTestId("stage-frame")
+    .locator(
+      ".editorial-trend-chart svg .editorial-trend-axis[text-anchor='end']"
+    )
+    .evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        label: node.textContent,
+        left: (node as SVGTextElement).getBBox().x,
+      }))
+    )
+  expect(ticks).toHaveLength(5)
+  expect(new Set(ticks.map(({ label }) => label)).size).toBe(ticks.length)
+  expect(ticks.every(({ left }) => left >= 0)).toBe(true)
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page.getByRole("status").filter({ hasText: "Copied" })
+  ).toBeVisible()
+})
+
 test("authors explicit missing weeks, retains a measured zero, and exports a gap", async ({
   page,
 }) => {
