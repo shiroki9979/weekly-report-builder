@@ -20,7 +20,8 @@ import {
   type WeeklyOverviewPage,
 } from "./week-document"
 import { errorMessage } from "./error-message"
-import { isCalendarMonday, trendBounds, trendEndMonday } from "./trend-target"
+import { trendBounds, trendEndMonday } from "./trend-target"
+import { isCalendarMonday } from "./week-id"
 import {
   observationPath,
   trendInputError,

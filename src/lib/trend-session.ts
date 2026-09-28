@@ -15,11 +15,8 @@ import {
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
-import {
-  isCalendarMonday,
-  observationMonday,
-  trendRangeEnd,
-} from "./trend-target"
+import { observationMonday, trendRangeEnd } from "./trend-target"
+import { isCalendarMonday } from "./week-id"
 import {
   assertCanAddEntry,
   assertCanRemoveEntry,

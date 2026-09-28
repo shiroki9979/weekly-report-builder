@@ -5,7 +5,8 @@ import type {
   TrendInputPath,
 } from "./metric-input"
 import { errorMessage } from "./error-message"
-import { isCalendarMonday, trendRangeEnd } from "./trend-target"
+import { trendRangeEnd } from "./trend-target"
+import { isCalendarMonday } from "./week-id"
 import {
   canAddEntry,
   canRemoveEntry,
