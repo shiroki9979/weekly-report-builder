@@ -141,5 +141,5 @@ The Workshop's unsaved working state for one open Week Document, lasting from op
 _Avoid_: Week Draft, working copy, unsaved week
 
 **Metric Input**:
-The verbatim text an author typed for a Comparison Metric value, kept for the rest of the Editing Session. An invalid Metric Input blocks Save and Copy, and batch export skips its page.
+The verbatim text an author typed for a Comparison Metric value or a Trend & Target numeric or date field (target, Weekly Observation value, or starting Monday), kept for the rest of the Editing Session. An invalid Metric Input blocks Save and Copy, and batch export skips its page.
 _Avoid_: Metric draft, raw buffer

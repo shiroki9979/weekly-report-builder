@@ -140,6 +140,9 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
   }
 }
 
+// 規格指定新頁起始為八個 Unfilled 週次，作者可再增減端點
+const DEFAULT_TREND_WEEKS = 8
+
 export function createBlankTrendTargetPage(id: string): TrendTargetPage {
   return {
     id,
@@ -153,7 +156,9 @@ export function createBlankTrendTargetPage(id: string): TrendTargetPage {
       precision: 1,
     },
     startMonday: null,
-    observations: Array.from({ length: 8 }, () => ({ state: "unfilled" })),
+    observations: Array.from({ length: DEFAULT_TREND_WEEKS }, () => ({
+      state: "unfilled",
+    })),
     target: null,
     direction: "at-most",
     interpretation: "",
@@ -177,6 +182,10 @@ const BLANK_PAGE_FACTORIES: Record<
   "evidence-decision": createBlankEvidenceDecisionPage,
   "next-actions": createBlankNextActionsPage,
   "trend-target": createBlankTrendTargetPage,
+}
+
+export function isAddableLayout(value: unknown): value is AddableLayout {
+  return typeof value === "string" && Object.hasOwn(BLANK_PAGE_FACTORIES, value)
 }
 
 export function createBlankAddablePage(

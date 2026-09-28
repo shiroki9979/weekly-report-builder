@@ -748,6 +748,16 @@ const UNIT_POSITIONS = new Set<UnitPosition>(["before", "after"])
 const UNIT_SPACINGS = new Set<UnitSpacing>(["none", "space"])
 const PRECISIONS = new Set<ComparisonMetric["precision"]>([0, 1, 2])
 
+export function hasValidMetricFormat(
+  metric: Pick<ComparisonMetric, "unitPosition" | "unitSpacing" | "precision">
+): boolean {
+  return (
+    UNIT_POSITIONS.has(metric.unitPosition) &&
+    UNIT_SPACINGS.has(metric.unitSpacing) &&
+    PRECISIONS.has(metric.precision)
+  )
+}
+
 function parseNullableMetricValue(
   value: unknown,
   field: string
@@ -860,19 +870,20 @@ function parseNextActionsPage(
   )
 
   return withChrome(chrome, "next-actions", {
-    variant:
-      value.variant === undefined
-        ? "columns"
-        : value.variant === "columns" || value.variant === "rows"
-          ? value.variant
-          : invalidNextActionsVariant(`${field}.variant`),
+    variant: parseNextActionsVariant(value.variant, `${field}.variant`),
     commitments: commitments.map((commitment, commitmentIndex) =>
       parseCommitment(commitment, `${field}.commitments[${commitmentIndex}]`)
     ),
   })
 }
 
-function invalidNextActionsVariant(field: string): never {
+// 缺欄位的舊文件維持 Columns，避免既有週報開啟後版型改變
+function parseNextActionsVariant(
+  value: unknown,
+  field: string
+): NonNullable<NextActionsPage["variant"]> {
+  if (value === undefined) return "columns"
+  if (value === "columns" || value === "rows") return value
   throw new Error(`Invalid week document: ${field} must be columns or rows`)
 }
 
@@ -881,95 +892,129 @@ function parseTrendTargetPage(
   chrome: ParsedPageChrome,
   field: string
 ): TrendTargetPage {
-  const metric = readRecord(value.metric, `${field}.metric`)
-  const unitPosition = readNonEmptyString(
-    metric.unitPosition,
-    `${field}.metric.unitPosition`
-  )
-  const unitSpacing = readNonEmptyString(
-    metric.unitSpacing,
-    `${field}.metric.unitSpacing`
-  )
-  const precision = metric.precision
-  const direction = readNonEmptyString(value.direction, `${field}.direction`)
-  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition))
-    throw new Error(`Invalid week document: ${field}.metric.unitPosition`)
-  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing))
-    throw new Error(`Invalid week document: ${field}.metric.unitSpacing`)
-  if (
-    typeof precision !== "number" ||
-    !PRECISIONS.has(precision as ComparisonMetric["precision"])
-  )
-    throw new Error(`Invalid week document: ${field}.metric.precision`)
-  if (direction !== "at-most" && direction !== "at-least")
-    throw new Error(`Invalid week document: ${field}.direction`)
-  const startMonday = value.startMonday
-  if (
-    startMonday !== null &&
-    (typeof startMonday !== "string" || !isCalendarMonday(startMonday))
-  ) {
-    throw new Error(
-      `Invalid week document: ${field}.startMonday must be a Monday`
-    )
-  }
-  const entries = readEntries(
-    value.observations,
-    `${field}.observations`,
-    CARDINALITY.trendObservations
-  )
-  const observations = entries.map((entry, index): TrendObservation => {
-    const path = `${field}.observations[${index}]`
-    const observation = readRecord(entry, path)
-    if (observation.state === "measured")
-      return {
-        state: "measured",
-        value: readNumber(observation.value, `${path}.value`),
-      }
-    if (
-      (observation.state === "missing" || observation.state === "unfilled") &&
-      !Object.hasOwn(observation, "value")
-    )
-      return { state: observation.state }
-    throw new Error(`Invalid week document: ${path}`)
-  })
-  if (
-    startMonday === null &&
-    observations.some((entry) => entry.state !== "unfilled")
-  ) {
-    throw new Error(
-      `Invalid week document: ${field}.startMonday is required for entered observations`
-    )
-  }
-  if (startMonday !== null) {
-    try {
-      observationMonday(startMonday, observations.length - 1)
-    } catch {
-      throw new Error(
-        `Invalid week document: ${field}.observations exceed supported ISO dates`
-      )
-    }
-  }
+  const startMonday = parseStartMonday(value.startMonday, field)
+  const observations = parseTrendObservations(value.observations, field)
+  assertTrendDating({ startMonday, observations }, field)
   return withChrome(chrome, "trend-target", {
-    metric: {
-      label: readString(metric.label, `${field}.metric.label`),
-      unit: readString(metric.unit, `${field}.metric.unit`),
-      unitPosition: unitPosition as UnitPosition,
-      unitSpacing: unitSpacing as UnitSpacing,
-      precision: precision as ComparisonMetric["precision"],
-    },
+    metric: parseTrendMetric(value.metric, `${field}.metric`),
     startMonday,
     observations,
     target:
       value.target === null
         ? null
         : readNumber(value.target, `${field}.target`),
-    direction,
+    direction: parseTrendDirection(value.direction, `${field}.direction`),
     interpretation: readString(value.interpretation, `${field}.interpretation`),
     measurementContext: readString(
       value.measurementContext,
       `${field}.measurementContext`
     ),
   })
+}
+
+function parseTrendMetric(
+  value: unknown,
+  field: string
+): TrendTargetPage["metric"] {
+  const metric = readRecord(value, field)
+  const unitPosition = readNonEmptyString(
+    metric.unitPosition,
+    `${field}.unitPosition`
+  )
+  const unitSpacing = readNonEmptyString(
+    metric.unitSpacing,
+    `${field}.unitSpacing`
+  )
+  const precision = metric.precision
+  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition))
+    throw new Error(`Invalid week document: ${field}.unitPosition`)
+  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing))
+    throw new Error(`Invalid week document: ${field}.unitSpacing`)
+  if (
+    typeof precision !== "number" ||
+    !PRECISIONS.has(precision as ComparisonMetric["precision"])
+  )
+    throw new Error(`Invalid week document: ${field}.precision`)
+  return {
+    label: readString(metric.label, `${field}.label`),
+    unit: readString(metric.unit, `${field}.unit`),
+    unitPosition: unitPosition as UnitPosition,
+    unitSpacing: unitSpacing as UnitSpacing,
+    precision: precision as ComparisonMetric["precision"],
+  }
+}
+
+function parseTrendDirection(
+  value: unknown,
+  field: string
+): TrendTargetPage["direction"] {
+  const direction = readNonEmptyString(value, field)
+  if (direction !== "at-most" && direction !== "at-least")
+    throw new Error(`Invalid week document: ${field}`)
+  return direction
+}
+
+function parseStartMonday(value: unknown, field: string): string | null {
+  if (value === null) return null
+  if (typeof value !== "string" || !isCalendarMonday(value))
+    throw new Error(
+      `Invalid week document: ${field}.startMonday must be a Monday`
+    )
+  return value
+}
+
+function parseTrendObservations(
+  value: unknown,
+  field: string
+): TrendObservation[] {
+  const entries = readEntries(
+    value,
+    `${field}.observations`,
+    CARDINALITY.trendObservations
+  )
+  return entries.map((entry, index) =>
+    parseTrendObservation(entry, `${field}.observations[${index}]`)
+  )
+}
+
+function parseTrendObservation(value: unknown, path: string): TrendObservation {
+  const observation = readRecord(value, path)
+  if (observation.state === "measured")
+    return {
+      state: "measured",
+      value: readNumber(observation.value, `${path}.value`),
+    }
+  // 缺測與未填不得帶 value，否則讀者無法分辨殘值是否仍代表量測結果
+  if (
+    (observation.state === "missing" || observation.state === "unfilled") &&
+    !Object.hasOwn(observation, "value")
+  )
+    return { state: observation.state }
+  throw new Error(`Invalid week document: ${path}`)
+}
+
+function assertTrendDating(
+  {
+    startMonday,
+    observations,
+  }: Pick<TrendTargetPage, "startMonday" | "observations">,
+  field: string
+): void {
+  if (startMonday === null) {
+    if (observations.some((entry) => entry.state !== "unfilled"))
+      throw new Error(
+        `Invalid week document: ${field}.startMonday is required for entered observations`
+      )
+    return
+  }
+  try {
+    observationMonday(startMonday, observations.length - 1)
+  } catch (cause) {
+    throw new Error(
+      `Invalid week document: ${field}.observations exceed supported ISO dates`,
+      { cause }
+    )
+  }
 }
 
 function parseHtmlPage(

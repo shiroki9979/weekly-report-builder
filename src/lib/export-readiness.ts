@@ -1,4 +1,6 @@
 import {
+  CARDINALITY,
+  hasValidMetricFormat,
   isFiniteNonNegative,
   isHtmlWeekPage,
   isStructuredWeekPage,
@@ -17,8 +19,13 @@ import {
   type WeekPage,
   type WeeklyOverviewPage,
 } from "./week-document"
+import { errorMessage } from "./error-message"
 import { isCalendarMonday, trendBounds, trendEndMonday } from "./trend-target"
-import { trendInputError } from "./trend-input"
+import {
+  observationPath,
+  trendInputError,
+  trendRangeError,
+} from "./trend-input"
 
 import {
   invalidMetricInputMessage,
@@ -27,6 +34,7 @@ import {
   type MetricInputLocation,
   type MetricInputMap,
   type MetricValueField,
+  type TrendInputPath,
 } from "./metric-input"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
@@ -54,6 +62,9 @@ export type ExportAssessment = {
   eligible: boolean
   issues: ExportIssue[]
 }
+
+// 少於兩個量測點畫不出趨勢線
+const MIN_MEASURED_OBSERVATIONS = 2
 
 function missing(path: string, message: string): ExportIssue {
   return { code: "missing-content", path, message }
@@ -368,91 +379,125 @@ function assessTrendTarget(
   inputs: MetricInputMap,
   reportingMonday?: string
 ): ExportIssue[] {
-  const issues: ExportIssue[] = []
-  for (const [path, value, label] of [
+  return [
+    ...trendTextIssues(page),
+    ...trendPendingInputIssues(page, inputs),
+    ...trendDateIssues(page, reportingMonday),
+    ...trendTargetIssues(page),
+    ...trendFormatIssues(page),
+    ...trendObservationIssues(page),
+    ...trendAxisIssues(page),
+  ]
+}
+
+function trendTextIssues(page: TrendTargetPage): ExportIssue[] {
+  const fields = [
     ["title", page.title, "Title"],
     ["metric.label", page.metric.label, "Metric label"],
     ["interpretation", page.interpretation, "Interpretation"],
     ["measurementContext", page.measurementContext, "Measurement Context"],
-  ] as const) {
-    if (isBlank(value)) issues.push(missing(path, `${label} is required`))
-  }
-  for (const path of [
+  ] as const
+  return fields.flatMap(([path, value, label]) =>
+    isBlank(value) ? [missing(path, `${label} is required`)] : []
+  )
+}
+
+function trendPendingInputIssues(
+  page: TrendTargetPage,
+  inputs: MetricInputMap
+): ExportIssue[] {
+  const paths: TrendInputPath[] = [
     "startMonday",
     "target",
-    ...page.observations.map(
-      (_, index) => `observations[${index}].value` as const
-    ),
-  ] as const) {
+    ...page.observations.map((_, index) => observationPath(index)),
+  ]
+  return paths.flatMap((path) => {
     const message = trendInputError(page, inputs, path)
-    if (message) issues.push(invalid(path, message))
-  }
+    return message ? [invalid(path, message)] : []
+  })
+}
+
+function trendDateIssues(
+  page: TrendTargetPage,
+  reportingMonday?: string
+): ExportIssue[] {
   if (!page.startMonday)
-    issues.push(missing("startMonday", "Starting Monday is required"))
-  else if (!isCalendarMonday(page.startMonday))
-    issues.push(
-      invalid("startMonday", "Starting Monday must be a real calendar Monday")
-    )
-  else {
-    try {
-      const end = trendEndMonday(page)
-      if (!reportingMonday || !isCalendarMonday(reportingMonday))
-        issues.push(invalid("observations", "Reporting Monday is unavailable"))
-      else if (end && end > reportingMonday)
-        issues.push(
-          invalid(
-            "observations",
-            `Observed range ends ${end}, after reporting week ${reportingMonday}`
-          )
-        )
-    } catch {
-      issues.push(
-        invalid("observations", "Trend range exceeds supported ISO dates")
-      )
-    }
-  }
-  if (page.target === null) issues.push(missing("target", "Target is required"))
-  else if (!Number.isFinite(page.target))
-    issues.push(invalid("target", "Target must be finite"))
-  if (
-    ![0, 1, 2].includes(page.metric.precision) ||
-    !["before", "after"].includes(page.metric.unitPosition) ||
-    !["none", "space"].includes(page.metric.unitSpacing)
-  )
+    return [missing("startMonday", "Starting Monday is required")]
+  if (!isCalendarMonday(page.startMonday))
+    return [
+      invalid("startMonday", "Starting Monday must be a real calendar Monday"),
+    ]
+  const rangeError = trendRangeError(page.startMonday, page.observations.length)
+  if (rangeError) return [invalid("observations", rangeError)]
+  if (!reportingMonday || !isCalendarMonday(reportingMonday))
+    return [invalid("observations", "Reporting Monday is unavailable")]
+  const end = trendEndMonday(page)
+  if (end && end > reportingMonday)
+    return [
+      invalid(
+        "observations",
+        `Observed range ends ${end}, after reporting week ${reportingMonday}`
+      ),
+    ]
+  return []
+}
+
+function trendTargetIssues(page: TrendTargetPage): ExportIssue[] {
+  if (page.target === null) return [missing("target", "Target is required")]
+  if (!Number.isFinite(page.target))
+    return [invalid("target", "Target must be finite")]
+  return []
+}
+
+function trendFormatIssues(page: TrendTargetPage): ExportIssue[] {
+  const issues: ExportIssue[] = []
+  if (!hasValidMetricFormat(page.metric))
     issues.push(invalid("metric", "Metric format is invalid"))
   if (page.direction !== "at-most" && page.direction !== "at-least")
     issues.push(invalid("direction", "Target direction is invalid"))
-  if (page.observations.length < 2 || page.observations.length > 12)
-    issues.push(
-      invalid("observations", "Trend requires 2 to 12 weekly positions")
-    )
-  let measured = 0
-  page.observations.forEach((entry, index) => {
-    if (entry.state === "unfilled")
-      issues.push(missing(`observations[${index}]`, "Observation is unfilled"))
-    if (entry.state === "measured") {
-      measured++
-      if (!Number.isFinite(entry.value))
-        issues.push(
-          invalid(`observations[${index}].value`, "Measurement must be finite")
-        )
-    }
-  })
-  if (measured < 2)
-    issues.push(
-      missing("observations", "At least two measured observations are required")
-    )
-  try {
-    trendBounds(page)
-  } catch (cause) {
+  return issues
+}
+
+function trendObservationIssues(page: TrendTargetPage): ExportIssue[] {
+  const { min, max } = CARDINALITY.trendObservations
+  const issues: ExportIssue[] = []
+  if (page.observations.length < min || page.observations.length > max)
     issues.push(
       invalid(
         "observations",
-        cause instanceof Error ? cause.message : "Trend axis calculation failed"
+        `Trend requires ${min} to ${max} weekly positions`
       )
     )
-  }
+  page.observations.forEach((entry, index) => {
+    if (entry.state === "unfilled")
+      issues.push(missing(`observations[${index}]`, "Observation is unfilled"))
+    if (entry.state === "measured" && !Number.isFinite(entry.value))
+      issues.push(
+        invalid(`observations[${index}].value`, "Measurement must be finite")
+      )
+  })
+  const measured = page.observations.filter(
+    (entry) => entry.state === "measured"
+  ).length
+  if (measured < MIN_MEASURED_OBSERVATIONS)
+    issues.push(
+      missing("observations", "At least two measured observations are required")
+    )
   return issues
+}
+
+function trendAxisIssues(page: TrendTargetPage): ExportIssue[] {
+  try {
+    trendBounds(page)
+    return []
+  } catch (cause) {
+    return [
+      invalid(
+        "observations",
+        errorMessage(cause, "Trend axis calculation failed")
+      ),
+    ]
+  }
 }
 
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示

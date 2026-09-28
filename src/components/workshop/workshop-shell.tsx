@@ -43,9 +43,9 @@ import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 import type {
   MetricEditorControls,
-  TrendEditorControls,
   SessionLoadStatus,
 } from "@/lib/editing-session"
+import type { TrendEditorControls } from "@/lib/trend-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 

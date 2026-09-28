@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import {
   createBlankAddablePage,
+  isAddableLayout,
   nextPageId,
   type AddableLayout,
   type AddableTwoColumnPanelKind,
@@ -89,13 +90,7 @@ export function PageLifecycleControls({
           <Select
             value={layout}
             onValueChange={(value) => {
-              if (
-                value === "two-column" ||
-                value === "weekly-overview" ||
-                value === "evidence-decision" ||
-                value === "next-actions" ||
-                value === "trend-target"
-              ) {
+              if (isAddableLayout(value)) {
                 setLayout(value)
               }
             }}
