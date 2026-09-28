@@ -10,35 +10,48 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  addPageAfter,
+  ADDABLE_LAYOUTS,
+  ADDABLE_PANEL_KINDS,
   createBlankAddablePage,
-  deleteSelectedPage,
-  moveSelectedPage,
+  isAddableLayout,
+  isAddablePanelKind,
   nextPageId,
   type AddableLayout,
   type AddableTwoColumnPanelKind,
-  type PageLifecycleResult,
+  type PageMoveDirection,
 } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 type PageLifecycleControlsProps = {
   week: WeekDocument
   selectedPageId: string
-  onChange: (result: PageLifecycleResult) => void
+  onAdd: (page: WeekPage) => void
+  onDelete: (pageId: string) => void
+  onMove: (pageId: string, direction: PageMoveDirection) => void
   disabled?: boolean
 }
 
-const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
-  { value: "table", label: "Table" },
-  { value: "chart", label: "Chart" },
-  { value: "flow", label: "Flow" },
-  { value: "checklist", label: "Checklist" },
-]
+const LAYOUT_LABELS: Record<AddableLayout, string> = {
+  "two-column": "Two-column",
+  "weekly-overview": "Weekly Overview",
+  "evidence-decision": "Evidence-backed Decision",
+  "next-actions": "Next Actions",
+  "trend-target": "Trend & Target",
+}
+
+const PANEL_LABELS: Record<AddableTwoColumnPanelKind, string> = {
+  table: "Table",
+  chart: "Chart",
+  flow: "Flow",
+  checklist: "Checklist",
+}
 
 export function PageLifecycleControls({
   week,
   selectedPageId,
-  onChange,
+  onAdd,
+  onDelete,
+  onMove,
   disabled,
 }: PageLifecycleControlsProps) {
   const [layout, setLayout] = useState<AddableLayout>("two-column")
@@ -88,12 +101,7 @@ export function PageLifecycleControls({
           <Select
             value={layout}
             onValueChange={(value) => {
-              if (
-                value === "two-column" ||
-                value === "weekly-overview" ||
-                value === "evidence-decision" ||
-                value === "next-actions"
-              ) {
+              if (isAddableLayout(value)) {
                 setLayout(value)
               }
             }}
@@ -103,24 +111,18 @@ export function PageLifecycleControls({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="two-column">Two-column</SelectItem>
-              <SelectItem value="weekly-overview">Weekly Overview</SelectItem>
-              <SelectItem value="evidence-decision">
-                Evidence-backed Decision
-              </SelectItem>
-              <SelectItem value="next-actions">Next Actions</SelectItem>
+              {ADDABLE_LAYOUTS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {LAYOUT_LABELS[option]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {layout === "two-column" ? (
             <Select
               value={panelKind}
               onValueChange={(value) => {
-                if (
-                  value === "table" ||
-                  value === "chart" ||
-                  value === "flow" ||
-                  value === "checklist"
-                ) {
+                if (isAddablePanelKind(value)) {
                   setPanelKind(value)
                 }
               }}
@@ -134,9 +136,9 @@ export function PageLifecycleControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PANEL_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {ADDABLE_PANEL_KINDS.map((kind) => (
+                  <SelectItem key={kind} value={kind}>
+                    {PANEL_LABELS[kind]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -149,13 +151,7 @@ export function PageLifecycleControls({
             disabled={disabled}
             onClick={() => {
               const id = nextPageId(week.pages.map((page) => page.id))
-              onChange(
-                addPageAfter(
-                  week,
-                  selectedPageId,
-                  createBlankAddablePage(id, layout, panelKind)
-                )
-              )
+              onAdd(createBlankAddablePage(id, layout, panelKind))
             }}
           >
             Add page
@@ -169,7 +165,7 @@ export function PageLifecycleControls({
           variant="outline"
           size="sm"
           disabled={disabled || !canMoveUp}
-          onClick={() => onChange(moveSelectedPage(week, selectedPageId, "up"))}
+          onClick={() => onMove(selectedPageId, "up")}
         >
           Move up
         </Button>
@@ -178,9 +174,7 @@ export function PageLifecycleControls({
           variant="outline"
           size="sm"
           disabled={disabled || !canMoveDown}
-          onClick={() =>
-            onChange(moveSelectedPage(week, selectedPageId, "down"))
-          }
+          onClick={() => onMove(selectedPageId, "down")}
         >
           Move down
         </Button>
@@ -215,7 +209,7 @@ export function PageLifecycleControls({
             variant="destructive"
             size="sm"
             onClick={() => {
-              onChange(deleteSelectedPage(week, selectedPageId))
+              onDelete(selectedPageId)
               setDeleteOpen(false)
             }}
           >

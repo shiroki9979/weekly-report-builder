@@ -14,6 +14,26 @@ const interleavedHtmlFixturePath = resolve(
   "../fixtures/interleaved-html-week.json"
 )
 
+function twoColumnWeekWithPanel(panel: Record<string, unknown>) {
+  return {
+    start: "2026-08-24",
+    end: "2026-08-28",
+    pages: [
+      {
+        id: "p01",
+        layout: "two-column",
+        title: "Panel",
+        items: [
+          { heading: "A", body: "1" },
+          { heading: "B", body: "2" },
+          { heading: "C", body: "3" },
+        ],
+        panel,
+      },
+    ],
+  }
+}
+
 describe("parseWeekDocument", () => {
   it("parses the week fixture with two-column layout and table panel", () => {
     const raw = readFileSync(twoColumnFixturePath, "utf-8")
@@ -422,5 +442,97 @@ describe("parseWeekDocument", () => {
         ],
       })
     ).toThrow(/html/i)
+  })
+
+  it("rejects a chart panel whose series value is not a number", () => {
+    expect(() =>
+      parseWeekDocument(
+        twoColumnWeekWithPanel({
+          kind: "chart",
+          title: "Latency",
+          categories: ["Mon", "Tue"],
+          series: [{ name: "p95", values: [12, "fast"] }],
+        })
+      )
+    ).toThrow(/panel\.series\[0\]\.values\[1\]/)
+  })
+
+  it("rejects chart, flow, and checklist panels missing their entry arrays", () => {
+    const panels = [
+      { kind: "chart", title: "Latency", series: [] },
+      { kind: "chart", title: "Latency", categories: [] },
+      { kind: "flow", title: "Pipeline" },
+      { kind: "checklist", title: "Launch" },
+    ]
+
+    for (const panel of panels) {
+      expect(() => parseWeekDocument(twoColumnWeekWithPanel(panel))).toThrow(
+        /panel\.(categories|series|steps|items)/
+      )
+    }
+  })
+
+  it("parses optional showPageNumbers at the week root and showPageNumber on pages", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: false,
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Override show",
+          htmlFile: "p01.html",
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Inherit default",
+          htmlFile: "p02.html",
+        },
+        {
+          id: "p03",
+          layout: "two-column",
+          title: "Override hide",
+          showPageNumber: false,
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: {
+            kind: "checklist",
+            title: "Tasks",
+            items: [{ label: "Done", checked: true }],
+          },
+        },
+      ],
+    })
+
+    expect(week.showPageNumbers).toBe(false)
+    expect(week.pages[0].showPageNumber).toBe(true)
+    expect(week.pages[1].showPageNumber).toBeUndefined()
+    expect(week.pages[2].showPageNumber).toBe(false)
+  })
+
+  it("normalizes non-boolean showPageNumbers and showPageNumber as undefined", () => {
+    const week = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: "invalid",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Page",
+          htmlFile: "p01.html",
+          showPageNumber: 123,
+        },
+      ],
+    })
+
+    expect(week.showPageNumbers).toBeUndefined()
+    expect(week.pages[0].showPageNumber).toBeUndefined()
   })
 })

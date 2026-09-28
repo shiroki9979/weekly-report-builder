@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+
 import {
   Select,
   SelectContent,
@@ -10,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { WeekDocument } from "@/lib/week-document"
+import { cn } from "@/lib/utils"
 
 type WeekPickerProps = {
   weeks: string[]
@@ -59,128 +61,129 @@ export function WeekPicker({
   )
 }
 
-type PagePickerProps = {
-  week: WeekDocument
-  selectedPageIndex: number
-  onSelect: (index: number) => void
+export type ToolbarSaveControls = {
+  onSave: () => void
+  saving: boolean
+  message: string | null
+  error: string | null
+  disabled?: boolean
 }
 
-export function PagePicker({
-  week,
-  selectedPageIndex,
-  onSelect,
-}: PagePickerProps) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor="page-picker">Page</Label>
-      <Select
-        value={String(selectedPageIndex)}
-        onValueChange={(next) => {
-          if (next) {
-            onSelect(Number(next))
-          }
-        }}
-      >
-        <SelectTrigger id="page-picker" className="w-full">
-          <SelectValue>
-            {(value: string | null) => {
-              if (value == null) {
-                return null
-              }
+export type ToolbarCreateControls = {
+  onCreate: (monday: string) => void
+  creating: boolean
+  error: string | null
+  suggestedMonday: string
+  disabled?: boolean
+}
 
-              const page = week.pages[Number(value)]
-              if (!page) {
-                return value
-              }
-
-              return page.hidden ? `${page.title} (hidden)` : page.title
-            }}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {week.pages.map((page, index) => (
-            <SelectItem key={page.id} value={String(index)}>
-              {page.hidden ? `${page.title} (hidden)` : page.title}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  )
+export type ToolbarPageNumberControls = {
+  show: boolean
+  onChange?: (show: boolean) => void
+  disabled?: boolean
 }
 
 type WorkshopToolbarProps = {
   weeks: string[]
   selectedMonday: string
   onWeekChange: (monday: string) => void
-  onSave: () => void
-  saving: boolean
-  saveMessage: string | null
-  saveError: string | null
-  suggestedMonday: string
-  onCreateWeek: (monday: string) => void
-  creating: boolean
-  createError: string | null
   weekSelectDisabled?: boolean
-  saveDisabled?: boolean
-  createDisabled?: boolean
+  save: ToolbarSaveControls
+  create: ToolbarCreateControls
+  pageNumbers?: ToolbarPageNumberControls
 }
 
 export function WorkshopToolbar({
   weeks,
   selectedMonday,
   onWeekChange,
-  onSave,
-  saving,
-  saveMessage,
-  saveError,
-  suggestedMonday,
-  onCreateWeek,
-  creating,
-  createError,
   weekSelectDisabled,
-  saveDisabled,
-  createDisabled,
+  save,
+  create,
+  pageNumbers,
 }: WorkshopToolbarProps) {
+  if (weeks.length === 0) {
+    return null
+  }
+
   return (
     <div className="space-y-3">
-      {weeks.length > 0 ? (
-        <WeekPicker
-          weeks={weeks}
-          value={selectedMonday}
-          onChange={onWeekChange}
-          disabled={weekSelectDisabled}
-          trailing={
-            <>
-              <Button
-                type="button"
-                onClick={onSave}
-                disabled={saveDisabled || saving}
-              >
-                {saving ? "Saving…" : "Save"}
-              </Button>
-              {saveMessage ? (
-                <span className="text-xs text-muted-foreground">
-                  {saveMessage}
-                </span>
-              ) : null}
-              {saveError ? (
-                <span className="text-xs text-destructive">{saveError}</span>
-              ) : null}
-            </>
+      <WeekPicker
+        weeks={weeks}
+        value={selectedMonday}
+        onChange={onWeekChange}
+        disabled={weekSelectDisabled}
+        trailing={<SaveStatus save={save} />}
+      />
+      {pageNumbers ? <PageNumbersToggle pageNumbers={pageNumbers} /> : null}
+      <NewWeekForm
+        suggestedMonday={create.suggestedMonday}
+        onCreate={create.onCreate}
+        creating={create.creating}
+        createError={create.error}
+        disabled={create.disabled}
+      />
+    </div>
+  )
+}
+
+function SaveStatus({ save }: { save: ToolbarSaveControls }) {
+  return (
+    <>
+      <Button
+        type="button"
+        onClick={save.onSave}
+        disabled={save.disabled || save.saving}
+      >
+        {save.saving ? "Saving…" : "Save"}
+      </Button>
+      {save.message ? (
+        <span className="text-xs text-muted-foreground">{save.message}</span>
+      ) : null}
+      {save.error ? (
+        <span className="text-xs text-destructive">{save.error}</span>
+      ) : null}
+    </>
+  )
+}
+
+function PageNumbersToggle({
+  pageNumbers,
+}: {
+  pageNumbers: ToolbarPageNumberControls
+}) {
+  const disabled = pageNumbers.disabled || !pageNumbers.onChange
+
+  // HTML Page 的片段可能自帶頁碼，不跟隨週層級設定；在此註明，避免作者以為勾選後每頁都會疊頁碼
+  return (
+    <div
+      className={cn("space-y-1", disabled && "cursor-not-allowed opacity-50")}
+    >
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="week-show-page-numbers"
+          checked={pageNumbers.show}
+          disabled={disabled}
+          aria-describedby="week-show-page-numbers-hint"
+          onCheckedChange={(checked) =>
+            pageNumbers.onChange?.(checked === true)
           }
         />
-      ) : null}
-
-      {weeks.length === 0 ? null : (
-        <NewWeekForm
-          suggestedMonday={suggestedMonday}
-          onCreate={onCreateWeek}
-          creating={creating}
-          createError={createError}
-          disabled={createDisabled}
-        />
-      )}
+        <Label
+          htmlFor="week-show-page-numbers"
+          className={
+            disabled ? "cursor-not-allowed text-muted-foreground" : undefined
+          }
+        >
+          Show page numbers
+        </Label>
+      </div>
+      <p
+        id="week-show-page-numbers-hint"
+        className="text-xs text-muted-foreground"
+      >
+        HTML pages show a page number only when set on the page.
+      </p>
     </div>
   )
 }

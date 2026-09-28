@@ -9,26 +9,43 @@ import type {
   WeeklyOverviewPage,
   EvidenceDecisionPage,
   NextActionsPage,
+  TrendTargetPage,
 } from "./week-document"
+import { CARDINALITY } from "./week-document"
 import { blankMetric } from "./evidence-decision-editor"
 import { blankCommitment } from "./next-actions-editor"
 import { blankOutcome } from "./weekly-overview-editor"
 
-export type AddableTwoColumnPanelKind = "table" | "chart" | "flow" | "checklist"
+// 新增選單的選項與輸入驗證都由這份清單推導，不另列字串
+export const ADDABLE_PANEL_KINDS = [
+  "table",
+  "chart",
+  "flow",
+  "checklist",
+] as const
+
+export type AddableTwoColumnPanelKind = (typeof ADDABLE_PANEL_KINDS)[number]
+
+export function isAddablePanelKind(
+  value: unknown
+): value is AddableTwoColumnPanelKind {
+  return (ADDABLE_PANEL_KINDS as readonly unknown[]).includes(value)
+}
 
 export type PageLifecycleResult = {
   week: WeekDocument
   selectedPageId: string
 }
 
+export type PageMoveDirection = "up" | "down"
+
 const PAGE_ID_PATTERN = /^p(\d+)$/
 
 function blankItems(): TwoColumnWeekPage["items"] {
-  return [
-    { heading: "", body: "" },
-    { heading: "", body: "" },
-    { heading: "", body: "" },
-  ]
+  return Array.from({ length: CARDINALITY.twoColumnItems.min }, () => ({
+    heading: "",
+    body: "",
+  }))
 }
 
 function blankPanel(
@@ -131,29 +148,71 @@ export function createBlankNextActionsPage(id: string): NextActionsPage {
   return {
     id,
     layout: "next-actions",
+    variant: "rows",
     title: "",
     commitments: [blankCommitment(), blankCommitment(), blankCommitment()],
   }
 }
 
+// 規格指定新頁起始為八個 Unfilled 週次，作者可再增減端點
+const DEFAULT_TREND_WEEKS = 8
+
+export function createBlankTrendTargetPage(id: string): TrendTargetPage {
+  return {
+    id,
+    layout: "trend-target",
+    title: "",
+    metric: {
+      label: "",
+      unit: "",
+      unitPosition: "after",
+      unitSpacing: "space",
+      precision: 1,
+    },
+    startMonday: null,
+    observations: Array.from({ length: DEFAULT_TREND_WEEKS }, () => ({
+      state: "unfilled",
+    })),
+    target: null,
+    direction: "at-most",
+    interpretation: "",
+    measurementContext: "",
+  }
+}
+
 export type AddableLayout =
-  "two-column" | "weekly-overview" | "evidence-decision" | "next-actions"
+  | "two-column"
+  | "weekly-overview"
+  | "evidence-decision"
+  | "next-actions"
+  | "trend-target"
+
+const BLANK_PAGE_FACTORIES: Record<
+  AddableLayout,
+  (id: string, panelKind: AddableTwoColumnPanelKind) => WeekPage
+> = {
+  "two-column": createBlankTwoColumnPage,
+  "weekly-overview": createBlankWeeklyOverviewPage,
+  "evidence-decision": createBlankEvidenceDecisionPage,
+  "next-actions": createBlankNextActionsPage,
+  "trend-target": createBlankTrendTargetPage,
+}
+
+// 新增選單依工廠表的鍵列出版型，新增版型只需在工廠表登記一次
+export const ADDABLE_LAYOUTS = Object.keys(
+  BLANK_PAGE_FACTORIES
+) as AddableLayout[]
+
+export function isAddableLayout(value: unknown): value is AddableLayout {
+  return typeof value === "string" && Object.hasOwn(BLANK_PAGE_FACTORIES, value)
+}
 
 export function createBlankAddablePage(
   id: string,
   layout: AddableLayout,
   panelKind: AddableTwoColumnPanelKind
 ): WeekPage {
-  switch (layout) {
-    case "weekly-overview":
-      return createBlankWeeklyOverviewPage(id)
-    case "evidence-decision":
-      return createBlankEvidenceDecisionPage(id)
-    case "next-actions":
-      return createBlankNextActionsPage(id)
-    case "two-column":
-      return createBlankTwoColumnPage(id, panelKind)
-  }
+  return BLANK_PAGE_FACTORIES[layout](id, panelKind)
 }
 
 function requirePageIndex(week: WeekDocument, pageId: string): number {
@@ -201,7 +260,7 @@ export function deleteSelectedPage(
 export function moveSelectedPage(
   week: WeekDocument,
   selectedPageId: string,
-  direction: "up" | "down"
+  direction: PageMoveDirection
 ): PageLifecycleResult {
   const selectedIndex = requirePageIndex(week, selectedPageId)
   const targetIndex = direction === "up" ? selectedIndex - 1 : selectedIndex + 1

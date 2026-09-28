@@ -2,11 +2,12 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ThemeProvider } from "@/components/theme-provider"
-import {
-  EMPTY_STORE_MESSAGE,
-  WorkshopShell,
-} from "@/components/workshop/workshop-shell"
+import { EMPTY_STORE_MESSAGE } from "@/components/workshop/empty-store-message"
+import { WorkshopShell } from "@/components/workshop/workshop-shell"
 import type { WeekDocument } from "@/lib/week-document"
+import type { WeekStore } from "@/lib/week-store"
+import { InMemoryWeekStore } from "./support/in-memory-week-store"
+import { stubWorkshopDom } from "./support/workshop-dom"
 
 const LATEST_MONDAY = "2026-01-12"
 
@@ -35,90 +36,29 @@ function weekDocument(monday: string, title: string): WeekDocument {
   }
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as Response
-}
-
-function mockWeeksFetch({
-  weeks = [],
-  documents = {},
-  listStatus,
-}: {
-  weeks?: string[]
-  documents?: Record<string, WeekDocument>
-  listStatus?: number
-} = {}) {
-  vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-    const url = String(input)
-
-    if (url === "/api/weeks") {
-      if (listStatus !== undefined && listStatus >= 400) {
-        return jsonResponse({ error: "list failed" }, listStatus)
-      }
-      return jsonResponse({ weeks })
-    }
-
-    const documentMatch = /^\/weeks\/(\d{4}-\d{2}-\d{2})\.json$/.exec(url)
-    if (documentMatch) {
-      const document = documents[documentMatch[1]]
-      if (!document) {
-        return jsonResponse({ error: "missing" }, 404)
-      }
-      return jsonResponse(document)
-    }
-
-    throw new Error(`Unexpected fetch: ${url}`)
-  })
-}
-
-function renderWorkshop() {
+function renderWorkshop(weekStore: WeekStore) {
   return render(
     <ThemeProvider defaultTheme="light">
-      <WorkshopShell />
+      <WorkshopShell weekStore={weekStore} />
     </ThemeProvider>
   )
 }
 
 describe("Workshop empty store vs list failure", () => {
+  let restoreDom: () => void
+
   beforeEach(() => {
     vi.restoreAllMocks()
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      }
-    )
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }))
-    Object.defineProperty(Element.prototype, "getAnimations", {
-      configurable: true,
-      writable: true,
-      value: () => [],
-    })
+    restoreDom = stubWorkshopDom()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    vi.unstubAllGlobals()
+    restoreDom()
   })
 
   it("explains the empty weeks directory and does not offer first-week creation", async () => {
-    mockWeeksFetch({ weeks: [] })
-    renderWorkshop()
+    renderWorkshop(new InMemoryWeekStore())
 
     await waitFor(() => {
       expect(screen.getAllByText(EMPTY_STORE_MESSAGE).length).toBeGreaterThan(0)
@@ -131,8 +71,11 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("keeps list failures in the error alert instead of the empty store", async () => {
-    mockWeeksFetch({ listStatus: 503 })
-    renderWorkshop()
+    const store = new InMemoryWeekStore()
+    store.listWeeks = async () => {
+      throw new Error("Failed to list week files (503)")
+    }
+    renderWorkshop(store)
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -144,13 +87,13 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("opens the latest listed week without a Create week empty-state", async () => {
-    mockWeeksFetch({
-      weeks: [LATEST_MONDAY],
-      documents: {
-        [LATEST_MONDAY]: weekDocument(LATEST_MONDAY, "Harbor Grid latest"),
-      },
-    })
-    renderWorkshop()
+    renderWorkshop(
+      new InMemoryWeekStore(
+        new Map([
+          [LATEST_MONDAY, weekDocument(LATEST_MONDAY, "Harbor Grid latest")],
+        ])
+      )
+    )
 
     await waitFor(() => {
       expect(

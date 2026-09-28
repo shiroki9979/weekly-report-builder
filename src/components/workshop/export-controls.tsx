@@ -1,54 +1,12 @@
-import type { RefObject } from "react"
-
-import { StageFrame } from "@/components/stage/stage-frame"
-import { StageSlide } from "@/components/stage/stage-slide"
 import { Button } from "@/components/ui/button"
-import { createStagePageContext } from "@/lib/stage-page-context"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
-
-type StageCaptureHostProps = {
-  page: WeekPage | null
-  week: WeekDocument | null
-  hostRef: RefObject<HTMLDivElement | null>
-}
-
-export function StageCaptureHost({
-  page,
-  week,
-  hostRef,
-}: StageCaptureHostProps) {
-  if (!page || !week) {
-    return null
-  }
-
-  return (
-    <div
-      ref={hostRef}
-      aria-hidden
-      className="pointer-events-none fixed opacity-0"
-      style={{ left: -10000, top: 0, width: 1280 }}
-    >
-      <div className="w-[1280px]">
-        <StageFrame>
-          <StageSlide
-            page={page}
-            context={createStagePageContext(week, page.id)}
-            isCapture
-          />
-        </StageFrame>
-      </div>
-    </div>
-  )
-}
 
 type ExportControlsProps = {
   onDownloadAll: () => void
   onCopy: () => void
   exporting: boolean
   copying: boolean
-  exportError: string | null
-  exportWarning: string | null
-  clipboardError: string | null
+  exportResult: string | null
+  resultIsError: boolean
   disabled?: boolean
 }
 
@@ -57,9 +15,8 @@ export function ExportControls({
   onCopy,
   exporting,
   copying,
-  exportError,
-  exportWarning,
-  clipboardError,
+  exportResult,
+  resultIsError,
   disabled,
 }: ExportControlsProps) {
   return (
@@ -84,19 +41,12 @@ export function ExportControls({
           {copying ? "Copying…" : "Copy to clipboard"}
         </Button>
       </div>
-      {exportError ? (
-        <p className="text-xs text-destructive" role="alert">
-          {exportError}
-        </p>
-      ) : null}
-      {exportWarning ? (
-        <p className="text-xs text-muted-foreground" role="status">
-          {exportWarning}
-        </p>
-      ) : null}
-      {clipboardError ? (
-        <p className="text-xs text-destructive" role="alert">
-          {clipboardError}
+      {exportResult ? (
+        <p
+          className={`text-xs ${resultIsError ? "text-destructive" : "text-muted-foreground"}`}
+          role={resultIsError ? "alert" : "status"}
+        >
+          {exportResult}
         </p>
       ) : null}
     </div>

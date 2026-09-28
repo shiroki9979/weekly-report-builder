@@ -1,25 +1,20 @@
 import {
   matchWeekPage,
+  nextActionsVariant,
   type Outcome,
   type Panel,
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
 import { blankCommitment } from "./next-actions-editor"
-
-const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+import { isCalendarMonday } from "./week-id"
 
 function parseMonday(value: string): Date {
-  if (!MONDAY_PATTERN.test(value)) {
+  if (!isCalendarMonday(value)) {
     throw new Error(`Invalid date: ${value}`)
   }
 
-  const date = new Date(`${value}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date: ${value}`)
-  }
-
-  return date
+  return new Date(`${value}T00:00:00Z`)
 }
 
 function formatDate(date: Date): string {
@@ -38,10 +33,6 @@ export function weekRangeForMonday(monday: string): {
     start: formatDate(startDate),
     end: formatDate(endDate),
   }
-}
-
-export function isMondayDate(value: string): boolean {
-  return parseMonday(value).getUTCDay() === 1
 }
 
 export function latestWeekMonday(weeks: string[]): string | null {
@@ -117,7 +108,9 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: WeekPage): WeekPage {
-  return matchWeekPage(page, {
+  // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
+  return matchWeekPage<WeekPage>(page, {
+    // HTML Page 的頁碼須逐頁開啟、不吃週層級預設；沿用上週選擇才不會每週重開
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
@@ -125,6 +118,7 @@ function clearPage(page: WeekPage): WeekPage {
       htmlFile: htmlPage.htmlFile,
       hidden: htmlPage.hidden,
       notes: undefined,
+      showPageNumber: htmlPage.showPageNumber,
     }),
     weeklyOverview: (overview) => ({
       id: overview.id,
@@ -152,10 +146,18 @@ function clearPage(page: WeekPage): WeekPage {
     nextActions: (actions) => ({
       id: actions.id,
       layout: "next-actions",
+      variant: nextActionsVariant(actions),
       title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,
       notes: undefined,
+    }),
+    trendTarget: (trend) => ({
+      ...trend,
+      title: "",
+      interpretation: "",
+      notes: undefined,
+      showPageNumber: undefined,
     }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
@@ -166,7 +168,12 @@ function clearPage(page: WeekPage): WeekPage {
       hidden: twoColumn.hidden,
       notes: undefined,
     }),
-    unknown: (unknown) => ({ ...unknown, title: "", notes: undefined }),
+    unknown: (unknown) => ({
+      ...unknown,
+      title: "",
+      notes: undefined,
+      showPageNumber: undefined,
+    }),
   })
 }
 
@@ -174,12 +181,13 @@ export function cloneWeekFromPrevious(
   previous: WeekDocument,
   targetMonday: string
 ): WeekDocument {
-  if (!isMondayDate(targetMonday)) {
+  if (!isCalendarMonday(targetMonday)) {
     throw new Error(`Week file name must be a Monday date: ${targetMonday}`)
   }
 
   const range = weekRangeForMonday(targetMonday)
 
+  // 新週的 Editorial 頁碼回到預設顯示，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
   return {
     start: range.start,
     end: range.end,

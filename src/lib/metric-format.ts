@@ -1,11 +1,10 @@
-import { isFiniteNonNegative } from "./week-document"
+import { isFiniteNonNegative, type ComparisonMetric } from "./week-document"
+import { withUnit } from "./unit-format"
 
-export type MetricFormat = {
-  unit: string
-  unitPosition: "before" | "after"
-  unitSpacing: "none" | "space"
-  precision: 0 | 1 | 2
-}
+export type MetricFormat = Pick<
+  ComparisonMetric,
+  "unit" | "unitPosition" | "unitSpacing" | "precision"
+>
 
 export type MetricBarPercents = {
   baseline: number
@@ -25,16 +24,7 @@ export function formatMetricValue(
     return "—"
   }
 
-  const numeric = value.toFixed(format.precision)
-  const unit = format.unit
-  if (unit === "") {
-    return numeric
-  }
-
-  const gap = format.unitSpacing === "space" ? " " : ""
-  return format.unitPosition === "before"
-    ? `${unit}${gap}${numeric}`
-    : `${numeric}${gap}${unit}`
+  return withUnit(value.toFixed(format.precision), format)
 }
 
 export function calculateMetricBarPercents(

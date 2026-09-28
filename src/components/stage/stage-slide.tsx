@@ -3,11 +3,16 @@ import { HtmlSlide } from "@/components/stage/html-slide"
 import { NextActionsSlide } from "@/components/stage/next-actions-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import { WeeklyOverviewSlide } from "@/components/stage/weekly-overview-slide"
+import { TrendTargetSlide } from "@/components/stage/trend-target-slide"
 import {
   mondayFromWeekLabel,
   type StagePageContext,
 } from "@/lib/stage-page-context"
-import { matchWeekPage, type WeekPage } from "@/lib/week-document"
+import {
+  isHtmlWeekPage,
+  matchWeekPage,
+  type WeekPage,
+} from "@/lib/week-document"
 
 export type StageSlideProps = {
   page: WeekPage
@@ -43,12 +48,18 @@ export function StageSlide({
         nextActions: (actions) => (
           <NextActionsSlide page={actions} context={context} />
         ),
+        trendTarget: (trend) => (
+          <TrendTargetSlide page={trend} context={context} />
+        ),
         unknown: (unknown) => (
           <div className="stage-warning" role="status">
             Unknown layout: {unknown.layout}
           </div>
         ),
       })}
+      {isHtmlWeekPage(page) && context.showPageNumber && context.pageLabel ? (
+        <footer className="stage-page-number">{context.pageLabel}</footer>
+      ) : null}
     </div>
   )
 }

@@ -351,3 +351,178 @@
 .editorial-actions:has(.editorial-action:nth-child(4)) .editorial-checkpoint {
   font-size: clamp(8px, 1.1cqw, 14px);
 }
+
+.editorial-action-row-headings,
+.editorial-actions-rows .editorial-action {
+  display: grid;
+  grid-template-columns: 4cqw minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 2cqw;
+}
+
+.editorial-action-row-headings {
+  padding-bottom: 1.1cqw;
+  color: var(--mute);
+  font-size: 1.1cqw;
+}
+
+.editorial-actions-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.editorial-actions-rows .editorial-action {
+  flex: 1;
+  align-content: center;
+  align-items: start;
+  padding: 1.5cqw 0;
+  margin: 0;
+  border-right: 0;
+  border-top: 1px solid var(--line);
+}
+
+.editorial-actions-rows .editorial-action-num {
+  margin: 0;
+  font-size: 2.5cqw;
+  line-height: 1.1;
+}
+
+.editorial-actions-rows .editorial-action-title {
+  margin-bottom: 0.6cqw;
+  font-size: 1.8cqw;
+}
+
+.editorial-actions-rows .editorial-action-outcome {
+  font-size: 1.4cqw;
+  line-height: 1.45;
+}
+
+.editorial-actions-rows .editorial-checkpoint {
+  margin: 0;
+  padding: 0 0 0 1.5cqw;
+  border-top: 0;
+  border-left: 2px solid var(--blue-soft);
+  font-size: 1.45cqw;
+  line-height: 1.5;
+}
+
+.editorial-actions-rows:has(.editorial-action:nth-child(4)) .editorial-action {
+  padding: 1.1cqw 0;
+}
+
+.editorial-actions-rows:has(.editorial-action:nth-child(4))
+  .editorial-action-title {
+  font-size: 1.7cqw;
+}
+
+.editorial-actions-rows:has(.editorial-action:nth-child(4))
+  .editorial-action-outcome,
+.editorial-actions-rows:has(.editorial-action:nth-child(4))
+  .editorial-checkpoint {
+  font-size: 1.45cqw;
+}
+
+.editorial-trend {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 不設 min-height: 0：圖表區塊不得縮到比圖說、最小繪圖高度與圖例還小，否則會壓到下方摘要 */
+.editorial-trend-chart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+}
+
+.editorial-trend-chart figcaption {
+  color: var(--blue);
+  font-size: clamp(10px, 1.25cqw, 16px);
+  font-weight: 700;
+}
+
+.editorial-trend-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* viewBox 高度由元件依繪圖框比例計算，SVG 直接鋪滿框，不會留白或等比縮小 */
+.editorial-trend-plot svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.editorial-trend-legend {
+  display: flex;
+  gap: 1.4em;
+  color: var(--ink);
+  font-size: clamp(9px, 1.1cqw, 14px);
+}
+
+.editorial-trend-legend-observed::before,
+.editorial-trend-legend-target::before {
+  display: inline-block;
+  width: 1.5em;
+  margin-right: 0.35em;
+  border-top: 3px solid var(--blue);
+  content: "";
+  vertical-align: middle;
+}
+
+.editorial-trend-legend-target::before {
+  border-color: var(--warn-ink);
+  border-top-style: dashed;
+}
+
+.editorial-trend-range,
+.editorial-trend-context {
+  margin: 0.4em 0 0;
+  color: var(--mute);
+  font-size: clamp(9px, 1.1cqw, 14px);
+}
+
+.editorial-trend-summary {
+  display: grid;
+  grid-template-columns: 0.85fr 0.85fr 1.5fr;
+  gap: 3%;
+  align-items: start;
+  padding: 1.3% 0;
+  border-top: 1px solid var(--line);
+}
+
+.editorial-trend-label {
+  margin: 0;
+  color: var(--mute);
+  font-size: clamp(9px, 1cqw, 13px);
+}
+
+.editorial-trend-value {
+  margin: 0.18em 0;
+  color: var(--blue-deep);
+  font-size: clamp(15px, 2.1cqw, 27px);
+  font-weight: 700;
+}
+
+.editorial-trend-status,
+.editorial-trend-direction,
+.editorial-trend-interpretation,
+.editorial-trend-exact {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(10px, 1.25cqw, 16px);
+  line-height: 1.3;
+}
+
+.editorial-trend-status {
+  font-weight: 700;
+}
+
+.editorial-trend-exact {
+  color: var(--warn-ink);
+  font-weight: 700;
+}

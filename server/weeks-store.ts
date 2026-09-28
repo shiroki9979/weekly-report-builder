@@ -7,9 +7,29 @@ import {
   parseWeekDocument,
   type WeekDocument,
 } from "../src/lib/week-document"
+import { isMondayId } from "../src/lib/week-id"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 
-const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+// dev server 依型別而非訊息字串對應 409，避免改文案就改變 HTTP 語意
+export class WeekAlreadyExistsError extends Error {
+  constructor(monday: string) {
+    super(`Week already exists: ${monday}`)
+    this.name = "WeekAlreadyExistsError"
+  }
+}
+
+function resolveWeekFilePath(weeksDir: string, monday: string): string {
+  if (!isMondayId(monday)) {
+    throw new Error(`Invalid week id: ${monday}`)
+  }
+
+  const filePath = path.resolve(weeksDir, `${monday}.json`)
+  if (!filePath.startsWith(weeksDir)) {
+    throw new Error(`Invalid week path: ${monday}`)
+  }
+
+  return filePath
+}
 
 export function listWeeksInDirectory(weeksDir: string): string[] {
   if (!fs.existsSync(weeksDir)) {
@@ -20,15 +40,7 @@ export function listWeeksInDirectory(weeksDir: string): string[] {
 }
 
 export function readWeekFile(weeksDir: string, monday: string): WeekDocument {
-  if (!MONDAY_PATTERN.test(monday)) {
-    throw new Error(`Invalid week id: ${monday}`)
-  }
-
-  const filePath = path.resolve(weeksDir, `${monday}.json`)
-  if (!filePath.startsWith(weeksDir)) {
-    throw new Error(`Invalid week path: ${monday}`)
-  }
-
+  const filePath = resolveWeekFilePath(weeksDir, monday)
   const raw = fs.readFileSync(filePath, "utf-8")
   return parseWeekDocument(JSON.parse(raw))
 }
@@ -38,15 +50,7 @@ export function writeWeekFile(
   monday: string,
   week: WeekDocument
 ): void {
-  if (!MONDAY_PATTERN.test(monday)) {
-    throw new Error(`Invalid week id: ${monday}`)
-  }
-
-  const filePath = path.resolve(weeksDir, `${monday}.json`)
-  if (!filePath.startsWith(weeksDir)) {
-    throw new Error(`Invalid week path: ${monday}`)
-  }
-
+  const filePath = resolveWeekFilePath(weeksDir, monday)
   const validated = parseWeekDocument(week)
   fs.mkdirSync(weeksDir, { recursive: true })
   fs.writeFileSync(filePath, serializeWeekDocument(validated), "utf-8")
@@ -56,10 +60,7 @@ export function createWeekFromPrevious(
   weeksDir: string,
   monday: string
 ): WeekDocument {
-  if (!MONDAY_PATTERN.test(monday)) {
-    throw new Error(`Invalid week id: ${monday}`)
-  }
-
+  const filePath = resolveWeekFilePath(weeksDir, monday)
   const weeks = listWeeksInDirectory(weeksDir)
   const latestMonday = weeks.at(-1)
 
@@ -67,9 +68,8 @@ export function createWeekFromPrevious(
     throw new Error("No previous week to clone")
   }
 
-  const filePath = path.resolve(weeksDir, `${monday}.json`)
   if (fs.existsSync(filePath)) {
-    throw new Error(`Week already exists: ${monday}`)
+    throw new WeekAlreadyExistsError(monday)
   }
 
   const previous = readWeekFile(weeksDir, latestMonday)

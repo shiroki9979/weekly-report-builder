@@ -2,7 +2,7 @@ import type { CSSProperties } from "react"
 
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import type { NextActionsPage } from "@/lib/week-document"
+import { nextActionsVariant, type NextActionsPage } from "@/lib/week-document"
 
 type NextActionsSlideProps = {
   page: NextActionsPage
@@ -14,6 +14,7 @@ function formatCommitmentNumber(index: number): string {
 }
 
 export function NextActionsSlide({ page, context }: NextActionsSlideProps) {
+  const rows = nextActionsVariant(page) === "rows"
   const actionGridStyle = {
     "--editorial-commitment-count": page.commitments.length,
   } as CSSProperties
@@ -24,14 +25,30 @@ export function NextActionsSlide({ page, context }: NextActionsSlideProps) {
       headline={page.title}
       context={context}
     >
-      <ol className="editorial-actions" style={actionGridStyle}>
+      {rows && (
+        <div className="editorial-action-row-headings" aria-hidden="true">
+          <span />
+          <span>Action & intended outcome</span>
+          <span>Verification checkpoint</span>
+        </div>
+      )}
+      <ol
+        className={
+          rows
+            ? "editorial-actions editorial-actions-rows"
+            : "editorial-actions"
+        }
+        style={rows ? undefined : actionGridStyle}
+      >
         {page.commitments.map((commitment, index) => (
           <li className="editorial-action" key={index}>
             <p className="editorial-action-num">
               {formatCommitmentNumber(index)}
             </p>
-            <h2 className="editorial-action-title">{commitment.title}</h2>
-            <p className="editorial-action-outcome">{commitment.outcome}</p>
+            <div className="editorial-action-main">
+              <h2 className="editorial-action-title">{commitment.title}</h2>
+              <p className="editorial-action-outcome">{commitment.outcome}</p>
+            </div>
             <p className="editorial-checkpoint">{commitment.checkpoint}</p>
           </li>
         ))}

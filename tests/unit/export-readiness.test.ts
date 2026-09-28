@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { metricBufferKey } from "@/lib/evidence-decision-editor"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -289,13 +288,15 @@ describe("assessExportEligibility", () => {
     ).toEqual({ eligible: true, issues: [] })
   })
 
-  it("merges invalid metric drafts into content issues without capturing", () => {
-    const buffer = {
-      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-    }
+  it("merges invalid Metric Input into content issues without capturing", () => {
+    const metricInput = { p01: { "metrics[0].baselineValue": "abc" } }
 
     expect(
-      assessExportEligibility(completeDecisionPage(), { status: "fit" }, buffer)
+      assessExportEligibility(
+        completeDecisionPage(),
+        { status: "fit" },
+        { metricInput }
+      )
     ).toEqual({
       eligible: false,
       issues: [
@@ -308,14 +309,12 @@ describe("assessExportEligibility", () => {
     })
   })
 
-  it("keeps schema path order and lets invalid drafts win over missing values", () => {
-    const buffer = {
-      [metricBufferKey("p01", "metrics[0].baselineValue")]: "abc",
-    }
+  it("keeps schema path order and lets invalid Metric Input win over missing values", () => {
+    const metricInput = { p01: { "metrics[0].baselineValue": "abc" } }
     const assessment = assessExportEligibility(
       createBlankEvidenceDecisionPage("p01"),
       undefined,
-      buffer
+      { metricInput }
     )
 
     expect(assessment.issues.map((issue) => [issue.path, issue.code])).toEqual([

@@ -1,7 +1,7 @@
 # 第一份週報
 
 > 建立日期：2026-08-31  
-> 最後更新：2026-09-13
+> 最後更新：2026-09-28
 
 ---
 
@@ -51,4 +51,5 @@ pnpm dev
 
 - 建立下週空白結構：[建立新週次](../how-to/create-new-week.md)
 - 查 JSON 欄位定義：[週次 JSON 格式](../reference/week-json-format.md)
+- 試用公開範例中的 Trend & Target 與 Next Actions Rows：[Author Editorial Layouts](../how-to/author-editorial-layouts.md)
 - 查安裝與 seed 指令：[pnpm 指令](../reference/npm-scripts.md)
