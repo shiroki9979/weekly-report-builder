@@ -4,9 +4,11 @@ import { isEvidenceDecisionPage, type WeekDocument } from "./week-document"
 export type MetricValueField = "baselineValue" | "candidateValue"
 
 export type MetricInputPath = `metrics[${number}].${MetricValueField}`
+export type ObservationInputPath = `observations[${number}].value`
+export type TrendInputPath = "startMonday" | "target" | ObservationInputPath
 
 export type PageMetricInputs = Readonly<
-  Partial<Record<MetricInputPath, string>>
+  Partial<Record<MetricInputPath | TrendInputPath, string>>
 >
 
 // 以 Page ID 分層而非字串串接：Page ID 只要求非空，可含 `:` 等任何分隔字元

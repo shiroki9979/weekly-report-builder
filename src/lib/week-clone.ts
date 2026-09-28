@@ -6,19 +6,14 @@ import {
   type WeekPage,
 } from "./week-document"
 import { blankCommitment } from "./next-actions-editor"
-import { isMondayId } from "./week-id"
+import { isCalendarMonday } from "./week-id"
 
 function parseMonday(value: string): Date {
-  if (!isMondayId(value)) {
+  if (!isCalendarMonday(value)) {
     throw new Error(`Invalid date: ${value}`)
   }
 
-  const date = new Date(`${value}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date: ${value}`)
-  }
-
-  return date
+  return new Date(`${value}T00:00:00Z`)
 }
 
 function formatDate(date: Date): string {
@@ -37,10 +32,6 @@ export function weekRangeForMonday(monday: string): {
     start: formatDate(startDate),
     end: formatDate(endDate),
   }
-}
-
-export function isMondayDate(value: string): boolean {
-  return parseMonday(value).getUTCDay() === 1
 }
 
 export function latestWeekMonday(weeks: string[]): string | null {
@@ -154,10 +145,18 @@ function clearPage(page: WeekPage): WeekPage {
     nextActions: (actions) => ({
       id: actions.id,
       layout: "next-actions",
+      variant: actions.variant ?? "columns",
       title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,
       notes: undefined,
+    }),
+    trendTarget: (trend) => ({
+      ...trend,
+      title: "",
+      interpretation: "",
+      notes: undefined,
+      showPageNumber: undefined,
     }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
@@ -181,7 +180,7 @@ export function cloneWeekFromPrevious(
   previous: WeekDocument,
   targetMonday: string
 ): WeekDocument {
-  if (!isMondayDate(targetMonday)) {
+  if (!isCalendarMonday(targetMonday)) {
     throw new Error(`Week file name must be a Monday date: ${targetMonday}`)
   }
 

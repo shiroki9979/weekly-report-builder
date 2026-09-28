@@ -28,6 +28,15 @@ import {
   type MetricEditorControls,
   type SessionOperationSnapshot,
 } from "@/lib/editing-session"
+import {
+  cancelTrendRedate,
+  changeTrendEndpoint,
+  confirmTrendRedate,
+  readTrendInput,
+  setTrendObservationState,
+  writeTrendInput,
+  type TrendEditorControls,
+} from "@/lib/trend-session"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
@@ -42,6 +51,7 @@ export type EditingSessionResult = {
   operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
   metricControls: MetricEditorControls
+  trendControls: TrendEditorControls
   addPage: (page: WeekPage) => void
   deletePage: (pageId: string) => void
   movePage: (pageId: string, direction: PageMoveDirection) => void
@@ -99,6 +109,20 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
       move: (move) => update((current) => moveSessionMetric(current, move)),
       remove: (metric) =>
         update((current) => removeSessionMetric(current, metric)),
+      readiness: (pageId) => sessionReadiness(session, pageId),
+    },
+    trendControls: {
+      read: (location) => readTrendInput(session, location),
+      write: (location, raw) =>
+        update((current) => writeTrendInput(current, location, raw)),
+      setObservationState: (location, state) =>
+        update((current) => setTrendObservationState(current, location, state)),
+      changeEndpoint: (pageId, action) =>
+        update((current) => changeTrendEndpoint(current, pageId, action)),
+      confirmRedate: (pageId) =>
+        update((current) => confirmTrendRedate(current, pageId)),
+      cancelRedate: (pageId) =>
+        update((current) => cancelTrendRedate(current, pageId)),
       readiness: (pageId) => sessionReadiness(session, pageId),
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),

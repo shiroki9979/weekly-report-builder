@@ -125,6 +125,7 @@ describe("createBlankNextActionsPage", () => {
     expect(page).toEqual({
       id: "p06",
       layout: "next-actions",
+      variant: "rows",
       title: "",
       commitments: [
         { title: "", outcome: "", checkpoint: "" },

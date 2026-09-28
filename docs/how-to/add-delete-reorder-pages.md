@@ -1,14 +1,14 @@
 # 新增、刪除與重排頁面
 
 建立日期：2026-09-10  
-最後更新：2026-09-10
+最後更新：2026-09-28
 
 ---
 
 ## 新增頁面
 
 1. 解鎖 **Edit**
-2. 在 **Add page** 選擇 layout（Two-column、Weekly Overview、Evidence-backed Decision 或 Next Actions）。Two-column 再選 panel（Table / Chart / Flow / Checklist）
+2. 在 **Add page** 選擇 layout（Two-column、Weekly Overview、Evidence-backed Decision、Next Actions 或 Trend & Target）。Two-column 再選 panel（Table / Chart / Flow / Checklist）
 3. 點 **Add page**
 
 新頁會插在目前選取頁之後並立即被選取。內容為空白 Draft Page，可 Save，但尚未填完前不能 Copy 或進入批次匯出。
