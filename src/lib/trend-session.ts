@@ -1,17 +1,25 @@
-import { requireWeek, type EditingSession } from "./editing-session"
-import type { ExportIssue } from "./export-readiness"
-import type { MetricInputMap, TrendInputPath } from "./metric-input"
 import {
-  clearTrendInputText,
+  findSessionPage,
+  requireWeek,
+  type EditingSession,
+} from "./editing-session"
+import type { ExportIssue } from "./export-readiness"
+import {
+  clearInputText,
+  readInputText,
+  writeInputText,
+  type MetricInputMap,
+  type TrendInputPath,
+} from "./metric-input"
+import {
   endpointAddsWeek,
+  isStartSettled,
   observationIndex,
   observationPath,
   parseTrendNumber,
-  readTrendInputText,
   remapTrendObservationInput,
   requireTrendNumber,
   trendInputError,
-  writeTrendInputText,
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
@@ -21,14 +29,15 @@ import {
   assertCanAddEntry,
   assertCanRemoveEntry,
   CARDINALITY,
+  hasEnteredObservations,
   isTrendTargetPage,
-  type TrendObservation,
+  type WeeklyObservation,
   type TrendTargetPage,
 } from "./week-document"
 
 export type ObservationLocation = { pageId: string; index: number }
 
-export type UnmeasuredState = Exclude<TrendObservation["state"], "measured">
+export type UnmeasuredState = Exclude<WeeklyObservation["state"], "measured">
 
 export type TrendEditorControls = {
   read: (location: TrendInputLocation) => string
@@ -43,7 +52,7 @@ export type TrendEditorControls = {
   readiness: (pageId: string) => ExportIssue[]
 }
 
-// Trend 的 JSON 與未提交原文必須同步更新，綁在一起傳遞以免只改到一邊
+// Trend 的 JSON 與未提交的 Metric Input 必須同步更新，綁在一起傳遞以免只改到一邊
 type TrendEdit = { page: TrendTargetPage; metricInput: MetricInputMap }
 
 export function readTrendInput(
@@ -51,7 +60,7 @@ export function readTrendInput(
   location: TrendInputLocation
 ): string {
   const { page } = requireTrend(session, location.pageId)
-  const pending = readTrendInputText(session.metricInput, location)
+  const pending = readInputText(session.metricInput, location)
   return pending ?? committedTrendText(page, location.path)
 }
 
@@ -61,7 +70,7 @@ export function writeTrendInput(
   raw: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, location.pageId)
-  const metricInput = writeTrendInputText(session.metricInput, location, raw)
+  const metricInput = writeInputText(session.metricInput, location, raw)
   if (trendInputError(page, metricInput, location.path))
     return { ...session, metricInput }
   const edit = applyTrendInput({ page, metricInput }, location.path, raw)
@@ -83,7 +92,7 @@ export function setTrendObservationState(
       ...page,
       observations: page.observations.with(location.index, { state }),
     },
-    metricInput: clearTrendInputText(session.metricInput, {
+    metricInput: clearInputText(session.metricInput, {
       pageId: page.id,
       path: observationPath(location.index),
     }),
@@ -105,7 +114,7 @@ export function changeTrendEndpoint(
   })
   return replaceTrend(session, pageIndex, {
     page: ENDPOINT_MOVES[action](page, startMonday),
-    metricInput: clearTrendInputText(inputs, { pageId, path: "startMonday" }),
+    metricInput: clearInputText(inputs, { pageId, path: "startMonday" }),
   })
 }
 
@@ -114,7 +123,7 @@ export function confirmTrendRedate(
   pageId: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
-  const proposed = readTrendInputText(session.metricInput, {
+  const proposed = readInputText(session.metricInput, {
     pageId,
     path: "startMonday",
   })
@@ -123,7 +132,7 @@ export function confirmTrendRedate(
   trendRangeEnd(proposed, page.observations.length)
   return replaceTrend(session, pageIndex, {
     page: { ...page, startMonday: proposed },
-    metricInput: clearTrendInputText(session.metricInput, {
+    metricInput: clearInputText(session.metricInput, {
       pageId,
       path: "startMonday",
     }),
@@ -137,7 +146,7 @@ export function cancelTrendRedate(
   requireTrend(session, pageId)
   return {
     ...session,
-    metricInput: clearTrendInputText(session.metricInput, {
+    metricInput: clearInputText(session.metricInput, {
       pageId,
       path: "startMonday",
     }),
@@ -145,12 +154,9 @@ export function cancelTrendRedate(
 }
 
 function requireTrend(session: EditingSession, pageId: string) {
-  const pages = requireWeek(session).pages
-  const pageIndex = pages.findIndex((entry) => entry.id === pageId)
-  const page = pages[pageIndex]
-  if (!page || !isTrendTargetPage(page))
-    throw new Error(`Unknown Trend & Target page: ${pageId}`)
-  return { pageIndex, page }
+  const found = findSessionPage(session, pageId, isTrendTargetPage)
+  if (!found) throw new Error(`Unknown Trend & Target page: ${pageId}`)
+  return found
 }
 
 function replaceTrend(
@@ -195,11 +201,11 @@ function applyTrendInput(
   return applyObservationValue(edit, path, raw)
 }
 
-// 起始週一設定前輸入的數值只能暫存為原文；日期一旦合法就補寫入 JSON，作者不必重打
+// 起始週一設定前輸入的數值只能暫存為 Metric Input；日期一旦合法就補寫入 JSON，作者不必重打
 function applyStartMonday({ page, metricInput }: TrendEdit, raw: string) {
   if (raw === "") return { page: { ...page, startMonday: null }, metricInput }
   const observations = page.observations.map(
-    (entry, index): TrendObservation =>
+    (entry, index): WeeklyObservation =>
       entry.state === "unfilled"
         ? (pendingMeasurement(metricInput, page.id, index) ?? entry)
         : entry
@@ -211,8 +217,8 @@ function pendingMeasurement(
   inputs: MetricInputMap,
   pageId: string,
   index: number
-): TrendObservation | null {
-  const pending = readTrendInputText(inputs, {
+): WeeklyObservation | null {
+  const pending = readInputText(inputs, {
     pageId,
     path: observationPath(index),
   })
@@ -229,7 +235,7 @@ function applyObservationValue(
   if (observation.state === "missing")
     throw new Error(`Missing Trend observation is not editable: ${path}`)
   const value = requireTrendNumber(raw)
-  const next: TrendObservation =
+  const next: WeeklyObservation =
     value === null ? { state: "unfilled" } : { state: "measured", value }
   return releaseClearedStart({
     page: { ...page, observations: page.observations.with(index, next) },
@@ -241,11 +247,11 @@ function applyObservationValue(
 function releaseClearedStart({ page, metricInput }: TrendEdit): TrendEdit {
   const cleared =
     metricInput[page.id]?.startMonday === "" &&
-    page.observations.every((entry) => entry.state === "unfilled")
+    !hasEnteredObservations(page.observations)
   if (!cleared) return { page, metricInput }
   return {
     page: { ...page, startMonday: null },
-    metricInput: clearTrendInputText(metricInput, {
+    metricInput: clearInputText(metricInput, {
       pageId: page.id,
       path: "startMonday",
     }),
@@ -256,14 +262,11 @@ function requireSettledStart(
   inputs: MetricInputMap,
   page: TrendTargetPage
 ): string {
-  const pending = readTrendInputText(inputs, {
+  const pending = readInputText(inputs, {
     pageId: page.id,
     path: "startMonday",
   })
-  if (
-    !page.startMonday ||
-    (pending !== undefined && pending !== page.startMonday)
-  )
+  if (!isStartSettled(page, pending))
     throw new Error("Set a valid starting Monday before changing the range")
   return page.startMonday
 }

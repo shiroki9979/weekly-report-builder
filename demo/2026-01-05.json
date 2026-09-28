@@ -265,7 +265,7 @@
     {
       "id": "p08",
       "layout": "trend-target",
-      "title": "Fictional final-week reading is unavailable.",
+      "title": "Fictional export 時間：最後一週沒有 reading。",
       "metric": {
         "label": "Mean export duration",
         "unit": "s",
@@ -308,8 +308,8 @@
       ],
       "target": 8,
       "direction": "at-most",
-      "interpretation": "No sample was collected for the final Monday; the prior reading does not describe this week.",
-      "measurementContext": "Fictional Harbor Grid sample: mean of 100 scripted exports each Monday when available; no run on 2026-01-05.",
+      "interpretation": "最後一個 Monday 沒有收集 sample；前一週的 8.1 s 不能代表本週。",
+      "measurementContext": "Fictional Harbor Grid sample：每週一 100 次 scripted exports 的平均；2026-01-05 沒有執行。",
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
     },
     {

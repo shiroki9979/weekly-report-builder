@@ -72,6 +72,9 @@ describe("Demo Week Set", () => {
       )
     ).toBe(true)
     expect(noData.observations.at(-1)).toEqual({ state: "missing" })
+    // 兩個方向之外，Trend 也需要一頁中英混排的版面實例
+    expect(noData.title).toMatch(/[\u4e00-\u9fff]/u)
+    expect(noData.title).toMatch(/[A-Za-z]/)
     expect(
       noData.observations.filter((item) => item.state === "measured").length
     ).toBeGreaterThanOrEqual(2)

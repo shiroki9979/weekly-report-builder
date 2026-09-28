@@ -7,12 +7,14 @@ export type MetricInputPath = `metrics[${number}].${MetricValueField}`
 export type ObservationInputPath = `observations[${number}].value`
 export type TrendInputPath = "startMonday" | "target" | ObservationInputPath
 
-export type PageMetricInputs = Readonly<
-  Partial<Record<MetricInputPath | TrendInputPath, string>>
->
+export type InputPath = MetricInputPath | TrendInputPath
+
+export type PageMetricInputs = Readonly<Partial<Record<InputPath, string>>>
 
 // 以 Page ID 分層而非字串串接：Page ID 只要求非空，可含 `:` 等任何分隔字元
 export type MetricInputMap = Readonly<Record<string, PageMetricInputs>>
+
+export type PageInputLocation = Readonly<{ pageId: string; path: InputPath }>
 
 export type MetricLocation = Readonly<{
   pageId: string
@@ -39,20 +41,59 @@ export function metricInputPath(
   return `metrics[${metricIndex}].${field}`
 }
 
+// readiness 以 path 判斷是否為 Comparison Metric；path 格式只在此模組定義
+export function isMetricInputPath(path: string): path is MetricInputPath {
+  return METRIC_INPUT_PATH.test(path)
+}
+
+// Comparison Metric 與 Trend & Target 的 Metric Input 共用同一套以 Page ID 分層的讀寫規則
+export function readInputText(
+  inputsByPage: MetricInputMap,
+  { pageId, path }: PageInputLocation
+): string | undefined {
+  return inputsByPage[pageId]?.[path]
+}
+
+export function writeInputText(
+  inputsByPage: MetricInputMap,
+  { pageId, path }: PageInputLocation,
+  raw: string
+): MetricInputMap {
+  return { ...inputsByPage, [pageId]: { ...inputsByPage[pageId], [path]: raw } }
+}
+
+export function clearInputText(
+  inputsByPage: MetricInputMap,
+  { pageId, path }: PageInputLocation
+): MetricInputMap {
+  const pageInputs = inputsByPage[pageId]
+  if (pageInputs?.[path] === undefined) return inputsByPage
+  const next = { ...pageInputs }
+  delete next[path]
+  return { ...inputsByPage, [pageId]: next }
+}
+
+function metricInputLocation({
+  pageId,
+  metricIndex,
+  field,
+}: MetricInputLocation): PageInputLocation {
+  return { pageId, path: metricInputPath(metricIndex, field) }
+}
+
 export function readMetricInputText(
   inputsByPage: MetricInputMap,
-  { pageId, metricIndex, field }: MetricInputLocation
+  location: MetricInputLocation
 ): string | undefined {
-  return inputsByPage[pageId]?.[metricInputPath(metricIndex, field)]
+  return readInputText(inputsByPage, metricInputLocation(location))
 }
 
 export function writeMetricInputText(
   inputsByPage: MetricInputMap,
-  { pageId, metricIndex, field }: MetricInputLocation,
+  location: MetricInputLocation,
   raw: string
 ): MetricInputMap {
-  const path = metricInputPath(metricIndex, field)
-  return { ...inputsByPage, [pageId]: { ...inputsByPage[pageId], [path]: raw } }
+  return writeInputText(inputsByPage, metricInputLocation(location), raw)
 }
 
 // 非法輸入寫不回 JSON，typed 值只會停在上一個合法值；只有 Metric Input 保留使用者目前打錯的文字，所以須獨立檢查

@@ -1,7 +1,7 @@
 # 架構加深候選
 
 建立日期：2026-09-27  
-最後更新：2026-09-27
+最後更新：2026-09-28
 
 ---
 
@@ -111,7 +111,7 @@ Copy 與 batch export 共用同一條單頁流程。
 
 ## 5. Week store 成為真的 seam
 
-- **相關 module**：`src/lib/weeks-client.ts`、`vite.config.ts`（`weeksApiMiddleware`、`weeksStaticMiddleware`）、`server/weeks-store.ts`、`src/lib/html-page.ts`（`resolveHtmlUrl`）、`src/lib/week-store.ts`（`WeekStore`、`httpWeekStore`、`InMemoryWeekStore`）。
+- **相關 module**：`src/lib/weeks-client.ts`、`vite.config.ts`（`weeksApiMiddleware`、`weeksStaticMiddleware`）、`server/weeks-store.ts`、`src/lib/html-page.ts`（`resolveHtmlUrl`）、`src/lib/week-store.ts`（`WeekStore`、`httpWeekStore`）、`tests/unit/support/in-memory-week-store.ts`（`InMemoryWeekStore`）。
 - **問題**：同一組路由與回應形狀（`/api/weeks`、`PUT／POST /api/weeks/{monday}`、`/weeks/{monday}.json`、`{ weeks }`、`{ week }`、409）拼寫在 `weeks-client.ts` 與 `vite.config.ts` 兩端；伺服端路由沒有 export，也沒有 unit test。審查時 hooks 直接 import `weeks-client`，只能靠依 URL 分派的 fetch stub 測試（已由 PR #41 解決）。
 - **做法**：hooks 接受一個 Week store port（列出、載入、儲存、由上週建立），錯誤模式包含 server 回報的原因。瀏覽器用 HTTP adapter，hook 測試用 in-memory adapter。伺服端路由表搬到 `weeks-store` 旁，對暫存目錄測試。Week store port 與兩個 adapter 已完成；錯誤原因與伺服端路由表仍待處理（見〈狀態〉）。
 - **證據**：

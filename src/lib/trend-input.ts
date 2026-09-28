@@ -11,8 +11,9 @@ import {
   canAddEntry,
   canRemoveEntry,
   CARDINALITY,
+  hasEnteredObservations,
   isTrendTargetPage,
-  type TrendObservation,
+  type WeeklyObservation,
   type TrendTargetPage,
   type WeekDocument,
 } from "./week-document"
@@ -29,7 +30,7 @@ export function endpointAddsWeek(action: TrendEndpointAction): boolean {
 }
 
 export function canChangeTrendEndpoint(
-  observations: readonly TrendObservation[],
+  observations: readonly WeeklyObservation[],
   action: TrendEndpointAction
 ): boolean {
   const rule = CARDINALITY.trendObservations
@@ -55,36 +56,7 @@ function isTrendInputPath(path: string): path is TrendInputPath {
   )
 }
 
-export function readTrendInputText(
-  inputs: MetricInputMap,
-  location: TrendInputLocation
-): string | undefined {
-  return inputs[location.pageId]?.[location.path]
-}
-
-export function writeTrendInputText(
-  inputs: MetricInputMap,
-  location: TrendInputLocation,
-  raw: string
-): MetricInputMap {
-  return {
-    ...inputs,
-    [location.pageId]: { ...inputs[location.pageId], [location.path]: raw },
-  }
-}
-
-export function clearTrendInputText(
-  inputs: MetricInputMap,
-  { pageId, path }: TrendInputLocation
-): MetricInputMap {
-  const pageInputs = inputs[pageId]
-  if (!pageInputs || pageInputs[path] === undefined) return inputs
-  const next = { ...pageInputs }
-  delete next[path]
-  return { ...inputs, [pageId]: next }
-}
-
-// null 代表該週已被移除，對應的原文一併丟棄
+// null 代表該週已被移除，對應的 Metric Input 一併丟棄
 const SHIFTED_INDEX: Record<
   TrendEndpointAction,
   (index: number, length: number) => number | null
@@ -95,7 +67,7 @@ const SHIFTED_INDEX: Record<
   "remove-last": (index, length) => (index === length - 1 ? null : index),
 }
 
-// 端點增減只改 observations 索引；非法原文須跟著搬到同一週，否則錯誤會掛到鄰週
+// 端點增減只改 observations 索引；非法 Metric Input 須跟著搬到同一週，否則錯誤會掛到鄰週
 export function remapTrendObservationInput(
   inputs: MetricInputMap,
   pageId: string,
@@ -130,11 +102,22 @@ export function parseTrendNumber(
   return value
 }
 
-// 呼叫端須先通過 trendInputError；非法原文走到這裡代表流程有誤，須拋錯而非寫入 JSON
+// 呼叫端須先通過 trendInputError；非法 Metric Input 走到這裡代表流程有誤，須拋錯而非寫入 JSON
 export function requireTrendNumber(raw: string): number | null {
   const value = parseTrendNumber(raw)
   if (typeof value === "string") throw new Error(`Invalid Trend number: ${raw}`)
   return value
+}
+
+// 起始週一已提交且沒有待確認的改動時，端點增減與觀測值才有明確日期可掛
+export function isStartSettled(
+  page: TrendTargetPage,
+  pendingStart: string | undefined
+): page is TrendTargetPage & { startMonday: string } {
+  return (
+    page.startMonday !== null &&
+    (pendingStart === undefined || pendingStart === page.startMonday)
+  )
 }
 
 export function trendRangeError(start: string, length: number): string | null {
@@ -165,7 +148,7 @@ function startMondayInputError(
   page: TrendTargetPage,
   raw: string
 ): string | null {
-  const entered = page.observations.some((entry) => entry.state !== "unfilled")
+  const entered = hasEnteredObservations(page.observations)
   if (raw === "" && !entered) return null
   if (!isCalendarMonday(raw))
     return "Starting Monday must be a real calendar Monday"

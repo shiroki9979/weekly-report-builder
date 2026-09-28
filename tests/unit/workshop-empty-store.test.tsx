@@ -7,7 +7,8 @@ import {
   WorkshopShell,
 } from "@/components/workshop/workshop-shell"
 import type { WeekDocument } from "@/lib/week-document"
-import { InMemoryWeekStore, type WeekStore } from "@/lib/week-store"
+import type { WeekStore } from "@/lib/week-store"
+import { InMemoryWeekStore } from "./support/in-memory-week-store"
 
 const LATEST_MONDAY = "2026-01-12"
 

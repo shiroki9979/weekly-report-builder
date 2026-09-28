@@ -1,11 +1,10 @@
 import type { ExportIssue } from "./export-readiness"
-
-const COMPARISON_METRIC_PATH_PREFIX = "metrics["
+import { isMetricInputPath } from "./metric-input"
 
 // Comparison Metric 只屬於 Evidence-backed Decision；Two-column chart 等其他非法值不可借用此術語
 function invalidContentLabel(invalidIssues: ExportIssue[]): string {
   const onlyMetrics = invalidIssues.every((issue) =>
-    issue.path?.startsWith(COMPARISON_METRIC_PATH_PREFIX)
+    issue.path === undefined ? false : isMetricInputPath(issue.path)
   )
   return onlyMetrics ? "invalid Comparison Metric input" : "invalid content"
 }

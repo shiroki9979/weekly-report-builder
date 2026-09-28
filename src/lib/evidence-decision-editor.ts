@@ -1,3 +1,4 @@
+import type { MetricFormat } from "./metric-format"
 import type { MetricValueField } from "./metric-input"
 import { typedPageUpdater } from "./update-week-page"
 import {
@@ -48,27 +49,11 @@ export function setDecisionMetricLabel(
   }))
 }
 
-export function setDecisionMetricUnit(
-  week: WeekDocument,
-  pageIndex: number,
-  metricIndex: number,
-  unit: string
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({
-    ...page,
-    metrics: page.metrics.map((metric, index) =>
-      index === metricIndex ? { ...metric, unit } : metric
-    ),
-  }))
-}
-
 export function setDecisionMetricFormat(
   week: WeekDocument,
   pageIndex: number,
   metricIndex: number,
-  patch: Partial<
-    Pick<ComparisonMetric, "unitPosition" | "unitSpacing" | "precision">
-  >
+  patch: Partial<MetricFormat>
 ): WeekDocument {
   return updateDecision(week, pageIndex, (page) => ({
     ...page,

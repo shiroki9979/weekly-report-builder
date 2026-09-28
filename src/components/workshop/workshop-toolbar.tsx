@@ -154,27 +154,36 @@ function PageNumbersToggle({
 }) {
   const disabled = pageNumbers.disabled || !pageNumbers.onChange
 
+  // HTML Page 的片段可能自帶頁碼，不跟隨週層級設定；在此註明，避免作者以為勾選後每頁都會疊頁碼
   return (
     <div
-      className={cn(
-        "flex items-center gap-2",
-        disabled && "cursor-not-allowed opacity-50"
-      )}
+      className={cn("space-y-1", disabled && "cursor-not-allowed opacity-50")}
     >
-      <Checkbox
-        id="week-show-page-numbers"
-        checked={pageNumbers.show}
-        disabled={disabled}
-        onCheckedChange={(checked) => pageNumbers.onChange?.(checked === true)}
-      />
-      <Label
-        htmlFor="week-show-page-numbers"
-        className={
-          disabled ? "cursor-not-allowed text-muted-foreground" : undefined
-        }
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="week-show-page-numbers"
+          checked={pageNumbers.show}
+          disabled={disabled}
+          aria-describedby="week-show-page-numbers-hint"
+          onCheckedChange={(checked) =>
+            pageNumbers.onChange?.(checked === true)
+          }
+        />
+        <Label
+          htmlFor="week-show-page-numbers"
+          className={
+            disabled ? "cursor-not-allowed text-muted-foreground" : undefined
+          }
+        >
+          Show page numbers
+        </Label>
+      </div>
+      <p
+        id="week-show-page-numbers-hint"
+        className="text-xs text-muted-foreground"
       >
-        Show page numbers
-      </Label>
+        HTML pages show a page number only when set on the page.
+      </p>
     </div>
   )
 }

@@ -20,7 +20,40 @@ type PageNumberSelectProps = {
   onChange: (update: (week: WeekDocument) => WeekDocument) => void
 }
 
-/** 頁面級頁碼顯示設定（可繼承週層級預設，或單獨強制顯示／隱藏） */
+// Select 只收字串；頁面欄位以 undefined 表示沿用週層級預設
+const OVERRIDE_BY_CHOICE = {
+  default: undefined,
+  show: true,
+  hide: false,
+} as const satisfies Record<string, boolean | undefined>
+
+type PageNumberChoice = keyof typeof OVERRIDE_BY_CHOICE
+
+const CHOICES = Object.keys(OVERRIDE_BY_CHOICE) as PageNumberChoice[]
+
+function choiceFor(override: boolean | undefined): PageNumberChoice {
+  return (
+    CHOICES.find((choice) => OVERRIDE_BY_CHOICE[choice] === override) ??
+    "default"
+  )
+}
+
+function isPageNumberChoice(value: unknown): value is PageNumberChoice {
+  return typeof value === "string" && Object.hasOwn(OVERRIDE_BY_CHOICE, value)
+}
+
+function visibilityLabel(visible: boolean): string {
+  return visible ? "Show" : "Hide"
+}
+
+// HTML Page 的預設與週層級設定不同，Default 須標出實際結果，作者才知道會不會疊頁碼
+function choiceLabel(choice: PageNumberChoice, defaultVisible: boolean) {
+  const override = OVERRIDE_BY_CHOICE[choice]
+  return override === undefined
+    ? `Default (${visibilityLabel(defaultVisible)})`
+    : visibilityLabel(override)
+}
+
 export function PageNumberSelect({
   week,
   pageIndex,
@@ -29,14 +62,6 @@ export function PageNumberSelect({
 }: PageNumberSelectProps) {
   const page = week.pages[pageIndex]
   const defaultVisible = page ? defaultPageNumberVisibility(week, page) : true
-  const currentValue =
-    page?.showPageNumber === undefined
-      ? "default"
-      : page.showPageNumber
-        ? "show"
-        : "hide"
-
-  const defaultLabel = defaultVisible ? "Default (Show)" : "Default (Hide)"
 
   return (
     <div className={cn("space-y-2", disabled && "opacity-50")}>
@@ -49,39 +74,35 @@ export function PageNumberSelect({
         Page number
       </Label>
       <Select
-        value={currentValue}
+        value={choiceFor(page?.showPageNumber)}
         disabled={disabled}
-        onValueChange={(val) => {
-          let next: boolean | undefined
-          if (val === "show") {
-            next = true
-          } else if (val === "hide") {
-            next = false
-          } else {
-            next = undefined
-          }
+        onValueChange={(value) => {
+          if (!isPageNumberChoice(value)) return
           onChange((currentWeek) =>
-            setPageShowPageNumber(currentWeek, pageIndex, next)
+            setPageShowPageNumber(
+              currentWeek,
+              pageIndex,
+              OVERRIDE_BY_CHOICE[value]
+            )
           )
         }}
       >
         <SelectTrigger id="page-number-visibility" className="w-full">
           <SelectValue>
-            {(value: string | null) => {
-              if (value === "show") {
-                return "Show"
-              }
-              if (value === "hide") {
-                return "Hide"
-              }
-              return defaultLabel
-            }}
+            {(value: string | null) =>
+              choiceLabel(
+                isPageNumberChoice(value) ? value : "default",
+                defaultVisible
+              )
+            }
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">{defaultLabel}</SelectItem>
-          <SelectItem value="show">Show</SelectItem>
-          <SelectItem value="hide">Hide</SelectItem>
+          {CHOICES.map((choice) => (
+            <SelectItem key={choice} value={choice}>
+              {choiceLabel(choice, defaultVisible)}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

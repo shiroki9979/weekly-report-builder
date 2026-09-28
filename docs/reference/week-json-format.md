@@ -142,7 +142,7 @@ Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八�
 | -------------------- | --------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `metric`             | `object`                    | 是   | `label`、`unit`、`unitPosition`、`unitSpacing`、`precision`；格式選項同 Comparison Metric，預設為一位小數、單位置後、以空格分隔 |
 | `startMonday`        | `string \| null`            | 是   | 真實 ISO 週一；未設定時只能有 `unfilled` 位置                                                                                   |
-| `observations`       | `TrendObservation[]`        | 是   | 2–12 個連續週次位置；日期由 `startMonday` 起以 UTC 每次加七天                                                                   |
+| `observations`       | `WeeklyObservation[]`       | 是   | 2–12 個連續週次位置；日期由 `startMonday` 起以 UTC 每次加七天                                                                   |
 | `target`             | `number \| null`            | 是   | 有限的固定門檻；`null` 是草稿                                                                                                   |
 | `direction`          | `"at-most"` \| `"at-least"` | 是   | 包含等號的比較方向                                                                                                              |
 | `interpretation`     | `string`                    | 是   | 對趨勢的文字解讀                                                                                                                |

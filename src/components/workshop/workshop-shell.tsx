@@ -33,7 +33,10 @@ import {
 } from "@/components/workshop/workshop-toolbar"
 import { useStageExport } from "@/hooks/use-stage-export"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
-import { useEditingSession } from "@/hooks/use-editing-session"
+import {
+  useEditingSession,
+  type MetricInputControls,
+} from "@/hooks/use-editing-session"
 import {
   CAPTURE_STAGE_SIZE_LABEL,
   measureStageOverflow,
@@ -41,11 +44,7 @@ import {
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
-import type {
-  MetricEditorControls,
-  SessionLoadStatus,
-} from "@/lib/editing-session"
-import type { TrendEditorControls } from "@/lib/trend-session"
+import type { SessionLoadStatus } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setWeekShowPageNumbers } from "@/lib/week-editor"
 
@@ -67,8 +66,7 @@ type EditorSidebarProps = {
   onWeekChange: (monday: string) => void
   week: WeekDocument | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
-  metricControls: MetricEditorControls
-  trendControls: TrendEditorControls
+  metricInputControls: MetricInputControls
   selection: PageSelection
   loadStatus: SessionLoadStatus
   save: ToolbarSaveControls
@@ -82,8 +80,7 @@ function EditorSidebar({
   onWeekChange,
   week,
   editContent,
-  metricControls,
-  trendControls,
+  metricInputControls,
   selection,
   loadStatus,
   save,
@@ -167,8 +164,7 @@ function EditorSidebar({
               week={week}
               pageIndex={selection.pageIndex}
               onChange={editContent}
-              metricControls={metricControls}
-              trendControls={trendControls}
+              metricInputControls={metricInputControls}
               readOnly={!editMode}
             />
           </>
@@ -187,8 +183,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
     week,
     operationSnapshot,
     editContent,
-    metricControls,
-    trendControls,
+    metricInputControls,
     addPage,
     deletePage,
     movePage,
@@ -394,8 +389,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
             onWeekChange={setSelectedMonday}
             week={week}
             editContent={editContent}
-            metricControls={metricControls}
-            trendControls={trendControls}
+            metricInputControls={metricInputControls}
             selection={{
               pageIndex: selectedPageIndex,
               pageId: selectedPageId,
