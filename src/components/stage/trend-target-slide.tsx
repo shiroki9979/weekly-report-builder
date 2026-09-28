@@ -30,8 +30,7 @@ const LATEST_POINT_RADIUS = 6
 const POINT_RADIUS = 4
 // 超過此週數時改為隔週標日期，避免日期標籤互相重疊
 const DENSE_X_AXIS_WEEKS = 8
-// 量級極大且彼此極近的值，刻度印成完整數字會全部相同；改以 offset 顯示差值
-const LARGE_MAGNITUDE = 1e9
+// 範圍相對數值極窄時，刻度印成完整數字會全部相同；改以 offset 顯示差值
 const NARROW_RANGE_RATIO = 1e-6
 const OFFSET_TICK_DIGITS = 3
 const PLAIN_TICK_DIGITS = 12
@@ -48,7 +47,7 @@ const SVG_INK = {
 const SVG_STYLE = {
   grid: { stroke: SVG_INK.line },
   axis: { fill: SVG_INK.mute, fontSize: 15 },
-  target: { stroke: SVG_INK.warnInk, strokeWidth: 2, strokeDasharray: "7 5" },
+  target: { stroke: SVG_INK.warnInk, strokeWidth: 3, strokeDasharray: "7 5" },
   line: { fill: "none", stroke: SVG_INK.blue, strokeWidth: 3 },
   point: { fill: SVG_INK.blue, stroke: SVG_INK.paper, strokeWidth: 2 },
   missing: { fill: SVG_INK.warnInk, fontSize: 20, fontWeight: 700 },
@@ -83,10 +82,10 @@ function axisLabel(value: number, offset: number): string {
 }
 
 function axisOffsetFor([minimum, maximum]: [number, number]): number {
-  const crowded =
-    Math.abs(minimum) >= LARGE_MAGNITUDE &&
-    maximum - minimum < Math.abs(minimum) * NARROW_RANGE_RATIO
-  return crowded ? Math.round(minimum) : 0
+  const span = maximum - minimum
+  if (span >= Math.abs(minimum) * NARROW_RANGE_RATIO) return 0
+  const magnitude = 10 ** Math.floor(Math.log10(span))
+  return Number((Math.round(minimum / magnitude) * magnitude).toPrecision(15))
 }
 
 function chartGeometry(
@@ -102,6 +101,8 @@ function chartGeometry(
   const ticks = Array.from(
     { length: Y_TICK_COUNT },
     (_, index) => minimum + ((maximum - minimum) * index) / (Y_TICK_COUNT - 1)
+  ).filter(
+    (tick, index, positions) => index === 0 || tick > positions[index - 1]
   )
   const line = page.observations
     .map((entry, index) => {
@@ -211,6 +212,11 @@ function TrendSeries({
 }) {
   return (
     <>
+      <path
+        className="editorial-trend-line"
+        {...SVG_STYLE.line}
+        d={geometry.line}
+      />
       {page.target !== null ? (
         <line
           className="editorial-trend-target"
@@ -221,11 +227,6 @@ function TrendSeries({
           y2={geometry.y(page.target)}
         />
       ) : null}
-      <path
-        className="editorial-trend-line"
-        {...SVG_STYLE.line}
-        d={geometry.line}
-      />
       {page.observations.map((entry, index) => (
         <TrendMarker
           key={index}

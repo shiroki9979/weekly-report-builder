@@ -131,6 +131,57 @@ describe("Trend & Target", () => {
     ).toHaveTextContent("1e+12")
   })
 
+  it("keeps closely spaced midrange y-axis ticks distinct", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 100_000_000 },
+        { state: "measured", value: 100_000_000.00001 },
+      ],
+      target: 100_000_000.000005,
+    }
+    const { container } = render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-20",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    const ticks = [...container.querySelectorAll("svg .editorial-trend-axis")]
+      .slice(0, 5)
+      .map((node) => node.textContent)
+    expect(new Set(ticks).size).toBe(5)
+  })
+
+  it("does not repeat y-axis labels when measurements are one representable step apart", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 100_000_000 },
+        { state: "measured", value: 100_000_000.00000001 },
+      ],
+      target: 100_000_000,
+    }
+    const { container } = render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-20",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    const labels = [...container.querySelectorAll("svg .editorial-trend-axis")]
+      .slice(0, 5)
+      .map((node) => node.textContent)
+    expect(labels.length).toBeGreaterThanOrEqual(2)
+    expect(new Set(labels).size).toBe(labels.length)
+  })
+
   describe("endpoint availability", () => {
     const weeks = (length: number) =>
       Array.from({ length }, () => ({ state: "unfilled" as const }))
