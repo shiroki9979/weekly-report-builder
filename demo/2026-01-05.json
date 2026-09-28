@@ -213,10 +213,10 @@
     {
       "id": "p07",
       "layout": "trend-target",
-      "title": "虛構試點：淨完成檢查數由負轉正。",
+      "title": "Fictional pilot: net completed checks turned positive.",
       "metric": {
-        "label": "淨完成檢查數",
-        "unit": "件",
+        "label": "Net completed checks",
+        "unit": "checks",
         "unitPosition": "after",
         "unitSpacing": "space",
         "precision": 0
@@ -258,16 +258,16 @@
       ],
       "target": 0,
       "direction": "at-least",
-      "interpretation": "零值符合含等號的下限；最新虛構週比目標多完成四件。",
-      "measurementContext": "虛構試點：每週一以模擬記錄計算完成檢查減去重開檢查，單位為件。",
+      "interpretation": "Zero meets the inclusive lower bound; the latest fictional week finished four checks above target.",
+      "measurementContext": "Fictional pilot: completed checks minus reopened checks, calculated each Monday from simulated records.",
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
     },
     {
       "id": "p08",
       "layout": "trend-target",
-      "title": "Fictional nightly import 時間：最後一週沒有 reading。",
+      "title": "Fictional nightly import duration: no reading for the final week.",
       "metric": {
-        "label": "Nightly import 時間",
+        "label": "Nightly import duration",
         "unit": "s",
         "unitPosition": "after",
         "unitSpacing": "space",
@@ -308,8 +308,8 @@
       ],
       "target": 8,
       "direction": "at-most",
-      "interpretation": "最後一個 Monday 沒有收集 sample；前一週的 8.1 s 不能代表本週。",
-      "measurementContext": "Fictional Harbor Grid nightly import：每週一 100 次 scripted imports 的平均；2026-01-05 的 import job 沒有執行。",
+      "interpretation": "No sample was collected on the final Monday; the prior week's 8.1 s reading cannot represent this week.",
+      "measurementContext": "Fictional Harbor Grid nightly import: mean of 100 scripted imports each Monday; the import job did not run on 2026-01-05.",
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
     },
     {
@@ -340,25 +340,25 @@
       "id": "p10",
       "layout": "next-actions",
       "variant": "rows",
-      "title": "虛構專案：下週確認交付與驗證。",
+      "title": "Fictional project: confirm delivery and validation next week.",
       "commitments": [
         {
-          "title": "Review 站點資料接入",
-          "outcome": "North 與 South 的模擬資料都使用同一套欄位定義，方便值班人員逐站核對。",
-          "checkpoint": "週四前完成 schema review，附上兩站的 sample log。"
+          "title": "Review site data ingestion",
+          "outcome": "Simulated data from North and South uses the same field definitions, allowing on-call operators to verify each site consistently.",
+          "checkpoint": "Complete the schema review by Thursday and attach sample logs from both sites."
         },
         {
-          "title": "Rehearse 切版流程",
-          "outcome": "以測試 alias 演練回退與批准步驟，確保團隊看得懂 cutover 的結果。",
-          "checkpoint": "週五前在演練紀錄中標記 pass/fail 與 owner。"
+          "title": "Rehearse the cutover process",
+          "outcome": "Practice rollback and approval steps with a test alias so the team can interpret the cutover result.",
+          "checkpoint": "Record the pass/fail result and owner in the rehearsal log by Friday."
         },
         {
-          "title": "更新 on-call handoff",
-          "outcome": "把虛構試點的例外處理與人工檢查點寫入交接摘要，避免下週重新追問。",
-          "checkpoint": "週五交班前由 Ops review 並記錄回覆。"
+          "title": "Update the on-call handoff",
+          "outcome": "Add the fictional pilot's exception handling and manual checkpoints to the handoff summary to avoid repeated questions next week.",
+          "checkpoint": "Have Ops review and record feedback before Friday's handoff."
         }
       ],
-      "notes": "Fictional mixed-language content for Rows fit and reading review."
+      "notes": "Fictional English content for Rows fit and reading review."
     }
   ]
 }
