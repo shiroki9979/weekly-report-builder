@@ -1,20 +1,11 @@
 import type { TrendTargetPage } from "./week-document"
+import { withUnit } from "./unit-format"
 
 const DAYS_PER_WEEK = 7
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
 const AXIS_PADDING_RATIO = 0.1
 // 所有值相同時沒有自然範圍，至少撐開 1 個單位才畫得出刻度
 const FLAT_SERIES_MIN_PADDING = 1
-
-export function isCalendarMonday(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const date = new Date(`${value}T00:00:00Z`)
-  return (
-    !Number.isNaN(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value &&
-    date.getUTCDay() === 1
-  )
-}
 
 export function observationMonday(start: string, index: number): string {
   const date = new Date(`${start}T00:00:00Z`)
@@ -43,26 +34,20 @@ export function displayedTrendNumber(value: number, precision: number): string {
 }
 
 export function formatTrendValue(value: number, page: TrendTargetPage): string {
-  return withUnit(displayedTrendNumber(value, page.metric.precision), page)
+  return withUnit(
+    displayedTrendNumber(value, page.metric.precision),
+    page.metric
+  )
 }
 
 export function exactTrendValue(value: number, page: TrendTargetPage): string {
-  return withUnit(Object.is(value, -0) ? "0" : String(value), page)
+  return withUnit(Object.is(value, -0) ? "0" : String(value), page.metric)
 }
 
 export function formatTrendTarget(page: TrendTargetPage): string | null {
   if (page.target === null) return null
   const operator = page.direction === "at-most" ? "≤" : "≥"
   return `${operator} ${formatTrendValue(page.target, page)}`
-}
-
-function withUnit(numeric: string, page: TrendTargetPage): string {
-  const { unit, unitPosition, unitSpacing } = page.metric
-  if (!unit) return numeric
-  const gap = unitSpacing === "space" ? " " : ""
-  return unitPosition === "before"
-    ? `${unit}${gap}${numeric}`
-    : `${numeric}${gap}${unit}`
 }
 
 export function targetMet(value: number, page: TrendTargetPage): boolean {
@@ -83,10 +68,12 @@ export function trendBounds(page: TrendTargetPage): [number, number] {
   if (!values.length) return [-1, 1]
   const low = Math.min(...values)
   const high = Math.max(...values)
-  const pad =
+  const idealPad =
     high === low
       ? Math.max(Math.abs(low) * AXIS_PADDING_RATIO, FLAT_SERIES_MIN_PADDING)
       : (high - low) * AXIS_PADDING_RATIO
+  // 極小的有限跨度乘以 10% 可能下溢為零；至少保留一個可表示的間距。
+  const pad = Math.max(idealPad, Number.MIN_VALUE)
   const minimum = low - pad
   const maximum = high + pad
   if (

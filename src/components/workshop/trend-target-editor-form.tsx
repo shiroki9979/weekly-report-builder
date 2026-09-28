@@ -19,11 +19,8 @@ import {
   type TrendEndpointAction,
 } from "@/lib/trend-input"
 import type { TrendEditorControls } from "@/lib/trend-session"
-import {
-  isCalendarMonday,
-  observationMonday,
-  trendRangeEnd,
-} from "@/lib/trend-target"
+import { observationMonday, trendRangeEnd } from "@/lib/trend-target"
+import { isCalendarMonday } from "@/lib/week-id"
 import { typedPageUpdater } from "@/lib/update-week-page"
 import { isTrendTargetPage, type TrendTargetPage } from "@/lib/week-document"
 

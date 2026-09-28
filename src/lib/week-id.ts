@@ -6,3 +6,13 @@ const MONDAY_ID_PATTERN = new RegExp(`^${MONDAY_ID_SOURCE}$`)
 export function isMondayId(value: string): boolean {
   return MONDAY_ID_PATTERN.test(value)
 }
+
+export function isCalendarMonday(value: string): boolean {
+  if (!isMondayId(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value &&
+    date.getUTCDay() === 1
+  )
+}

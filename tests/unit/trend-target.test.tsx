@@ -131,6 +131,35 @@ describe("Trend & Target", () => {
     ).toHaveTextContent("1e+12")
   })
 
+  it("renders readable ticks for finite subnormal weekly observations", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 1e-314 },
+        { state: "measured", value: 1.000000001e-314 },
+      ],
+      target: 1.000000001e-314,
+    }
+
+    expect(assessContentReadiness(page, {}, "2026-07-20")).toEqual([])
+    const { container } = render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-20",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+    const labels = [...container.querySelectorAll("svg .editorial-trend-axis")]
+      .filter((node) => node.getAttribute("text-anchor") === "end")
+      .map((node) => node.textContent)
+    expect(labels.length).toBeGreaterThanOrEqual(2)
+    expect(labels).not.toContain("NaN")
+    expect(new Set(labels).size).toBe(labels.length)
+  })
+
   it("keeps closely spaced midrange y-axis ticks distinct", () => {
     const page: TrendTargetPage = {
       ...complete,

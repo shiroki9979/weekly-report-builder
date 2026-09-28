@@ -1,5 +1,6 @@
 import { validateHtmlFileName } from "./html-page"
-import { isCalendarMonday, observationMonday } from "./trend-target"
+import { observationMonday } from "./trend-target"
+import { isCalendarMonday } from "./week-id"
 
 export type SlideItem = {
   heading: string

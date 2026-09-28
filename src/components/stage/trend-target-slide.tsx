@@ -84,7 +84,11 @@ function axisLabel(value: number, offset: number): string {
 function axisOffsetFor([minimum, maximum]: [number, number]): number {
   const span = maximum - minimum
   if (span >= Math.abs(minimum) * NARROW_RANGE_RATIO) return 0
-  const magnitude = 10 ** Math.floor(Math.log10(span))
+  // 10 的次方在極小跨度下可能下溢，不能讓 offset 計算出 NaN。
+  const magnitude = Math.max(
+    10 ** Math.floor(Math.log10(span)),
+    Number.MIN_VALUE
+  )
   return Number((Math.round(minimum / magnitude) * magnitude).toPrecision(15))
 }
 
