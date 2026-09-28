@@ -2,7 +2,7 @@
 
 建立日期：2026-09-27
 
-最後更新：2026-09-27
+最後更新：2026-09-28
 
 研究日期：2026-09-27
 
@@ -48,7 +48,7 @@
 
 **優先嘗試一頁分層**：主訊息可快速辨認，支持內容可逐項讀取，必要條件保留在可讀的註記區。如果這樣仍無法同時滿足兩種情境，可研究「同一資訊骨架的兩種密度版本」或配套閱讀材料；成本是內容同步與雙份驗證。這些是未來設計選項，現有產品沒有因此新增模式。
 
-目前 Speaker Notes 顯示在 Stage 外，既有分享流程匯出 PNG。要讓單張輸出可獨立理解，必要資訊不能只留在 notes；若放不下，需拆頁或把閱讀材料一併交付。相關現況見 [Workshop shell](../../src/components/workshop/workshop-shell.tsx) 與 [匯出流程](../how-to/export-slides-to-team-deck.md)。
+目前 Speaker Notes 顯示在 Stage 外，既有分享流程匯出 PNG。要讓單張輸出可獨立理解，必要資訊不能只留在 notes；若放不下，需拆頁或把閱讀材料一併交付。相關現況見 [Workshop preview](../../src/components/workshop/workshop-preview.tsx) 與 [匯出流程](../how-to/export-slides-to-team-deck.md)。
 
 ## 從資訊關係選 layout
 

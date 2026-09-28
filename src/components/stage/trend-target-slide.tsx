@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from "react"
+
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
 import {
@@ -11,16 +13,25 @@ import {
   trendDirectionRule,
   trendEndMonday,
 } from "@/lib/trend-target"
-import type { WeeklyObservation, TrendTargetPage } from "@/lib/week-document"
+import type {
+  TrendTargetPage,
+  UnmeasuredState,
+  WeeklyObservation,
+} from "@/lib/week-document"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
+// viewBox 寬度固定，字級與線寬只隨實際寬度縮放；高度依繪圖框的實際比例決定
 const CHART_WIDTH = 1000
-const CHART_HEIGHT = 200
+// 量到繪圖框之前（首次 render 或測試環境）使用的預設比例
+const DEFAULT_CHART_HEIGHT = 200
 const CHART_LEFT = 120
 const CHART_RIGHT = 976
 const CHART_TOP = 10
-const CHART_BOTTOM = 154
+// 圖底保留給 x 軸刻度與日期標籤的高度
+const X_AXIS_BAND = 46
+// 五個 y 軸刻度標籤（字級 15）互不重疊所需的最小繪圖高度；空間更小時改由 overflow 量測擋下
+const MIN_CHART_HEIGHT = CHART_TOP + 72 + X_AXIS_BAND
 const Y_TICK_COUNT = 5
 const Y_LABEL_GAP = 12
 const Y_LABEL_BASELINE = 5
@@ -59,10 +70,21 @@ const SVG_STYLE = {
   missing: { fill: SVG_INK.warnInk, fontSize: 20, fontWeight: 700 },
 } as const
 
+// 未量測週次的文案依規格集中於此：Missing 在圖上與描述稱 No observation，
+// 作為最新週時摘要改稱 No data；Unfilled 一律為 Not entered
+const UNMEASURED_COPY: Record<
+  UnmeasuredState,
+  { observation: string; latestStatus: string }
+> = {
+  missing: { observation: "No observation", latestStatus: "No data" },
+  unfilled: { observation: "Not entered", latestStatus: "Not entered" },
+}
+
 function latestWeekStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
-  if (latest?.state === "missing") return "No data"
-  if (latest?.state !== "measured") return "Not entered"
+  if (!latest) return UNMEASURED_COPY.unfilled.latestStatus
+  if (latest.state !== "measured")
+    return UNMEASURED_COPY[latest.state].latestStatus
   if (page.target === null) return "Target not set"
   return targetMet(latest.value, page) ? "Target met" : "Target missed"
 }
@@ -114,14 +136,15 @@ function axisOffsetFor([minimum, maximum]: [number, number]): number {
 
 function chartGeometry(
   page: TrendTargetPage,
-  [minimum, maximum]: [number, number]
+  [minimum, maximum]: [number, number],
+  height: number
 ) {
+  const bottom = height - X_AXIS_BAND
   const x = (index: number) =>
     CHART_LEFT +
     (index * (CHART_RIGHT - CHART_LEFT)) / (page.observations.length - 1)
   const y = (value: number) =>
-    CHART_BOTTOM -
-    ((value - minimum) / (maximum - minimum)) * (CHART_BOTTOM - CHART_TOP)
+    bottom - ((value - minimum) / (maximum - minimum)) * (bottom - CHART_TOP)
   const ticks = Array.from(
     { length: Y_TICK_COUNT },
     (_, index) => minimum + ((maximum - minimum) * index) / (Y_TICK_COUNT - 1)
@@ -135,7 +158,15 @@ function chartGeometry(
       return `${previous?.state === "measured" ? "L" : "M"}${x(index)},${y(entry.value)}`
     })
     .join(" ")
-  return { axisOffset: axisOffsetFor([minimum, maximum]), x, y, ticks, line }
+  return {
+    axisOffset: axisOffsetFor([minimum, maximum]),
+    height,
+    bottom,
+    x,
+    y,
+    ticks,
+    line,
+  }
 }
 
 type ChartGeometry = ReturnType<typeof chartGeometry>
@@ -144,9 +175,9 @@ function observationText(
   entry: WeeklyObservation,
   page: TrendTargetPage
 ): string {
-  if (entry.state === "measured") return formatTrendValue(entry.value, page)
-  if (entry.state === "missing") return "No observation"
-  return "Not entered"
+  return entry.state === "measured"
+    ? formatTrendValue(entry.value, page)
+    : UNMEASURED_COPY[entry.state].observation
 }
 
 function trendDescription(page: TrendTargetPage): string {
@@ -216,10 +247,10 @@ function TrendMarker({
       <text
         className="editorial-trend-missing"
         {...SVG_STYLE.missing}
-        aria-label="No observation"
+        aria-label={UNMEASURED_COPY.missing.observation}
         textAnchor="middle"
         x={geometry.x(index)}
-        y={CHART_BOTTOM - MISSING_MARK_LIFT}
+        y={geometry.bottom - MISSING_MARK_LIFT}
       >
         ×
       </text>
@@ -286,15 +317,15 @@ function TrendXAxis({
           {...SVG_STYLE.grid}
           x1={geometry.x(index)}
           x2={geometry.x(index)}
-          y1={CHART_BOTTOM}
-          y2={CHART_BOTTOM + X_TICK_LENGTH}
+          y1={geometry.bottom}
+          y2={geometry.bottom + X_TICK_LENGTH}
         />
         {showsDateLabel(index, page.observations.length) ? (
           <text
             className="editorial-trend-axis"
             {...SVG_STYLE.axis}
             x={geometry.x(index)}
-            y={CHART_BOTTOM + X_LABEL_OFFSET}
+            y={geometry.bottom + X_LABEL_OFFSET}
             textAnchor="middle"
           >
             {monthDayLabel(monday)}
@@ -305,29 +336,77 @@ function TrendXAxis({
   })
 }
 
+type PlotBox = { layoutWidth: number; heightRatio: number }
+
+// 依繪圖框的實際寬高比決定 viewBox 高度：圖表維持全寬，字級不會因 meet 等比縮放而變小；
+// 繪圖框小於最小高度時撐開版面，讓 overflow 量測擋下匯出，而不是壓到下方的摘要
+function useFittedChartHeight() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState<PlotBox | null>(null)
+  useLayoutEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const measure = () => {
+      // 比例取小數精度的 bounding box（預覽的 transform 為等比縮放，不影響比例），
+      // 最小高度則以不受 transform 影響的排版寬度換算
+      const rect = element.getBoundingClientRect()
+      if (!rect.width) return
+      const next = {
+        layoutWidth: element.offsetWidth,
+        heightRatio: rect.height / rect.width,
+      }
+      setBox((current) =>
+        current?.layoutWidth === next.layoutWidth &&
+        current.heightRatio === next.heightRatio
+          ? current
+          : next
+      )
+    }
+    measure()
+    if (typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  if (!box) return { ref, height: DEFAULT_CHART_HEIGHT, minHeightPx: undefined }
+  return {
+    ref,
+    height: Math.max(CHART_WIDTH * box.heightRatio, MIN_CHART_HEIGHT),
+    minHeightPx: (MIN_CHART_HEIGHT * box.layoutWidth) / CHART_WIDTH,
+  }
+}
+
 function TrendPlot({
   page,
-  geometry,
+  bounds,
   targetLabel,
 }: {
   page: TrendTargetPage
-  geometry: ChartGeometry
+  bounds: [number, number]
   targetLabel: string
 }) {
+  const { ref, height, minHeightPx } = useFittedChartHeight()
+  const geometry = chartGeometry(page, bounds, height)
   return (
-    <svg
-      viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-      role="img"
-      aria-label={`${metricCaption(page)}; ${targetLabel}`}
+    <div
+      ref={ref}
+      className="editorial-trend-plot"
+      style={minHeightPx === undefined ? undefined : { minHeight: minHeightPx }}
     >
-      <title>{metricCaption(page)} by week</title>
-      <desc>
-        {trendDescription(page)}; {targetLabel}
-      </desc>
-      <TrendYAxis geometry={geometry} />
-      <TrendSeries page={page} geometry={geometry} />
-      <TrendXAxis page={page} geometry={geometry} />
-    </svg>
+      <svg
+        viewBox={`0 0 ${CHART_WIDTH} ${geometry.height}`}
+        role="img"
+        aria-label={`${metricCaption(page)}; ${targetLabel}`}
+      >
+        <title>{metricCaption(page)} by week</title>
+        <desc>
+          {trendDescription(page)}; {targetLabel}
+        </desc>
+        <TrendYAxis geometry={geometry} />
+        <TrendSeries page={page} geometry={geometry} />
+        <TrendXAxis page={page} geometry={geometry} />
+      </svg>
+    </div>
   )
 }
 
@@ -347,7 +426,7 @@ function TrendLegend({
         </span>
         {page.observations.some((entry) => entry.state === "missing") ? (
           <span className="editorial-trend-legend-missing">
-            × No observation
+            × {UNMEASURED_COPY.missing.observation}
           </span>
         ) : null}
       </div>
@@ -372,19 +451,19 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
     // 原因已由 Export Readiness 的 trendAxisIssues 回報並阻擋匯出，這裡只負責不讓預覽崩潰
     return <p role="alert">Trend axis cannot represent these values</p>
   }
-  const geometry = chartGeometry(page, bounds)
+  const axisOffset = axisOffsetFor(bounds)
   const targetLabel = formatTrendTarget(page) ?? "Target not set"
   return (
     <figure className="editorial-trend-chart">
       <figcaption>
         {metricCaption(page)}
-        {geometry.axisOffset !== 0 ? (
+        {axisOffset !== 0 ? (
           <span className="editorial-trend-axis-offset">
-            {axisOffsetNote(geometry.axisOffset)}
+            {axisOffsetNote(axisOffset)}
           </span>
         ) : null}
       </figcaption>
-      <TrendPlot page={page} geometry={geometry} targetLabel={targetLabel} />
+      <TrendPlot page={page} bounds={bounds} targetLabel={targetLabel} />
       <TrendLegend page={page} targetLabel={targetLabel} />
     </figure>
   )

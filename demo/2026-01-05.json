@@ -265,9 +265,9 @@
     {
       "id": "p08",
       "layout": "trend-target",
-      "title": "Fictional export 時間：最後一週沒有 reading。",
+      "title": "Fictional nightly import 時間：最後一週沒有 reading。",
       "metric": {
-        "label": "Mean export duration",
+        "label": "Nightly import 時間",
         "unit": "s",
         "unitPosition": "after",
         "unitSpacing": "space",
@@ -309,7 +309,7 @@
       "target": 8,
       "direction": "at-most",
       "interpretation": "最後一個 Monday 沒有收集 sample；前一週的 8.1 s 不能代表本週。",
-      "measurementContext": "Fictional Harbor Grid sample：每週一 100 次 scripted exports 的平均；2026-01-05 沒有執行。",
+      "measurementContext": "Fictional Harbor Grid nightly import：每週一 100 次 scripted imports 的平均；2026-01-05 的 import job 沒有執行。",
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
     },
     {

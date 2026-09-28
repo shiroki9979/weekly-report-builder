@@ -14,7 +14,10 @@ export type PageMetricInputs = Readonly<Partial<Record<InputPath, string>>>
 // 以 Page ID 分層而非字串串接：Page ID 只要求非空，可含 `:` 等任何分隔字元
 export type MetricInputMap = Readonly<Record<string, PageMetricInputs>>
 
-export type PageInputLocation = Readonly<{ pageId: string; path: InputPath }>
+export type PageInputLocation<P extends InputPath = InputPath> = Readonly<{
+  pageId: string
+  path: P
+}>
 
 export type MetricLocation = Readonly<{
   pageId: string
@@ -41,9 +44,27 @@ export function metricInputPath(
   return `metrics[${metricIndex}].${field}`
 }
 
-// readiness 以 path 判斷是否為 Comparison Metric；path 格式只在此模組定義
+// readiness 以 path 判斷是否為 Comparison Metric；Metric Input 的 path 格式只在此模組定義
 export function isMetricInputPath(path: string): path is MetricInputPath {
   return METRIC_INPUT_PATH.test(path)
+}
+
+const OBSERVATION_INPUT_PATH = /^observations\[(\d+)\]\.value$/
+
+export function observationPath(index: number): ObservationInputPath {
+  return `observations[${index}].value`
+}
+
+export function observationIndex(path: string): number | null {
+  const match = OBSERVATION_INPUT_PATH.exec(path)
+  return match ? Number(match[1]) : null
+}
+
+export function pageInputs(
+  inputsByPage: MetricInputMap,
+  pageId: string
+): PageMetricInputs {
+  return inputsByPage[pageId] ?? {}
 }
 
 // Comparison Metric 與 Trend & Target 的 Metric Input 共用同一套以 Page ID 分層的讀寫規則

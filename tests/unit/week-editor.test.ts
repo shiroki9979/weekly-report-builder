@@ -127,27 +127,32 @@ describe("week-editor", () => {
     )
   })
 
-  it("updates week-level page-number visibility with setWeekShowPageNumbers", () => {
-    const week = loadFixture()
-    const hidden = setWeekShowPageNumbers(week, false)
-    expect(hidden.showPageNumbers).toBe(false)
-    expect(week.showPageNumbers).toBeUndefined()
+  it.each([false, true])(
+    "sets week-level page-number visibility to %s without mutating the source",
+    (show) => {
+      const week = loadFixture()
 
-    const shown = setWeekShowPageNumbers(hidden, true)
-    expect(shown.showPageNumbers).toBe(true)
-  })
+      const updated = setWeekShowPageNumbers(week, show)
 
-  it("updates page-level page-number visibility override with setPageShowPageNumber", () => {
-    const week = loadFixture()
-    const overrideHide = setPageShowPageNumber(week, 0, false)
-    expect(overrideHide.pages[0].showPageNumber).toBe(false)
+      expect(updated.showPageNumbers).toBe(show)
+      expect(week.showPageNumbers).toBeUndefined()
+    }
+  )
 
-    const overrideShow = setPageShowPageNumber(overrideHide, 0, true)
-    expect(overrideShow.pages[0].showPageNumber).toBe(true)
+  it.each([
+    { from: undefined, to: false },
+    { from: false, to: true },
+    { from: true, to: undefined },
+  ])(
+    "changes a page-level page-number override from $from to $to",
+    ({ from, to }) => {
+      const week = setPageShowPageNumber(loadFixture(), 0, from)
 
-    const resetToInherit = setPageShowPageNumber(overrideShow, 0, undefined)
-    expect(resetToInherit.pages[0].showPageNumber).toBeUndefined()
-  })
+      const updated = setPageShowPageNumber(week, 0, to)
+
+      expect(updated.pages[0].showPageNumber).toBe(to)
+    }
+  )
 
   it("keeps at least one entry in chart, flow, and checklist panels", () => {
     const weekWith = (kind: "chart" | "flow" | "checklist"): WeekDocument => ({

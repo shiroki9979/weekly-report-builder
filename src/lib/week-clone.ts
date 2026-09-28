@@ -1,5 +1,6 @@
 import {
   matchWeekPage,
+  nextActionsVariant,
   type Outcome,
   type Panel,
   type WeekDocument,
@@ -145,7 +146,7 @@ function clearPage(page: WeekPage): WeekPage {
     nextActions: (actions) => ({
       id: actions.id,
       layout: "next-actions",
-      variant: actions.variant ?? "columns",
+      variant: nextActionsVariant(actions),
       title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,

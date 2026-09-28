@@ -118,8 +118,33 @@ export type WeeklyOverviewPage = WeekPageChrome & {
   supporting: Outcome[]
 }
 
-export type UnitPosition = "before" | "after"
-export type UnitSpacing = "none" | "space"
+// 單位格式的合法值只在此列出一次：parser、readiness 與編輯器選項都由這些清單推導
+export const UNIT_POSITIONS = ["after", "before"] as const
+export const UNIT_SPACINGS = ["space", "none"] as const
+export const METRIC_PRECISIONS = [0, 1, 2] as const
+
+export type UnitPosition = (typeof UNIT_POSITIONS)[number]
+export type UnitSpacing = (typeof UNIT_SPACINGS)[number]
+export type MetricPrecision = (typeof METRIC_PRECISIONS)[number]
+
+function isOneOf<T>(options: readonly T[], value: unknown): value is T {
+  return (options as readonly unknown[]).includes(value)
+}
+
+export const NEXT_ACTIONS_VARIANTS = ["rows", "columns"] as const
+export type NextActionsVariant = (typeof NEXT_ACTIONS_VARIANTS)[number]
+// 缺欄位的舊文件維持 Columns，避免既有週報開啟後版型改變
+const LEGACY_NEXT_ACTIONS_VARIANT: NextActionsVariant = "columns"
+
+export function isNextActionsVariant(
+  value: unknown
+): value is NextActionsVariant {
+  return isOneOf(NEXT_ACTIONS_VARIANTS, value)
+}
+
+export function nextActionsVariant(page: NextActionsPage): NextActionsVariant {
+  return page.variant ?? LEGACY_NEXT_ACTIONS_VARIANT
+}
 
 export type ComparisonMetric = {
   label: string
@@ -128,7 +153,7 @@ export type ComparisonMetric = {
   unit: string
   unitPosition: UnitPosition
   unitSpacing: UnitSpacing
-  precision: 0 | 1 | 2
+  precision: MetricPrecision
 }
 
 export type EvidenceDecisionPage = WeekPageChrome & {
@@ -149,7 +174,7 @@ export type Commitment = {
 export type NextActionsPage = WeekPageChrome & {
   id: string
   layout: "next-actions"
-  variant?: "columns" | "rows"
+  variant?: NextActionsVariant
   title: string
   commitments: Commitment[]
 }
@@ -239,6 +264,8 @@ export function isNextActionsPage(page: WeekPage): page is NextActionsPage {
 export function isTrendTargetPage(page: WeekPage): page is TrendTargetPage {
   return page.layout === "trend-target" && "observations" in page
 }
+
+export type UnmeasuredState = Exclude<WeeklyObservation["state"], "measured">
 
 // 已輸入（Measured 或 Missing）的週次都掛在起始週一上，決定日期能否清空或需確認才能改
 export function hasEnteredObservations(
@@ -752,17 +779,13 @@ function parseWeeklyOverviewPage(
   })
 }
 
-const UNIT_POSITIONS = new Set<UnitPosition>(["before", "after"])
-const UNIT_SPACINGS = new Set<UnitSpacing>(["none", "space"])
-const PRECISIONS = new Set<ComparisonMetric["precision"]>([0, 1, 2])
-
 export function hasValidMetricFormat(
   metric: Pick<ComparisonMetric, "unitPosition" | "unitSpacing" | "precision">
 ): boolean {
   return (
-    UNIT_POSITIONS.has(metric.unitPosition) &&
-    UNIT_SPACINGS.has(metric.unitSpacing) &&
-    PRECISIONS.has(metric.precision)
+    isOneOf(UNIT_POSITIONS, metric.unitPosition) &&
+    isOneOf(UNIT_SPACINGS, metric.unitSpacing) &&
+    isOneOf(METRIC_PRECISIONS, metric.precision)
   )
 }
 
@@ -811,7 +834,7 @@ function parseMetricFormat(
     value.unitPosition,
     `${field}.unitPosition`
   )
-  if (!UNIT_POSITIONS.has(unitPosition as UnitPosition)) {
+  if (!isOneOf(UNIT_POSITIONS, unitPosition)) {
     throw new Error(`Invalid week document: ${field}.unitPosition`)
   }
 
@@ -819,22 +842,16 @@ function parseMetricFormat(
     value.unitSpacing,
     `${field}.unitSpacing`
   )
-  if (!UNIT_SPACINGS.has(unitSpacing as UnitSpacing)) {
+  if (!isOneOf(UNIT_SPACINGS, unitSpacing)) {
     throw new Error(`Invalid week document: ${field}.unitSpacing`)
   }
 
-  if (
-    typeof value.precision !== "number" ||
-    !PRECISIONS.has(value.precision as ComparisonMetric["precision"])
-  ) {
+  const { precision } = value
+  if (!isOneOf(METRIC_PRECISIONS, precision)) {
     throw new Error(`Invalid week document: ${field}.precision`)
   }
 
-  return {
-    unitPosition: unitPosition as UnitPosition,
-    unitSpacing: unitSpacing as UnitSpacing,
-    precision: value.precision as ComparisonMetric["precision"],
-  }
+  return { unitPosition, unitSpacing, precision }
 }
 
 function parseEvidenceDecisionPage(
@@ -895,13 +912,12 @@ function parseNextActionsPage(
   })
 }
 
-// 缺欄位的舊文件維持 Columns，避免既有週報開啟後版型改變
 function parseNextActionsVariant(
   value: unknown,
   field: string
-): NonNullable<NextActionsPage["variant"]> {
-  if (value === undefined) return "columns"
-  if (value === "columns" || value === "rows") return value
+): NextActionsVariant {
+  if (value === undefined) return LEGACY_NEXT_ACTIONS_VARIANT
+  if (isNextActionsVariant(value)) return value
   throw new Error(`Invalid week document: ${field} must be columns or rows`)
 }
 

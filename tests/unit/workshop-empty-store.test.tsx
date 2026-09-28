@@ -2,10 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ThemeProvider } from "@/components/theme-provider"
-import {
-  EMPTY_STORE_MESSAGE,
-  WorkshopShell,
-} from "@/components/workshop/workshop-shell"
+import { EMPTY_STORE_MESSAGE } from "@/components/workshop/empty-store-message"
+import { WorkshopShell } from "@/components/workshop/workshop-shell"
 import type { WeekDocument } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 import { InMemoryWeekStore } from "./support/in-memory-week-store"

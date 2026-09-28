@@ -8,6 +8,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { MetricFormat } from "@/lib/metric-format"
+import {
+  METRIC_PRECISIONS,
+  UNIT_POSITIONS,
+  UNIT_SPACINGS,
+  type UnitPosition,
+  type UnitSpacing,
+} from "@/lib/week-document"
 
 type MetricFormatFieldsProps = {
   idPrefix: string
@@ -15,28 +22,18 @@ type MetricFormatFieldsProps = {
   onChange: (patch: Partial<MetricFormat>) => void
 }
 
-type PrecisionOption = `${MetricFormat["precision"]}`
-
-const UNIT_POSITION_LABELS: Record<MetricFormat["unitPosition"], string> = {
+const UNIT_POSITION_LABELS: Record<UnitPosition, string> = {
   after: "After",
   before: "Before",
 }
 
-const UNIT_SPACING_LABELS: Record<MetricFormat["unitSpacing"], string> = {
+const UNIT_SPACING_LABELS: Record<UnitSpacing, string> = {
   space: "Space",
   none: "None",
 }
 
-const PRECISION_BY_OPTION: Record<PrecisionOption, MetricFormat["precision"]> =
-  { "0": 0, "1": 1, "2": 2 }
-
-const PRECISION_LABELS: Record<PrecisionOption, string> = {
-  "0": "0",
-  "1": "1",
-  "2": "2",
-}
-
-// Comparison Metric 與 Trend & Target 共用同一組單位格式欄位，選項與驗證不會分岔
+// Comparison Metric 與 Trend & Target 共用同一組單位格式欄位；
+// 選項取自 parser 驗證用的同一份清單，編輯器能選的值與可存檔的值不會分岔
 export function MetricFormatFields({
   idPrefix,
   format,
@@ -56,54 +53,56 @@ export function MetricFormatFields({
         id={`${idPrefix}-position`}
         label="Unit position"
         value={format.unitPosition}
-        labels={UNIT_POSITION_LABELS}
+        options={UNIT_POSITIONS}
+        labelOf={(position) => UNIT_POSITION_LABELS[position]}
         onSelect={(unitPosition) => onChange({ unitPosition })}
       />
       <FormatSelect
         id={`${idPrefix}-spacing`}
         label="Unit spacing"
         value={format.unitSpacing}
-        labels={UNIT_SPACING_LABELS}
+        options={UNIT_SPACINGS}
+        labelOf={(spacing) => UNIT_SPACING_LABELS[spacing]}
         onSelect={(unitSpacing) => onChange({ unitSpacing })}
       />
       <FormatSelect
         id={`${idPrefix}-precision`}
         label="Precision"
-        value={`${format.precision}` as const}
-        labels={PRECISION_LABELS}
-        onSelect={(option) =>
-          onChange({ precision: PRECISION_BY_OPTION[option] })
-        }
+        value={format.precision}
+        options={METRIC_PRECISIONS}
+        labelOf={String}
+        onSelect={(precision) => onChange({ precision })}
       />
     </>
   )
 }
 
-type FormatSelectProps<T extends string> = {
+type FormatSelectProps<T extends string | number> = {
   id: string
   label: string
   value: T
-  labels: Record<T, string>
+  options: readonly T[]
+  labelOf: (option: T) => string
   onSelect: (value: T) => void
 }
 
-function FormatSelect<T extends string>({
+// Select 只收字串值；以選項本身的字串形式對回原值，數字精度也能共用同一元件
+function FormatSelect<T extends string | number>({
   id,
   label,
   value,
-  labels,
+  options,
+  labelOf,
   onSelect,
 }: FormatSelectProps<T>) {
-  const options = Object.keys(labels) as T[]
-  const isOption = (candidate: unknown): candidate is T =>
-    typeof candidate === "string" && Object.hasOwn(labels, candidate)
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Select
-        value={value}
+        value={String(value)}
         onValueChange={(next) => {
-          if (isOption(next)) onSelect(next)
+          const option = options.find((candidate) => String(candidate) === next)
+          if (option !== undefined) onSelect(option)
         }}
       >
         <SelectTrigger id={id}>
@@ -111,8 +110,8 @@ function FormatSelect<T extends string>({
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {labels[option]}
+            <SelectItem key={option} value={String(option)}>
+              {labelOf(option)}
             </SelectItem>
           ))}
         </SelectContent>

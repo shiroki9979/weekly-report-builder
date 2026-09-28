@@ -96,7 +96,7 @@ Copy 與 batch export 共用同一條單頁流程。
 
 ## 4. Stage context 帶型別事實，頁碼政策收進同一 module
 
-- **相關 module**：`src/lib/stage-page-context.ts`（`createStagePageContext`、`mondayFromWeekLabel`）、`src/components/stage/stage-slide.tsx`、`src/components/stage/editorial-frame.tsx`、`src/lib/week-document.ts`（`PAGE_NUMBER_LAYOUTS`、`defaultPageNumberVisibility`、`isPageNumberVisible`）、`src/lib/week-clone.ts`、`src/components/workshop/page-number-select.tsx`、`src/components/workshop/page-navigator.tsx`、`src/components/workshop/workshop-shell.tsx`。
+- **相關 module**：`src/lib/stage-page-context.ts`（`createStagePageContext`、`mondayFromWeekLabel`）、`src/components/stage/stage-slide.tsx`、`src/components/stage/editorial-frame.tsx`、`src/lib/week-document.ts`（`PAGE_NUMBER_LAYOUTS`、`defaultPageNumberVisibility`、`isPageNumberVisible`）、`src/lib/week-clone.ts`、`src/components/workshop/page-number-select.tsx`、`src/components/workshop/page-navigator.tsx`、`src/components/workshop/workshop-preview.tsx`。
 - **問題**：`StagePageContext` 把狀態藏進顯示字串：`StageSlide` 以 `pageLabel === "Hidden"` 判斷 Hidden Page，HTML Page 需要的 Monday 則從 Week Label `slice(0, 10)` 取回。頁碼可見性（週預設、單頁覆寫、HTML Page 預設不疊、Two-column 與 Hidden Page 不畫、clone 保留或丟棄）散在 6 個檔案，預設值 `showPageNumbers ?? true` 在 shell 又寫一次。
 - **做法**：Stage context module 回傳型別事實（是否 Hidden、Monday、Page Position 序號與總數、是否畫頁碼），renderer 只負責畫。Week Label 格式與頁碼的預設、覆寫、clone 規則移進同一個 module。
 - **證據**：

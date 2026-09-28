@@ -2,7 +2,7 @@ import type { CSSProperties } from "react"
 
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import type { NextActionsPage } from "@/lib/week-document"
+import { nextActionsVariant, type NextActionsPage } from "@/lib/week-document"
 
 type NextActionsSlideProps = {
   page: NextActionsPage
@@ -14,7 +14,7 @@ function formatCommitmentNumber(index: number): string {
 }
 
 export function NextActionsSlide({ page, context }: NextActionsSlideProps) {
-  const rows = page.variant === "rows"
+  const rows = nextActionsVariant(page) === "rows"
   const actionGridStyle = {
     "--editorial-commitment-count": page.commitments.length,
   } as CSSProperties

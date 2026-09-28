@@ -50,6 +50,47 @@ async function fitsPreview(page: Page, width: number, height: number) {
   expect(result).toEqual({ width, height, violations: [] })
 }
 
+// 同頁 Trend 文字的 clamp 下限；圖表若被剩餘高度等比壓縮，軸字會先低於此值
+const MIN_TREND_TEXT_PX = 9
+const TREND_DEMO_PAGES = new Set<number>([6, 7, 8])
+
+async function expectReadableFullWidthChart(page: Page) {
+  const chart = page
+    .getByTestId("stage-frame")
+    .locator(".editorial-trend-chart")
+  const drawn = await chart.evaluate((figure) => {
+    const svg = figure.querySelector("svg")!
+    const box = svg.getBoundingClientRect()
+    const viewBox = svg.viewBox.baseVal
+    // 預設 preserveAspectRatio 為 meet，實際繪製比例取寬高兩者較小值
+    const scale = Math.min(
+      box.width / viewBox.width,
+      box.height / viewBox.height
+    )
+    const axis = svg.querySelector(".editorial-trend-axis")!
+    const summary = figure.parentElement!.querySelector(
+      ".editorial-trend-summary"
+    )!
+    return {
+      figureWidth: figure.getBoundingClientRect().width,
+      plotWidth: viewBox.width * scale,
+      axisFontPx: Number(axis.getAttribute("font-size")) * scale,
+      // 圖表區塊（含圖例與日期範圍）須在摘要之上結束，不得互相覆蓋
+      overlapPx:
+        figure.lastElementChild!.getBoundingClientRect().bottom -
+        summary.getBoundingClientRect().top,
+    }
+  })
+  expect(drawn.plotWidth).toBeCloseTo(drawn.figureWidth, 0)
+  expect(drawn.axisFontPx).toBeGreaterThanOrEqual(MIN_TREND_TEXT_PX)
+  expect(drawn.overlapPx).toBeLessThanOrEqual(0)
+}
+
+// 預覽尺寸剛改變時，圖表要等 ResizeObserver 重算 viewBox 後才會回到全寬
+async function expectChartSettledAtFullWidth(page: Page) {
+  await expect(async () => expectReadableFullWidthChart(page)).toPass()
+}
+
 test("fresh public demo opens both directions and both Next Actions compositions", async ({
   page,
 }) => {
@@ -70,10 +111,12 @@ test("fresh public demo opens both directions and both Next Actions compositions
     const stage = page.getByTestId("stage-frame")
     await expect(stage.getByText(required, { exact: false })).toBeVisible()
     await fitsPreview(page, 800, 450)
+    if (TREND_DEMO_PAGES.has(number)) await expectChartSettledAtFullWidth(page)
     await stage.screenshot({
       path: test.info().outputPath(`demo-p${number}-800.png`),
     })
     await fitsPreview(page, 1280, 720)
+    if (TREND_DEMO_PAGES.has(number)) await expectChartSettledAtFullWidth(page)
     await page.getByRole("button", { name: "Copy to clipboard" }).click()
     await expect(
       page.getByRole("status").filter({ hasText: "Copied" })
@@ -172,4 +215,23 @@ test("dated missing history survives next-week trim, append, save, reload, and P
   expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
   expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([2560, 1440])
   fs.writeFileSync(test.info().outputPath("next-week-p06.png"), bytes)
+})
+
+test("blocks a Trend page whose text leaves no room for the full-width chart", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Edit", exact: true }).click()
+  await selectPage(page, 6)
+  await page
+    .getByRole("textbox", { name: "Interpretation" })
+    .fill("The latest sample is still above the inclusive ceiling. ".repeat(12))
+
+  await expectChartSettledAtFullWidth(page)
+  await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect(
+    page
+      .locator("p[role='alert']")
+      .filter({ hasText: "Page overflows the 1280 × 720 capture stage" })
+  ).toBeVisible()
 })

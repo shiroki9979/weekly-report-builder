@@ -22,8 +22,17 @@ import {
   canAddEntry,
   canRemoveEntry,
   CARDINALITY,
+  isNextActionsVariant,
+  NEXT_ACTIONS_VARIANTS,
+  nextActionsVariant,
   type NextActionsPage,
+  type NextActionsVariant,
 } from "@/lib/week-document"
+
+const VARIANT_LABELS: Record<NextActionsVariant, string> = {
+  rows: "Rows",
+  columns: "Columns",
+}
 
 export function NextActionsEditorForm({
   week,
@@ -46,10 +55,10 @@ export function NextActionsEditorForm({
       <div className="space-y-2">
         <Label htmlFor="next-actions-variant">Composition</Label>
         <Select
-          value={page.variant ?? "columns"}
+          value={nextActionsVariant(page)}
           disabled={readOnly}
           onValueChange={(value) => {
-            if (value === "rows" || value === "columns") {
+            if (isNextActionsVariant(value)) {
               onChange((currentWeek) =>
                 setNextActionsVariant(currentWeek, pageIndex, value)
               )
@@ -58,12 +67,15 @@ export function NextActionsEditorForm({
         >
           <SelectTrigger id="next-actions-variant">
             <SelectValue>
-              {page.variant === "rows" ? "Rows" : "Columns"}
+              {VARIANT_LABELS[nextActionsVariant(page)]}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="rows">Rows</SelectItem>
-            <SelectItem value="columns">Columns</SelectItem>
+            {NEXT_ACTIONS_VARIANTS.map((variant) => (
+              <SelectItem key={variant} value={variant}>
+                {VARIANT_LABELS[variant]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

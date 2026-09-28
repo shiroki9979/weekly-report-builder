@@ -4,6 +4,7 @@ import {
   CARDINALITY,
   isNextActionsPage,
   type Commitment,
+  type NextActionsVariant,
   type WeekDocument,
 } from "./week-document"
 import { typedPageUpdater } from "./update-week-page"
@@ -20,7 +21,7 @@ export function blankCommitment(): Commitment {
 export function setNextActionsVariant(
   week: WeekDocument,
   pageIndex: number,
-  variant: "columns" | "rows"
+  variant: NextActionsVariant
 ): WeekDocument {
   return updateNextActions(week, pageIndex, (page) => ({ ...page, variant }))
 }
