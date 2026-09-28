@@ -35,14 +35,23 @@ const LARGE_MAGNITUDE = 1e9
 const NARROW_RANGE_RATIO = 1e-6
 const OFFSET_TICK_DIGITS = 3
 const PLAIN_TICK_DIGITS = 12
-// html-to-image 擷取 PNG 時不會把 stylesheet 或 var() 帶進 SVG 子元素，顏色只能以字面值寫在屬性上；
-// 數值須與 stage.css／editorial-layouts.css 的同名 token 保持一致
+// html-to-image 擷取 PNG 時不會把 stylesheet 或 var() 帶進 SVG 子元素，
+// SVG 外觀（顏色、線寬、字級）只能以字面值寫在屬性上；顏色須與 stage.css／editorial-layouts.css 的同名 token 一致
 const SVG_INK = {
   line: "#d0d7de",
   mute: "#5c5c5c",
   blue: "#2e75b6",
   warnInk: "#8a5508",
   paper: "#ffffff",
+} as const
+
+const SVG_STYLE = {
+  grid: { stroke: SVG_INK.line },
+  axis: { fill: SVG_INK.mute, fontSize: 15 },
+  target: { stroke: SVG_INK.warnInk, strokeWidth: 2, strokeDasharray: "7 5" },
+  line: { fill: "none", stroke: SVG_INK.blue, strokeWidth: 3 },
+  point: { fill: SVG_INK.blue, stroke: SVG_INK.paper, strokeWidth: 2 },
+  missing: { fill: SVG_INK.warnInk, fontSize: 20, fontWeight: 700 },
 } as const
 
 function latestWeekStatus(page: TrendTargetPage): string {
@@ -137,7 +146,7 @@ function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
     <g key={index}>
       <line
         className="editorial-trend-grid"
-        stroke={SVG_INK.line}
+        {...SVG_STYLE.grid}
         x1={CHART_LEFT}
         x2={CHART_RIGHT}
         y1={y(tick)}
@@ -145,7 +154,7 @@ function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
       />
       <text
         className="editorial-trend-axis"
-        fill={SVG_INK.mute}
+        {...SVG_STYLE.axis}
         x={CHART_LEFT - Y_LABEL_GAP}
         y={y(tick) + Y_LABEL_BASELINE}
         textAnchor="end"
@@ -171,9 +180,7 @@ function TrendMarker({
     return (
       <circle
         className="editorial-trend-point"
-        fill={SVG_INK.blue}
-        stroke={SVG_INK.paper}
-        strokeWidth="2"
+        {...SVG_STYLE.point}
         cx={geometry.x(index)}
         cy={geometry.y(entry.value)}
         r={isLatest ? LATEST_POINT_RADIUS : POINT_RADIUS}
@@ -183,9 +190,7 @@ function TrendMarker({
     return (
       <text
         className="editorial-trend-missing"
-        fill={SVG_INK.warnInk}
-        fontSize="20"
-        fontWeight="700"
+        {...SVG_STYLE.missing}
         aria-label="No observation"
         textAnchor="middle"
         x={geometry.x(index)}
@@ -209,9 +214,7 @@ function TrendSeries({
       {page.target !== null ? (
         <line
           className="editorial-trend-target"
-          stroke={SVG_INK.warnInk}
-          strokeWidth="2"
-          strokeDasharray="7 5"
+          {...SVG_STYLE.target}
           x1={CHART_LEFT}
           x2={CHART_RIGHT}
           y1={geometry.y(page.target)}
@@ -220,9 +223,7 @@ function TrendSeries({
       ) : null}
       <path
         className="editorial-trend-line"
-        fill="none"
-        stroke={SVG_INK.blue}
-        strokeWidth="3"
+        {...SVG_STYLE.line}
         d={geometry.line}
       />
       {page.observations.map((entry, index) => (
@@ -257,7 +258,7 @@ function TrendXAxis({
       <g key={monday}>
         <line
           className="editorial-trend-grid"
-          stroke={SVG_INK.line}
+          {...SVG_STYLE.grid}
           x1={geometry.x(index)}
           x2={geometry.x(index)}
           y1={CHART_BOTTOM}
@@ -266,7 +267,7 @@ function TrendXAxis({
         {showsDateLabel(index, page.observations.length) ? (
           <text
             className="editorial-trend-axis"
-            fill={SVG_INK.mute}
+            {...SVG_STYLE.axis}
             x={geometry.x(index)}
             y={CHART_BOTTOM + X_LABEL_OFFSET}
             textAnchor="middle"

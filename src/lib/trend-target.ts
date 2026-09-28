@@ -25,9 +25,14 @@ export function observationMonday(start: string, index: number): string {
   return value
 }
 
+// 超出 ISO 日期範圍時拋錯，呼叫端可藉此驗證整段區間都能標日期
+export function trendRangeEnd(start: string, length: number): string {
+  return observationMonday(start, length - 1)
+}
+
 export function trendEndMonday(page: TrendTargetPage): string | null {
   return page.startMonday
-    ? observationMonday(page.startMonday, page.observations.length - 1)
+    ? trendRangeEnd(page.startMonday, page.observations.length)
     : null
 }
 

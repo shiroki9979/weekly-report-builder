@@ -450,10 +450,6 @@
   min-height: 0;
 }
 
-.editorial-trend-axis {
-  font-size: 15px;
-}
-
 .editorial-trend-legend {
   display: flex;
   gap: 1.4em;
