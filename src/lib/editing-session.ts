@@ -489,7 +489,10 @@ export function sessionReadiness(
     throw new Error(`Unknown page id: ${pageId}`)
   }
   return isStructuredWeekPage(page)
-    ? assessContentReadiness(page, session.metricInput, session.week?.start)
+    ? assessContentReadiness(page, {
+        metricInput: session.metricInput,
+        reportingMonday: session.week?.start,
+      })
     : []
 }
 

@@ -8,16 +8,14 @@ import {
   formatTrendTarget,
   formatTrendValue,
   observationMonday,
+  TARGET_NOT_SET,
   targetMet,
   trendBounds,
   trendDirectionRule,
   trendEndMonday,
+  UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import type {
-  TrendTargetPage,
-  UnmeasuredState,
-  WeeklyObservation,
-} from "@/lib/week-document"
+import type { TrendTargetPage, WeeklyObservation } from "@/lib/week-document"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
@@ -30,9 +28,13 @@ const CHART_RIGHT = 976
 const CHART_TOP = 10
 // 圖底保留給 x 軸刻度與日期標籤的高度
 const X_AXIS_BAND = 46
-// 五個 y 軸刻度標籤（字級 15）互不重疊所需的最小繪圖高度；空間更小時改由 overflow 量測擋下
-const MIN_CHART_HEIGHT = CHART_TOP + 72 + X_AXIS_BAND
 const Y_TICK_COUNT = 5
+const AXIS_FONT_SIZE = 15
+// 相鄰 y 軸刻度標籤的最小間距：字級加上少許行距，標籤才不會互相重疊
+const Y_LABEL_MIN_STEP = AXIS_FONT_SIZE + 3
+// 所有 y 軸刻度標籤互不重疊所需的最小繪圖高度；空間更小時改由 overflow 量測擋下
+const MIN_CHART_HEIGHT =
+  CHART_TOP + (Y_TICK_COUNT - 1) * Y_LABEL_MIN_STEP + X_AXIS_BAND
 const Y_LABEL_GAP = 12
 const Y_LABEL_BASELINE = 5
 const X_TICK_LENGTH = 5
@@ -63,29 +65,19 @@ const SVG_INK = {
 
 const SVG_STYLE = {
   grid: { stroke: SVG_INK.line },
-  axis: { fill: SVG_INK.mute, fontSize: 15 },
+  axis: { fill: SVG_INK.mute, fontSize: AXIS_FONT_SIZE },
   target: { stroke: SVG_INK.warnInk, strokeWidth: 3, strokeDasharray: "7 5" },
   line: { fill: "none", stroke: SVG_INK.blue, strokeWidth: 3 },
   point: { fill: SVG_INK.blue, stroke: SVG_INK.paper, strokeWidth: 2 },
-  missing: { fill: SVG_INK.warnInk, fontSize: 20, fontWeight: 700 },
+  missing: { fill: SVG_INK.mute, fontSize: 20, fontWeight: 700 },
 } as const
-
-// 未量測週次的文案依規格集中於此：Missing 在圖上與描述稱 No observation，
-// 作為最新週時摘要改稱 No data；Unfilled 一律為 Not entered
-const UNMEASURED_COPY: Record<
-  UnmeasuredState,
-  { observation: string; latestStatus: string }
-> = {
-  missing: { observation: "No observation", latestStatus: "No data" },
-  unfilled: { observation: "Not entered", latestStatus: "Not entered" },
-}
 
 function latestWeekStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
   if (!latest) return UNMEASURED_COPY.unfilled.latestStatus
   if (latest.state !== "measured")
     return UNMEASURED_COPY[latest.state].latestStatus
-  if (page.target === null) return "Target not set"
+  if (page.target === null) return TARGET_NOT_SET
   return targetMet(latest.value, page) ? "Target met" : "Target missed"
 }
 
@@ -452,7 +444,7 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
     return <p role="alert">Trend axis cannot represent these values</p>
   }
   const axisOffset = axisOffsetFor(bounds)
-  const targetLabel = formatTrendTarget(page) ?? "Target not set"
+  const targetLabel = formatTrendTarget(page) ?? TARGET_NOT_SET
   return (
     <figure className="editorial-trend-chart">
       <figcaption>

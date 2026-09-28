@@ -18,7 +18,8 @@ import {
   canChangeTrendEndpoint,
   isStartSettled,
   observationEntryPath,
-  trendRangeError,
+  startMondayInput,
+  trendDatingError,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
 import type { TrendEditorControls } from "@/lib/trend-session"
@@ -28,12 +29,14 @@ import {
   TREND_DIRECTIONS,
   trendDirectionRule,
   trendRangeEnd,
+  UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import { isCalendarMonday } from "@/lib/week-id"
 import { typedPageUpdater } from "@/lib/update-week-page"
 import {
   hasEnteredObservations,
   isTrendTargetPage,
+  type UnmeasuredState,
+  type WeeklyObservation,
   type TrendTargetPage,
 } from "@/lib/week-document"
 
@@ -41,8 +44,18 @@ const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
 // 日期不合法時不顯示預覽即可；錯誤原因已由 readiness 的 startMonday issue 呈現
 function proposedRange(start: string, length: number): string | null {
-  if (!isCalendarMonday(start) || trendRangeError(start, length)) return null
+  if (trendDatingError(start, length)) return null
   return `${start} – ${trendRangeEnd(start, length)}`
+}
+
+// Missing 與輸入數值互為切換：按鈕文案與切換後的狀態都由目前狀態決定
+function observationToggle(entry: WeeklyObservation): {
+  label: string
+  next: UnmeasuredState
+} {
+  return entry.state === "missing"
+    ? { label: "Enter value", next: "unfilled" }
+    : { label: UNMEASURED_COPY.missing.observation, next: "missing" }
 }
 
 const ENDPOINT_BUTTONS: { action: TrendEndpointAction; label: string }[] = [
@@ -89,16 +102,17 @@ function TrendMetricLabel({
   )
 }
 
-function TrendDateRangeControls({ page, paths, trendControls }: FieldProps) {
-  const pendingStart = trendControls.read({
-    pageId: page.id,
-    path: "startMonday",
-  })
+function TrendDateRangeControls({
+  page,
+  paths,
+  trendControls,
+  startText,
+}: FieldProps & { startText: string }) {
   const dateProposal =
     hasEnteredObservations(page.observations) &&
     page.startMonday &&
-    pendingStart !== page.startMonday
-      ? proposedRange(pendingStart, page.observations.length)
+    startText !== page.startMonday
+      ? proposedRange(startText, page.observations.length)
       : null
   return (
     <div className="space-y-2">
@@ -106,13 +120,10 @@ function TrendDateRangeControls({ page, paths, trendControls }: FieldProps) {
       <Input
         id="trend-start"
         placeholder="YYYY-MM-DD"
-        value={pendingStart}
+        value={startText}
         aria-invalid={paths.has("startMonday") || undefined}
         onChange={(event) =>
-          trendControls.write(
-            { pageId: page.id, path: "startMonday" },
-            event.target.value
-          )
+          trendControls.write(startMondayInput(page.id), event.target.value)
         }
       />
       <p className="text-xs text-muted-foreground">
@@ -155,13 +166,10 @@ function TrendObservationControls({
   page,
   paths,
   trendControls,
+  startText,
   readOnly,
-}: FieldProps & { readOnly?: boolean }) {
-  const pendingStart = trendControls.read({
-    pageId: page.id,
-    path: "startMonday",
-  })
-  const rangeReady = isStartSettled(page, pendingStart)
+}: FieldProps & { startText: string; readOnly?: boolean }) {
+  const rangeReady = isStartSettled(page, startText)
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-medium">Weekly observations</legend>
@@ -185,11 +193,12 @@ function TrendObservationControls({
         const label = page.startMonday
           ? `Week ${index + 1} · ${observationMonday(page.startMonday, index)}`
           : `Week ${index + 1}`
+        const toggle = observationToggle(entry)
         return (
           <div key={index} className="space-y-1">
             <Label htmlFor={`trend-value-${index}`}>{label}</Label>
             {entry.state === "missing" ? (
-              <p>No observation</p>
+              <p>{UNMEASURED_COPY.missing.observation}</p>
             ) : (
               <Input
                 id={`trend-value-${index}`}
@@ -213,15 +222,15 @@ function TrendObservationControls({
               variant="outline"
               size="sm"
               disabled={readOnly || !page.startMonday}
-              aria-label={`${entry.state === "missing" ? "Enter value" : "No observation"} for ${label}`}
+              aria-label={`${toggle.label} for ${label}`}
               onClick={() =>
                 trendControls.setObservationState(
                   { pageId: page.id, index },
-                  entry.state === "missing" ? "unfilled" : "missing"
+                  toggle.next
                 )
               }
             >
-              {entry.state === "missing" ? "Enter value" : "No observation"}
+              {toggle.label}
             </Button>
           </div>
         )
@@ -339,6 +348,7 @@ export function TrendTargetEditorForm({
   const paths = issuePaths(issues)
   const update: UpdateTrend = (change) =>
     onChange((current) => updateTrendPage(current, pageIndex, change))
+  const startText = trendControls.read(startMondayInput(page.id))
 
   return (
     <EditorialPageEditorChrome
@@ -355,11 +365,13 @@ export function TrendTargetEditorForm({
         page={page}
         paths={paths}
         trendControls={trendControls}
+        startText={startText}
       />
       <TrendObservationControls
         page={page}
         paths={paths}
         trendControls={trendControls}
+        startText={startText}
         readOnly={readOnly}
       />
       <TrendTargetAndFormatControls

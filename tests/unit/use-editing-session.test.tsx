@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import { useEditingSession } from "@/hooks/use-editing-session"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
+import { deferred, until } from "./support/async"
 import { InMemoryWeekStore } from "./support/in-memory-week-store"
 
 const older = "2026-01-05"
@@ -27,24 +28,7 @@ function store() {
   )
 }
 
-function deferred<T>() {
-  let resolve!: (value: T) => void
-  return {
-    promise: new Promise<T>((done) => {
-      resolve = done
-    }),
-    resolve,
-  }
-}
-
 type HookResult = { current: ReturnType<typeof useEditingSession> }
-
-// Arrange 階段等待非同步載入完成；等待本身不是測試要驗證的行為
-async function until(condition: () => boolean): Promise<void> {
-  await waitFor(() => {
-    if (!condition()) throw new Error("Precondition not reached yet")
-  })
-}
 
 async function ready(result: HookResult) {
   await until(() => result.current.loadStatus.kind === "ready")

@@ -54,12 +54,8 @@ describe("Trend & Target SVG ink", () => {
       sheet: "editorial-layouts.css",
       token: "warn-ink",
     },
-    {
-      mark: "missing",
-      attribute: "fill",
-      sheet: "editorial-layouts.css",
-      token: "warn-ink",
-    },
+    // 缺測標記與目標線分色，目標貼近 y 軸下限時 × 疊在虛線上也不會被讀成「等於目標」
+    { mark: "missing", attribute: "fill", sheet: "stage.css", token: "mute" },
   ])(
     "paints the $mark $attribute with --$token",
     ({ mark, attribute, sheet, token }) => {

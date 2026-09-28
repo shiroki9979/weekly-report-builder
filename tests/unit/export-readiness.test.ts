@@ -295,7 +295,7 @@ describe("assessExportEligibility", () => {
       assessExportEligibility(
         completeDecisionPage(),
         { status: "fit" },
-        metricInput
+        { metricInput }
       )
     ).toEqual({
       eligible: false,
@@ -314,7 +314,7 @@ describe("assessExportEligibility", () => {
     const assessment = assessExportEligibility(
       createBlankEvidenceDecisionPage("p01"),
       undefined,
-      metricInput
+      { metricInput }
     )
 
     expect(assessment.issues.map((issue) => [issue.path, issue.code])).toEqual([
