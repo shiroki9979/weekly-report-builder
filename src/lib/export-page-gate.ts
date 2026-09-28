@@ -7,6 +7,7 @@ import {
   assessExportEligibility,
   type CaptureAssessment,
   type ExportIssue,
+  type ReadinessContext,
 } from "./export-readiness"
 import {
   isHtmlWeekPage,
@@ -45,7 +46,8 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
-type GateDeps = ExportPageDeps & { metricInput: MetricInputMap }
+// 同一頁的 preflight 與量測後判定須用同一份 Metric Input 與報告週一，在入口組好一次
+type GateDeps = ExportPageDeps & { readiness: ReadinessContext }
 
 type PhaseLimit = { phase: string; timeoutMs: number }
 
@@ -73,8 +75,11 @@ export async function exportPage(
   if (deps.signal?.aborted) {
     return { kind: "failed", cause: deps.signal.reason }
   }
-  const gateDeps: GateDeps = { ...deps, metricInput: deps.metricInput ?? {} }
-  const readinessIssues = preflightIssues(week, page, gateDeps.metricInput)
+  const gateDeps: GateDeps = {
+    ...deps,
+    readiness: { metricInput: deps.metricInput, reportingMonday: week.start },
+  }
+  const readinessIssues = preflightIssues(page, gateDeps.readiness)
   if (readinessIssues.length > 0) {
     return { kind: "blocked", issues: readinessIssues }
   }
@@ -87,25 +92,21 @@ export async function exportPage(
         issues: [{ code: "html-load-failed", message: prepared.message }],
       }
     }
-    return await captureFromSession(prepared, week, page, gateDeps)
+    return await captureFromSession(prepared, page, gateDeps)
   } catch (cause: unknown) {
     return { kind: "failed", cause }
   }
 }
 
 function preflightIssues(
-  week: WeekDocument,
   page: WeekPage,
-  metricInput: MetricInputMap
+  readiness: ReadinessContext
 ): ExportIssue[] {
   if (!isSupportedStagePage(page)) {
     return assessExportEligibility(page).issues
   }
   if (isStructuredWeekPage(page)) {
-    return assessContentReadiness(page, {
-      metricInput,
-      reportingMonday: week.start,
-    })
+    return assessContentReadiness(page, readiness)
   }
   return []
 }
@@ -147,12 +148,11 @@ function disposeLateSession(
 
 async function captureFromSession(
   session: CaptureSession,
-  week: WeekDocument,
   page: WeekPage,
   deps: GateDeps
 ): Promise<PageGateResult> {
   try {
-    const issues = await measurementIssues(session, week, page, deps)
+    const issues = await measurementIssues(session, page, deps)
     if (issues.length > 0) {
       return { kind: "blocked", issues }
     }
@@ -164,7 +164,6 @@ async function captureFromSession(
 
 async function measurementIssues(
   session: CaptureSession,
-  week: WeekDocument,
   page: WeekPage,
   deps: GateDeps
 ): Promise<ExportIssue[]> {
@@ -189,10 +188,7 @@ async function measurementIssues(
     ]
   }
 
-  const assessment = assessExportEligibility(page, measurement, {
-    metricInput: deps.metricInput,
-    reportingMonday: week.start,
-  })
+  const assessment = assessExportEligibility(page, measurement, deps.readiness)
   return assessment.eligible ? [] : assessment.issues
 }
 

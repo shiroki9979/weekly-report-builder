@@ -1,6 +1,7 @@
 import type { TrendTargetPage, UnmeasuredState } from "./week-document"
+import { errorMessage } from "./error-message"
 import { withUnit } from "./unit-format"
-import { isMondayId } from "./week-id"
+import { isCalendarMonday, isMondayId } from "./week-id"
 
 const DAYS_PER_WEEK = 7
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
@@ -21,6 +22,34 @@ export function observationMonday(start: string, index: number): string {
 // 超出 ISO 日期範圍時拋錯，呼叫端可藉此驗證整段區間都能標日期
 export function trendRangeEnd(start: string, length: number): string {
   return observationMonday(start, length - 1)
+}
+
+function trendRangeError(start: string, length: number): string | null {
+  try {
+    trendRangeEnd(start, length)
+    return null
+  } catch (cause) {
+    return errorMessage(cause, "Trend range cannot be dated")
+  }
+}
+
+type TrendDatingError = {
+  path: "startMonday" | "observations"
+  message: string
+}
+
+// 起始週一須是真實週一，且整段區間都能標上 ISO 日期；parser、編輯中的輸入與 readiness 共用同一套檢查
+export function trendDatingError(
+  start: string,
+  length: number
+): TrendDatingError | null {
+  if (!isCalendarMonday(start))
+    return {
+      path: "startMonday",
+      message: "Starting Monday must be a real calendar Monday",
+    }
+  const rangeError = trendRangeError(start, length)
+  return rangeError ? { path: "observations", message: rangeError } : null
 }
 
 export function trendEndMonday(page: TrendTargetPage): string | null {

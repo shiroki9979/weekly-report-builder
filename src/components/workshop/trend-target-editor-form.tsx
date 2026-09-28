@@ -19,7 +19,6 @@ import {
   isStartSettled,
   observationEntryPath,
   startMondayInput,
-  trendDatingError,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
 import type { TrendEditorControls } from "@/lib/trend-session"
@@ -27,6 +26,7 @@ import {
   isTrendDirection,
   observationMonday,
   TREND_DIRECTIONS,
+  trendDatingError,
   trendDirectionRule,
   trendRangeEnd,
   UNMEASURED_COPY,

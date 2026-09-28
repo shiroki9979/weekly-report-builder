@@ -54,6 +54,42 @@ type EditorSidebarProps = {
   create: ToolbarCreateControls
 }
 
+function SidebarModeHeader({
+  editMode,
+  disabled,
+  onToggle,
+}: {
+  editMode: boolean
+  disabled: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Sidebar
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {editMode
+            ? "Edit mode — forms are writable"
+            : "Locked — browse only; unlock to edit"}
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant={editMode ? "outline" : "default"}
+        size="sm"
+        disabled={disabled}
+        aria-pressed={editMode}
+        onClick={onToggle}
+      >
+        {editMode ? <LockIcon /> : <PencilIcon />}
+        {editMode ? "Lock" : "Edit"}
+      </Button>
+    </div>
+  )
+}
+
 /** 週次切換時以 key remount，editMode 自動回到鎖定 */
 function EditorSidebar({
   weeks,
@@ -74,29 +110,11 @@ function EditorSidebar({
   return (
     <ScrollArea className="h-full min-w-0">
       <div className="space-y-4 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Sidebar
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {editMode
-                ? "Edit mode — forms are writable"
-                : "Locked — browse only; unlock to edit"}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant={editMode ? "outline" : "default"}
-            size="sm"
-            disabled={loading || !week}
-            aria-pressed={editMode}
-            onClick={() => setEditMode((current) => !current)}
-          >
-            {editMode ? <LockIcon /> : <PencilIcon />}
-            {editMode ? "Lock" : "Edit"}
-          </Button>
-        </div>
+        <SidebarModeHeader
+          editMode={editMode}
+          disabled={loading || !week}
+          onToggle={() => setEditMode((current) => !current)}
+        />
 
         {loadStatus.kind === "empty" ? (
           // 空 store 只說明如何 seed，不提供建立第一週

@@ -5,6 +5,7 @@ import { WorkshopPreview } from "@/components/workshop/workshop-preview"
 import { measureStageOverflow } from "@/lib/overflow-measurement"
 import type { WeekDocument } from "@/lib/week-document"
 import { completePage } from "./export-fixtures"
+import { stubWorkshopDom } from "./support/workshop-dom"
 
 vi.mock("@/lib/overflow-measurement", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/overflow-measurement")>()),
@@ -30,26 +31,15 @@ function renderPreview() {
 }
 
 describe("WorkshopPreview measurement notice", () => {
+  let restoreDom: () => void
+
   beforeEach(() => {
     vi.mocked(measureStageOverflow).mockReset()
-    // jsdom 沒有 ResizeObserver；可調整面板只需要它存在，不依賴回呼
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      }
-    )
-    Object.defineProperty(Element.prototype, "getAnimations", {
-      configurable: true,
-      writable: true,
-      value: () => [],
-    })
+    restoreDom = stubWorkshopDom()
   })
 
   afterEach(() => {
-    vi.unstubAllGlobals()
+    restoreDom()
   })
 
   it("explains a preview overflow without blocking export", async () => {

@@ -1,6 +1,5 @@
 import { validateHtmlFileName } from "./html-page"
-import { isTrendDirection, observationMonday } from "./trend-target"
-import { isCalendarMonday } from "./week-id"
+import { isTrendDirection, trendDatingError } from "./trend-target"
 
 export type SlideItem = {
   heading: string
@@ -971,10 +970,8 @@ function parseTrendDirection(
 
 function parseStartMonday(value: unknown, field: string): string | null {
   if (value === null) return null
-  if (typeof value !== "string" || !isCalendarMonday(value))
-    throw new Error(
-      `Invalid week document: ${field}.startMonday must be a Monday`
-    )
+  if (typeof value !== "string")
+    throw new Error(`Invalid week document: ${field}.startMonday`)
   return value
 }
 
@@ -1025,14 +1022,11 @@ function assertTrendDating(
       )
     return
   }
-  try {
-    observationMonday(startMonday, observations.length - 1)
-  } catch (cause) {
+  const datingError = trendDatingError(startMonday, observations.length)
+  if (datingError)
     throw new Error(
-      `Invalid week document: ${field}.observations exceed supported ISO dates`,
-      { cause }
+      `Invalid week document: ${field}.${datingError.path}: ${datingError.message}`
     )
-  }
 }
 
 function parseHtmlPage(

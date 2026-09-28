@@ -8,10 +8,8 @@ import {
   type PageMetricInputs,
   type TrendInputPath,
 } from "./metric-input"
-import { errorMessage } from "./error-message"
 import type { MetricInputResult } from "./metric-format"
-import { trendRangeEnd } from "./trend-target"
-import { isCalendarMonday } from "./week-id"
+import { trendDatingError } from "./trend-target"
 import {
   assertCanAddEntry,
   assertCanRemoveEntry,
@@ -151,15 +149,6 @@ export function isStartSettled(
   )
 }
 
-function trendRangeError(start: string, length: number): string | null {
-  try {
-    trendRangeEnd(start, length)
-    return null
-  } catch (cause) {
-    return errorMessage(cause, "Trend range cannot be dated")
-  }
-}
-
 export function trendInputError(
   page: TrendTargetPage,
   inputs: MetricInputMap,
@@ -172,25 +161,6 @@ export function trendInputError(
     return "Set starting Monday before entering observations"
   const parsed = parseTrendNumber(raw)
   return parsed.status === "invalid" ? parsed.message : null
-}
-
-type TrendDatingError = {
-  path: "startMonday" | "observations"
-  message: string
-}
-
-// 起始週一須是真實週一，且整段區間都能標上 ISO 日期；編輯中的輸入與 readiness 共用同一套檢查
-export function trendDatingError(
-  start: string,
-  length: number
-): TrendDatingError | null {
-  if (!isCalendarMonday(start))
-    return {
-      path: "startMonday",
-      message: "Starting Monday must be a real calendar Monday",
-    }
-  const rangeError = trendRangeError(start, length)
-  return rangeError ? { path: "observations", message: rangeError } : null
 }
 
 function startMondayInputError(
