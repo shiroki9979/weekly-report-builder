@@ -12,14 +12,16 @@ import {
   deleteSessionPage,
   addSessionPage,
   openSessionWeek,
-  readTrendInput,
   sessionReadiness,
-  setTrendObservationState,
-  writeTrendInput,
+} from "@/lib/editing-session"
+import {
+  cancelTrendRedate,
   changeTrendEndpoint,
   confirmTrendRedate,
-  cancelTrendRedate,
-} from "@/lib/editing-session"
+  readTrendInput,
+  setTrendObservationState,
+  writeTrendInput,
+} from "@/lib/trend-session"
 import { exportPage } from "@/lib/export-page-gate"
 import { fakeAdapter } from "./export-fixtures"
 import { exportVisiblePages } from "@/lib/week-export"
@@ -128,127 +130,194 @@ describe("Trend & Target", () => {
     ).toHaveTextContent("1e+12")
   })
 
-  it("maintains endpoint dates and raw input without moving retained evidence", () => {
-    const week = {
-      start: "2027-01-11",
-      end: "2027-01-15",
-      pages: [
-        {
-          ...complete,
-          startMonday: "2026-12-28",
-          observations: [
-            { state: "measured" as const, value: 1 },
-            { state: "missing" as const },
-            { state: "measured" as const, value: 3 },
-          ],
-        },
-      ],
-    }
-    let session = createEditingSession(week)
-    session = writeTrendInput(
-      session,
-      { pageId: "p01", path: "observations[0].value" },
-      "1.00"
-    )
-    session = writeTrendInput(
-      session,
-      { pageId: "p01", path: "observations[2].value" },
-      "3e"
-    )
-    session = changeTrendEndpoint(session, "p01", "prepend")
-    expect(session.week?.pages[0]).toMatchObject({
-      startMonday: "2026-12-21",
-      observations: [
-        { state: "unfilled" },
-        { state: "measured", value: 1 },
-        { state: "missing" },
-        { state: "measured", value: 3 },
-      ],
-    })
-    expect(
-      readTrendInput(session, { pageId: "p01", path: "observations[3].value" })
-    ).toBe("3e")
-    expect(
-      readTrendInput(session, { pageId: "p01", path: "observations[1].value" })
-    ).toBe("1.00")
-    expect(canSaveSession(session).allowed).toBe(false)
-    session = changeTrendEndpoint(session, "p01", "remove-first")
-    expect(session.week?.pages[0]).toMatchObject({ startMonday: "2026-12-28" })
-    expect(
-      readTrendInput(session, { pageId: "p01", path: "observations[2].value" })
-    ).toBe("3e")
-    session = changeTrendEndpoint(session, "p01", "remove-last")
-    expect(canSaveSession(session).allowed).toBe(true)
-    expect(session.week?.pages[0]).toMatchObject({
-      observations: [{ state: "measured", value: 1 }, { state: "missing" }],
-    })
-    expect(() => changeTrendEndpoint(session, "p01", "remove-first")).toThrow(
-      /two/
-    )
-  })
-
-  it("requires explicit confirmation to re-date entered weeks and preserves invalid clearing", () => {
-    const week = { start: "2026-07-20", end: "2026-07-24", pages: [complete] }
-    let session = createEditingSession(week)
-    session = writeTrendInput(
-      session,
-      { pageId: "p01", path: "startMonday" },
-      "2026-07-13"
-    )
-    expect(session.week?.pages[0]).toMatchObject({ startMonday: "2026-07-06" })
-    expect(canSaveSession(session).allowed).toBe(false)
-    session = cancelTrendRedate(session, "p01")
-    expect(
-      readTrendInput(session, { pageId: "p01", path: "startMonday" })
-    ).toBe("2026-07-06")
-    session = writeTrendInput(
-      session,
-      { pageId: "p01", path: "startMonday" },
-      "2026-07-13"
-    )
-    session = confirmTrendRedate(session, "p01")
-    expect(session.week?.pages[0]).toMatchObject({
-      startMonday: "2026-07-13",
-      observations: complete.observations,
-    })
-    expect(canSaveSession(session).allowed).toBe(true)
-    session = writeTrendInput(
-      session,
-      { pageId: "p01", path: "startMonday" },
-      ""
-    )
-    expect(session.week?.pages[0]).toMatchObject({ startMonday: "2026-07-13" })
-    expect(canSaveSession(session).allowed).toBe(false)
-    expect(sessionReadiness(session, "p01")).toContainEqual(
-      expect.objectContaining({ path: "startMonday" })
-    )
-  })
-
-  it("never evicts at twelve positions", () => {
-    const page = {
+  describe("range endpoints", () => {
+    const dated = {
       ...complete,
-      startMonday: "2026-01-05",
-      observations: Array.from({ length: 12 }, () => ({
-        state: "unfilled" as const,
-      })),
+      startMonday: "2026-12-28",
+      observations: [
+        { state: "measured" as const, value: 1 },
+        { state: "missing" as const },
+        { state: "measured" as const, value: 3 },
+      ],
     }
-    let session = createEditingSession({
-      start: "2026-03-23",
-      end: "2026-03-27",
-      pages: [page],
+
+    function sessionWithRawInput() {
+      let session = createEditingSession({
+        start: "2027-01-11",
+        end: "2027-01-15",
+        pages: [dated],
+      })
+      session = writeTrendInput(
+        session,
+        { pageId: "p01", path: "observations[0].value" },
+        "1.00"
+      )
+      return writeTrendInput(
+        session,
+        { pageId: "p01", path: "observations[2].value" },
+        "3e"
+      )
+    }
+
+    it("prepends an unfilled week one Monday earlier and moves raw input with its week", () => {
+      const session = sessionWithRawInput()
+
+      const next = changeTrendEndpoint(session, "p01", "prepend")
+
+      expect(next.week?.pages[0]).toMatchObject({
+        startMonday: "2026-12-21",
+        observations: [
+          { state: "unfilled" },
+          { state: "measured", value: 1 },
+          { state: "missing" },
+          { state: "measured", value: 3 },
+        ],
+      })
+      expect(
+        readTrendInput(next, { pageId: "p01", path: "observations[1].value" })
+      ).toBe("1.00")
+      expect(
+        readTrendInput(next, { pageId: "p01", path: "observations[3].value" })
+      ).toBe("3e")
+      expect(canSaveSession(next).allowed).toBe(false)
     })
-    expect(() => changeTrendEndpoint(session, "p01", "append")).toThrow(
-      /twelve/
-    )
-    session = changeTrendEndpoint(session, "p01", "remove-first")
-    expect(session.week?.pages[0]).toMatchObject({ startMonday: "2026-01-12" })
-    session = changeTrendEndpoint(session, "p01", "append")
-    expect(
-      (session.week?.pages[0] as TrendTargetPage).observations
-    ).toHaveLength(12)
-    expect(
-      (session.week?.pages[0] as TrendTargetPage).observations.at(-1)
-    ).toEqual({ state: "unfilled" })
+
+    it("removes the earliest week and advances the starting Monday", () => {
+      const session = sessionWithRawInput()
+
+      const next = changeTrendEndpoint(session, "p01", "remove-first")
+
+      expect(next.week?.pages[0]).toMatchObject({
+        startMonday: "2027-01-04",
+        observations: [{ state: "missing" }, { state: "measured", value: 3 }],
+      })
+      expect(
+        readTrendInput(next, { pageId: "p01", path: "observations[1].value" })
+      ).toBe("3e")
+    })
+
+    it("removes the latest week together with its invalid raw input", () => {
+      const session = sessionWithRawInput()
+
+      const next = changeTrendEndpoint(session, "p01", "remove-last")
+
+      expect(next.week?.pages[0]).toMatchObject({
+        startMonday: "2026-12-28",
+        observations: [{ state: "measured", value: 1 }, { state: "missing" }],
+      })
+      expect(canSaveSession(next).allowed).toBe(true)
+    })
+
+    it("refuses to shrink below two weeks", () => {
+      const session = createEditingSession({
+        start: "2027-01-11",
+        end: "2027-01-15",
+        pages: [{ ...dated, observations: dated.observations.slice(0, 2) }],
+      })
+
+      expect(() => changeTrendEndpoint(session, "p01", "remove-first")).toThrow(
+        "Trend & Target must keep at least 2 observations"
+      )
+    })
+
+    describe("at twelve positions", () => {
+      const full = {
+        ...complete,
+        startMonday: "2026-01-05",
+        observations: Array.from({ length: 12 }, () => ({
+          state: "unfilled" as const,
+        })),
+      }
+      const session = createEditingSession({
+        start: "2026-03-23",
+        end: "2026-03-27",
+        pages: [full],
+      })
+
+      it("refuses to add a week instead of evicting history", () => {
+        expect(() => changeTrendEndpoint(session, "p01", "append")).toThrow(
+          "Trend & Target can have at most 12 observations"
+        )
+      })
+
+      it("appends an unfilled latest week after the earliest is removed", () => {
+        const trimmed = changeTrendEndpoint(session, "p01", "remove-first")
+
+        const next = changeTrendEndpoint(trimmed, "p01", "append")
+
+        const page = next.week?.pages[0] as TrendTargetPage
+        expect(page.startMonday).toBe("2026-01-12")
+        expect(page.observations).toHaveLength(12)
+        expect(page.observations.at(-1)).toEqual({ state: "unfilled" })
+      })
+    })
+  })
+
+  describe("re-dating entered weeks", () => {
+    function sessionWithProposedMonday() {
+      const session = createEditingSession({
+        start: "2026-07-20",
+        end: "2026-07-24",
+        pages: [complete],
+      })
+      return writeTrendInput(
+        session,
+        { pageId: "p01", path: "startMonday" },
+        "2026-07-13"
+      )
+    }
+
+    it("holds a proposed Monday as pending input and blocks save", () => {
+      const session = sessionWithProposedMonday()
+
+      expect(session.week?.pages[0]).toMatchObject({
+        startMonday: "2026-07-06",
+      })
+      expect(canSaveSession(session).allowed).toBe(false)
+    })
+
+    it("restores the committed Monday when the change is cancelled", () => {
+      const session = sessionWithProposedMonday()
+
+      const next = cancelTrendRedate(session, "p01")
+
+      expect(readTrendInput(next, { pageId: "p01", path: "startMonday" })).toBe(
+        "2026-07-06"
+      )
+      expect(canSaveSession(next).allowed).toBe(true)
+    })
+
+    it("moves every observation to the confirmed Monday without changing values", () => {
+      const session = sessionWithProposedMonday()
+
+      const next = confirmTrendRedate(session, "p01")
+
+      expect(next.week?.pages[0]).toMatchObject({
+        startMonday: "2026-07-13",
+        observations: complete.observations,
+      })
+      expect(canSaveSession(next).allowed).toBe(true)
+    })
+
+    it("keeps the Monday and reports readiness when dating is cleared while weeks are entered", () => {
+      const session = createEditingSession({
+        start: "2026-07-20",
+        end: "2026-07-24",
+        pages: [complete],
+      })
+
+      const next = writeTrendInput(
+        session,
+        { pageId: "p01", path: "startMonday" },
+        ""
+      )
+
+      expect(next.week?.pages[0]).toMatchObject({ startMonday: "2026-07-06" })
+      expect(canSaveSession(next).allowed).toBe(false)
+      expect(sessionReadiness(next, "p01")).toContainEqual(
+        expect.objectContaining({ path: "startMonday" })
+      )
+    })
   })
 
   it("blocks output while populated dating is cleared and permits undating only after every observation is cleared", async () => {
@@ -426,6 +495,49 @@ describe("Trend & Target", () => {
     expect(screen.getByText(/Exact: 8\.04 s > 8 s/)).toBeInTheDocument()
     expect(
       screen.getByText(/Observed weeks: 2026-07-06.*2026-07-20/)
+    ).toBeInTheDocument()
+  })
+
+  it("adds an exact comparison when a negative value rounds to the displayed zero target", () => {
+    const page: TrendTargetPage = {
+      ...complete,
+      observations: [
+        { state: "measured", value: 0.3 },
+        { state: "measured", value: -0.04 },
+      ],
+      target: 0,
+      direction: "at-least",
+    }
+
+    render(
+      <StageSlide
+        page={page}
+        context={{
+          weekLabel: "2026-07-13",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+
+    expect(screen.getByText("Target missed")).toBeInTheDocument()
+    expect(screen.getByText("Exact: -0.04 s < 0 s")).toBeInTheDocument()
+  })
+
+  it("names the metric unit in the chart caption", () => {
+    render(
+      <StageSlide
+        page={complete}
+        context={{
+          weekLabel: "2026-07-20",
+          pageLabel: "",
+          showPageNumber: false,
+        }}
+      />
+    )
+
+    expect(
+      screen.getByText("Mean export duration (s)", { selector: "figcaption" })
     ).toBeInTheDocument()
   })
 

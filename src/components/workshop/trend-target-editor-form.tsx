@@ -11,21 +11,56 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
-import type { TrendEditorControls } from "@/lib/editing-session"
 import { issuePaths } from "@/lib/export-readiness"
+import {
+  observationPath,
+  trendRangeError,
+  type TrendEndpointAction,
+} from "@/lib/trend-input"
+import type { TrendEditorControls } from "@/lib/trend-session"
 import { isCalendarMonday, observationMonday } from "@/lib/trend-target"
 import { typedPageUpdater } from "@/lib/update-week-page"
-import { isTrendTargetPage, type TrendTargetPage } from "@/lib/week-document"
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  isTrendTargetPage,
+  type TrendTargetPage,
+} from "@/lib/week-document"
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
+// 日期不合法時不顯示預覽即可；錯誤原因已由 readiness 的 startMonday issue 呈現
 function proposedRange(start: string, length: number): string | null {
-  if (!isCalendarMonday(start)) return null
-  try {
-    return `${start} – ${observationMonday(start, length - 1)}`
-  } catch {
-    return null
-  }
+  if (!isCalendarMonday(start) || trendRangeError(start, length)) return null
+  return `${start} – ${observationMonday(start, length - 1)}`
+}
+
+const ENDPOINT_BUTTONS: {
+  action: TrendEndpointAction
+  label: string
+  allowed: (page: TrendTargetPage) => boolean
+}[] = [
+  { action: "prepend", label: "Add earlier week", allowed: canAddWeek },
+  { action: "append", label: "Add later week", allowed: canAddWeek },
+  {
+    action: "remove-first",
+    label: "Remove earliest week",
+    allowed: canRemoveWeek,
+  },
+  {
+    action: "remove-last",
+    label: "Remove latest week",
+    allowed: canRemoveWeek,
+  },
+]
+
+function canAddWeek(page: TrendTargetPage): boolean {
+  return canAddEntry(page.observations, CARDINALITY.trendObservations)
+}
+
+function canRemoveWeek(page: TrendTargetPage): boolean {
+  return canRemoveEntry(page.observations, CARDINALITY.trendObservations)
 }
 
 type Props = PageEditorProps<TrendTargetPage> & {
@@ -47,7 +82,7 @@ function TrendMetricLabel({
   paths,
   update,
 }: Pick<FieldProps, "page" | "paths"> & { update: UpdateTrend }) {
-  const format = (label: string) =>
+  const setLabel = (label: string) =>
     update((current) => ({
       ...current,
       metric: { ...current.metric, label },
@@ -59,7 +94,7 @@ function TrendMetricLabel({
         id="trend-metric"
         value={page.metric.label}
         aria-invalid={paths.has("metric.label") || undefined}
-        onChange={(event) => format(event.target.value)}
+        onChange={(event) => setLabel(event.target.value)}
       />
     </div>
   )
@@ -141,41 +176,20 @@ function TrendObservationControls({
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-medium">Weekly observations</legend>
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!rangeReady || page.observations.length >= 12}
-          onClick={() => trendControls.endpoint(page.id, "prepend")}
-        >
-          Add earlier week
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!rangeReady || page.observations.length >= 12}
-          onClick={() => trendControls.endpoint(page.id, "append")}
-        >
-          Add later week
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!rangeReady || page.observations.length <= 2}
-          onClick={() => trendControls.endpoint(page.id, "remove-first")}
-        >
-          Remove earliest week
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!rangeReady || page.observations.length <= 2}
-          onClick={() => trendControls.endpoint(page.id, "remove-last")}
-        >
-          Remove latest week
-        </Button>
+        {ENDPOINT_BUTTONS.map(({ action, label, allowed }) => (
+          <Button
+            key={action}
+            type="button"
+            variant="outline"
+            disabled={!rangeReady || !allowed(page)}
+            onClick={() => trendControls.changeEndpoint(page.id, action)}
+          >
+            {label}
+          </Button>
+        ))}
       </div>
       {page.observations.map((entry, index) => {
-        const path = `observations[${index}].value` as const
+        const path = observationPath(index)
         const label = page.startMonday
           ? `Week ${index + 1} · ${observationMonday(page.startMonday, index)}`
           : `Week ${index + 1}`
@@ -230,7 +244,7 @@ function TrendMetricFormatControls({
   trendControls,
   update,
 }: FieldProps & { update: UpdateTrend }) {
-  const format = (
+  const setMetricFormat = (
     field: keyof TrendTargetPage["metric"],
     value: string | number
   ) =>
@@ -278,7 +292,7 @@ function TrendMetricFormatControls({
         <Input
           id="trend-unit"
           value={page.metric.unit}
-          onChange={(event) => format("unit", event.target.value)}
+          onChange={(event) => setMetricFormat("unit", event.target.value)}
         />
       </div>
       <div className="space-y-2">
@@ -287,7 +301,7 @@ function TrendMetricFormatControls({
           value={String(page.metric.precision)}
           onValueChange={(value) => {
             if (value === "0" || value === "1" || value === "2")
-              format("precision", Number(value))
+              setMetricFormat("precision", Number(value))
           }}
         >
           <SelectTrigger id="trend-precision">
@@ -306,7 +320,7 @@ function TrendMetricFormatControls({
           value={page.metric.unitPosition}
           onValueChange={(value) => {
             if (value === "before" || value === "after")
-              format("unitPosition", value)
+              setMetricFormat("unitPosition", value)
           }}
         >
           <SelectTrigger id="trend-position">
@@ -324,7 +338,7 @@ function TrendMetricFormatControls({
           value={page.metric.unitSpacing}
           onValueChange={(value) => {
             if (value === "space" || value === "none")
-              format("unitSpacing", value)
+              setMetricFormat("unitSpacing", value)
           }}
         >
           <SelectTrigger id="trend-spacing">

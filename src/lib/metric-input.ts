@@ -4,8 +4,8 @@ import { isEvidenceDecisionPage, type WeekDocument } from "./week-document"
 export type MetricValueField = "baselineValue" | "candidateValue"
 
 export type MetricInputPath = `metrics[${number}].${MetricValueField}`
-export type TrendInputPath =
-  "startMonday" | "target" | `observations[${number}].value`
+export type ObservationInputPath = `observations[${number}].value`
+export type TrendInputPath = "startMonday" | "target" | ObservationInputPath
 
 export type PageMetricInputs = Readonly<
   Partial<Record<MetricInputPath | TrendInputPath, string>>

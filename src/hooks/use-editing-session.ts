@@ -6,10 +6,7 @@ import {
   beginSessionCreate,
   beginSessionOpen,
   beginSessionSave,
-  cancelTrendRedate,
   canSaveSession,
-  changeTrendEndpoint,
-  confirmTrendRedate,
   createEditingSession,
   deleteSessionPage,
   editSessionContent,
@@ -21,20 +18,25 @@ import {
   moveSessionMetric,
   moveSessionPage,
   readMetricInput,
-  readTrendInput,
   removeSessionMetric,
   selectSessionPage,
   sessionReadiness,
   sessionOperationSnapshot,
-  setTrendObservationState,
   setSessionWeeks,
   writeMetricInput,
-  writeTrendInput,
   type EditingSession,
   type MetricEditorControls,
-  type TrendEditorControls,
   type SessionOperationSnapshot,
 } from "@/lib/editing-session"
+import {
+  cancelTrendRedate,
+  changeTrendEndpoint,
+  confirmTrendRedate,
+  readTrendInput,
+  setTrendObservationState,
+  writeTrendInput,
+  type TrendEditorControls,
+} from "@/lib/trend-session"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
@@ -115,7 +117,7 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
         update((current) => writeTrendInput(current, location, raw)),
       setObservationState: (location, state) =>
         update((current) => setTrendObservationState(current, location, state)),
-      endpoint: (pageId, action) =>
+      changeEndpoint: (pageId, action) =>
         update((current) => changeTrendEndpoint(current, pageId, action)),
       confirmRedate: (pageId) =>
         update((current) => confirmTrendRedate(current, pageId)),

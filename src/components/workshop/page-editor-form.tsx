@@ -13,10 +13,8 @@ import type {
   PageEditorProps,
   PanelEditorProps,
 } from "@/components/workshop/page-editor-props"
-import type {
-  MetricEditorControls,
-  TrendEditorControls,
-} from "@/lib/editing-session"
+import type { MetricEditorControls } from "@/lib/editing-session"
+import type { TrendEditorControls } from "@/lib/trend-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { TrendTargetEditorForm } from "@/components/workshop/trend-target-editor-form"

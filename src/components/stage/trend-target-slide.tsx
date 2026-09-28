@@ -1,18 +1,51 @@
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
 import {
+  displayedTrendNumber,
   exactTrendValue,
+  formatTrendTarget,
   formatTrendValue,
   observationMonday,
   targetMet,
   trendBounds,
   trendEndMonday,
 } from "@/lib/trend-target"
-import type { TrendTargetPage } from "@/lib/week-document"
+import type { TrendObservation, TrendTargetPage } from "@/lib/week-document"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
-function status(page: TrendTargetPage): string {
+const CHART_WIDTH = 1000
+const CHART_HEIGHT = 200
+const CHART_LEFT = 84
+const CHART_RIGHT = 976
+const CHART_TOP = 10
+const CHART_BOTTOM = 154
+const Y_TICK_COUNT = 5
+const Y_LABEL_GAP = 12
+const Y_LABEL_BASELINE = 5
+const X_TICK_LENGTH = 5
+const X_LABEL_OFFSET = 25
+const MISSING_MARK_LIFT = 3
+const LATEST_POINT_RADIUS = 6
+const POINT_RADIUS = 4
+// 超過此週數時改為隔週標日期，避免日期標籤互相重疊
+const DENSE_X_AXIS_WEEKS = 8
+// 量級極大且彼此極近的值，刻度印成完整數字會全部相同；改以 offset 顯示差值
+const LARGE_MAGNITUDE = 1e9
+const NARROW_RANGE_RATIO = 1e-6
+const OFFSET_TICK_DIGITS = 3
+const PLAIN_TICK_DIGITS = 12
+// html-to-image 擷取 PNG 時不會把 stylesheet 或 var() 帶進 SVG 子元素，顏色只能以字面值寫在屬性上；
+// 數值須與 stage.css／editorial-layouts.css 的同名 token 保持一致
+const SVG_INK = {
+  line: "#d0d7de",
+  mute: "#5c5c5c",
+  blue: "#2e75b6",
+  warnInk: "#8a5508",
+  paper: "#ffffff",
+} as const
+
+function latestWeekStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
   if (latest?.state === "missing") return "No data"
   if (latest?.state !== "measured") return "Not entered"
@@ -20,13 +53,15 @@ function status(page: TrendTargetPage): string {
   return targetMet(latest.value, page) ? "Target met" : "Target missed"
 }
 
+// 只有在顯示值看起來與目標相同、實際卻不同時才補精確值，避免摘要與狀態互相矛盾
 function exactComparison(page: TrendTargetPage): string | null {
   const latest = page.observations.at(-1)
   if (latest?.state !== "measured" || page.target === null) return null
   if (latest.value === page.target) return null
+  const { precision } = page.metric
   if (
-    latest.value.toFixed(page.metric.precision) !==
-    page.target.toFixed(page.metric.precision)
+    displayedTrendNumber(latest.value, precision) !==
+    displayedTrendNumber(page.target, precision)
   )
     return null
   const relation = latest.value < page.target ? "<" : ">"
@@ -34,23 +69,21 @@ function exactComparison(page: TrendTargetPage): string | null {
 }
 
 function axisLabel(value: number, offset: number): string {
-  return Number((value - offset).toPrecision(offset ? 3 : 12)).toString()
+  const digits = offset ? OFFSET_TICK_DIGITS : PLAIN_TICK_DIGITS
+  return Number((value - offset).toPrecision(digits)).toString()
 }
 
-const CHART_WIDTH = 1000
-const CHART_LEFT = 84
-const CHART_RIGHT = 976
-const CHART_TOP = 10
-const CHART_BOTTOM = 154
+function axisOffsetFor([minimum, maximum]: [number, number]): number {
+  const crowded =
+    Math.abs(minimum) >= LARGE_MAGNITUDE &&
+    maximum - minimum < Math.abs(minimum) * NARROW_RANGE_RATIO
+  return crowded ? Math.round(minimum) : 0
+}
 
 function chartGeometry(
   page: TrendTargetPage,
   [minimum, maximum]: [number, number]
 ) {
-  const axisOffset =
-    Math.abs(minimum) >= 1e9 && maximum - minimum < Math.abs(minimum) * 1e-6
-      ? Math.round(minimum)
-      : 0
   const x = (index: number) =>
     CHART_LEFT +
     (index * (CHART_RIGHT - CHART_LEFT)) / (page.observations.length - 1)
@@ -58,8 +91,8 @@ function chartGeometry(
     CHART_BOTTOM -
     ((value - minimum) / (maximum - minimum)) * (CHART_BOTTOM - CHART_TOP)
   const ticks = Array.from(
-    { length: 5 },
-    (_, index) => minimum + ((maximum - minimum) * index) / 4
+    { length: Y_TICK_COUNT },
+    (_, index) => minimum + ((maximum - minimum) * index) / (Y_TICK_COUNT - 1)
   )
   const line = page.observations
     .map((entry, index) => {
@@ -68,19 +101,34 @@ function chartGeometry(
       return `${previous?.state === "measured" ? "L" : "M"}${x(index)},${y(entry.value)}`
     })
     .join(" ")
-  return { axisOffset, x, y, ticks, line }
+  return { axisOffset: axisOffsetFor([minimum, maximum]), x, y, ticks, line }
 }
 
 type ChartGeometry = ReturnType<typeof chartGeometry>
 
+function observationText(
+  entry: TrendObservation,
+  page: TrendTargetPage
+): string {
+  if (entry.state === "measured") return formatTrendValue(entry.value, page)
+  if (entry.state === "missing") return "No observation"
+  return "Not entered"
+}
+
 function trendDescription(page: TrendTargetPage): string {
-  if (!page.startMonday) return "Starting Monday not set"
+  const { startMonday } = page
+  if (!startMonday) return "Starting Monday not set"
   return page.observations
     .map(
       (entry, index) =>
-        `${observationMonday(page.startMonday!, index)}: ${entry.state === "measured" ? formatTrendValue(entry.value, page) : entry.state === "missing" ? "No observation" : "Not entered"}`
+        `${observationMonday(startMonday, index)}: ${observationText(entry, page)}`
     )
     .join("; ")
+}
+
+function metricCaption(page: TrendTargetPage): string {
+  const { label, unit } = page.metric
+  return unit ? `${label} (${unit})` : label
 }
 
 function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
@@ -89,7 +137,7 @@ function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
     <g key={index}>
       <line
         className="editorial-trend-grid"
-        stroke="#d0d7de"
+        stroke={SVG_INK.line}
         x1={CHART_LEFT}
         x2={CHART_RIGHT}
         y1={y(tick)}
@@ -97,15 +145,56 @@ function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
       />
       <text
         className="editorial-trend-axis"
-        fill="#5c5c5c"
-        x={CHART_LEFT - 12}
-        y={y(tick) + 5}
+        fill={SVG_INK.mute}
+        x={CHART_LEFT - Y_LABEL_GAP}
+        y={y(tick) + Y_LABEL_BASELINE}
         textAnchor="end"
       >
         {axisLabel(tick, axisOffset)}
       </text>
     </g>
   ))
+}
+
+function TrendMarker({
+  entry,
+  index,
+  isLatest,
+  geometry,
+}: {
+  entry: TrendObservation
+  index: number
+  isLatest: boolean
+  geometry: ChartGeometry
+}) {
+  if (entry.state === "measured")
+    return (
+      <circle
+        className="editorial-trend-point"
+        fill={SVG_INK.blue}
+        stroke={SVG_INK.paper}
+        strokeWidth="2"
+        cx={geometry.x(index)}
+        cy={geometry.y(entry.value)}
+        r={isLatest ? LATEST_POINT_RADIUS : POINT_RADIUS}
+      />
+    )
+  if (entry.state === "missing")
+    return (
+      <text
+        className="editorial-trend-missing"
+        fill={SVG_INK.warnInk}
+        fontSize="20"
+        fontWeight="700"
+        aria-label="No observation"
+        textAnchor="middle"
+        x={geometry.x(index)}
+        y={CHART_BOTTOM - MISSING_MARK_LIFT}
+      >
+        ×
+      </text>
+    )
+  return null
 }
 
 function TrendSeries({
@@ -115,58 +204,42 @@ function TrendSeries({
   page: TrendTargetPage
   geometry: ChartGeometry
 }) {
-  const { x, y, line } = geometry
   return (
     <>
       {page.target !== null ? (
         <line
           className="editorial-trend-target"
-          stroke="#8a5508"
+          stroke={SVG_INK.warnInk}
           strokeWidth="2"
           strokeDasharray="7 5"
           x1={CHART_LEFT}
           x2={CHART_RIGHT}
-          y1={y(page.target)}
-          y2={y(page.target)}
+          y1={geometry.y(page.target)}
+          y2={geometry.y(page.target)}
         />
       ) : null}
       <path
         className="editorial-trend-line"
-        d={line}
         fill="none"
-        stroke="#2e75b6"
+        stroke={SVG_INK.blue}
         strokeWidth="3"
+        d={geometry.line}
       />
-      {page.observations.map((entry, index) =>
-        entry.state === "measured" ? (
-          <circle
-            key={index}
-            className="editorial-trend-point"
-            fill="#2e75b6"
-            stroke="white"
-            strokeWidth="2"
-            cx={x(index)}
-            cy={y(entry.value)}
-            r={index === page.observations.length - 1 ? 6 : 4}
-          />
-        ) : entry.state === "missing" ? (
-          <text
-            key={index}
-            className="editorial-trend-missing"
-            aria-label="No observation"
-            fill="#8a5508"
-            fontSize="20"
-            fontWeight="700"
-            textAnchor="middle"
-            x={x(index)}
-            y={CHART_BOTTOM - 3}
-          >
-            ×
-          </text>
-        ) : null
-      )}
+      {page.observations.map((entry, index) => (
+        <TrendMarker
+          key={index}
+          entry={entry}
+          index={index}
+          isLatest={index === page.observations.length - 1}
+          geometry={geometry}
+        />
+      ))}
     </>
   )
+}
+
+function showsDateLabel(index: number, length: number): boolean {
+  return length <= DENSE_X_AXIS_WEEKS || index % 2 === 0 || index === length - 1
 }
 
 function TrendXAxis({
@@ -176,27 +249,26 @@ function TrendXAxis({
   page: TrendTargetPage
   geometry: ChartGeometry
 }) {
-  if (!page.startMonday) return null
+  const { startMonday } = page
+  if (!startMonday) return null
   return page.observations.map((_, index) => {
-    const monday = observationMonday(page.startMonday!, index)
+    const monday = observationMonday(startMonday, index)
     return (
       <g key={monday}>
         <line
           className="editorial-trend-grid"
-          stroke="#d0d7de"
+          stroke={SVG_INK.line}
           x1={geometry.x(index)}
           x2={geometry.x(index)}
           y1={CHART_BOTTOM}
-          y2={CHART_BOTTOM + 5}
+          y2={CHART_BOTTOM + X_TICK_LENGTH}
         />
-        {page.observations.length <= 8 ||
-        index % 2 === 0 ||
-        index === page.observations.length - 1 ? (
+        {showsDateLabel(index, page.observations.length) ? (
           <text
             className="editorial-trend-axis"
-            fill="#5c5c5c"
+            fill={SVG_INK.mute}
             x={geometry.x(index)}
-            y={CHART_BOTTOM + 25}
+            y={CHART_BOTTOM + X_LABEL_OFFSET}
             textAnchor="middle"
           >
             {monday.slice(5).replace("-", "/")}
@@ -218,11 +290,11 @@ function TrendPlot({
 }) {
   return (
     <svg
-      viewBox={`0 0 ${CHART_WIDTH} 200`}
+      viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
       role="img"
-      aria-label={`${page.metric.label}; ${targetLabel}`}
+      aria-label={`${metricCaption(page)}; ${targetLabel}`}
     >
-      <title>{page.metric.label} by week</title>
+      <title>{metricCaption(page)} by week</title>
       <desc>
         {trendDescription(page)}; {targetLabel}
       </desc>
@@ -261,25 +333,28 @@ function TrendLegend({
   )
 }
 
+function axisOffsetNote(offset: number): string {
+  const sign = offset > 0 ? "+" : ""
+  return ` · Y-axis offset ${sign}${offset.toExponential()}`
+}
+
 function TrendChart({ page }: { page: TrendTargetPage }) {
   let bounds: [number, number]
   try {
     bounds = trendBounds(page)
   } catch {
+    // 原因已由 Export Readiness 的 trendAxisIssues 回報並阻擋匯出，這裡只負責不讓預覽崩潰
     return <p role="alert">Trend axis cannot represent these values</p>
   }
   const geometry = chartGeometry(page, bounds)
-  const targetLabel =
-    page.target === null
-      ? "Target not set"
-      : `${page.direction === "at-most" ? "≤" : "≥"} ${formatTrendValue(page.target, page)}`
+  const targetLabel = formatTrendTarget(page) ?? "Target not set"
   return (
     <figure className="editorial-trend-chart">
       <figcaption>
-        {page.metric.label}
+        {metricCaption(page)}
         {geometry.axisOffset !== 0 ? (
           <span className="editorial-trend-axis-offset">
-            {` · Y-axis offset ${geometry.axisOffset > 0 ? "+" : ""}${geometry.axisOffset.toExponential()}`}
+            {axisOffsetNote(geometry.axisOffset)}
           </span>
         ) : null}
       </figcaption>
@@ -289,9 +364,41 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
   )
 }
 
-export function TrendTargetSlide({ page, context }: Props) {
+function TrendSummary({ page }: { page: TrendTargetPage }) {
   const latest = page.observations.at(-1)
-  const date = trendEndMonday(page)
+  return (
+    <section
+      className="editorial-trend-summary"
+      aria-label="Latest week and target"
+    >
+      <div>
+        <p className="editorial-trend-label">
+          Latest week · {trendEndMonday(page) ?? "—"}
+        </p>
+        <p className="editorial-trend-value">
+          {latest?.state === "measured"
+            ? formatTrendValue(latest.value, page)
+            : "—"}
+        </p>
+        <p className="editorial-trend-status">{latestWeekStatus(page)}</p>
+      </div>
+      <div>
+        <p className="editorial-trend-label">Weekly target</p>
+        <p className="editorial-trend-value">
+          {formatTrendTarget(page) ?? "—"}
+        </p>
+        <p className="editorial-trend-direction">
+          {page.direction === "at-most"
+            ? "Lower is better"
+            : "Higher is better"}
+        </p>
+      </div>
+      <p className="editorial-trend-interpretation">{page.interpretation}</p>
+    </section>
+  )
+}
+
+export function TrendTargetSlide({ page, context }: Props) {
   const comparison = exactComparison(page)
   return (
     <EditorialFrame
@@ -301,36 +408,7 @@ export function TrendTargetSlide({ page, context }: Props) {
     >
       <div className="editorial-trend">
         <TrendChart page={page} />
-        <section
-          className="editorial-trend-summary"
-          aria-label="Latest week and target"
-        >
-          <div>
-            <p className="editorial-trend-label">Latest week · {date ?? "—"}</p>
-            <p className="editorial-trend-value">
-              {latest?.state === "measured"
-                ? formatTrendValue(latest.value, page)
-                : "—"}
-            </p>
-            <p className="editorial-trend-status">{status(page)}</p>
-          </div>
-          <div>
-            <p className="editorial-trend-label">Weekly target</p>
-            <p className="editorial-trend-value">
-              {page.target === null
-                ? "—"
-                : `${page.direction === "at-most" ? "≤" : "≥"} ${formatTrendValue(page.target, page)}`}
-            </p>
-            <p className="editorial-trend-direction">
-              {page.direction === "at-most"
-                ? "Lower is better"
-                : "Higher is better"}
-            </p>
-          </div>
-          <p className="editorial-trend-interpretation">
-            {page.interpretation}
-          </p>
-        </section>
+        <TrendSummary page={page} />
         {comparison ? (
           <p className="editorial-trend-exact">{comparison}</p>
         ) : null}

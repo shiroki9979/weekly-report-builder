@@ -1,12 +1,40 @@
 import type {
   MetricInputMap,
+  ObservationInputPath,
   PageMetricInputs,
   TrendInputPath,
 } from "./metric-input"
+import { errorMessage } from "./error-message"
 import { isCalendarMonday, observationMonday } from "./trend-target"
-import type { TrendTargetPage } from "./week-document"
+import {
+  isTrendTargetPage,
+  type TrendTargetPage,
+  type WeekDocument,
+} from "./week-document"
 
 export type TrendInputLocation = { pageId: string; path: TrendInputPath }
+
+export type TrendEndpointAction =
+  "prepend" | "append" | "remove-first" | "remove-last"
+
+const OBSERVATION_PATH = /^observations\[(\d+)\]\.value$/
+
+export function observationPath(index: number): ObservationInputPath {
+  return `observations[${index}].value`
+}
+
+export function observationIndex(path: string): number | null {
+  const match = OBSERVATION_PATH.exec(path)
+  return match ? Number(match[1]) : null
+}
+
+function isTrendInputPath(path: string): path is TrendInputPath {
+  return (
+    path === "target" ||
+    path === "startMonday" ||
+    observationIndex(path) !== null
+  )
+}
 
 export function readTrendInputText(
   inputs: MetricInputMap,
@@ -37,34 +65,34 @@ export function clearTrendInputText(
   return { ...inputs, [pageId]: next }
 }
 
+// null 代表該週已被移除，對應的原文一併丟棄
+const SHIFTED_INDEX: Record<
+  TrendEndpointAction,
+  (index: number, length: number) => number | null
+> = {
+  prepend: (index) => index + 1,
+  append: (index) => index,
+  "remove-first": (index) => (index === 0 ? null : index - 1),
+  "remove-last": (index, length) => (index === length - 1 ? null : index),
+}
+
+// 端點增減只改 observations 索引；非法原文須跟著搬到同一週，否則錯誤會掛到鄰週
 export function remapTrendObservationInput(
   inputs: MetricInputMap,
   pageId: string,
-  endpoint: "prepend" | "append" | "remove-first" | "remove-last",
-  length: number
+  { action, length }: { action: TrendEndpointAction; length: number }
 ): MetricInputMap {
   const pageInputs = inputs[pageId]
   if (!pageInputs) return inputs
   const next: Partial<Record<keyof PageMetricInputs, string>> = {}
   for (const [path, raw] of Object.entries(pageInputs)) {
-    const match = /^observations\[(\d+)\]\.value$/.exec(path)
-    if (!match) {
+    const index = observationIndex(path)
+    if (index === null) {
       next[path as keyof PageMetricInputs] = raw
       continue
     }
-    const index = Number(match[1])
-    if (
-      (endpoint === "remove-first" && index === 0) ||
-      (endpoint === "remove-last" && index === length - 1)
-    )
-      continue
-    const shifted =
-      endpoint === "prepend"
-        ? index + 1
-        : endpoint === "remove-first"
-          ? index - 1
-          : index
-    next[`observations[${shifted}].value`] = raw
+    const shifted = SHIFTED_INDEX[action](index, length)
+    if (shifted !== null) next[observationPath(shifted)] = raw
   }
   return { ...inputs, [pageId]: next }
 }
@@ -78,6 +106,15 @@ export function parseTrendNumber(raw: string): number | null | "invalid" {
   return Number.isFinite(value) ? value : "invalid"
 }
 
+export function trendRangeError(start: string, length: number): string | null {
+  try {
+    observationMonday(start, length - 1)
+    return null
+  } catch (cause) {
+    return errorMessage(cause, "Trend range cannot be dated")
+  }
+}
+
 export function trendInputError(
   page: TrendTargetPage,
   inputs: MetricInputMap,
@@ -85,48 +122,44 @@ export function trendInputError(
 ): string | null {
   const raw = inputs[page.id]?.[path]
   if (raw === undefined) return null
-  if (path === "startMonday") {
-    if (
-      raw === "" &&
-      page.observations.every((entry) => entry.state === "unfilled")
-    )
-      return null
-    if (!isCalendarMonday(raw))
-      return "Starting Monday must be a real calendar Monday"
-    try {
-      observationMonday(raw, page.observations.length - 1)
-    } catch {
-      return "Trend range exceeds supported ISO dates"
-    }
-    if (
-      page.startMonday &&
-      raw !== page.startMonday &&
-      page.observations.some((entry) => entry.state !== "unfilled")
-    ) {
-      return "Re-dating entered observations requires confirmation"
-    }
-    return null
-  }
-  if (path.startsWith("observations[") && raw.trim() && !page.startMonday)
+  if (path === "startMonday") return startMondayInputError(page, raw)
+  if (path !== "target" && raw.trim() && !page.startMonday)
     return "Set starting Monday before entering observations"
   return parseTrendNumber(raw) === "invalid"
     ? "Enter a finite signed number"
     : null
 }
 
+function startMondayInputError(
+  page: TrendTargetPage,
+  raw: string
+): string | null {
+  const entered = page.observations.some((entry) => entry.state !== "unfilled")
+  if (raw === "" && !entered) return null
+  if (!isCalendarMonday(raw))
+    return "Starting Monday must be a real calendar Monday"
+  const rangeError = trendRangeError(raw, page.observations.length)
+  if (rangeError) return rangeError
+  if (page.startMonday && raw !== page.startMonday && entered)
+    return "Re-dating entered observations requires confirmation"
+  return null
+}
+
 export function hasInvalidTrendInput(
   page: TrendTargetPage,
   inputs: MetricInputMap
 ): boolean {
-  const pageInputs = inputs[page.id]
-  return (
-    !!pageInputs &&
-    Object.keys(pageInputs).some(
-      (path) =>
-        (path === "target" ||
-          path === "startMonday" ||
-          /^observations\[\d+\]\.value$/.test(path)) &&
-        trendInputError(page, inputs, path as TrendInputPath) !== null
-    )
+  return Object.keys(inputs[page.id] ?? {}).some(
+    (path) =>
+      isTrendInputPath(path) && trendInputError(page, inputs, path) !== null
+  )
+}
+
+export function weekHasInvalidTrendInputs(
+  week: WeekDocument,
+  inputs: MetricInputMap
+): boolean {
+  return week.pages.some(
+    (page) => isTrendTargetPage(page) && hasInvalidTrendInput(page, inputs)
   )
 }
