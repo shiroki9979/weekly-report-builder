@@ -1,6 +1,6 @@
 # Trend & Target and Next Actions Rows
 
-Status: Approved for implementation. Published as [specification #42](https://github.com/shiroki9979/weekly-report-builder/issues/42) with five implementation tickets; all carry `ready-for-agent`. Testing seams and ticket dependencies were confirmed on 2026-09-28. Implemented by [PR #48](https://github.com/shiroki9979/weekly-report-builder/pull/48).
+Status: Approved for implementation. Published as [specification #42](https://github.com/shiroki9979/weekly-report-builder/issues/42) with five implementation tickets; all carry `ready-for-agent`. Testing seams and ticket dependencies were confirmed on 2026-09-28. Implementation in [PR #48](https://github.com/shiroki9979/weekly-report-builder/pull/48).
 
 Created: 2026-09-27
 Last updated: 2026-09-28
