@@ -19,6 +19,7 @@ import {
   parseTrendNumber,
   remapTrendObservationInput,
   requireTrendNumber,
+  START_MONDAY_REQUIRED,
   startMondayInput,
   trendInputError,
   type TrendEndpointAction,
@@ -86,7 +87,7 @@ export function setTrendObservationState(
   if (!page.observations[location.index])
     throw new Error(`Unknown Trend observation: ${location.index}`)
   if (state === "missing" && !page.startMonday)
-    throw new Error("Set starting Monday before entering observations")
+    throw new Error(START_MONDAY_REQUIRED)
   const edit = releaseClearedStart({
     page: {
       ...page,

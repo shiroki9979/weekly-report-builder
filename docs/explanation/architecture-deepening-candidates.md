@@ -96,7 +96,7 @@ Copy 與 batch export 共用同一條單頁流程。
 
 ## 4. Stage context 帶型別事實，頁碼政策收進同一 module
 
-- **相關 module**：`src/lib/stage-page-context.ts`（`createStagePageContext`、`mondayFromWeekLabel`）、`src/components/stage/stage-slide.tsx`、`src/components/stage/editorial-frame.tsx`、`src/lib/week-document.ts`（`PAGE_NUMBER_LAYOUTS`、`defaultPageNumberVisibility`、`isPageNumberVisible`）、`src/lib/week-clone.ts`、`src/components/workshop/page-number-select.tsx`、`src/components/workshop/page-navigator.tsx`、`src/components/workshop/workshop-preview.tsx`。
+- **相關 module**：`src/lib/stage-page-context.ts`（`createStagePageContext`、`mondayFromWeekLabel`）、`src/components/stage/stage-slide.tsx`、`src/components/stage/editorial-frame.tsx`、`src/lib/week-document.ts`（`hasPageNumberSlot`、`defaultPageNumberVisibility`、`isPageNumberVisible`）、`src/lib/week-clone.ts`、`src/components/workshop/page-number-select.tsx`、`src/components/workshop/page-navigator.tsx`、`src/components/workshop/workshop-preview.tsx`。
 - **問題**：`StagePageContext` 把狀態藏進顯示字串：`StageSlide` 以 `pageLabel === "Hidden"` 判斷 Hidden Page，HTML Page 需要的 Monday 則從 Week Label `slice(0, 10)` 取回。頁碼可見性（週預設、單頁覆寫、HTML Page 預設不疊、Two-column 與 Hidden Page 不畫、clone 保留或丟棄）散在 6 個檔案，預設值 `showPageNumbers ?? true` 在 shell 又寫一次。
 - **做法**：Stage context module 回傳型別事實（是否 Hidden、Monday、Page Position 序號與總數、是否畫頁碼），renderer 只負責畫。Week Label 格式與頁碼的預設、覆寫、clone 規則移進同一個 module。
 - **證據**：
@@ -127,7 +127,7 @@ Copy 與 batch export 共用同一條單頁流程。
 ## 6. 每種 Structured Layout 一個 module
 
 - **相關 module**：`src/lib/week-document.ts`、`src/lib/page-lifecycle.ts`、`src/components/workshop/page-lifecycle-controls.tsx`、`src/lib/week-clone.ts`、`src/lib/export-readiness.ts`、`src/components/stage/panels/stage-panel.tsx`、各 `*-editor.ts`。
-- **問題**：每種 Structured Layout 的 schema 事實（parse、空白頁、clone 清除、readiness、頁碼參與、可否新增）依關注點分散在 6 個 module。新增一種 Structured Layout 要改 8 個既有檔案（含 `editorial-layouts.css`）、加 3 個新檔；`matchWeekPage` 讓 5 個分派點受編譯器檢查，但 `PAGE_NUMBER_LAYOUTS`、新增選單的字串 guard 與 `isStructuredWeekPage` 的 OR 清單不受檢查。Panel kind 連中央 matcher 都沒有。
+- **問題**：每種 Structured Layout 的 schema 事實（parse、空白頁、clone 清除、readiness、頁碼參與、可否新增）依關注點分散在 6 個 module。新增一種 Structured Layout 要改 8 個既有檔案（含 `editorial-layouts.css`）、加 3 個新檔；`matchWeekPage` 讓分派點受編譯器檢查（頁碼參與已改走 `hasPageNumberSlot`），但新增選單的字串 guard 與 `isStructuredWeekPage` 的 OR 清單不受檢查。Panel kind 連中央 matcher 都沒有。
 - **做法**：每種 Structured Layout 一個 module 持有自己的 schema 事實，並登錄於一張表；表單與 renderer 維持各自手寫。不與規格衝突的第一步：panel kind 比照 `matchWeekPage` 加一個會窮舉的 matcher，並讓「Two-column 支援哪些 panel」只有一份。
 - **證據**：
   - 實際紀錄：Evidence-backed Decision（`0773cfb`）改了 17 個 src 檔，Weekly Overview（`104bec3`）改了 13 個。

@@ -16,6 +16,7 @@ import { issuePaths } from "@/lib/export-readiness"
 import { observationPath } from "@/lib/metric-input"
 import {
   canChangeTrendEndpoint,
+  isRedateProposal,
   isStartSettled,
   observationEntryPath,
   startMondayInput,
@@ -33,7 +34,6 @@ import {
 } from "@/lib/trend-target"
 import { typedPageUpdater } from "@/lib/update-week-page"
 import {
-  hasEnteredObservations,
   isTrendTargetPage,
   type UnmeasuredState,
   type WeeklyObservation,
@@ -108,12 +108,9 @@ function TrendDateRangeControls({
   trendControls,
   startText,
 }: FieldProps & { startText: string }) {
-  const dateProposal =
-    hasEnteredObservations(page.observations) &&
-    page.startMonday &&
-    startText !== page.startMonday
-      ? proposedRange(startText, page.observations.length)
-      : null
+  const dateProposal = isRedateProposal(page, startText)
+    ? proposedRange(startText, page.observations.length)
+    : null
   return (
     <div className="space-y-2">
       <Label htmlFor="trend-start">Starting Monday</Label>

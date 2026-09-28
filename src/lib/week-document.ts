@@ -31,10 +31,19 @@ export type ChartPanel = {
   series: ChartSeries[]
 }
 
+// parser 與編輯器共用這份清單判斷 flow step 樣式，不另列字串
+export const FLOW_STEP_VARIANTS = ["default", "ok"] as const
+
+export type FlowStepVariant = (typeof FLOW_STEP_VARIANTS)[number]
+
+export function isFlowStepVariant(value: unknown): value is FlowStepVariant {
+  return (FLOW_STEP_VARIANTS as readonly unknown[]).includes(value)
+}
+
 export type FlowStep = {
   label: string
   caption?: string
-  variant?: "default" | "ok"
+  variant?: FlowStepVariant
 }
 
 export type FlowPanel = {
@@ -305,13 +314,18 @@ export function isSupportedStagePage(page: WeekPage): boolean {
   })
 }
 
-const PAGE_NUMBER_LAYOUTS = new Set([
-  "html",
-  "weekly-overview",
-  "evidence-decision",
-  "next-actions",
-  "trend-target",
-])
+// 經 matchWeekPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
+function hasPageNumberSlot(page: WeekPage): boolean {
+  return matchWeekPage(page, {
+    html: () => true,
+    weeklyOverview: () => true,
+    evidenceDecision: () => true,
+    nextActions: () => true,
+    trendTarget: () => true,
+    twoColumn: () => false,
+    unknown: () => false,
+  })
+}
 
 /**
  * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
@@ -335,7 +349,7 @@ export function isPageNumberVisible(
   week: WeekDocument,
   page: WeekPage
 ): boolean {
-  if (page.hidden || !PAGE_NUMBER_LAYOUTS.has(page.layout)) {
+  if (page.hidden || !hasPageNumberSlot(page)) {
     return false
   }
   return page.showPageNumber ?? defaultPageNumberVisibility(week, page)
@@ -610,10 +624,7 @@ function parseFlowPanel(value: Record<string, unknown>): FlowPanel {
       return {
         label: readString(step.label, `${field}.label`),
         caption: typeof step.caption === "string" ? step.caption : undefined,
-        variant:
-          step.variant === "ok" || step.variant === "default"
-            ? step.variant
-            : undefined,
+        variant: isFlowStepVariant(step.variant) ? step.variant : undefined,
       }
     }),
   }

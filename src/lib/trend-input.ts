@@ -149,6 +149,22 @@ export function isStartSettled(
   )
 }
 
+// 起始週一未設定時，週次沒有日期可掛；編輯中的輸入與 session 操作用同一句說明
+export const START_MONDAY_REQUIRED =
+  "Set starting Monday before entering observations"
+
+// 已輸入的週次掛在已提交的起始週一上；待確認的日期與它不同時才算改日期提案，須經確認才套用
+export function isRedateProposal(
+  page: TrendTargetPage,
+  pendingStart: string
+): boolean {
+  return (
+    hasEnteredObservations(page.observations) &&
+    page.startMonday !== null &&
+    pendingStart !== page.startMonday
+  )
+}
+
 export function trendInputError(
   page: TrendTargetPage,
   inputs: MetricInputMap,
@@ -158,7 +174,7 @@ export function trendInputError(
   if (raw === undefined) return null
   if (path === "startMonday") return startMondayInputError(page, raw)
   if (path !== "target" && raw.trim() && !page.startMonday)
-    return "Set starting Monday before entering observations"
+    return START_MONDAY_REQUIRED
   const parsed = parseTrendNumber(raw)
   return parsed.status === "invalid" ? parsed.message : null
 }
@@ -171,7 +187,7 @@ function startMondayInputError(
   if (raw === "" && !entered) return null
   const datingError = trendDatingError(raw, page.observations.length)
   if (datingError) return datingError.message
-  if (page.startMonday && raw !== page.startMonday && entered)
+  if (isRedateProposal(page, raw))
     return "Re-dating entered observations requires confirmation"
   return null
 }
