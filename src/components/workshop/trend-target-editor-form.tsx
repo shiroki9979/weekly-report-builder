@@ -200,6 +200,7 @@ function TrendObservationControls({
               <Input
                 id={`trend-value-${index}`}
                 inputMode="decimal"
+                disabled={readOnly || !page.startMonday}
                 value={trendControls.read({ pageId: page.id, path })}
                 aria-invalid={
                   paths.has(path) ||
