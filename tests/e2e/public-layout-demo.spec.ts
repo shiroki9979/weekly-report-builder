@@ -94,6 +94,8 @@ async function expectChartSettledAtFullWidth(page: Page) {
 test("fresh public demo opens both directions and both Next Actions compositions", async ({
   page,
 }) => {
+  // 六頁都做真實 PNG 擷取，完整旅程會超過一般 e2e 的 45 秒上限。
+  test.slow()
   await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
   await page.goto("/")
   await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
@@ -120,7 +122,7 @@ test("fresh public demo opens both directions and both Next Actions compositions
     await page.getByRole("button", { name: "Copy to clipboard" }).click()
     await expect(
       page.getByRole("status").filter({ hasText: "Copied" })
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 25_000 })
     const png = await page.evaluate(async () => {
       const item = (await navigator.clipboard.read())[0]
       const blob = await item.getType("image/png")
