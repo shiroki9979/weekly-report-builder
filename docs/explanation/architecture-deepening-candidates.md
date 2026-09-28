@@ -127,13 +127,13 @@ Copy 與 batch export 共用同一條單頁流程。
 ## 6. 每種 Structured Layout 一個 module
 
 - **相關 module**：`src/lib/week-document.ts`、`src/lib/page-lifecycle.ts`、`src/components/workshop/page-lifecycle-controls.tsx`、`src/lib/week-clone.ts`、`src/lib/export-readiness.ts`、`src/components/stage/panels/stage-panel.tsx`、各 `*-editor.ts`。
-- **問題**：每種 Structured Layout 的 schema 事實（parse、空白頁、clone 清除、readiness、頁碼參與、可否新增）依關注點分散在 6 個 module。新增一種 Structured Layout 要改 8 個既有檔案（含 `editorial-layouts.css`）、加 3 個新檔；`matchWeekPage` 讓分派點受編譯器檢查（頁碼參與已改走 `hasPageNumberSlot`），但新增選單的字串 guard 與 `isStructuredWeekPage` 的 OR 清單不受檢查。Panel kind 連中央 matcher 都沒有。
+- **問題**：每種 Structured Layout 的 schema 事實（parse、空白頁、clone 清除、readiness、頁碼參與、可否新增）依關注點分散在 6 個 module。新增一種 Structured Layout 要改 8 個既有檔案（含 `editorial-layouts.css`）、加 3 個新檔；`matchWeekPage` 讓分派點受編譯器檢查，頁碼參與已改走 `hasPageNumberSlot`，新增選單與字串 guard 也已由同一張工廠表產生；`isStructuredWeekPage` 的 OR 清單仍不受窮舉檢查。Panel kind 連中央 matcher 都沒有。
 - **做法**：每種 Structured Layout 一個 module 持有自己的 schema 事實，並登錄於一張表；表單與 renderer 維持各自手寫。不與規格衝突的第一步：panel kind 比照 `matchWeekPage` 加一個會窮舉的 matcher，並讓「Two-column 支援哪些 panel」只有一份。
 - **證據**：
   - 實際紀錄：Evidence-backed Decision（`0773cfb`）改了 17 個 src 檔，Weekly Overview（`104bec3`）改了 13 個。
   - `blankCommitment` 由 `next-actions-editor.ts` 出口給 `week-clone.ts` 與 `page-lifecycle.ts`，`blankMetric`、`blankOutcome` 同理，editor module 兼當 schema module。
   - Panel kind 的 dispatch 有 9 處、分在 8 個檔案；「Two-column 支援 table、chart、flow、checklist，不支援 fields」寫在 6 處。`export-readiness.ts` 的 panel switch 不窮舉：新 kind 若加進 `SUPPORTED_TWO_COLUMN_PANEL_KINDS` 卻漏改 switch，內容檢查會被靜默跳過。
-  - 判斷 layout 有兩套標準：`matchWeekPage` 看結構 guard，`isPageNumberVisible` 看原始字串。`workshop-page-numbers.test.tsx` 的 fixture 有一頁只帶 `agenda: []` 的 `weekly-overview`，前者當成 unknown，後者照樣畫頁碼。
+  - 曾有兩套 layout 判斷標準：`matchWeekPage` 看結構 guard，`isPageNumberVisible` 看原始字串；現已改為 `hasPageNumberSlot` 透過 `matchWeekPage` 分派，兩者不再分歧。
   - 空 table 是 parse error，空 chart、flow、checklist 卻是 Draft Page。
 - **收益**：locality，新版面集中在一個 module；分派點全受編譯器檢查；editor 不再兼 schema 出口；實作 spec-only 的 `fields` panel 時只動一處。
 - **既有決定**：與規格〈Module design〉按關注點切分（Readiness Module 隱藏各 layout 的 completeness 規則）衝突；只有確定還要新增 Structured Layout 時才值得重開。panel matcher 那一步不衝突。
