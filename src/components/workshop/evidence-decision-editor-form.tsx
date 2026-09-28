@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import { MetricFormatFields } from "@/components/workshop/metric-format-fields"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import type { MetricEditorControls } from "@/lib/editing-session"
 import {
@@ -18,7 +12,6 @@ import {
   setDecisionInterpretation,
   setDecisionMetricFormat,
   setDecisionMetricLabel,
-  setDecisionMetricUnit,
   setDecisionVerdict,
 } from "@/lib/evidence-decision-editor"
 import { issuePaths } from "@/lib/export-readiness"
@@ -183,112 +176,20 @@ export function EvidenceDecisionEditorForm({
               )
             }
           />
-          <div className="space-y-2">
-            <Label htmlFor={`metric-${metricIndex}-unit`}>Unit</Label>
-            <Input
-              id={`metric-${metricIndex}-unit`}
-              value={metric.unit}
-              onChange={(event) =>
-                onChange((currentWeek) =>
-                  setDecisionMetricUnit(
-                    currentWeek,
-                    pageIndex,
-                    metricIndex,
-                    event.target.value
-                  )
+          <MetricFormatFields
+            idPrefix={`metric-${metricIndex}`}
+            format={metric}
+            onChange={(patch) =>
+              onChange((currentWeek) =>
+                setDecisionMetricFormat(
+                  currentWeek,
+                  pageIndex,
+                  metricIndex,
+                  patch
                 )
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`metric-${metricIndex}-position`}>
-              Unit position
-            </Label>
-            <Select
-              value={metric.unitPosition}
-              onValueChange={(value) => {
-                if (value === "before" || value === "after") {
-                  onChange((currentWeek) =>
-                    setDecisionMetricFormat(
-                      currentWeek,
-                      pageIndex,
-                      metricIndex,
-                      {
-                        unitPosition: value,
-                      }
-                    )
-                  )
-                }
-              }}
-            >
-              <SelectTrigger id={`metric-${metricIndex}-position`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="after">After</SelectItem>
-                <SelectItem value="before">Before</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`metric-${metricIndex}-spacing`}>
-              Unit spacing
-            </Label>
-            <Select
-              value={metric.unitSpacing}
-              onValueChange={(value) => {
-                if (value === "none" || value === "space") {
-                  onChange((currentWeek) =>
-                    setDecisionMetricFormat(
-                      currentWeek,
-                      pageIndex,
-                      metricIndex,
-                      {
-                        unitSpacing: value,
-                      }
-                    )
-                  )
-                }
-              }}
-            >
-              <SelectTrigger id={`metric-${metricIndex}-spacing`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="space">Space</SelectItem>
-                <SelectItem value="none">None</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`metric-${metricIndex}-precision`}>Precision</Label>
-            <Select
-              value={String(metric.precision)}
-              onValueChange={(value) => {
-                if (value === "0" || value === "1" || value === "2") {
-                  onChange((currentWeek) =>
-                    setDecisionMetricFormat(
-                      currentWeek,
-                      pageIndex,
-                      metricIndex,
-                      {
-                        precision: Number(value) as 0 | 1 | 2,
-                      }
-                    )
-                  )
-                }
-              }}
-            >
-              <SelectTrigger id={`metric-${metricIndex}-precision`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">0</SelectItem>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              )
+            }
+          />
         </fieldset>
       ))}
 

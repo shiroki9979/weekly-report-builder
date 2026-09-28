@@ -202,17 +202,28 @@ export function requireWeek(session: EditingSession): WeekDocument {
   return session.week
 }
 
+// 以 Page ID 找出特定版型的頁面；版型不符視同找不到，呼叫端再依自身語意回報錯誤
+export function findSessionPage<T extends WeekPage>(
+  session: EditingSession,
+  pageId: string,
+  hasLayout: (page: WeekPage) => page is T
+): { week: WeekDocument; pageIndex: number; page: T } | null {
+  const week = requireWeek(session)
+  const pageIndex = week.pages.findIndex((page) => page.id === pageId)
+  const page = week.pages[pageIndex]
+  if (!page || !hasLayout(page)) return null
+  return { week, pageIndex, page }
+}
+
 function requireMetric(
   session: EditingSession,
   { pageId, metricIndex }: MetricLocation
 ) {
-  const week = requireWeek(session)
-  const pageIndex = week.pages.findIndex((page) => page.id === pageId)
-  const page = week.pages[pageIndex]
-  if (!page || !isEvidenceDecisionPage(page) || !page.metrics[metricIndex]) {
+  const found = findSessionPage(session, pageId, isEvidenceDecisionPage)
+  if (!found?.page.metrics[metricIndex]) {
     throw new Error(`Unknown Comparison Metric: ${pageId}[${metricIndex}]`)
   }
-  return { week, pageIndex, page }
+  return found
 }
 
 export function editSessionContent(

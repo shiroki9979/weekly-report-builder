@@ -1,5 +1,5 @@
 import { validateHtmlFileName } from "./html-page"
-import { observationMonday } from "./trend-target"
+import { isTrendDirection, observationMonday } from "./trend-target"
 import { isCalendarMonday } from "./week-id"
 
 export type SlideItem = {
@@ -154,7 +154,7 @@ export type NextActionsPage = WeekPageChrome & {
   commitments: Commitment[]
 }
 
-export type TrendObservation =
+export type WeeklyObservation =
   | { state: "measured"; value: number }
   | { state: "missing" }
   | { state: "unfilled" }
@@ -168,7 +168,7 @@ export type TrendTargetPage = WeekPageChrome & {
     "label" | "unit" | "unitPosition" | "unitSpacing" | "precision"
   >
   startMonday: string | null
-  observations: TrendObservation[]
+  observations: WeeklyObservation[]
   target: number | null
   direction: "at-most" | "at-least"
   interpretation: string
@@ -238,6 +238,13 @@ export function isNextActionsPage(page: WeekPage): page is NextActionsPage {
 
 export function isTrendTargetPage(page: WeekPage): page is TrendTargetPage {
   return page.layout === "trend-target" && "observations" in page
+}
+
+// 已輸入（Measured 或 Missing）的週次都掛在起始週一上，決定日期能否清空或需確認才能改
+export function hasEnteredObservations(
+  observations: readonly WeeklyObservation[]
+): boolean {
+  return observations.some((entry) => entry.state !== "unfilled")
 }
 
 export function isStructuredWeekPage(
@@ -904,7 +911,7 @@ function parseTrendTargetPage(
   field: string
 ): TrendTargetPage {
   const startMonday = parseStartMonday(value.startMonday, field)
-  const observations = parseTrendObservations(value.observations, field)
+  const observations = parseWeeklyObservations(value.observations, field)
   assertTrendDating({ startMonday, observations }, field)
   return withChrome(chrome, "trend-target", {
     metric: parseTrendMetric(value.metric, `${field}.metric`),
@@ -941,7 +948,7 @@ function parseTrendDirection(
   field: string
 ): TrendTargetPage["direction"] {
   const direction = readNonEmptyString(value, field)
-  if (direction !== "at-most" && direction !== "at-least")
+  if (!isTrendDirection(direction))
     throw new Error(`Invalid week document: ${field}`)
   return direction
 }
@@ -955,21 +962,24 @@ function parseStartMonday(value: unknown, field: string): string | null {
   return value
 }
 
-function parseTrendObservations(
+function parseWeeklyObservations(
   value: unknown,
   field: string
-): TrendObservation[] {
+): WeeklyObservation[] {
   const entries = readEntries(
     value,
     `${field}.observations`,
     CARDINALITY.trendObservations
   )
   return entries.map((entry, index) =>
-    parseTrendObservation(entry, `${field}.observations[${index}]`)
+    parseWeeklyObservation(entry, `${field}.observations[${index}]`)
   )
 }
 
-function parseTrendObservation(value: unknown, path: string): TrendObservation {
+function parseWeeklyObservation(
+  value: unknown,
+  path: string
+): WeeklyObservation {
   const observation = readRecord(value, path)
   if (observation.state === "measured")
     return {
@@ -993,7 +1003,7 @@ function assertTrendDating(
   field: string
 ): void {
   if (startMonday === null) {
-    if (observations.some((entry) => entry.state !== "unfilled"))
+    if (hasEnteredObservations(observations))
       throw new Error(
         `Invalid week document: ${field}.startMonday is required for entered observations`
       )

@@ -15,9 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 新增 Trend & Target：以 2–12 個連續週次呈現單一量測與固定目標，區分已量測、缺測與未填；支援日期範圍維護、跨週沿用、儲存及 PNG 匯出（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)、[#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)～[#46](https://github.com/shiroki9979/weekly-report-builder/issues/46)）。
 - Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
-- 公開 Demo Week Set 新增 Trend & Target 的雙向目標、缺測末週與 Next Actions 版型對照，並補上首次使用及分享檢查指引（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 公開 Demo Week Set 新增 Trend & Target 的雙向目標、缺測末週（英文、中文與中英混排各一頁）與 Next Actions 版型對照，並補上首次使用及分享檢查指引（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 新增共用 Export gate，讓 Copy 與批次匯出使用相同的頁面就緒及截圖規則；批次可略過未就緒頁面並回報部分結果（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)～[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
-- Workshop 支援週次與單頁頁碼顯示切換；Editorial 頁預設顯示頁碼，HTML 頁可選擇疊印頁碼，Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- Workshop 支援週次與單頁頁碼顯示切換；Editorial 頁預設顯示頁碼，HTML 頁可選擇疊印頁碼且新週沿用該設定（工具列註明 HTML 頁需逐頁開啟），Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
 - 新增雙情境 Slide 設計研究及 Trend & Target／Next Actions Rows 實作規格，記錄口頭報告與自行閱讀的版型依據（[研究筆記](docs/explanation/slide-design-research.md)、[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
 
 ### Changed
@@ -34,7 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Trend & Target 拒絕不存在的週一日期及數值下溢輸入；修正補填起始週後的資料顯示、極端／近值縱軸刻度與等值目標線的呈現（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
 - 修正複製新週後，無標題頁面在 Page 選單中的顯示，以及空白 chart 類別造成的重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
-- 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session。
+- 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session（[#33](https://github.com/shiroki9979/weekly-report-builder/issues/33)）。
+- 視窗高度不足時 16:9 預覽不再覆蓋 Speaker notes；Speaker notes 面板可拖曳調整高度並由標題列收合。
+- 切換或建立週次後才失敗的舊週載入、儲存與建立結果，改為留下 console 警告，不再無聲丟棄。
 - 修正 Comparison Metric 非法草稿在含 `:` 的 Page ID、移動／刪除項目、刪除頁面或切換週次時的歸屬；Save 與 Copy 不會誤用舊值（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
 - Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
 

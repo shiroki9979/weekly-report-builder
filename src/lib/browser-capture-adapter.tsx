@@ -11,12 +11,11 @@ import {
 import { createStagePageContext } from "./stage-page-context"
 import { captureStageToPng } from "./stage-capture"
 import { abortError } from "./export-errors"
+import { HTML_LOAD_TIMEOUT_MS, PAINT_SETTLE_TIMEOUT_MS } from "./capture-limits"
 import type { CaptureAdapter, HtmlLoadFailure } from "./export-page-gate"
 import { isHtmlWeekPage } from "./week-document"
 
 const OFFSCREEN_LEFT_PX = -10000
-const PAINT_SETTLE_TIMEOUT_MS = 1000
-const HTML_LOAD_TIMEOUT_MS = 3000
 const HTML_STATUS_POLL_MS = 16
 
 export function assertCaptureHostAvailable(): void {

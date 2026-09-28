@@ -1,5 +1,6 @@
 import type { TrendTargetPage } from "./week-document"
 import { withUnit } from "./unit-format"
+import { isMondayId } from "./week-id"
 
 const DAYS_PER_WEEK = 7
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
@@ -11,7 +12,8 @@ export function observationMonday(start: string, index: number): string {
   const date = new Date(`${start}T00:00:00Z`)
   date.setUTCDate(date.getUTCDate() + DAYS_PER_WEEK * index)
   const value = date.toISOString().slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value))
+  // 超出四位數年份時 toISOString 會改用 ±YYYYYY 格式，不再是合法的週一 id
+  if (!isMondayId(value))
     throw new Error("Trend range exceeds supported ISO dates")
   return value
 }
@@ -44,17 +46,56 @@ export function exactTrendValue(value: number, page: TrendTargetPage): string {
   return withUnit(Object.is(value, -0) ? "0" : String(value), page.metric)
 }
 
+type TrendDirection = TrendTargetPage["direction"]
+
+type TrendDirectionRule = {
+  operator: string
+  choiceLabel: string
+  preference: string
+  meets: (value: number, target: number) => boolean
+}
+
+// 目標方向的符號、比較與文案集中一處，parser、編輯器與投影片不各自判斷方向
+const TREND_DIRECTION_RULES: Record<TrendDirection, TrendDirectionRule> = {
+  "at-most": {
+    operator: "≤",
+    choiceLabel: "At most (≤)",
+    preference: "Lower is better",
+    meets: (value, target) => value <= target,
+  },
+  "at-least": {
+    operator: "≥",
+    choiceLabel: "At least (≥)",
+    preference: "Higher is better",
+    meets: (value, target) => value >= target,
+  },
+}
+
+export const TREND_DIRECTIONS = Object.keys(
+  TREND_DIRECTION_RULES
+) as TrendDirection[]
+
+export function isTrendDirection(value: unknown): value is TrendDirection {
+  return (
+    typeof value === "string" && Object.hasOwn(TREND_DIRECTION_RULES, value)
+  )
+}
+
+export function trendDirectionRule(
+  direction: TrendDirection
+): TrendDirectionRule {
+  return TREND_DIRECTION_RULES[direction]
+}
+
 export function formatTrendTarget(page: TrendTargetPage): string | null {
   if (page.target === null) return null
-  const operator = page.direction === "at-most" ? "≤" : "≥"
+  const { operator } = trendDirectionRule(page.direction)
   return `${operator} ${formatTrendValue(page.target, page)}`
 }
 
 export function targetMet(value: number, page: TrendTargetPage): boolean {
   if (page.target === null) return false
-  return page.direction === "at-most"
-    ? value <= page.target
-    : value >= page.target
+  return trendDirectionRule(page.direction).meets(value, page.target)
 }
 
 export function trendBounds(page: TrendTargetPage): [number, number] {

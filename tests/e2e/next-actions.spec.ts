@@ -191,7 +191,24 @@ async function assertActionsFitAtPreviewAndCapture(page: Page) {
     })
   })
   expect(visibleTextFits).toBe(true)
+  await expectCopiedAtCaptureSize(page)
+}
+
+// 先清空剪貼簿，才能確認這次 Copy 真的通過 1280 × 720 的 Export gate，而非沿用上一輪的結果
+async function expectCopiedAtCaptureSize(page: Page) {
+  await page.evaluate(() => navigator.clipboard.writeText(""))
   await page.getByRole("button", { name: "Copy to clipboard" }).click()
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const [item] = await navigator.clipboard.read()
+        if (!item?.types.includes("image/png")) return null
+        const blob = await item.getType("image/png")
+        const header = new DataView(await blob.slice(16, 24).arrayBuffer())
+        return [header.getUint32(0), header.getUint32(4)]
+      })
+    )
+    .toEqual([2560, 1440])
   await expect(
     page.locator("p[role='alert']").filter({ hasText: "Page overflows" })
   ).toHaveCount(0)
@@ -200,6 +217,7 @@ async function assertActionsFitAtPreviewAndCapture(page: Page) {
 test("compares two to four multilingual Columns and Rows at preview and capture sizes", async ({
   page,
 }) => {
+  await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
   await openActionsWeek(page)
   await unlockEditor(page)
   for (const title of [

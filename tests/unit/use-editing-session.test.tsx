@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { useEditingSession } from "@/hooks/use-editing-session"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
-import { InMemoryWeekStore } from "@/lib/week-store"
+import { InMemoryWeekStore } from "./support/in-memory-week-store"
 
 const older = "2026-01-05"
 const latest = "2026-01-12"
@@ -121,7 +121,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricControls.write(
+      result.current.metricInputControls.comparisonMetric.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -131,7 +131,7 @@ describe("useEditingSession", () => {
 
     expect(result.current.save.message).toBe("Saved")
     expect(
-      result.current.metricControls.read({
+      result.current.metricInputControls.comparisonMetric.read({
         pageId: "p01",
         metricIndex: 0,
         field: "baselineValue",
@@ -159,7 +159,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricControls.write(
+      result.current.metricInputControls.comparisonMetric.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -179,7 +179,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricControls.write(
+      result.current.metricInputControls.comparisonMetric.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "bad"
       )
@@ -225,7 +225,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricControls.write(
+      result.current.metricInputControls.comparisonMetric.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -274,6 +274,20 @@ describe("useEditingSession", () => {
     expect(result.current.week?.start).toBe(next)
     expect(result.current.save.error).toBeNull()
     expect(result.current.save.saving).toBe(false)
+  })
+
+  it("logs a save failure that finishes after a created week opens", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const { result, failSave } = await renderWithPendingFailingSave()
+
+    await act(() => result.current.create.createWeek(next))
+    await failSave()
+
+    expect(warn).toHaveBeenCalledWith(
+      `Discarded stale failure: save week ${latest}`,
+      new Error("Disk full")
+    )
+    warn.mockRestore()
   })
 
   it("ignores a late create after switching weeks without listing weeks", async () => {

@@ -20,7 +20,7 @@ import {
   type WeeklyOverviewPage,
 } from "./week-document"
 import { errorMessage } from "./error-message"
-import { trendBounds, trendEndMonday } from "./trend-target"
+import { isTrendDirection, trendBounds, trendEndMonday } from "./trend-target"
 import { isCalendarMonday } from "./week-id"
 import {
   observationPath,
@@ -454,7 +454,7 @@ function trendFormatIssues(page: TrendTargetPage): ExportIssue[] {
   const issues: ExportIssue[] = []
   if (!hasValidMetricFormat(page.metric))
     issues.push(invalid("metric", "Metric format is invalid"))
-  if (page.direction !== "at-most" && page.direction !== "at-least")
+  if (!isTrendDirection(page.direction))
     issues.push(invalid("direction", "Target direction is invalid"))
   return issues
 }

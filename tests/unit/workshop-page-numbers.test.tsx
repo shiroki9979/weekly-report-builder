@@ -7,17 +7,16 @@ import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
-import type { MetricEditorControls } from "@/lib/editing-session"
+import type { MetricInputControls } from "@/hooks/use-editing-session"
 import type { WeekDocument } from "@/lib/week-document"
+import {
+  unusedComparisonMetricControls,
+  unusedTrendControls,
+} from "./support/editor-controls"
 
-// 這些頁面沒有 Comparison Metric，表單不會呼叫 Metric 控制
-const noMetricControls: MetricEditorControls = {
-  read: () => "",
-  write: () => {},
-  add: () => {},
-  move: () => {},
-  remove: () => {},
-  readiness: () => [],
+const noMetricInputControls: MetricInputControls = {
+  comparisonMetric: unusedComparisonMetricControls,
+  trend: unusedTrendControls,
 }
 
 function sampleWeek(showPageNumbers?: boolean): WeekDocument {
@@ -99,6 +98,25 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
 
     const checkbox = screen.getByRole("checkbox", { name: "Show page numbers" })
     expect(checkbox).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("explains that HTML pages opt in to page numbers individually", () => {
+    render(
+      <WorkshopToolbar
+        weeks={["2026-08-24"]}
+        selectedMonday="2026-08-24"
+        onWeekChange={() => {}}
+        save={idleSave}
+        create={idleCreate}
+        pageNumbers={{ show: true, onChange: () => {} }}
+      />
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "Show page numbers" })
+    ).toHaveAccessibleDescription(
+      "HTML pages show a page number only when set on the page."
+    )
   })
 })
 
@@ -185,7 +203,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
         week={week}
         pageIndex={0}
         onChange={() => {}}
-        metricControls={noMetricControls}
+        metricInputControls={noMetricInputControls}
       />
     )
 
@@ -223,7 +241,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
         week={week}
         pageIndex={0}
         onChange={() => {}}
-        metricControls={noMetricControls}
+        metricInputControls={noMetricInputControls}
       />
     )
 

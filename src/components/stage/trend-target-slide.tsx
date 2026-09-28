@@ -8,9 +8,10 @@ import {
   observationMonday,
   targetMet,
   trendBounds,
+  trendDirectionRule,
   trendEndMonday,
 } from "@/lib/trend-target"
-import type { TrendObservation, TrendTargetPage } from "@/lib/week-document"
+import type { WeeklyObservation, TrendTargetPage } from "@/lib/week-document"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
@@ -33,6 +34,8 @@ const DENSE_X_AXIS_WEEKS = 8
 // 科學記號保留四位有效數字；跨度不到 1% 時改以 offset 顯示差值，避免刻度捨入後相同。
 const NARROW_RANGE_RATIO = 1e-2
 const OFFSET_TICK_DIGITS = 3
+// double 可穩定還原的十進位有效位數；捨去 offset 乘回 magnitude 時的浮點殘差
+const OFFSET_SIGNIFICANT_DIGITS = 15
 const PLAIN_TICK_DIGITS = 12
 // 左側留白約容納八個完整數字，更長的軸標改用科學記號。
 const MAX_PLAIN_TICK_CHARS = 8
@@ -88,6 +91,12 @@ function axisLabel(value: number, offset: number): string {
     : rounded.toExponential(SCIENTIFIC_TICK_DECIMALS)
 }
 
+// 軸上空間只夠放月／日，年份由下方的 Observed weeks 範圍交代
+function monthDayLabel(monday: string): string {
+  const [, month, day] = monday.split("-")
+  return `${month}/${day}`
+}
+
 function axisOffsetFor([minimum, maximum]: [number, number]): number {
   const span = maximum - minimum
   if (span >= Math.abs(minimum) * NARROW_RANGE_RATIO) return 0
@@ -96,7 +105,11 @@ function axisOffsetFor([minimum, maximum]: [number, number]): number {
     10 ** Math.floor(Math.log10(span)),
     Number.MIN_VALUE
   )
-  return Number((Math.round(minimum / magnitude) * magnitude).toPrecision(15))
+  return Number(
+    (Math.round(minimum / magnitude) * magnitude).toPrecision(
+      OFFSET_SIGNIFICANT_DIGITS
+    )
+  )
 }
 
 function chartGeometry(
@@ -128,7 +141,7 @@ function chartGeometry(
 type ChartGeometry = ReturnType<typeof chartGeometry>
 
 function observationText(
-  entry: TrendObservation,
+  entry: WeeklyObservation,
   page: TrendTargetPage
 ): string {
   if (entry.state === "measured") return formatTrendValue(entry.value, page)
@@ -183,7 +196,7 @@ function TrendMarker({
   isLatest,
   geometry,
 }: {
-  entry: TrendObservation
+  entry: WeeklyObservation
   index: number
   isLatest: boolean
   geometry: ChartGeometry
@@ -284,7 +297,7 @@ function TrendXAxis({
             y={CHART_BOTTOM + X_LABEL_OFFSET}
             textAnchor="middle"
           >
-            {monday.slice(5).replace("-", "/")}
+            {monthDayLabel(monday)}
           </text>
         ) : null}
       </g>
@@ -401,9 +414,7 @@ function TrendSummary({ page }: { page: TrendTargetPage }) {
           {formatTrendTarget(page) ?? "—"}
         </p>
         <p className="editorial-trend-direction">
-          {page.direction === "at-most"
-            ? "Lower is better"
-            : "Higher is better"}
+          {trendDirectionRule(page.direction).preference}
         </p>
       </div>
       <p className="editorial-trend-interpretation">{page.interpretation}</p>

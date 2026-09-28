@@ -43,6 +43,12 @@ import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 
+// Comparison Metric 與 Trend & Target 的 Metric Input 都由 Editing Session 持有，一併交給頁面編輯器
+export type MetricInputControls = {
+  comparisonMetric: MetricEditorControls
+  trend: TrendEditorControls
+}
+
 export type EditingSessionResult = {
   weeks: string[]
   selectedMonday: string
@@ -50,8 +56,7 @@ export type EditingSessionResult = {
   week: WeekDocument | null
   operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
-  metricControls: MetricEditorControls
-  trendControls: TrendEditorControls
+  metricInputControls: MetricInputControls
   addPage: (page: WeekPage) => void
   deletePage: (pageId: string) => void
   movePage: (pageId: string, direction: PageMoveDirection) => void
@@ -101,29 +106,33 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
     operationSnapshot: () => sessionOperationSnapshot(sessionRef.current),
     editContent: (change) =>
       update((current) => editSessionContent(current, change)),
-    metricControls: {
-      read: (location) => readMetricInput(session, location),
-      write: (location, raw) =>
-        update((current) => writeMetricInput(current, location, raw)),
-      add: (pageId) => update((current) => addSessionMetric(current, pageId)),
-      move: (move) => update((current) => moveSessionMetric(current, move)),
-      remove: (metric) =>
-        update((current) => removeSessionMetric(current, metric)),
-      readiness: (pageId) => sessionReadiness(session, pageId),
-    },
-    trendControls: {
-      read: (location) => readTrendInput(session, location),
-      write: (location, raw) =>
-        update((current) => writeTrendInput(current, location, raw)),
-      setObservationState: (location, state) =>
-        update((current) => setTrendObservationState(current, location, state)),
-      changeEndpoint: (pageId, action) =>
-        update((current) => changeTrendEndpoint(current, pageId, action)),
-      confirmRedate: (pageId) =>
-        update((current) => confirmTrendRedate(current, pageId)),
-      cancelRedate: (pageId) =>
-        update((current) => cancelTrendRedate(current, pageId)),
-      readiness: (pageId) => sessionReadiness(session, pageId),
+    metricInputControls: {
+      comparisonMetric: {
+        read: (location) => readMetricInput(session, location),
+        write: (location, raw) =>
+          update((current) => writeMetricInput(current, location, raw)),
+        add: (pageId) => update((current) => addSessionMetric(current, pageId)),
+        move: (move) => update((current) => moveSessionMetric(current, move)),
+        remove: (metric) =>
+          update((current) => removeSessionMetric(current, metric)),
+        readiness: (pageId) => sessionReadiness(session, pageId),
+      },
+      trend: {
+        read: (location) => readTrendInput(session, location),
+        write: (location, raw) =>
+          update((current) => writeTrendInput(current, location, raw)),
+        setObservationState: (location, state) =>
+          update((current) =>
+            setTrendObservationState(current, location, state)
+          ),
+        changeEndpoint: (pageId, action) =>
+          update((current) => changeTrendEndpoint(current, pageId, action)),
+        confirmRedate: (pageId) =>
+          update((current) => confirmTrendRedate(current, pageId)),
+        cancelRedate: (pageId) =>
+          update((current) => cancelTrendRedate(current, pageId)),
+        readiness: (pageId) => sessionReadiness(session, pageId),
+      },
     },
     addPage: (page) => update((current) => addSessionPage(current, page)),
     deletePage: (pageId) =>
@@ -235,11 +244,13 @@ function expireOpenedWeekResults(lifecycle: WeekLifecycle): void {
 }
 
 type Outcome<T> = {
+  // 過期失敗不再寫回畫面，只能靠這段描述在 console 辨識是哪個請求
+  description: string
   resolved: (value: T) => void | Promise<void>
   rejected: (cause: unknown) => void
 }
 
-// 過期的結果不論成功或失敗都丟棄
+// 過期的結果不論成功或失敗都不寫回；失敗仍留下紀錄，避免切週後 Save 失敗無從追查
 async function whenLatest<T>(
   isLatest: () => boolean,
   request: () => Promise<T>,
@@ -250,6 +261,7 @@ async function whenLatest<T>(
     value = await request()
   } catch (cause) {
     if (isLatest()) outcome.rejected(cause)
+    else console.warn(`Discarded stale failure: ${outcome.description}`, cause)
     return
   }
   if (isLatest()) await outcome.resolved(value)
@@ -268,6 +280,7 @@ async function openLatestWeek(
 ): Promise<void> {
   const { store, update } = lifecycle
   await whenLatest(isLatest, () => store.listWeeks(), {
+    description: "list weeks",
     resolved: (weeks) => {
       update((current) => setSessionWeeks(current, weeks))
       const latest = latestWeekMonday(weeks)
@@ -291,6 +304,7 @@ async function openWeek(
   const isLatest = claimLatest(lifecycle.openedWeeks)
   update((current) => beginSessionOpen(current, monday))
   await whenLatest(isLatest, () => store.loadWeek(monday), {
+    description: `load week ${monday}`,
     resolved: (week) => update((current) => finishSessionOpen(current, week)),
     rejected: (cause) =>
       update((current) =>
@@ -319,6 +333,7 @@ async function saveOpenWeek(
   const isLatest = claimLatest(lifecycle.saves, lifecycle.openedWeeks)
   update(beginSessionSave)
   await whenLatest(isLatest, () => store.saveWeek(selectedMonday, week), {
+    description: `save week ${selectedMonday}`,
     resolved: () => update(finishSessionSave),
     rejected: (cause) =>
       update((current) =>
@@ -346,8 +361,10 @@ async function createAndOpenWeek(
   update(beginSessionCreate)
   // 建立後先確認仍是最新操作，過期的建立不再列出週次
   await whenLatest(isLatest, () => store.createWeekFromPrevious(monday), {
+    description: `create week ${monday}`,
     resolved: (week) =>
       whenLatest(isLatest, () => store.listWeeks(), {
+        description: `list weeks after creating ${monday}`,
         resolved: (weeks) => {
           // 新週真正開啟時才讓舊週的進行中結果過期；建立失敗時，舊週的 Save 結果仍要回報
           expireOpenedWeekResults(lifecycle)

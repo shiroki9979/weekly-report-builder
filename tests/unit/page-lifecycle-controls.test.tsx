@@ -20,6 +20,7 @@ import {
 } from "@/lib/editing-session"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
+import { unusedTrendControls } from "./support/editor-controls"
 
 function sampleWeek(): WeekDocument {
   return {
@@ -76,17 +77,20 @@ function LifecycleHarness({
         onChange={(update) =>
           setSession((current) => editSessionContent(current, update))
         }
-        metricControls={{
-          read: (location) => readMetricInput(session, location),
-          write: (location, raw) =>
-            setSession((current) => writeMetricInput(current, location, raw)),
-          add: (pageId) =>
-            setSession((current) => addSessionMetric(current, pageId)),
-          move: (move) =>
-            setSession((current) => moveSessionMetric(current, move)),
-          remove: (metric) =>
-            setSession((current) => removeSessionMetric(current, metric)),
-          readiness: (pageId) => sessionReadiness(session, pageId),
+        metricInputControls={{
+          comparisonMetric: {
+            read: (location) => readMetricInput(session, location),
+            write: (location, raw) =>
+              setSession((current) => writeMetricInput(current, location, raw)),
+            add: (pageId) =>
+              setSession((current) => addSessionMetric(current, pageId)),
+            move: (move) =>
+              setSession((current) => moveSessionMetric(current, move)),
+            remove: (metric) =>
+              setSession((current) => removeSessionMetric(current, metric)),
+            readiness: (pageId) => sessionReadiness(session, pageId),
+          },
+          trend: unusedTrendControls,
         }}
       />
     </div>

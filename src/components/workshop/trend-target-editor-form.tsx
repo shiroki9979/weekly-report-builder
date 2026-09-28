@@ -10,19 +10,31 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import { MetricFormatFields } from "@/components/workshop/metric-format-fields"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { issuePaths } from "@/lib/export-readiness"
 import {
   canChangeTrendEndpoint,
+  isStartSettled,
   observationPath,
   trendRangeError,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
 import type { TrendEditorControls } from "@/lib/trend-session"
-import { observationMonday, trendRangeEnd } from "@/lib/trend-target"
+import {
+  isTrendDirection,
+  observationMonday,
+  TREND_DIRECTIONS,
+  trendDirectionRule,
+  trendRangeEnd,
+} from "@/lib/trend-target"
 import { isCalendarMonday } from "@/lib/week-id"
 import { typedPageUpdater } from "@/lib/update-week-page"
-import { isTrendTargetPage, type TrendTargetPage } from "@/lib/week-document"
+import {
+  hasEnteredObservations,
+  isTrendTargetPage,
+  type TrendTargetPage,
+} from "@/lib/week-document"
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
@@ -81,9 +93,10 @@ function TrendDateRangeControls({ page, paths, trendControls }: FieldProps) {
     pageId: page.id,
     path: "startMonday",
   })
-  const entered = page.observations.some((entry) => entry.state !== "unfilled")
   const dateProposal =
-    entered && page.startMonday && pendingStart !== page.startMonday
+    hasEnteredObservations(page.observations) &&
+    page.startMonday &&
+    pendingStart !== page.startMonday
       ? proposedRange(pendingStart, page.observations.length)
       : null
   return (
@@ -147,7 +160,7 @@ function TrendObservationControls({
     pageId: page.id,
     path: "startMonday",
   })
-  const rangeReady = !!page.startMonday && pendingStart === page.startMonday
+  const rangeReady = isStartSettled(page, pendingStart)
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-medium">Weekly observations</legend>
@@ -216,20 +229,12 @@ function TrendObservationControls({
   )
 }
 
-function TrendMetricFormatControls({
+function TrendTargetAndFormatControls({
   page,
   paths,
   trendControls,
   update,
 }: FieldProps & { update: UpdateTrend }) {
-  const setMetricFormat = (
-    field: keyof TrendTargetPage["metric"],
-    value: string | number
-  ) =>
-    update((current) => ({
-      ...current,
-      metric: { ...current.metric, [field]: value },
-    }))
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-2">
@@ -252,7 +257,7 @@ function TrendMetricFormatControls({
         <Select
           value={page.direction}
           onValueChange={(value) => {
-            if (value === "at-most" || value === "at-least")
+            if (isTrendDirection(value))
               update((current) => ({ ...current, direction: value }))
           }}
         >
@@ -260,74 +265,24 @@ function TrendMetricFormatControls({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="at-most">At most (≤)</SelectItem>
-            <SelectItem value="at-least">At least (≥)</SelectItem>
+            {TREND_DIRECTIONS.map((direction) => (
+              <SelectItem key={direction} value={direction}>
+                {trendDirectionRule(direction).choiceLabel}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="trend-unit">Unit</Label>
-        <Input
-          id="trend-unit"
-          value={page.metric.unit}
-          onChange={(event) => setMetricFormat("unit", event.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="trend-precision">Precision</Label>
-        <Select
-          value={String(page.metric.precision)}
-          onValueChange={(value) => {
-            if (value === "0" || value === "1" || value === "2")
-              setMetricFormat("precision", Number(value))
-          }}
-        >
-          <SelectTrigger id="trend-precision">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">0</SelectItem>
-            <SelectItem value="1">1</SelectItem>
-            <SelectItem value="2">2</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="trend-position">Unit position</Label>
-        <Select
-          value={page.metric.unitPosition}
-          onValueChange={(value) => {
-            if (value === "before" || value === "after")
-              setMetricFormat("unitPosition", value)
-          }}
-        >
-          <SelectTrigger id="trend-position">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="after">After</SelectItem>
-            <SelectItem value="before">Before</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="trend-spacing">Unit spacing</Label>
-        <Select
-          value={page.metric.unitSpacing}
-          onValueChange={(value) => {
-            if (value === "space" || value === "none")
-              setMetricFormat("unitSpacing", value)
-          }}
-        >
-          <SelectTrigger id="trend-spacing">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="space">Space</SelectItem>
-            <SelectItem value="none">None</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <MetricFormatFields
+        idPrefix="trend"
+        format={page.metric}
+        onChange={(patch) =>
+          update((current) => ({
+            ...current,
+            metric: { ...current.metric, ...patch },
+          }))
+        }
+      />
     </div>
   )
 }
@@ -406,7 +361,7 @@ export function TrendTargetEditorForm({
         trendControls={trendControls}
         readOnly={readOnly}
       />
-      <TrendMetricFormatControls
+      <TrendTargetAndFormatControls
         page={page}
         paths={paths}
         trendControls={trendControls}

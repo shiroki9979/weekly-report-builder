@@ -1,5 +1,6 @@
 import { errorMessage } from "./error-message"
 import { abortError } from "./export-errors"
+import { PREPARATION_TIMEOUT_MS } from "./capture-limits"
 import type { MetricInputMap } from "./metric-input"
 import {
   assessContentReadiness,
@@ -53,11 +54,9 @@ const MEASUREMENT_LIMIT: PhaseLimit = {
   timeoutMs: 5000,
 }
 const CAPTURE_LIMIT: PhaseLimit = { phase: "PNG generation", timeoutMs: 15000 }
-// 需大於 browser adapter 的 HTML_LOAD_TIMEOUT_MS 與 PAINT_SETTLE_TIMEOUT_MS 總和，
-// HTML 逾時才會先被歸類為 html-load-failed，而非整個操作失敗。
 const PREPARATION_LIMIT: PhaseLimit = {
   phase: "Capture preparation",
-  timeoutMs: 5000,
+  timeoutMs: PREPARATION_TIMEOUT_MS,
 }
 
 export function isHtmlLoadFailure(
