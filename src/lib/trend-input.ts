@@ -5,9 +5,13 @@ import type {
   TrendInputPath,
 } from "./metric-input"
 import { errorMessage } from "./error-message"
-import { isCalendarMonday, observationMonday } from "./trend-target"
+import { isCalendarMonday, trendRangeEnd } from "./trend-target"
 import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
   isTrendTargetPage,
+  type TrendObservation,
   type TrendTargetPage,
   type WeekDocument,
 } from "./week-document"
@@ -18,6 +22,20 @@ export type TrendEndpointAction =
   "prepend" | "append" | "remove-first" | "remove-last"
 
 const OBSERVATION_PATH = /^observations\[(\d+)\]\.value$/
+
+export function endpointAddsWeek(action: TrendEndpointAction): boolean {
+  return action === "prepend" || action === "append"
+}
+
+export function canChangeTrendEndpoint(
+  observations: readonly TrendObservation[],
+  action: TrendEndpointAction
+): boolean {
+  const rule = CARDINALITY.trendObservations
+  return endpointAddsWeek(action)
+    ? canAddEntry(observations, rule)
+    : canRemoveEntry(observations, rule)
+}
 
 export function observationPath(index: number): ObservationInputPath {
   return `observations[${index}].value`
@@ -106,9 +124,16 @@ export function parseTrendNumber(raw: string): number | null | "invalid" {
   return Number.isFinite(value) ? value : "invalid"
 }
 
+// 呼叫端須先通過 trendInputError；非法原文走到這裡代表流程有誤，須拋錯而非寫入 JSON
+export function requireTrendNumber(raw: string): number | null {
+  const value = parseTrendNumber(raw)
+  if (value === "invalid") throw new Error(`Invalid Trend number: ${raw}`)
+  return value
+}
+
 export function trendRangeError(start: string, length: number): string | null {
   try {
-    observationMonday(start, length - 1)
+    trendRangeEnd(start, length)
     return null
   } catch (cause) {
     return errorMessage(cause, "Trend range cannot be dated")

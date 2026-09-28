@@ -13,55 +13,34 @@ import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { issuePaths } from "@/lib/export-readiness"
 import {
+  canChangeTrendEndpoint,
   observationPath,
   trendRangeError,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
 import type { TrendEditorControls } from "@/lib/trend-session"
-import { isCalendarMonday, observationMonday } from "@/lib/trend-target"
-import { typedPageUpdater } from "@/lib/update-week-page"
 import {
-  canAddEntry,
-  canRemoveEntry,
-  CARDINALITY,
-  isTrendTargetPage,
-  type TrendTargetPage,
-} from "@/lib/week-document"
+  isCalendarMonday,
+  observationMonday,
+  trendRangeEnd,
+} from "@/lib/trend-target"
+import { typedPageUpdater } from "@/lib/update-week-page"
+import { isTrendTargetPage, type TrendTargetPage } from "@/lib/week-document"
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
 // 日期不合法時不顯示預覽即可；錯誤原因已由 readiness 的 startMonday issue 呈現
 function proposedRange(start: string, length: number): string | null {
   if (!isCalendarMonday(start) || trendRangeError(start, length)) return null
-  return `${start} – ${observationMonday(start, length - 1)}`
+  return `${start} – ${trendRangeEnd(start, length)}`
 }
 
-const ENDPOINT_BUTTONS: {
-  action: TrendEndpointAction
-  label: string
-  allowed: (page: TrendTargetPage) => boolean
-}[] = [
-  { action: "prepend", label: "Add earlier week", allowed: canAddWeek },
-  { action: "append", label: "Add later week", allowed: canAddWeek },
-  {
-    action: "remove-first",
-    label: "Remove earliest week",
-    allowed: canRemoveWeek,
-  },
-  {
-    action: "remove-last",
-    label: "Remove latest week",
-    allowed: canRemoveWeek,
-  },
+const ENDPOINT_BUTTONS: { action: TrendEndpointAction; label: string }[] = [
+  { action: "prepend", label: "Add earlier week" },
+  { action: "append", label: "Add later week" },
+  { action: "remove-first", label: "Remove earliest week" },
+  { action: "remove-last", label: "Remove latest week" },
 ]
-
-function canAddWeek(page: TrendTargetPage): boolean {
-  return canAddEntry(page.observations, CARDINALITY.trendObservations)
-}
-
-function canRemoveWeek(page: TrendTargetPage): boolean {
-  return canRemoveEntry(page.observations, CARDINALITY.trendObservations)
-}
 
 type Props = PageEditorProps<TrendTargetPage> & {
   trendControls: TrendEditorControls
@@ -176,12 +155,14 @@ function TrendObservationControls({
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-medium">Weekly observations</legend>
       <div className="flex flex-wrap gap-2">
-        {ENDPOINT_BUTTONS.map(({ action, label, allowed }) => (
+        {ENDPOINT_BUTTONS.map(({ action, label }) => (
           <Button
             key={action}
             type="button"
             variant="outline"
-            disabled={!rangeReady || !allowed(page)}
+            disabled={
+              !rangeReady || !canChangeTrendEndpoint(page.observations, action)
+            }
             onClick={() => trendControls.changeEndpoint(page.id, action)}
           >
             {label}

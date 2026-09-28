@@ -3,18 +3,23 @@ import type { ExportIssue } from "./export-readiness"
 import type { MetricInputMap, TrendInputPath } from "./metric-input"
 import {
   clearTrendInputText,
+  endpointAddsWeek,
   observationIndex,
   observationPath,
   parseTrendNumber,
   readTrendInputText,
   remapTrendObservationInput,
+  requireTrendNumber,
   trendInputError,
-  trendRangeError,
   writeTrendInputText,
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
-import { isCalendarMonday, observationMonday } from "./trend-target"
+import {
+  isCalendarMonday,
+  observationMonday,
+  trendRangeEnd,
+} from "./trend-target"
 import {
   assertCanAddEntry,
   assertCanRemoveEntry,
@@ -26,12 +31,14 @@ import {
 
 export type ObservationLocation = { pageId: string; index: number }
 
+export type UnmeasuredState = Exclude<TrendObservation["state"], "measured">
+
 export type TrendEditorControls = {
   read: (location: TrendInputLocation) => string
   write: (location: TrendInputLocation, raw: string) => void
   setObservationState: (
     location: ObservationLocation,
-    state: "missing" | "unfilled"
+    state: UnmeasuredState
   ) => void
   changeEndpoint: (pageId: string, action: TrendEndpointAction) => void
   confirmRedate: (pageId: string) => void
@@ -67,7 +74,7 @@ export function writeTrendInput(
 export function setTrendObservationState(
   session: EditingSession,
   location: ObservationLocation,
-  state: "missing" | "unfilled"
+  state: UnmeasuredState
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, location.pageId)
   if (!page.observations[location.index])
@@ -116,8 +123,7 @@ export function confirmTrendRedate(
   })
   if (!proposed || !isCalendarMonday(proposed))
     throw new Error("Choose a valid proposed Monday")
-  const rangeError = trendRangeError(proposed, page.observations.length)
-  if (rangeError) throw new Error(rangeError)
+  trendRangeEnd(proposed, page.observations.length)
   return replaceTrend(session, pageIndex, {
     page: { ...page, startMonday: proposed },
     metricInput: clearTrendInputText(session.metricInput, {
@@ -166,9 +172,16 @@ function committedTrendText(
 ): string {
   if (path === "startMonday") return page.startMonday ?? ""
   if (path === "target") return page.target?.toString() ?? ""
-  const observation = page.observations[observationIndex(path) ?? -1]
-  if (!observation) throw new Error(`Unknown Trend observation: ${path}`)
+  const { observation } = observationAt(page, path)
   return observation.state === "measured" ? String(observation.value) : ""
+}
+
+function observationAt(page: TrendTargetPage, path: TrendInputPath) {
+  const index = observationIndex(path)
+  const observation = index === null ? undefined : page.observations[index]
+  if (index === null || !observation)
+    throw new Error(`Unknown Trend observation: ${path}`)
+  return { index, observation }
 }
 
 function applyTrendInput(
@@ -180,7 +193,7 @@ function applyTrendInput(
   if (path === "target")
     return {
       ...edit,
-      page: { ...edit.page, target: parseTrendNumber(raw) as number | null },
+      page: { ...edit.page, target: requireTrendNumber(raw) },
     }
   return applyObservationValue(edit, path, raw)
 }
@@ -215,11 +228,10 @@ function applyObservationValue(
   path: TrendInputPath,
   raw: string
 ): TrendEdit {
-  const index = observationIndex(path) ?? -1
-  const current = page.observations[index]
-  if (!current || current.state === "missing")
-    throw new Error(`Unknown editable Trend observation: ${path}`)
-  const value = parseTrendNumber(raw) as number | null
+  const { index, observation } = observationAt(page, path)
+  if (observation.state === "missing")
+    throw new Error(`Missing Trend observation is not editable: ${path}`)
+  const value = requireTrendNumber(raw)
   const next: TrendObservation =
     value === null ? { state: "unfilled" } : { state: "measured", value }
   return releaseClearedStart({
@@ -264,8 +276,7 @@ function assertEndpointAllowed(
   action: TrendEndpointAction
 ): void {
   const rule = CARDINALITY.trendObservations
-  if (action === "prepend" || action === "append")
-    assertCanAddEntry(page.observations, rule)
+  if (endpointAddsWeek(action)) assertCanAddEntry(page.observations, rule)
   else assertCanRemoveEntry(page.observations, rule)
 }
 
@@ -279,8 +290,8 @@ const ENDPOINT_MOVES: Record<
     observations: [{ state: "unfilled" }, ...page.observations],
   }),
   append: (page, startMonday) => {
-    // 只為驗證新末週仍在 ISO 日期範圍內；超出時直接拋錯，不新增週次
-    observationMonday(startMonday, page.observations.length)
+    // 新末週超出 ISO 日期範圍時直接拋錯，不新增週次
+    trendRangeEnd(startMonday, page.observations.length + 1)
     return {
       ...page,
       observations: [...page.observations, { state: "unfilled" }],

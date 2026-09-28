@@ -26,6 +26,7 @@ import { exportPage } from "@/lib/export-page-gate"
 import { fakeAdapter } from "./export-fixtures"
 import { exportVisiblePages } from "@/lib/week-export"
 import { trendBounds } from "@/lib/trend-target"
+import { canChangeTrendEndpoint } from "@/lib/trend-input"
 
 const complete: TrendTargetPage = {
   id: "p01",
@@ -130,6 +131,21 @@ describe("Trend & Target", () => {
     ).toHaveTextContent("1e+12")
   })
 
+  describe("endpoint availability", () => {
+    const weeks = (length: number) =>
+      Array.from({ length }, () => ({ state: "unfilled" as const }))
+
+    it("allows adding either endpoint until twelve weeks", () => {
+      expect(canChangeTrendEndpoint(weeks(11), "prepend")).toBe(true)
+      expect(canChangeTrendEndpoint(weeks(12), "append")).toBe(false)
+    })
+
+    it("allows removing either endpoint until two weeks remain", () => {
+      expect(canChangeTrendEndpoint(weeks(3), "remove-last")).toBe(true)
+      expect(canChangeTrendEndpoint(weeks(2), "remove-first")).toBe(false)
+    })
+  })
+
   describe("range endpoints", () => {
     const dated = {
       ...complete,
@@ -221,27 +237,36 @@ describe("Trend & Target", () => {
     })
 
     describe("at twelve positions", () => {
-      const full = {
-        ...complete,
-        startMonday: "2026-01-05",
-        observations: Array.from({ length: 12 }, () => ({
-          state: "unfilled" as const,
-        })),
+      function fullSession() {
+        return createEditingSession({
+          start: "2026-03-23",
+          end: "2026-03-27",
+          pages: [
+            {
+              ...complete,
+              startMonday: "2026-01-05",
+              observations: Array.from({ length: 12 }, () => ({
+                state: "unfilled" as const,
+              })),
+            },
+          ],
+        })
       }
-      const session = createEditingSession({
-        start: "2026-03-23",
-        end: "2026-03-27",
-        pages: [full],
-      })
 
       it("refuses to add a week instead of evicting history", () => {
+        const session = fullSession()
+
         expect(() => changeTrendEndpoint(session, "p01", "append")).toThrow(
           "Trend & Target can have at most 12 observations"
         )
       })
 
       it("appends an unfilled latest week after the earliest is removed", () => {
-        const trimmed = changeTrendEndpoint(session, "p01", "remove-first")
+        const trimmed = changeTrendEndpoint(
+          fullSession(),
+          "p01",
+          "remove-first"
+        )
 
         const next = changeTrendEndpoint(trimmed, "p01", "append")
 
