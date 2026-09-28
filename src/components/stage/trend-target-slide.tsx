@@ -16,7 +16,7 @@ type Props = { page: TrendTargetPage; context: StagePageContext }
 
 const CHART_WIDTH = 1000
 const CHART_HEIGHT = 200
-const CHART_LEFT = 84
+const CHART_LEFT = 120
 const CHART_RIGHT = 976
 const CHART_TOP = 10
 const CHART_BOTTOM = 154
@@ -30,10 +30,13 @@ const LATEST_POINT_RADIUS = 6
 const POINT_RADIUS = 4
 // 超過此週數時改為隔週標日期，避免日期標籤互相重疊
 const DENSE_X_AXIS_WEEKS = 8
-// 範圍相對數值極窄時，刻度印成完整數字會全部相同；改以 offset 顯示差值
-const NARROW_RANGE_RATIO = 1e-6
+// 科學記號保留四位有效數字；跨度不到 1% 時改以 offset 顯示差值，避免刻度捨入後相同。
+const NARROW_RANGE_RATIO = 1e-2
 const OFFSET_TICK_DIGITS = 3
 const PLAIN_TICK_DIGITS = 12
+// 左側留白約容納八個完整數字，更長的軸標改用科學記號。
+const MAX_PLAIN_TICK_CHARS = 8
+const SCIENTIFIC_TICK_DECIMALS = 3
 // html-to-image 擷取 PNG 時不會把 stylesheet 或 var() 帶進 SVG 子元素，
 // SVG 外觀（顏色、線寬、字級）只能以字面值寫在屬性上；顏色須與 stage.css／editorial-layouts.css 的同名 token 一致
 const SVG_INK = {
@@ -78,7 +81,11 @@ function exactComparison(page: TrendTargetPage): string | null {
 
 function axisLabel(value: number, offset: number): string {
   const digits = offset ? OFFSET_TICK_DIGITS : PLAIN_TICK_DIGITS
-  return Number((value - offset).toPrecision(digits)).toString()
+  const rounded = Number((value - offset).toPrecision(digits))
+  const plain = rounded.toString()
+  return plain.length <= MAX_PLAIN_TICK_CHARS
+    ? plain
+    : rounded.toExponential(SCIENTIFIC_TICK_DECIMALS)
 }
 
 function axisOffsetFor([minimum, maximum]: [number, number]): number {
