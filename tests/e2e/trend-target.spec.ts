@@ -20,9 +20,13 @@ test("authors, saves, reloads, copies, and exports a measured Trend & Target pag
   await page
     .getByRole("textbox", { name: "Metric label" })
     .fill("Mean export duration")
+  await expect(page.getByRole("textbox", { name: "Week 1" })).toBeDisabled()
   await page
     .getByRole("textbox", { name: "Starting Monday" })
     .fill("2026-07-13")
+  await expect(
+    page.getByRole("textbox", { name: "Week 1 · 2026-07-13" })
+  ).toBeEnabled()
   for (const [index, value] of [
     "9.6",
     "9.1",

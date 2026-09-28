@@ -16,7 +16,6 @@ import {
 import {
   assertTrendEndpointAllowed,
   isStartSettled,
-  parseTrendNumber,
   remapTrendObservationInput,
   requireTrendNumber,
   START_MONDAY_REQUIRED,
@@ -71,6 +70,8 @@ export function writeTrendInput(
   raw: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, location.pageId)
+  if (observationIndex(location.path) !== null && !page.startMonday)
+    throw new Error(START_MONDAY_REQUIRED)
   const metricInput = writeInputText(session.metricInput, location, raw)
   if (trendInputError(page, metricInput, location.path))
     return { ...session, metricInput }
@@ -86,8 +87,7 @@ export function setTrendObservationState(
   const { page, pageIndex } = requireTrend(session, location.pageId)
   if (!page.observations[location.index])
     throw new Error(`Unknown Trend observation: ${location.index}`)
-  if (state === "missing" && !page.startMonday)
-    throw new Error(START_MONDAY_REQUIRED)
+  if (!page.startMonday) throw new Error(START_MONDAY_REQUIRED)
   const edit = releaseClearedStart({
     page: {
       ...page,
@@ -187,41 +187,14 @@ function applyTrendInput(
   path: TrendInputPath,
   raw: string
 ): TrendEdit {
-  if (path === "startMonday") return applyStartMonday(edit, raw)
+  if (path === "startMonday")
+    return { ...edit, page: { ...edit.page, startMonday: raw || null } }
   if (path === "target")
     return {
       ...edit,
       page: { ...edit.page, target: requireTrendNumber(raw) },
     }
   return applyObservationValue(edit, path, raw)
-}
-
-// 起始週一設定前輸入的數值只能暫存為 Metric Input；日期一旦合法就補寫入 JSON，作者不必重打
-function applyStartMonday({ page, metricInput }: TrendEdit, raw: string) {
-  if (raw === "") return { page: { ...page, startMonday: null }, metricInput }
-  const observations = page.observations.map(
-    (entry, index): WeeklyObservation =>
-      entry.state === "unfilled"
-        ? (pendingMeasurement(metricInput, page.id, index) ?? entry)
-        : entry
-  )
-  return { page: { ...page, startMonday: raw, observations }, metricInput }
-}
-
-function pendingMeasurement(
-  inputs: MetricInputMap,
-  pageId: string,
-  index: number
-): WeeklyObservation | null {
-  const pending = readInputText(inputs, {
-    pageId,
-    path: observationPath(index),
-  })
-  if (pending === undefined) return null
-  const parsed = parseTrendNumber(pending)
-  return parsed.status === "valid"
-    ? { state: "measured", value: parsed.value }
-    : null
 }
 
 function applyObservationValue(

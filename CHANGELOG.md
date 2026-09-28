@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Trend & Target 拒絕不存在的週一日期及數值下溢輸入；修正補填起始週後的資料顯示、極端／近值縱軸刻度與等值目標線的呈現；圖表維持全寬並依可用高度重算比例，空間不足時由 overflow 擋下匯出，不再縮小圖表或壓到摘要；缺測標記改用灰色，與目標線區分（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
+- Trend & Target 須先設定起始週一才能輸入觀測值；拒絕不存在的週一日期及數值下溢輸入；修正補填起始週後的資料顯示、極端／近值縱軸刻度與等值目標線的呈現；圖表維持全寬並依可用高度重算比例，空間不足時由 overflow 擋下匯出，不再縮小圖表或壓到摘要；缺測標記改用灰色，與目標線區分（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
 - 修正複製新週後，無標題頁面在 Page 選單中的顯示，以及空白 chart 類別造成的重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
 - 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session（[#33](https://github.com/shiroki9979/weekly-report-builder/issues/33)）。
 - 視窗高度不足時 16:9 預覽不再覆蓋 Speaker notes；Speaker notes 面板可拖曳調整高度並由標題列收合。

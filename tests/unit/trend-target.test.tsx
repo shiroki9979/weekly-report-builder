@@ -82,42 +82,45 @@ function yAxisTickLabels(container: HTMLElement) {
 }
 
 describe("Trend & Target", () => {
-  describe("an observation entered before dating", () => {
+  describe("an observation before dating", () => {
     const value = { pageId: "p01", path: "observations[0].value" } as const
-    const startMonday = { pageId: "p01", path: "startMonday" } as const
 
-    function undatedSessionWithValue() {
-      const session = sessionWith({
+    function undatedSession() {
+      return sessionWith({
         ...complete,
         startMonday: null,
         observations: [{ state: "unfilled" }, { state: "unfilled" }],
       })
-      return writeTrendInput(session, value, "0")
     }
 
-    it("stays pending and blocks save", () => {
-      const session = undatedSessionWithValue()
+    it("rejects a measured value until the starting Monday is set", () => {
+      const session = undatedSession()
 
-      expect(readTrendInput(session, value)).toBe("0")
-      expect(canSaveSession(session).allowed).toBe(false)
+      expect(() => writeTrendInput(session, value, "0")).toThrow(
+        "Set starting Monday before entering observations"
+      )
+      expect(readTrendInput(session, value)).toBe("")
     })
 
-    it("stays uncommitted while dating is left empty", () => {
-      const session = undatedSessionWithValue()
+    it("rejects an explicit missing observation until the starting Monday is set", () => {
+      const session = undatedSession()
 
-      const next = writeTrendInput(session, startMonday, "")
-
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: null,
-        observations: [{ state: "unfilled" }, { state: "unfilled" }],
-      })
+      expect(() =>
+        setTrendObservationState(
+          session,
+          { pageId: "p01", index: 0 },
+          "missing"
+        )
+      ).toThrow("Set starting Monday before entering observations")
     })
 
-    it("commits once a valid starting Monday is entered", () => {
-      const session = undatedSessionWithValue()
-
-      const next = writeTrendInput(session, startMonday, "2026-07-06")
-
+    it("accepts a measured value after the starting Monday is set", () => {
+      const session = writeTrendInput(
+        undatedSession(),
+        { pageId: "p01", path: "startMonday" },
+        "2026-07-06"
+      )
+      const next = writeTrendInput(session, value, "0")
       expect(next.week?.pages[0]).toMatchObject({
         startMonday: "2026-07-06",
         observations: [{ state: "measured", value: 0 }, { state: "unfilled" }],
