@@ -19,12 +19,13 @@ import {
   parseTrendNumber,
   remapTrendObservationInput,
   requireTrendNumber,
+  startMondayInput,
+  trendDatingError,
   trendInputError,
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
 import { observationMonday, trendRangeEnd } from "./trend-target"
-import { isCalendarMonday } from "./week-id"
 import {
   hasEnteredObservations,
   isTrendTargetPage,
@@ -110,7 +111,7 @@ export function changeTrendEndpoint(
   })
   return replaceTrend(session, pageIndex, {
     page: ENDPOINT_MOVES[action](page, startMonday),
-    metricInput: clearInputText(inputs, { pageId, path: "startMonday" }),
+    metricInput: clearInputText(inputs, startMondayInput(pageId)),
   })
 }
 
@@ -119,19 +120,12 @@ export function confirmTrendRedate(
   pageId: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
-  const proposed = readInputText(session.metricInput, {
-    pageId,
-    path: "startMonday",
-  })
-  if (!proposed || !isCalendarMonday(proposed))
+  const proposed = readInputText(session.metricInput, startMondayInput(pageId))
+  if (!proposed || trendDatingError(proposed, page.observations.length))
     throw new Error("Choose a valid proposed Monday")
-  trendRangeEnd(proposed, page.observations.length)
   return replaceTrend(session, pageIndex, {
     page: { ...page, startMonday: proposed },
-    metricInput: clearInputText(session.metricInput, {
-      pageId,
-      path: "startMonday",
-    }),
+    metricInput: clearInputText(session.metricInput, startMondayInput(pageId)),
   })
 }
 
@@ -142,10 +136,7 @@ export function cancelTrendRedate(
   requireTrend(session, pageId)
   return {
     ...session,
-    metricInput: clearInputText(session.metricInput, {
-      pageId,
-      path: "startMonday",
-    }),
+    metricInput: clearInputText(session.metricInput, startMondayInput(pageId)),
   }
 }
 
@@ -218,8 +209,11 @@ function pendingMeasurement(
     pageId,
     path: observationPath(index),
   })
-  const value = pending === undefined ? null : parseTrendNumber(pending)
-  return typeof value === "number" ? { state: "measured", value } : null
+  if (pending === undefined) return null
+  const parsed = parseTrendNumber(pending)
+  return parsed.status === "valid"
+    ? { state: "measured", value: parsed.value }
+    : null
 }
 
 function applyObservationValue(
@@ -242,15 +236,12 @@ function applyObservationValue(
 // 清空日期時若仍有已輸入週次，日期須留在 JSON；等最後一筆也清掉才真正解除日期
 function releaseClearedStart({ page, metricInput }: TrendEdit): TrendEdit {
   const cleared =
-    readInputText(metricInput, { pageId: page.id, path: "startMonday" }) ===
-      "" && !hasEnteredObservations(page.observations)
+    readInputText(metricInput, startMondayInput(page.id)) === "" &&
+    !hasEnteredObservations(page.observations)
   if (!cleared) return { page, metricInput }
   return {
     page: { ...page, startMonday: null },
-    metricInput: clearInputText(metricInput, {
-      pageId: page.id,
-      path: "startMonday",
-    }),
+    metricInput: clearInputText(metricInput, startMondayInput(page.id)),
   }
 }
 
@@ -258,10 +249,7 @@ function requireSettledStart(
   inputs: MetricInputMap,
   page: TrendTargetPage
 ): string {
-  const pending = readInputText(inputs, {
-    pageId: page.id,
-    path: "startMonday",
-  })
+  const pending = readInputText(inputs, startMondayInput(page.id))
   if (!isStartSettled(page, pending))
     throw new Error("Set a valid starting Monday before changing the range")
   return page.startMonday

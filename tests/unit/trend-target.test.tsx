@@ -160,9 +160,9 @@ describe("Trend & Target", () => {
       }
 
       it("are ready for export", () => {
-        expect(assessContentReadiness(page, {}, reportingWeek.start)).toEqual(
-          []
-        )
+        expect(
+          assessContentReadiness(page, { reportingMonday: reportingWeek.start })
+        ).toEqual([])
       })
 
       it("render readable, distinct ticks", () => {
@@ -578,11 +578,15 @@ describe("Trend & Target", () => {
 
   describe("reporting week", () => {
     it("is ready when the final observation falls on the reporting week", () => {
-      expect(assessContentReadiness(complete, {}, "2026-07-20")).toEqual([])
+      expect(
+        assessContentReadiness(complete, { reportingMonday: "2026-07-20" })
+      ).toEqual([])
     })
 
     it("reports observations that end after the reporting week", () => {
-      expect(assessContentReadiness(complete, {}, "2026-07-13")).toContainEqual(
+      expect(
+        assessContentReadiness(complete, { reportingMonday: "2026-07-13" })
+      ).toContainEqual(
         expect.objectContaining({
           path: "observations",
           code: "invalid-content",
@@ -647,13 +651,17 @@ describe("Trend & Target", () => {
 
     it("are ready when interior", () => {
       expect(
-        assessContentReadiness(interiorMissing, {}, reportingWeek.start)
+        assessContentReadiness(interiorMissing, {
+          reportingMonday: reportingWeek.start,
+        })
       ).toEqual([])
     })
 
     it("are ready when final", () => {
       expect(
-        assessContentReadiness(finalMissing, {}, finalMissingWeek.start)
+        assessContentReadiness(finalMissing, {
+          reportingMonday: finalMissingWeek.start,
+        })
       ).toEqual([])
     })
 
@@ -861,7 +869,7 @@ describe("Trend & Target", () => {
       },
     ])("reports $draft as not ready", ({ page, path, message }) => {
       expect(
-        assessContentReadiness(page, {}, reportingWeek.start)
+        assessContentReadiness(page, { reportingMonday: reportingWeek.start })
       ).toContainEqual(expect.objectContaining({ path, message }))
     })
 
@@ -911,7 +919,9 @@ describe("Trend & Target", () => {
       { series: "two signed weeks", page: twoWeeks, monday: "2026-08-31" },
       { series: "twelve zero weeks", page: twelveZeros, monday: "2026-03-02" },
     ])("accept $series as ready", ({ page, monday }) => {
-      expect(assessContentReadiness(page, {}, monday)).toEqual([])
+      expect(assessContentReadiness(page, { reportingMonday: monday })).toEqual(
+        []
+      )
     })
 
     it("meet an at-least target equal to the latest value", () => {

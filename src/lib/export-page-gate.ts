@@ -102,7 +102,10 @@ function preflightIssues(
     return assessExportEligibility(page).issues
   }
   if (isStructuredWeekPage(page)) {
-    return assessContentReadiness(page, metricInput, week.start)
+    return assessContentReadiness(page, {
+      metricInput,
+      reportingMonday: week.start,
+    })
   }
   return []
 }
@@ -186,12 +189,10 @@ async function measurementIssues(
     ]
   }
 
-  const assessment = assessExportEligibility(
-    page,
-    measurement,
-    deps.metricInput,
-    week.start
-  )
+  const assessment = assessExportEligibility(page, measurement, {
+    metricInput: deps.metricInput,
+    reportingMonday: week.start,
+  })
   return assessment.eligible ? [] : assessment.issues
 }
 

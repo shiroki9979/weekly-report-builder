@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { LockIcon, PencilIcon } from "lucide-react"
-import { usePanelRef } from "react-resizable-panels"
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -21,6 +20,7 @@ import {
   type ToolbarCreateControls,
   type ToolbarSaveControls,
 } from "@/components/workshop/workshop-toolbar"
+import { useCollapsiblePanel } from "@/hooks/use-collapsible-panel"
 import { usePageKeyboardNav } from "@/hooks/use-page-keyboard-nav"
 import {
   useEditingSession,
@@ -155,31 +155,11 @@ function EditorSidebar({
   )
 }
 
-// 編輯面板可由拖曳或標題列按鈕收合；收合狀態以面板回報為準，按鈕只送出切換要求
-function useEditorPanel() {
-  const panelRef = usePanelRef()
-  const [collapsed, setCollapsed] = useState(false)
-  const toggle = () => {
-    const panel = panelRef.current
-    if (!panel) {
-      return
-    }
-    if (panel.isCollapsed()) {
-      panel.expand()
-    } else {
-      panel.collapse()
-    }
-  }
-  const syncCollapsed = () =>
-    setCollapsed(panelRef.current?.isCollapsed() ?? false)
-  return { panelRef, collapsed, toggle, syncCollapsed }
-}
-
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
 export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
   const session = useEditingSession(weekStore)
   const { week, loadStatus, selectedPageIndex, setSelectedPageIndex } = session
-  const editorPanel = useEditorPanel()
+  const editorPanel = useCollapsiblePanel()
 
   usePageKeyboardNav({
     pageCount: week?.pages.length ?? 0,

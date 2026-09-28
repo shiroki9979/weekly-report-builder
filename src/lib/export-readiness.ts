@@ -501,11 +501,16 @@ function trendAxisIssues(page: TrendTargetPage): ExportIssue[] {
   }
 }
 
+// Metric Input 與報告週一總是一起決定內容是否就緒，合成一個 context 傳遞
+export type ReadinessContext = {
+  metricInput?: MetricInputMap
+  reportingMonday?: string
+}
+
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
   page: StructuredWeekPage,
-  metricInput: MetricInputMap = {},
-  reportingMonday?: string
+  { metricInput = {}, reportingMonday }: ReadinessContext = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
@@ -530,8 +535,7 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricInput: MetricInputMap = {},
-  reportingMonday?: string
+  context: ReadinessContext = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -549,11 +553,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessContentReadiness(
-    page,
-    metricInput,
-    reportingMonday
-  )
+  const contentIssues = assessContentReadiness(page, context)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }

@@ -9,6 +9,7 @@ import {
   type TrendInputPath,
 } from "./metric-input"
 import { errorMessage } from "./error-message"
+import type { MetricInputResult } from "./metric-format"
 import { trendRangeEnd } from "./trend-target"
 import { isCalendarMonday } from "./week-id"
 import {
@@ -26,6 +27,10 @@ import {
 } from "./week-document"
 
 export type TrendInputLocation = PageInputLocation<TrendInputPath>
+
+export function startMondayInput(pageId: string): TrendInputLocation {
+  return { pageId, path: "startMonday" }
+}
 
 // readiness 以此 path 標記整個週次位置（例如 Unfilled），與該週數值的 Metric Input path 區分
 export function observationEntryPath(index: number): string {
@@ -112,25 +117,27 @@ export function remapTrendObservationInput(
   return { ...inputs, [pageId]: next }
 }
 
-export function parseTrendNumber(
-  raw: string
-): number | null | "invalid" | "underflow" {
+const SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/
+
+// 與 Comparison Metric 的 parseMetricInput 回傳同一種結果形狀，呼叫端以 status 分辨
+export function parseTrendNumber(raw: string): MetricInputResult {
   const text = raw.trim()
-  if (!text) return null
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text))
-    return "invalid"
+  if (!text) return { status: "empty", value: null }
   const value = Number(text)
-  if (!Number.isFinite(value)) return "invalid"
+  if (!SIGNED_DECIMAL.test(text) || !Number.isFinite(value))
+    return { status: "invalid", message: "Enter a finite signed number" }
   // 非零係數若下溢成 0，會把量測誤存為真正的零值。
-  if (value === 0 && /[1-9]/.test(text.split(/[eE]/, 1)[0])) return "underflow"
-  return value
+  if (value === 0 && /[1-9]/.test(text.split(/[eE]/, 1)[0]))
+    return { status: "invalid", message: "Number is too small to represent" }
+  return { status: "valid", value }
 }
 
 // 呼叫端須先通過 trendInputError；非法 Metric Input 走到這裡代表流程有誤，須拋錯而非寫入 JSON
 export function requireTrendNumber(raw: string): number | null {
-  const value = parseTrendNumber(raw)
-  if (typeof value === "string") throw new Error(`Invalid Trend number: ${raw}`)
-  return value
+  const parsed = parseTrendNumber(raw)
+  if (parsed.status === "invalid")
+    throw new Error(`Invalid Trend number: ${raw}`)
+  return parsed.value
 }
 
 // 起始週一已提交且沒有待確認的改動時，端點增減與觀測值才有明確日期可掛
@@ -144,7 +151,7 @@ export function isStartSettled(
   )
 }
 
-export function trendRangeError(start: string, length: number): string | null {
+function trendRangeError(start: string, length: number): string | null {
   try {
     trendRangeEnd(start, length)
     return null
@@ -164,8 +171,7 @@ export function trendInputError(
   if (path !== "target" && raw.trim() && !page.startMonday)
     return "Set starting Monday before entering observations"
   const parsed = parseTrendNumber(raw)
-  if (parsed === "underflow") return "Number is too small to represent"
-  return parsed === "invalid" ? "Enter a finite signed number" : null
+  return parsed.status === "invalid" ? parsed.message : null
 }
 
 type TrendDatingError = {

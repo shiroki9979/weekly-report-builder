@@ -1,4 +1,4 @@
-import { act, render, waitFor } from "@testing-library/react"
+import { act, render } from "@testing-library/react"
 import { useEffect } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -16,6 +16,7 @@ import {
 } from "@/lib/editing-session"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import { deferred, until } from "./support/async"
 
 vi.mock("@/lib/browser-capture-adapter", () => ({
   browserCaptureAdapter: { prepare: vi.fn() },
@@ -66,21 +67,6 @@ function renderOperation(props: HarnessProps) {
       view.rerender(<OperationHarness {...next} commandsRef={commandsRef} />),
     unmount: view.unmount,
   }
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void
-  const promise = new Promise<T>((settle) => {
-    resolve = settle
-  })
-  return { promise, resolve }
-}
-
-// Arrange 階段等待非同步前置條件成立；等待本身不是測試要驗證的行為
-async function until(condition: () => boolean): Promise<void> {
-  await waitFor(() => {
-    if (!condition()) throw new Error("Precondition not reached yet")
-  })
 }
 
 function htmlPage(id: string, title: string): WeekPage {

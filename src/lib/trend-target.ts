@@ -1,4 +1,4 @@
-import type { TrendTargetPage } from "./week-document"
+import type { TrendTargetPage, UnmeasuredState } from "./week-document"
 import { withUnit } from "./unit-format"
 import { isMondayId } from "./week-id"
 
@@ -45,6 +45,18 @@ export function formatTrendValue(value: number, page: TrendTargetPage): string {
 export function exactTrendValue(value: number, page: TrendTargetPage): string {
   return withUnit(Object.is(value, -0) ? "0" : String(value), page.metric)
 }
+
+// 未量測週次的文案依規格集中於此，投影片與編輯器共用：Missing 在圖上、描述與編輯器稱
+// No observation，作為最新週時摘要改稱 No data；Unfilled 一律為 Not entered
+export const UNMEASURED_COPY: Record<
+  UnmeasuredState,
+  { observation: string; latestStatus: string }
+> = {
+  missing: { observation: "No observation", latestStatus: "No data" },
+  unfilled: { observation: "Not entered", latestStatus: "Not entered" },
+}
+
+export const TARGET_NOT_SET = "Target not set"
 
 type TrendDirection = TrendTargetPage["direction"]
 
