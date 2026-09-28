@@ -1,22 +1,37 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import {
   addCommitment,
   moveCommitment,
   removeCommitment,
   setCommitmentField,
+  setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type { NextActionsPage, WeekDocument } from "@/lib/week-document"
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  isNextActionsVariant,
+  NEXT_ACTIONS_VARIANTS,
+  nextActionsVariant,
+  type NextActionsPage,
+  type NextActionsVariant,
+} from "@/lib/week-document"
 
-type NextActionsEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: NextActionsPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
+const VARIANT_LABELS: Record<NextActionsVariant, string> = {
+  rows: "Rows",
+  columns: "Columns",
 }
 
 export function NextActionsEditorForm({
@@ -25,7 +40,7 @@ export function NextActionsEditorForm({
   page,
   onChange,
   readOnly = false,
-}: NextActionsEditorFormProps) {
+}: PageEditorProps<NextActionsPage>) {
   const invalidPaths = issuePathsFor(page)
 
   return (
@@ -37,14 +52,43 @@ export function NextActionsEditorForm({
       readOnly={readOnly}
       invalidPaths={invalidPaths}
     >
+      <div className="space-y-2">
+        <Label htmlFor="next-actions-variant">Composition</Label>
+        <Select
+          value={nextActionsVariant(page)}
+          disabled={readOnly}
+          onValueChange={(value) => {
+            if (isNextActionsVariant(value)) {
+              onChange((currentWeek) =>
+                setNextActionsVariant(currentWeek, pageIndex, value)
+              )
+            }
+          }}
+        >
+          <SelectTrigger id="next-actions-variant">
+            <SelectValue>
+              {VARIANT_LABELS[nextActionsVariant(page)]}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {NEXT_ACTIONS_VARIANTS.map((variant) => (
+              <SelectItem key={variant} value={variant}>
+                {VARIANT_LABELS[variant]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">Commitments</p>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          disabled={page.commitments.length >= 4}
-          onClick={() => onChange(addCommitment(week, pageIndex))}
+          disabled={!canAddEntry(page.commitments, CARDINALITY.commitments)}
+          onClick={() =>
+            onChange((currentWeek) => addCommitment(currentWeek, pageIndex))
+          }
         >
           Add commitment
         </Button>
@@ -65,9 +109,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === 0}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveCommitment(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex - 1
@@ -83,9 +127,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === page.commitments.length - 1}
               onClick={() =>
-                onChange(
+                onChange((currentWeek) =>
                   moveCommitment(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex + 1
@@ -99,9 +143,13 @@ export function NextActionsEditorForm({
               type="button"
               variant="outline"
               size="sm"
-              disabled={page.commitments.length <= 2}
+              disabled={
+                !canRemoveEntry(page.commitments, CARDINALITY.commitments)
+              }
               onClick={() =>
-                onChange(removeCommitment(week, pageIndex, commitmentIndex))
+                onChange((currentWeek) =>
+                  removeCommitment(currentWeek, pageIndex, commitmentIndex)
+                )
               }
             >
               Remove
@@ -119,9 +167,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "title",
@@ -143,9 +191,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "outcome",
@@ -168,9 +216,9 @@ export function NextActionsEditorForm({
                 ) || undefined
               }
               onChange={(event) =>
-                onChange(
+                onChange((currentWeek) =>
                   setCommitmentField(
-                    week,
+                    currentWeek,
                     pageIndex,
                     commitmentIndex,
                     "checkpoint",

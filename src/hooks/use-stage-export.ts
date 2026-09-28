@@ -1,200 +1,212 @@
-import { useCallback, useRef, useState, type RefObject } from "react"
-import { flushSync } from "react-dom"
+import { useCallback, useEffect, useRef, useState } from "react"
 
+import {
+  assertCaptureHostAvailable,
+  browserCaptureAdapter,
+} from "@/lib/browser-capture-adapter"
 import { copyImageToClipboard } from "@/lib/clipboard-image"
 import { downloadBlob } from "@/lib/download-blob"
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
-import {
-  assessExportEligibility,
-  formatExportIssues,
-} from "@/lib/export-readiness"
-import { measureStageOverflow } from "@/lib/overflow-measurement"
-import { captureStageToPng } from "@/lib/stage-capture"
-import {
-  isHtmlWeekPage,
-  type WeekDocument,
-  type WeekPage,
-} from "@/lib/week-document"
-import {
-  exportVisiblePages,
-  formatSkippedExportWarning,
-} from "@/lib/week-export"
+import type { SessionOperationSnapshot } from "@/lib/editing-session"
+import { errorMessage } from "@/lib/error-message"
+import { exportPage } from "@/lib/export-page-gate"
+import { formatExportIssues } from "@/lib/export-readiness"
+import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
+import type { WeekPage } from "@/lib/week-document"
+import { exportVisiblePages } from "@/lib/week-export"
 
 type UseStageExportOptions = {
-  monday: string
-  week: WeekDocument | null
-  selectedPage?: WeekPage | null
-  captureHostRef: RefObject<HTMLElement | null>
-  metricBuffer?: MetricDraftBuffer
+  operationSnapshot: () => SessionOperationSnapshot | null
 }
 
-function waitForPaint(): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve())
-    })
-  })
+type ExportCommandResult =
+  | { kind: "completed" }
+  | { kind: "busy" }
+  | { kind: "unavailable" }
+  | { kind: "disposed" }
+
+type ExportOperation = {
+  snapshot: SessionOperationSnapshot
+  controller: AbortController
 }
 
-async function waitForSlideSettled(host: HTMLElement): Promise<void> {
-  const getStatus = () => {
-    const slide = host.querySelector("[data-status]")
-    if (!slide) {
-      // 非 HTML 頁面或無非同步狀態元件，視為就緒
-      return "ready"
-    }
-    return slide.getAttribute("data-status")
-  }
-
-  const maxWaitMs = 3000
-  const startTime = Date.now()
-
-  while (getStatus() === "loading") {
-    if (Date.now() - startTime > maxWaitMs) {
-      throw new Error("Timed out waiting for HTML slide to load")
-    }
-    // 釋放執行緒讓 React 調度器能沖刷非同步 fetch 後的 state 更新，並相容真實瀏覽器與測試環境
-    await new Promise((resolve) => setTimeout(resolve, 16))
-  }
+type StartedOperation<Target> = {
+  kind: "started"
+  operation: ExportOperation
+  target: Target
 }
 
-function blockedBeforeCapture(
-  page: WeekPage,
-  metricBuffer?: MetricDraftBuffer
-): ReturnType<typeof assessExportEligibility> | null {
-  const assessment = assessExportEligibility(page, undefined, metricBuffer)
-  const blocked = assessment.issues.some(
-    (issue) => issue.code !== "measurement-failed"
-  )
-  if (!assessment.eligible && blocked) {
-    return assessment
-  }
-  return null
-}
-
-export function useStageExport({
-  monday,
-  week,
-  selectedPage,
-  captureHostRef,
-  metricBuffer = {},
-}: UseStageExportOptions) {
-  const [capturePage, setCapturePage] = useState<WeekPage | null>(null)
+export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
-  const [exportWarning, setExportWarning] = useState<string | null>(null)
-  const [clipboardError, setClipboardError] = useState<string | null>(null)
-  const exportingRef = useRef(false)
+  const [lastResult, setLastResult] = useState<ExportResult | null>(null)
+  const activeRef = useRef<ExportOperation | null>(null)
+  const disposedRef = useRef(false)
 
-  const renderPageForCapture = useCallback(
-    async (page: WeekPage) => {
-      flushSync(() => setCapturePage(page))
+  useEffect(() => {
+    disposedRef.current = false
+    return () => {
+      disposedRef.current = true
+      activeRef.current?.controller.abort()
+      activeRef.current = null
+    }
+  }, [])
 
-      const host = captureHostRef.current
-      if (!host) {
-        throw new Error("Capture stage not ready")
+  // 目標由快照挑出：快照沒有可操作的目標時不佔用互斥鎖，也不清掉上一次結果
+  const start = useCallback(
+    <Target>(
+      pickTarget: (snapshot: SessionOperationSnapshot) => Target | undefined
+    ): StartedOperation<Target> | ExportCommandResult => {
+      if (disposedRef.current) {
+        return { kind: "disposed" }
+      }
+      if (activeRef.current) {
+        return { kind: "busy" }
+      }
+      const snapshot = operationSnapshot()
+      const target = snapshot ? pickTarget(snapshot) : undefined
+      if (!snapshot || target === undefined) {
+        return { kind: "unavailable" }
       }
 
-      // 等候非同步載入的 HTML 片段結算至 ready 或 error 狀態，避免截圖拍到載入中的佔位元件
-      await waitForSlideSettled(host)
-      await waitForPaint()
-
-      const stageRoot = host.querySelector(".stage-root")
-      if (!(stageRoot instanceof HTMLElement)) {
-        throw new Error("Capture stage not ready")
+      const operation: ExportOperation = {
+        snapshot,
+        controller: new AbortController(),
       }
-
-      return stageRoot
+      activeRef.current = operation
+      setLastResult(null)
+      return { kind: "started", operation, target }
     },
-    [captureHostRef]
+    [operationSnapshot]
   )
 
-  const downloadVisiblePages = useCallback(async () => {
-    if (!week || exportingRef.current) {
-      return
-    }
+  const isActive = useCallback(
+    (operation: ExportOperation) =>
+      activeRef.current === operation && !operation.controller.signal.aborted,
+    []
+  )
 
-    exportingRef.current = true
-    setExporting(true)
-    setExportError(null)
-    setExportWarning(null)
-
-    try {
-      const skipped = await exportVisiblePages(monday, week, {
-        renderPage: renderPageForCapture,
-        capture: captureStageToPng,
-        download: downloadBlob,
-        measureCapture: measureStageOverflow,
-        metricBuffer,
-      })
-      setExportWarning(formatSkippedExportWarning(skipped))
-    } catch (cause: unknown) {
-      const message =
-        cause instanceof Error ? cause.message : "Failed to export PNG files"
-      setExportError(message)
-    } finally {
-      flushSync(() => setCapturePage(null))
+  const finish = useCallback((operation: ExportOperation) => {
+    if (activeRef.current === operation) {
+      activeRef.current = null
       setExporting(false)
-      exportingRef.current = false
-    }
-  }, [monday, metricBuffer, renderPageForCapture, week])
-
-  const copyCurrentPage = useCallback(async () => {
-    if (!week || !selectedPage) {
-      return
-    }
-
-    setCopying(true)
-    setClipboardError(null)
-
-    try {
-      const blocked = blockedBeforeCapture(selectedPage, metricBuffer)
-      if (blocked) {
-        setClipboardError(formatExportIssues(blocked.issues))
-        return
-      }
-
-      let stageRoot: HTMLElement
-
-      if (isHtmlWeekPage(selectedPage)) {
-        stageRoot = await renderPageForCapture(selectedPage)
-      } else {
-        stageRoot = await renderPageForCapture(selectedPage)
-        const capture = await measureStageOverflow(stageRoot)
-        const assessment = assessExportEligibility(
-          selectedPage,
-          capture,
-          metricBuffer
-        )
-        if (!assessment.eligible) {
-          setClipboardError(formatExportIssues(assessment.issues))
-          return
-        }
-      }
-
-      const blob = await captureStageToPng(stageRoot)
-      await copyImageToClipboard(blob, navigator.clipboard)
-    } catch (cause: unknown) {
-      const message =
-        cause instanceof Error
-          ? cause.message
-          : "Failed to copy image to clipboard"
-      setClipboardError(message)
-    } finally {
-      flushSync(() => setCapturePage(null))
       setCopying(false)
     }
-  }, [metricBuffer, renderPageForCapture, selectedPage, week])
+  }, [])
 
+  const downloadVisiblePages =
+    useCallback(async (): Promise<ExportCommandResult> => {
+      const started = start((snapshot) => snapshot.week)
+      if (started.kind !== "started") {
+        return started
+      }
+      const { operation, target: week } = started
+
+      setExporting(true)
+
+      try {
+        const result = await exportVisiblePages(
+          operation.snapshot.monday,
+          week,
+          {
+            adapter: browserCaptureAdapter,
+            download: downloadBlob,
+            metricInput: operation.snapshot.metricInput,
+            signal: operation.controller.signal,
+            beforePages: assertCaptureHostAvailable,
+          }
+        )
+        if (!isActive(operation)) {
+          return { kind: "disposed" }
+        }
+        setLastResult({ kind: "batch", data: result })
+      } finally {
+        finish(operation)
+      }
+      return { kind: "completed" }
+    }, [finish, isActive, start])
+
+  const copyCurrentPage =
+    useCallback(async (): Promise<ExportCommandResult> => {
+      const started = start(selectedPage)
+      if (started.kind !== "started") {
+        return started
+      }
+      const { operation, target: page } = started
+
+      setCopying(true)
+
+      try {
+        const outcome = await copyPageImage(operation, page)
+        if (!isActive(operation)) {
+          return { kind: "disposed" }
+        }
+        setLastResult({
+          kind: "copy",
+          monday: operation.snapshot.monday,
+          pageId: page.id,
+          error: outcome.kind === "rejected" ? outcome.reason : null,
+        })
+      } finally {
+        finish(operation)
+      }
+      return { kind: "completed" }
+    }, [finish, isActive, start])
+
+  const summary = summarizeExportResult(lastResult)
   return {
-    capturePage,
     exporting,
     copying,
-    exportError,
-    exportWarning,
-    clipboardError,
+    exportResult: summary?.message ?? null,
+    resultIsError: summary?.isError ?? false,
     downloadVisiblePages,
     copyCurrentPage,
+  }
+}
+
+function selectedPage(
+  snapshot: SessionOperationSnapshot
+): WeekPage | undefined {
+  return snapshot.week.pages.find((page) => page.id === snapshot.selectedPageId)
+}
+
+type CopyOutcome =
+  | { kind: "copied" }
+  | { kind: "rejected"; reason: string }
+  | { kind: "aborted" }
+
+async function copyPageImage(
+  operation: ExportOperation,
+  page: WeekPage
+): Promise<CopyOutcome> {
+  const result = await exportPage(operation.snapshot.week, page, {
+    adapter: browserCaptureAdapter,
+    metricInput: operation.snapshot.metricInput,
+    signal: operation.controller.signal,
+  })
+  if (result.kind === "blocked") {
+    return { kind: "rejected", reason: formatExportIssues(result.issues) }
+  }
+  if (result.kind === "failed") {
+    return {
+      kind: "rejected",
+      reason: errorMessage(result.cause, "Failed to copy image to clipboard"),
+    }
+  }
+  // 截圖完成後操作仍可能已被中止；中止後不得寫入剪貼簿。
+  if (operation.controller.signal.aborted) {
+    return { kind: "aborted" }
+  }
+  return writeToClipboard(result.blob)
+}
+
+async function writeToClipboard(blob: Blob): Promise<CopyOutcome> {
+  try {
+    await copyImageToClipboard(blob, navigator.clipboard)
+    return { kind: "copied" }
+  } catch (cause: unknown) {
+    return {
+      kind: "rejected",
+      reason: `Clipboard write failed: ${errorMessage(cause, "Clipboard write rejected")}`,
+    }
   }
 }

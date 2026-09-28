@@ -2,6 +2,7 @@ export const STAGE_CAPTURE_ROOT_ATTR = "data-stage-capture-root"
 
 export const CAPTURE_STAGE_WIDTH = 1280
 export const CAPTURE_STAGE_HEIGHT = 720
+export const CAPTURE_STAGE_SIZE_LABEL = `${CAPTURE_STAGE_WIDTH} × ${CAPTURE_STAGE_HEIGHT}`
 
 const SUBPIXEL_TOLERANCE_PX = 1
 const DEFAULT_TIMEOUT_MS = 5000

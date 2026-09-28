@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -6,6 +8,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-09-28
+
+### Added
+
+- 新增 Trend & Target：以 2–12 個連續週次呈現單一量測與固定目標，區分已量測、缺測與未填；支援日期範圍維護、跨週沿用、儲存及 PNG 匯出（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)、[#44](https://github.com/shiroki9979/weekly-report-builder/issues/44)～[#46](https://github.com/shiroki9979/weekly-report-builder/issues/46)）。
+- Next Actions 新增可保存的 Rows／Columns 版型選擇；新頁預設 Rows，既有頁維持 Columns，週次複製保留選擇（[#43](https://github.com/shiroki9979/weekly-report-builder/issues/43)）。
+- 公開 Demo Week Set 新增 Trend & Target 的雙向目標、缺測末週（英文、中文與中英混排各一頁）與 Next Actions 版型對照，並補上首次使用及分享檢查指引（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 新增共用 Export gate，讓 Copy 與批次匯出使用相同的頁面就緒及截圖規則；批次可略過未就緒頁面並回報部分結果（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)～[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
+- Workshop 支援週次與單頁頁碼顯示切換；Editorial 頁預設顯示頁碼，HTML 頁可選擇疊印頁碼且新週沿用該設定（工具列註明 HTML 頁需逐頁開啟），Two-column 不顯示頁碼（[#28](https://github.com/shiroki9979/weekly-report-builder/issues/28)）。
+- 新增雙情境 Slide 設計研究及 Trend & Target／Next Actions Rows 實作規格，記錄口頭報告與自行閱讀的版型依據（[研究筆記](docs/explanation/slide-design-research.md)、[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
+
+### Changed
+
+- 編輯與週次存取改由 Editing Session 和 Week store 管理；Copy／批次匯出使用開始操作時的資料快照，後續切週或編輯不會改動正在執行的輸出（[#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)～[#40](https://github.com/shiroki9979/weekly-report-builder/issues/40)）。
+- 匯出結果區分頁面就緒問題、剪貼簿／下載失敗及尚未處理的頁面；批次摘要保留已觸發下載與略過原因（[#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、[#35](https://github.com/shiroki9979/weekly-report-builder/issues/35)）。
+- 封存版型比較原型及 A/D 決策紀錄，移除開發用入口與指令，改由 Workshop 提供正式示例（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 統一 Two-column 投影片左側內距為 5% 並採用懸掛縮排，使項目標題與內文對齊主標基準線（[#29](https://github.com/shiroki9979/weekly-report-builder/issues/29)）。
+- Week JSON parser 拒絕非數值的 chart value 與缺少的 chart／flow／checklist 陣列，錯誤訊息附欄位路徑，不再靜默轉成 `NaN`／空陣列。
+- `pnpm typecheck` 改用 `tsc -b --noEmit`，實際檢查 app 與 node 兩個 TypeScript project。
+- Chart、Flow、Checklist panel 的刪除 reducer 與 Table 一致，至少保留一筆；數量規則與錯誤訊息（含單複數）統一由 `CARDINALITY` 產生。
+
+### Fixed
+
+- Trend & Target 須先設定起始週一才能輸入觀測值；拒絕不存在的週一日期及數值下溢輸入；修正補填起始週後的資料顯示、極端／近值縱軸刻度與等值目標線的呈現；圖表維持全寬並依可用高度重算比例，空間不足時由 overflow 擋下匯出，不再縮小圖表或壓到摘要；缺測標記改用灰色，與目標線區分（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）。
+- 修正複製新週後，無標題頁面在 Page 選單中的顯示，以及空白 chart 類別造成的重複 React key（[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47)）。
+- 背景分頁未派送動畫影格時，截圖準備不再無限等待；準備階段中止或逾時後會清理臨時 capture host 與晚到的 session（[#33](https://github.com/shiroki9979/weekly-report-builder/issues/33)）。
+- 視窗高度不足時 16:9 預覽不再覆蓋 Speaker notes；Speaker notes 面板可拖曳調整高度並由標題列收合。
+- 預覽的 overflow 量測失敗時改為顯示提示，不再當成版面合格而無聲略過。
+- 切換或建立週次後才失敗的舊週載入、儲存與建立結果，改為留下 console 警告，不再無聲丟棄。
+- 修正 Comparison Metric 非法草稿在含 `:` 的 Page ID、移動／刪除項目、刪除頁面或切換週次時的歸屬；Save 與 Copy 不會誤用舊值（[#13](https://github.com/shiroki9979/weekly-report-builder/issues/13)）。
+- Two-column chart 的非法值不再被 readiness 標題稱為 Comparison Metric（[#12](https://github.com/shiroki9979/weekly-report-builder/issues/12)）。
 
 ## [0.2.0] - 2026-09-18
 
@@ -69,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 消毒 HTML 逃生口時啟用 DOMPurify SVG profile，避免 inline 圖表被剝成空白投影片
 
-[Unreleased]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/shiroki9979/weekly-report-builder/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/shiroki9979/weekly-report-builder/releases/tag/v0.1.0

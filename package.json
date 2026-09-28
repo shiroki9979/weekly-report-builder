@@ -1,7 +1,7 @@
 {
   "name": "weekly-report-builder",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": "24.x"
@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md,yaml,yml}\" \"index.html\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

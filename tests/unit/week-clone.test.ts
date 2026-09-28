@@ -4,12 +4,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   cloneWeekFromPrevious,
-  isMondayDate,
   latestWeekMonday,
   nextMondayAfter,
   weekRangeForMonday,
 } from "@/lib/week-clone"
-import { parseWeekDocument } from "@/lib/week-document"
+import { isCalendarMonday } from "@/lib/week-id"
+import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -26,8 +27,14 @@ describe("week-clone", () => {
       start: "2026-08-31",
       end: "2026-09-04",
     })
-    expect(isMondayDate("2026-08-31")).toBe(true)
-    expect(isMondayDate("2026-09-01")).toBe(false)
+    expect(isCalendarMonday("2026-08-31")).toBe(true)
+    expect(isCalendarMonday("2026-09-01")).toBe(false)
+  })
+
+  it("rejects a nonexistent Monday instead of silently moving the reporting week", () => {
+    expect(() => weekRangeForMonday("2026-02-30")).toThrow(
+      "Invalid date: 2026-02-30"
+    )
   })
 
   it("picks the latest week and the following Monday", () => {
@@ -214,5 +221,47 @@ describe("week-clone", () => {
       ],
     })
     expect(() => parseWeekDocument(cloned)).not.toThrow()
+  })
+
+  it("starts a new week with Editorial page numbers reset to the week default", () => {
+    const previous: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      showPageNumbers: false,
+      pages: [{ ...createBlankNextActionsPage("p01"), showPageNumber: true }],
+    }
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+
+    expect(cloned.showPageNumbers).toBeUndefined()
+    expect(cloned.pages[0].showPageNumber).toBeUndefined()
+  })
+
+  it("keeps an HTML Page's page-number choice because HTML Pages opt in per page", () => {
+    const previous = parseWeekDocument({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [
+        {
+          id: "p01",
+          layout: "html",
+          title: "Opted in",
+          htmlFile: "p01.html",
+          showPageNumber: true,
+        },
+        {
+          id: "p02",
+          layout: "html",
+          title: "Opted out",
+          htmlFile: "p02.html",
+          showPageNumber: false,
+        },
+      ],
+    })
+
+    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+
+    expect(cloned.pages[0].showPageNumber).toBe(true)
+    expect(cloned.pages[1].showPageNumber).toBe(false)
   })
 })

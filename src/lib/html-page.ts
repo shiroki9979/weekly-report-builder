@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify"
 
-const MONDAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+import { isMondayId } from "./week-id"
 
 export function validateHtmlFileName(fileName: string): void {
   if (typeof fileName !== "string") {
@@ -29,7 +29,7 @@ export function validateHtmlFileName(fileName: string): void {
 }
 
 export function resolveHtmlUrl(monday: string, htmlFile: string): string {
-  if (!MONDAY_PATTERN.test(monday)) {
+  if (!isMondayId(monday)) {
     throw new Error(`Invalid Monday date for HTML page: ${monday}`)
   }
 

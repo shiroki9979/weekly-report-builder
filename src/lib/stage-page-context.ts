@@ -1,8 +1,13 @@
-import { isSupportedStagePage, type WeekDocument } from "./week-document"
+import {
+  isPageNumberVisible,
+  isSupportedStagePage,
+  type WeekDocument,
+} from "./week-document"
 
 export type StagePageContext = {
   weekLabel: string
   pageLabel: string
+  showPageNumber: boolean
 }
 
 export function createStagePageContext(
@@ -15,9 +20,10 @@ export function createStagePageContext(
   }
 
   const weekLabel = `${week.start} — ${week.end}`
+  const showPageNumber = isPageNumberVisible(week, page)
 
   if (page.hidden) {
-    return { weekLabel, pageLabel: "Hidden" }
+    return { weekLabel, pageLabel: "Hidden", showPageNumber }
   }
 
   const supportedVisible = week.pages.filter(
@@ -25,12 +31,13 @@ export function createStagePageContext(
   )
   const position = supportedVisible.findIndex((entry) => entry.id === pageId)
   if (position === -1) {
-    return { weekLabel, pageLabel: "" }
+    return { weekLabel, pageLabel: "", showPageNumber }
   }
 
   return {
     weekLabel,
     pageLabel: `${position + 1} / ${supportedVisible.length}`,
+    showPageNumber,
   }
 }
 

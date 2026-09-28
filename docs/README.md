@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-09-11
+最後更新：2026-09-28
 
 ## Tutorials（入門教學）
 
@@ -40,27 +40,24 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                               | 說明                                           |
-| -------------------------------------------------- | ---------------------------------------------- |
-| [工坊架構](explanation/workshop-architecture.md)   | 工坊殼 vs 16:9 stage、資料流                   |
-| [Layout 家族原型](explanation/layout-prototype.md) | 歷史 800 × 450 驗證與 production adoption 指標 |
-
-## Specs（尚未落地的功能規格）
-
-給實作 agent 的完整規格。
-
-| 文件                                                | 說明                                              |
-| --------------------------------------------------- | ------------------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)            | `layout: "html"` 16:9 逃生口                      |
-| [HTML Page error-PNG](specs/html-page-error-png.md) | HTML fetch／timeout／capture 失敗政策（尚未實作） |
+| 文件                                                                  | 說明                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------- |
+| [工坊架構](explanation/workshop-architecture.md)                      | 工坊殼 vs 16:9 stage、資料流                         |
+| [Layout 家族原型](explanation/layout-prototype.md)                    | 歷史 800 × 450 驗證與 production adoption 指標       |
+| [Slide 設計研究](explanation/slide-design-research.md)                | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據 |
+| [Trend / Rows 原型決策](explanation/trend-target-layout-prototype.md) | 四視圖 A/D 決策、封存來源與生產驗證紀錄              |
+| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據          |
 
 ## Specs（已落地）
 
-已實作、仍作為 layout 規則來源的規格。
+已實作、仍供維護與驗收參照的規格。
 
-| 文件                                                                            | 說明                                       |
-| ------------------------------------------------------------------------------- | ------------------------------------------ |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md) | Editorial Layout Family 的 production 規格 |
+| 文件                                                                                | 說明                                                                                                      |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)                                            | `layout: "html"` 16:9 逃生口                                                                              |
+| [HTML Page export failure policy](specs/html-page-error-png.md)                     | HTML 載入／截圖失敗政策與共用 Export gate                                                                 |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)     | Editorial Layout Family 的 production 規格                                                                |
+| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md) | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)） |
 
 ## 其他
 

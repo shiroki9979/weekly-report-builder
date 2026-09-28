@@ -1,22 +1,25 @@
-import type { MetricDraftBuffer } from "@/lib/evidence-decision-editor"
 import { contentReadinessHeading } from "@/lib/content-readiness-copy"
-import { assessStructuredContentIssues } from "@/lib/export-readiness"
+import {
+  assessContentReadiness,
+  formatExportIssue,
+  type ExportIssue,
+} from "@/lib/export-readiness"
 import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
 
 type ContentReadinessSummaryProps = {
   page: WeekPage
-  metricBuffer?: MetricDraftBuffer
+  issues?: ExportIssue[]
 }
 
 export function ContentReadinessSummary({
   page,
-  metricBuffer = {},
+  issues: suppliedIssues,
 }: ContentReadinessSummaryProps) {
   if (!isStructuredWeekPage(page)) {
     return null
   }
 
-  const issues = assessStructuredContentIssues(page, metricBuffer)
+  const issues = suppliedIssues ?? assessContentReadiness(page)
   if (issues.length === 0) {
     return null
   }
@@ -31,7 +34,7 @@ export function ContentReadinessSummary({
       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
         {issues.map((issue) => (
           <li key={`${issue.code}:${issue.path ?? issue.message}`}>
-            {issue.path ? `${issue.path}: ${issue.message}` : issue.message}
+            {formatExportIssue(issue)}
           </li>
         ))}
       </ul>

@@ -1,27 +1,29 @@
 import {
+  assertCanAddEntry,
+  assertCanRemoveEntry,
+  CARDINALITY,
   isNextActionsPage,
   type Commitment,
-  type NextActionsPage,
+  type NextActionsVariant,
   type WeekDocument,
 } from "./week-document"
-import { updateTypedPage } from "./update-week-page"
+import { typedPageUpdater } from "./update-week-page"
 
-function updateNextActions(
-  week: WeekDocument,
-  pageIndex: number,
-  updater: (page: NextActionsPage) => NextActionsPage
-): WeekDocument {
-  return updateTypedPage(
-    week,
-    pageIndex,
-    isNextActionsPage,
-    "a next-actions page",
-    updater
-  )
-}
+const updateNextActions = typedPageUpdater(
+  isNextActionsPage,
+  "a next-actions page"
+)
 
 export function blankCommitment(): Commitment {
   return { title: "", outcome: "", checkpoint: "" }
+}
+
+export function setNextActionsVariant(
+  week: WeekDocument,
+  pageIndex: number,
+  variant: NextActionsVariant
+): WeekDocument {
+  return updateNextActions(week, pageIndex, (page) => ({ ...page, variant }))
 }
 
 export function setCommitmentField(
@@ -44,9 +46,7 @@ export function addCommitment(
   pageIndex: number
 ): WeekDocument {
   return updateNextActions(week, pageIndex, (page) => {
-    if (page.commitments.length >= 4) {
-      throw new Error("Next Actions can have at most 4 commitments")
-    }
+    assertCanAddEntry(page.commitments, CARDINALITY.commitments)
     return { ...page, commitments: [...page.commitments, blankCommitment()] }
   })
 }
@@ -57,9 +57,7 @@ export function removeCommitment(
   commitmentIndex: number
 ): WeekDocument {
   return updateNextActions(week, pageIndex, (page) => {
-    if (page.commitments.length <= 2) {
-      throw new Error("Next Actions must keep at least 2 commitments")
-    }
+    assertCanRemoveEntry(page.commitments, CARDINALITY.commitments)
     return {
       ...page,
       commitments: page.commitments.filter(

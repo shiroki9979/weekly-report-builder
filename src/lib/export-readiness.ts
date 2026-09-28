@@ -1,4 +1,6 @@
 import {
+  CARDINALITY,
+  hasValidMetricFormat,
   isFiniteNonNegative,
   isHtmlWeekPage,
   isStructuredWeekPage,
@@ -9,6 +11,7 @@ import {
   type FlowPanel,
   type EvidenceDecisionPage,
   type NextActionsPage,
+  type TrendTargetPage,
   type Outcome,
   type StructuredWeekPage,
   type TablePanel,
@@ -16,19 +19,39 @@ import {
   type WeekPage,
   type WeeklyOverviewPage,
 } from "./week-document"
+import { errorMessage } from "./error-message"
+import {
+  isTrendDirection,
+  trendBounds,
+  trendDatingError,
+  trendEndMonday,
+} from "./trend-target"
+import { isCalendarMonday } from "./week-id"
+import { observationEntryPath, trendInputError } from "./trend-input"
 
 import {
-  assessMetricDraftIssues,
-  type MetricDraftBuffer,
-} from "./evidence-decision-editor"
-import type { OverflowMeasurement } from "./overflow-measurement"
+  invalidMetricInputMessage,
+  METRIC_VALUE_FIELDS,
+  metricInputPath,
+  observationPath,
+  type MetricInputLocation,
+  type MetricInputMap,
+  type MetricValueField,
+  type TrendInputPath,
+} from "./metric-input"
+import {
+  CAPTURE_STAGE_SIZE_LABEL,
+  type OverflowMeasurement,
+} from "./overflow-measurement"
 
 export type ExportIssueCode =
   | "unsupported"
   | "missing-content"
   | "invalid-content"
   | "overflow"
+  | "html-load-failed"
   | "measurement-failed"
+  | "capture-failed"
 
 export type ExportIssue = {
   code: ExportIssueCode
@@ -42,6 +65,9 @@ export type ExportAssessment = {
   eligible: boolean
   issues: ExportIssue[]
 }
+
+// 少於兩個量測點畫不出趨勢線
+const MIN_MEASURED_OBSERVATIONS = 2
 
 function missing(path: string, message: string): ExportIssue {
   return { code: "missing-content", path, message }
@@ -253,7 +279,39 @@ function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
   return issues
 }
 
-function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
+const METRIC_VALUE_LABELS: Record<MetricValueField, string> = {
+  baselineValue: "Baseline value",
+  candidateValue: "Candidate value",
+}
+
+// 非法 Metric Input 優先於 typed 值：輸入未能寫回 JSON，typed 值只是上一個合法值
+function assessMetricValue(
+  page: EvidenceDecisionPage,
+  location: MetricInputLocation,
+  metricInput: MetricInputMap
+): ExportIssue[] {
+  const { metricIndex, field } = location
+  const path = metricInputPath(metricIndex, field)
+  const inputMessage = invalidMetricInputMessage(metricInput, location)
+  if (inputMessage !== null) {
+    return [invalid(path, inputMessage)]
+  }
+
+  const value = page.metrics[metricIndex][field]
+  const label = METRIC_VALUE_LABELS[field]
+  if (value === null) {
+    return [missing(path, `${label} is required`)]
+  }
+  if (!isFiniteNonNegative(value)) {
+    return [invalid(path, `${label} must be a finite non-negative number`)]
+  }
+  return []
+}
+
+function assessEvidenceDecision(
+  page: EvidenceDecisionPage,
+  metricInput: MetricInputMap
+): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -269,33 +327,15 @@ function assessEvidenceDecision(page: EvidenceDecisionPage): ExportIssue[] {
         missing(`metrics[${index}].label`, "Metric label is required")
       )
     }
-    if (metric.baselineValue === null) {
-      issues.push(
-        missing(`metrics[${index}].baselineValue`, "Baseline value is required")
-      )
-    } else if (!isFiniteNonNegative(metric.baselineValue)) {
-      issues.push(
-        invalid(
-          `metrics[${index}].baselineValue`,
-          "Baseline value must be a finite non-negative number"
+    issues.push(
+      ...METRIC_VALUE_FIELDS.flatMap((field) =>
+        assessMetricValue(
+          page,
+          { pageId: page.id, metricIndex: index, field },
+          metricInput
         )
       )
-    }
-    if (metric.candidateValue === null) {
-      issues.push(
-        missing(
-          `metrics[${index}].candidateValue`,
-          "Candidate value is required"
-        )
-      )
-    } else if (!isFiniteNonNegative(metric.candidateValue)) {
-      issues.push(
-        invalid(
-          `metrics[${index}].candidateValue`,
-          "Candidate value must be a finite non-negative number"
-        )
-      )
-    }
+    )
   })
 
   page.interpretations.forEach((text, index) => {
@@ -337,14 +377,150 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
   return issues
 }
 
+function assessTrendTarget(
+  page: TrendTargetPage,
+  inputs: MetricInputMap,
+  reportingMonday?: string
+): ExportIssue[] {
+  return [
+    ...trendTextIssues(page),
+    ...trendPendingInputIssues(page, inputs),
+    ...trendDateIssues(page, reportingMonday),
+    ...trendTargetIssues(page),
+    ...trendFormatIssues(page),
+    ...trendObservationIssues(page),
+    ...trendAxisIssues(page),
+  ]
+}
+
+function trendTextIssues(page: TrendTargetPage): ExportIssue[] {
+  const fields = [
+    ["title", page.title, "Title"],
+    ["metric.label", page.metric.label, "Metric label"],
+    ["interpretation", page.interpretation, "Interpretation"],
+    ["measurementContext", page.measurementContext, "Measurement Context"],
+  ] as const
+  return fields.flatMap(([path, value, label]) =>
+    isBlank(value) ? [missing(path, `${label} is required`)] : []
+  )
+}
+
+function trendPendingInputIssues(
+  page: TrendTargetPage,
+  inputs: MetricInputMap
+): ExportIssue[] {
+  const paths: TrendInputPath[] = [
+    "startMonday",
+    "target",
+    ...page.observations.map((_, index) => observationPath(index)),
+  ]
+  return paths.flatMap((path) => {
+    const message = trendInputError(page, inputs, path)
+    return message ? [invalid(path, message)] : []
+  })
+}
+
+function trendDateIssues(
+  page: TrendTargetPage,
+  reportingMonday?: string
+): ExportIssue[] {
+  if (!page.startMonday)
+    return [missing("startMonday", "Starting Monday is required")]
+  const datingError = trendDatingError(
+    page.startMonday,
+    page.observations.length
+  )
+  if (datingError) return [invalid(datingError.path, datingError.message)]
+  if (!reportingMonday || !isCalendarMonday(reportingMonday))
+    return [invalid("observations", "Reporting Monday is unavailable")]
+  const end = trendEndMonday(page)
+  if (end && end > reportingMonday)
+    return [
+      invalid(
+        "observations",
+        `Observed range ends ${end}, after reporting week ${reportingMonday}`
+      ),
+    ]
+  return []
+}
+
+function trendTargetIssues(page: TrendTargetPage): ExportIssue[] {
+  if (page.target === null) return [missing("target", "Target is required")]
+  if (!Number.isFinite(page.target))
+    return [invalid("target", "Target must be finite")]
+  return []
+}
+
+function trendFormatIssues(page: TrendTargetPage): ExportIssue[] {
+  const issues: ExportIssue[] = []
+  if (!hasValidMetricFormat(page.metric))
+    issues.push(invalid("metric", "Metric format is invalid"))
+  if (!isTrendDirection(page.direction))
+    issues.push(invalid("direction", "Target direction is invalid"))
+  return issues
+}
+
+function trendObservationIssues(page: TrendTargetPage): ExportIssue[] {
+  const { min, max } = CARDINALITY.trendObservations
+  const issues: ExportIssue[] = []
+  if (page.observations.length < min || page.observations.length > max)
+    issues.push(
+      invalid(
+        "observations",
+        `Trend requires ${min} to ${max} weekly positions`
+      )
+    )
+  page.observations.forEach((entry, index) => {
+    if (entry.state === "unfilled")
+      issues.push(
+        missing(observationEntryPath(index), "Observation is unfilled")
+      )
+    if (entry.state === "measured" && !Number.isFinite(entry.value))
+      issues.push(invalid(observationPath(index), "Measurement must be finite"))
+  })
+  const measured = page.observations.filter(
+    (entry) => entry.state === "measured"
+  ).length
+  if (measured < MIN_MEASURED_OBSERVATIONS)
+    issues.push(
+      missing("observations", "At least two measured observations are required")
+    )
+  return issues
+}
+
+function trendAxisIssues(page: TrendTargetPage): ExportIssue[] {
+  try {
+    trendBounds(page)
+    return []
+  } catch (cause) {
+    return [
+      invalid(
+        "observations",
+        errorMessage(cause, "Trend axis calculation failed")
+      ),
+    ]
+  }
+}
+
+// Metric Input 與報告週一總是一起決定內容是否就緒，合成一個 context 傳遞
+export type ReadinessContext = {
+  metricInput?: MetricInputMap
+  reportingMonday?: string
+}
+
+// issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
-  page: StructuredWeekPage
+  page: StructuredWeekPage,
+  { metricInput = {}, reportingMonday }: ReadinessContext = {}
 ): ExportIssue[] {
   return matchWeekPage(page, {
     twoColumn: assessTwoColumn,
     weeklyOverview: assessWeeklyOverview,
-    evidenceDecision: assessEvidenceDecision,
+    evidenceDecision: (decision) =>
+      assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
+    trendTarget: (trend) =>
+      assessTrendTarget(trend, metricInput, reportingMonday),
     html: () => [],
     unknown: () => [],
   })
@@ -354,138 +530,13 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
   const labels = axes.map((axis) =>
     axis === "horizontal" ? "horizontally" : "vertically"
   )
-  return `Page overflows the 1280 × 720 capture stage ${labels.join(" and ")}`
-}
-
-type PathToken = string | number
-
-const ROOT_FIELDS = [
-  "title",
-  "verdict",
-  "lead",
-  "supporting",
-  "items",
-  "panel",
-  "metrics",
-  "interpretations",
-  "commitments",
-]
-
-const NESTED_FIELDS: Record<string, string[]> = {
-  lead: ["workstream", "figure", "result", "impact", "status"],
-  supporting: ["workstream", "figure", "result", "impact", "status"],
-  status: ["label"],
-  items: ["heading", "body", "label"],
-  panel: ["title", "columns", "rows", "categories", "series", "steps", "items"],
-  rows: ["cells"],
-  series: ["name", "values"],
-  steps: ["label"],
-  metrics: ["label", "baselineValue", "candidateValue"],
-  commitments: ["title", "outcome", "checkpoint"],
-}
-
-function tokenizePath(path: string): PathToken[] {
-  const tokens: PathToken[] = []
-  const pattern = /([A-Za-z][A-Za-z0-9]*)|\[(\d+)\]/g
-  let match = pattern.exec(path)
-  while (match !== null) {
-    if (match[1] !== undefined) {
-      tokens.push(match[1])
-    } else {
-      tokens.push(Number(match[2]))
-    }
-    match = pattern.exec(path)
-  }
-  return tokens
-}
-
-function parentField(tokens: PathToken[], index: number): string | undefined {
-  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-    const token = tokens[cursor]
-    if (typeof token === "string") {
-      return token
-    }
-  }
-  return undefined
-}
-
-function fieldRank(field: string, parent: string | undefined): number {
-  const order = parent ? (NESTED_FIELDS[parent] ?? ROOT_FIELDS) : ROOT_FIELDS
-  const rank = order.indexOf(field)
-  return rank === -1 ? Number.MAX_SAFE_INTEGER : rank
-}
-
-// 依 schema 宣告序比較 path；localeCompare 會把 interpretations 排到 metrics 前面
-function compareSchemaPaths(left: string, right: string): number {
-  const a = tokenizePath(left)
-  const b = tokenizePath(right)
-  const length = Math.max(a.length, b.length)
-  for (let i = 0; i < length; i += 1) {
-    if (i >= a.length) {
-      return -1
-    }
-    if (i >= b.length) {
-      return 1
-    }
-    const ca = a[i]
-    const cb = b[i]
-    if (typeof ca === "number" && typeof cb === "number") {
-      if (ca !== cb) {
-        return ca - cb
-      }
-      continue
-    }
-    if (typeof ca === "string" && typeof cb === "string") {
-      const rank =
-        fieldRank(ca, parentField(a, i)) - fieldRank(cb, parentField(b, i))
-      if (rank !== 0) {
-        return rank
-      }
-      continue
-    }
-    return String(ca).localeCompare(String(cb))
-  }
-  return 0
-}
-
-function mergeContentAndDraftIssues(
-  contentIssues: ExportIssue[],
-  draftIssues: ExportIssue[]
-): ExportIssue[] {
-  const byPath = new Map<string, ExportIssue>()
-  const unpathed: ExportIssue[] = []
-
-  for (const issue of [...contentIssues, ...draftIssues]) {
-    if (issue.path === undefined) {
-      unpathed.push(issue)
-      continue
-    }
-    const existing = byPath.get(issue.path)
-    if (!existing || issue.code === "invalid-content") {
-      byPath.set(issue.path, issue)
-    }
-  }
-
-  const sorted = [...byPath.values()].sort((left, right) =>
-    compareSchemaPaths(left.path ?? "", right.path ?? "")
-  )
-  return [...unpathed, ...sorted]
-}
-
-export function assessStructuredContentIssues(
-  page: StructuredWeekPage,
-  metricBuffer: MetricDraftBuffer = {}
-): ExportIssue[] {
-  return mergeContentAndDraftIssues(
-    assessContentReadiness(page),
-    assessMetricDraftIssues(page, metricBuffer)
-  )
+  return `Page overflows the ${CAPTURE_STAGE_SIZE_LABEL} capture stage ${labels.join(" and ")}`
 }
 
 export function assessExportEligibility(
   page: WeekPage,
   capture?: CaptureAssessment,
-  metricBuffer: MetricDraftBuffer = {}
+  context: ReadinessContext = {}
 ): ExportAssessment {
   if (isHtmlWeekPage(page)) {
     return { eligible: true, issues: [] }
@@ -503,7 +554,7 @@ export function assessExportEligibility(
     }
   }
 
-  const contentIssues = assessStructuredContentIssues(page, metricBuffer)
+  const contentIssues = assessContentReadiness(page, context)
   if (contentIssues.length > 0) {
     return { eligible: false, issues: contentIssues }
   }
@@ -547,25 +598,20 @@ export function assessExportEligibility(
   return { eligible: true, issues: [] }
 }
 
-export function formatExportIssues(issues: ExportIssue[]): string {
-  return issues
-    .map((issue) =>
-      issue.path ? `${issue.path}: ${issue.message}` : issue.message
-    )
-    .join("; ")
+export function formatExportIssue(issue: ExportIssue): string {
+  return issue.path ? `${issue.path}: ${issue.message}` : issue.message
 }
 
-export function issuePathsFor(
-  page: WeekPage,
-  metricBuffer: MetricDraftBuffer = {}
-): Set<string> {
-  if (!isStructuredWeekPage(page)) {
-    return new Set()
-  }
+export function formatExportIssues(issues: ExportIssue[]): string {
+  return issues.map(formatExportIssue).join("; ")
+}
 
-  return new Set(
-    assessStructuredContentIssues(page, metricBuffer)
-      .map((issue) => issue.path)
-      .filter((path): path is string => path !== undefined)
+export function issuePathsFor(page: WeekPage): Set<string> {
+  return issuePaths(
+    isStructuredWeekPage(page) ? assessContentReadiness(page) : []
   )
+}
+
+export function issuePaths(issues: ExportIssue[]): Set<string> {
+  return new Set(issues.flatMap((issue) => (issue.path ? [issue.path] : [])))
 }

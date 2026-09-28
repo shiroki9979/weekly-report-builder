@@ -3,16 +3,22 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
-  assertTwoColumnPage,
+  removeChartCategory,
+  removeChartSeries,
+  removeChecklistItem,
+  removeFlowStep,
   setPageHidden,
   setPageHtmlFile,
   setPageItem,
   setPageNotes,
+  setPageShowPageNumber,
   setPageTitle,
   setTablePanelCell,
   setTablePanelTitle,
+  setWeekShowPageNumbers,
 } from "@/lib/week-editor"
-import { parseWeekDocument } from "@/lib/week-document"
+import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
+import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -101,7 +107,7 @@ describe("week-editor", () => {
     )
   })
 
-  it("assertTwoColumnPage rejects pages with html layout", () => {
+  it("rejects two-column item edits on an HTML page", () => {
     const htmlWeek = parseWeekDocument({
       start: "2026-08-24",
       end: "2026-08-28",
@@ -116,11 +122,56 @@ describe("week-editor", () => {
     })
 
     // 驗證針對非 two-column 頁面執行結構化編輯操作時會拋出明確錯誤，防止資料結構毀損
-    expect(() => assertTwoColumnPage(htmlWeek.pages[0])).toThrow(
-      "Week Page p03 is not a two-column page"
-    )
     expect(() => setPageItem(htmlWeek, 0, 0, "heading", "fail")).toThrow(
       "Week Page p03 is not a two-column page"
+    )
+  })
+
+  it.each([false, true])(
+    "sets week-level page-number visibility to %s without mutating the source",
+    (show) => {
+      const week = loadFixture()
+
+      const updated = setWeekShowPageNumbers(week, show)
+
+      expect(updated.showPageNumbers).toBe(show)
+      expect(week.showPageNumbers).toBeUndefined()
+    }
+  )
+
+  it.each([
+    { from: undefined, to: false },
+    { from: false, to: true },
+    { from: true, to: undefined },
+  ])(
+    "changes a page-level page-number override from $from to $to",
+    ({ from, to }) => {
+      const week = setPageShowPageNumber(loadFixture(), 0, from)
+
+      const updated = setPageShowPageNumber(week, 0, to)
+
+      expect(updated.pages[0].showPageNumber).toBe(to)
+    }
+  )
+
+  it("keeps at least one entry in chart, flow, and checklist panels", () => {
+    const weekWith = (kind: "chart" | "flow" | "checklist"): WeekDocument => ({
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [createBlankTwoColumnPage("p01", kind)],
+    })
+
+    expect(() => removeChartCategory(weekWith("chart"), 0, 0)).toThrow(
+      "Chart must keep at least 1 category"
+    )
+    expect(() => removeChartSeries(weekWith("chart"), 0, 0)).toThrow(
+      "Chart must keep at least 1 series"
+    )
+    expect(() => removeFlowStep(weekWith("flow"), 0, 0)).toThrow(
+      "Flow must keep at least 1 step"
+    )
+    expect(() => removeChecklistItem(weekWith("checklist"), 0, 0)).toThrow(
+      "Checklist must keep at least 1 item"
     )
   })
 })

@@ -11,11 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
+import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { issuePathsFor } from "@/lib/export-readiness"
-import type {
-  StatusTone,
-  WeekDocument,
-  WeeklyOverviewPage,
+import {
+  canAddEntry,
+  canRemoveEntry,
+  CARDINALITY,
+  type StatusTone,
+  type WeeklyOverviewPage,
 } from "@/lib/week-document"
 import {
   addSupportingOutcome,
@@ -27,14 +30,6 @@ import {
   setOverviewSupportingField,
   setOverviewSupportingStatus,
 } from "@/lib/weekly-overview-editor"
-
-type WeeklyOverviewEditorFormProps = {
-  week: WeekDocument
-  pageIndex: number
-  page: WeeklyOverviewPage
-  onChange: (week: WeekDocument) => void
-  readOnly?: boolean
-}
 
 const TONE_OPTIONS: { value: StatusTone; label: string }[] = [
   { value: "positive", label: "Positive" },
@@ -48,9 +43,12 @@ export function WeeklyOverviewEditorForm({
   page,
   onChange,
   readOnly = false,
-}: WeeklyOverviewEditorFormProps) {
+}: PageEditorProps<WeeklyOverviewPage>) {
   const invalidPaths = issuePathsFor(page)
-  const canAddSupporting = page.supporting.length < 3
+  const canAddSupporting = canAddEntry(
+    page.supporting,
+    CARDINALITY.supportingOutcomes
+  )
 
   return (
     <EditorialPageEditorChrome
@@ -68,10 +66,14 @@ export function WeeklyOverviewEditorForm({
         outcome={page.lead}
         invalidPaths={invalidPaths}
         onTextChange={(field, value) =>
-          onChange(setOverviewLeadField(week, pageIndex, field, value))
+          onChange((currentWeek) =>
+            setOverviewLeadField(currentWeek, pageIndex, field, value)
+          )
         }
         onStatusChange={(field, value) =>
-          onChange(setOverviewLeadStatus(week, pageIndex, field, value))
+          onChange((currentWeek) =>
+            setOverviewLeadStatus(currentWeek, pageIndex, field, value)
+          )
         }
       />
 
@@ -82,7 +84,11 @@ export function WeeklyOverviewEditorForm({
           variant="outline"
           size="sm"
           disabled={!canAddSupporting}
-          onClick={() => onChange(addSupportingOutcome(week, pageIndex))}
+          onClick={() =>
+            onChange((currentWeek) =>
+              addSupportingOutcome(currentWeek, pageIndex)
+            )
+          }
         >
           Add supporting outcome
         </Button>
@@ -97,9 +103,9 @@ export function WeeklyOverviewEditorForm({
           outcome={outcome}
           invalidPaths={invalidPaths}
           onTextChange={(field, value) =>
-            onChange(
+            onChange((currentWeek) =>
               setOverviewSupportingField(
-                week,
+                currentWeek,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -108,9 +114,9 @@ export function WeeklyOverviewEditorForm({
             )
           }
           onStatusChange={(field, value) =>
-            onChange(
+            onChange((currentWeek) =>
               setOverviewSupportingStatus(
-                week,
+                currentWeek,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -125,7 +131,9 @@ export function WeeklyOverviewEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange(makeLead(week, pageIndex, supportingIndex))
+                  onChange((currentWeek) =>
+                    makeLead(currentWeek, pageIndex, supportingIndex)
+                  )
                 }
               >
                 Make lead
@@ -136,9 +144,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === 0}
                 onClick={() =>
-                  onChange(
+                  onChange((currentWeek) =>
                     moveSupportingOutcome(
-                      week,
+                      currentWeek,
                       pageIndex,
                       supportingIndex,
                       supportingIndex - 1
@@ -154,9 +162,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === page.supporting.length - 1}
                 onClick={() =>
-                  onChange(
+                  onChange((currentWeek) =>
                     moveSupportingOutcome(
-                      week,
+                      currentWeek,
                       pageIndex,
                       supportingIndex,
                       supportingIndex + 1
@@ -170,10 +178,19 @@ export function WeeklyOverviewEditorForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={page.supporting.length <= 1}
+                disabled={
+                  !canRemoveEntry(
+                    page.supporting,
+                    CARDINALITY.supportingOutcomes
+                  )
+                }
                 onClick={() =>
-                  onChange(
-                    removeSupportingOutcome(week, pageIndex, supportingIndex)
+                  onChange((currentWeek) =>
+                    removeSupportingOutcome(
+                      currentWeek,
+                      pageIndex,
+                      supportingIndex
+                    )
                   )
                 }
               >

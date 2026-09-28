@@ -1,13 +1,26 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useState } from "react"
 import { describe, expect, it } from "vitest"
 
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { PageLifecycleControls } from "@/components/workshop/page-lifecycle-controls"
+import {
+  addSessionMetric,
+  addSessionPage,
+  createEditingSession,
+  deleteSessionPage,
+  editSessionContent,
+  moveSessionMetric,
+  moveSessionPage,
+  readMetricInput,
+  removeSessionMetric,
+  sessionReadiness,
+  writeMetricInput,
+} from "@/lib/editing-session"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { PageLifecycleResult } from "@/lib/page-lifecycle"
 import type { WeekDocument } from "@/lib/week-document"
+import { unusedTrendControls } from "./support/editor-controls"
 
 function sampleWeek(): WeekDocument {
   return {
@@ -35,13 +48,11 @@ function LifecycleHarness({
 }: {
   initialWeek?: WeekDocument
 }) {
-  const [week, setWeek] = useState(initialWeek)
-  const [selectedPageId, setSelectedPageId] = useState(week.pages[0].id)
-
-  const onChange = (result: PageLifecycleResult) => {
-    setWeek(result.week)
-    setSelectedPageId(result.selectedPageId)
-  }
+  const [session, setSession] = useState(() =>
+    createEditingSession(initialWeek)
+  )
+  const week = session.week!
+  const selectedPageId = session.selectedPageId!
 
   return (
     <div>
@@ -52,12 +63,35 @@ function LifecycleHarness({
       <PageLifecycleControls
         week={week}
         selectedPageId={selectedPageId}
-        onChange={onChange}
+        onAdd={(page) => setSession((current) => addSessionPage(current, page))}
+        onDelete={(pageId) =>
+          setSession((current) => deleteSessionPage(current, pageId))
+        }
+        onMove={(pageId, direction) =>
+          setSession((current) => moveSessionPage(current, pageId, direction))
+        }
       />
       <PageEditorForm
         week={week}
         pageIndex={week.pages.findIndex((page) => page.id === selectedPageId)}
-        onChange={setWeek}
+        onChange={(update) =>
+          setSession((current) => editSessionContent(current, update))
+        }
+        layoutControls={{
+          evidenceDecision: {
+            read: (location) => readMetricInput(session, location),
+            write: (location, raw) =>
+              setSession((current) => writeMetricInput(current, location, raw)),
+            add: (pageId) =>
+              setSession((current) => addSessionMetric(current, pageId)),
+            move: (move) =>
+              setSession((current) => moveSessionMetric(current, move)),
+            remove: (metric) =>
+              setSession((current) => removeSessionMetric(current, metric)),
+            readiness: (pageId) => sessionReadiness(session, pageId),
+          },
+          trendTarget: unusedTrendControls,
+        }}
       />
     </div>
   )
@@ -149,12 +183,18 @@ describe("workshop page lifecycle", () => {
     )
   })
 
+  async function addEvidenceDecisionPage(
+    user: ReturnType<typeof userEvent.setup>
+  ) {
+    await chooseAddPageLayout(user, "Evidence-backed Decision")
+    await user.click(screen.getByRole("button", { name: "Add page" }))
+  }
+
   it("adds an evidence-backed decision page and shows its editor", async () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await chooseAddPageLayout(user, "Evidence-backed Decision")
-    await user.click(screen.getByRole("button", { name: "Add page" }))
+    await addEvidenceDecisionPage(user)
 
     expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
     expect(screen.getByLabelText("Verdict")).toBeInTheDocument()
@@ -164,6 +204,22 @@ describe("workshop page lifecycle", () => {
     expect(
       screen.getByRole("button", { name: "Add interpretation" })
     ).toBeInTheDocument()
+  })
+
+  it("restores a removed metric with Add metric", async () => {
+    const user = userEvent.setup()
+    render(<LifecycleHarness />)
+    await addEvidenceDecisionPage(user)
+    await user.click(
+      within(screen.getByRole("group", { name: "Metric 2" })).getByRole(
+        "button",
+        { name: "Remove" }
+      )
+    )
+
+    await user.click(screen.getByRole("button", { name: "Add metric" }))
+
+    expect(screen.getByRole("group", { name: "Metric 2" })).toBeInTheDocument()
   })
 
   it("adds a next-actions page and shows its editor", async () => {

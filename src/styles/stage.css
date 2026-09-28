@@ -1,3 +1,13 @@
+/* 預覽槽先占滿剩餘高度再當 size container，畫布才能同時受寬與高限制 */
+.stage-preview-slot {
+  container-type: size;
+}
+
+/* 在槽內取最大 16:9（寬度上限沿用原 max-w-5xl 的 64rem），避免向下蓋到 speaker notes */
+.stage-preview-fit {
+  width: min(100cqi, 64rem, calc(100cqb * 16 / 9));
+}
+
 /* 16:9 預覽畫布專用 token；不套用 shadcn 元件 */
 .stage-root {
   --blue: #2e75b6;
@@ -46,7 +56,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 4.6% 5.2% 6.4%;
+  padding: 4.6% 5% 6.4%;
 }
 
 .stage-slide h1 {
@@ -73,19 +83,21 @@
   gap: 1.45em;
 }
 
+/* 採懸掛縮排（hanging indent）：小標與內文起始邊對齊主標題（5% 格線），圓點懸掛於左側間距 */
 .stage-item {
   display: grid;
-  grid-template-columns: 1.15em 1fr;
-  gap: 0.5em;
+  grid-template-columns: 0.55em 1fr;
+  gap: 0.65em;
   align-items: start;
+  margin-left: -1.2em;
 }
 
 .stage-dot {
-  width: 0.62em;
-  height: 0.62em;
+  width: 0.55em;
+  height: 0.55em;
   border-radius: 50%;
   background: var(--blue);
-  margin-top: 0.48em;
+  margin-top: 0.44em;
 }
 
 .stage-item h3 {
@@ -309,4 +321,17 @@
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* HTML 全幅沒有文流 footer，頁碼疊在右下，不改片段本身 */
+.stage-page-number {
+  position: absolute;
+  right: 5%;
+  bottom: 3.2%;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(8px, 1cqw, 13px);
+  letter-spacing: 0.06em;
+  color: var(--mute);
+  pointer-events: none;
 }
