@@ -23,15 +23,16 @@ import { errorMessage } from "./error-message"
 import { isTrendDirection, trendBounds, trendEndMonday } from "./trend-target"
 import { isCalendarMonday } from "./week-id"
 import {
-  observationPath,
+  observationEntryPath,
+  trendDatingError,
   trendInputError,
-  trendRangeError,
 } from "./trend-input"
 
 import {
   invalidMetricInputMessage,
   METRIC_VALUE_FIELDS,
   metricInputPath,
+  observationPath,
   type MetricInputLocation,
   type MetricInputMap,
   type MetricValueField,
@@ -424,12 +425,11 @@ function trendDateIssues(
 ): ExportIssue[] {
   if (!page.startMonday)
     return [missing("startMonday", "Starting Monday is required")]
-  if (!isCalendarMonday(page.startMonday))
-    return [
-      invalid("startMonday", "Starting Monday must be a real calendar Monday"),
-    ]
-  const rangeError = trendRangeError(page.startMonday, page.observations.length)
-  if (rangeError) return [invalid("observations", rangeError)]
+  const datingError = trendDatingError(
+    page.startMonday,
+    page.observations.length
+  )
+  if (datingError) return [invalid(datingError.path, datingError.message)]
   if (!reportingMonday || !isCalendarMonday(reportingMonday))
     return [invalid("observations", "Reporting Monday is unavailable")]
   const end = trendEndMonday(page)
@@ -471,11 +471,11 @@ function trendObservationIssues(page: TrendTargetPage): ExportIssue[] {
     )
   page.observations.forEach((entry, index) => {
     if (entry.state === "unfilled")
-      issues.push(missing(`observations[${index}]`, "Observation is unfilled"))
-    if (entry.state === "measured" && !Number.isFinite(entry.value))
       issues.push(
-        invalid(`observations[${index}].value`, "Measurement must be finite")
+        missing(observationEntryPath(index), "Observation is unfilled")
       )
+    if (entry.state === "measured" && !Number.isFinite(entry.value))
+      issues.push(invalid(observationPath(index), "Measurement must be finite"))
   })
   const measured = page.observations.filter(
     (entry) => entry.state === "measured"

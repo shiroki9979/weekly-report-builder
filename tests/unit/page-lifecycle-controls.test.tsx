@@ -77,8 +77,8 @@ function LifecycleHarness({
         onChange={(update) =>
           setSession((current) => editSessionContent(current, update))
         }
-        metricInputControls={{
-          comparisonMetric: {
+        layoutControls={{
+          evidenceDecision: {
             read: (location) => readMetricInput(session, location),
             write: (location, raw) =>
               setSession((current) => writeMetricInput(current, location, raw)),
@@ -90,7 +90,7 @@ function LifecycleHarness({
               setSession((current) => removeSessionMetric(current, metric)),
             readiness: (pageId) => sessionReadiness(session, pageId),
           },
-          trend: unusedTrendControls,
+          trendTarget: unusedTrendControls,
         }}
       />
     </div>
@@ -183,12 +183,18 @@ describe("workshop page lifecycle", () => {
     )
   })
 
-  it("adds an evidence-backed decision page and restores a removed metric", async () => {
+  async function addEvidenceDecisionPage(
+    user: ReturnType<typeof userEvent.setup>
+  ) {
+    await chooseAddPageLayout(user, "Evidence-backed Decision")
+    await user.click(screen.getByRole("button", { name: "Add page" }))
+  }
+
+  it("adds an evidence-backed decision page and shows its editor", async () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await chooseAddPageLayout(user, "Evidence-backed Decision")
-    await user.click(screen.getByRole("button", { name: "Add page" }))
+    await addEvidenceDecisionPage(user)
 
     expect(screen.getByRole("alert")).toHaveTextContent("Draft Page")
     expect(screen.getByLabelText("Verdict")).toBeInTheDocument()
@@ -198,14 +204,21 @@ describe("workshop page lifecycle", () => {
     expect(
       screen.getByRole("button", { name: "Add interpretation" })
     ).toBeInTheDocument()
+  })
 
+  it("restores a removed metric with Add metric", async () => {
+    const user = userEvent.setup()
+    render(<LifecycleHarness />)
+    await addEvidenceDecisionPage(user)
     await user.click(
       within(screen.getByRole("group", { name: "Metric 2" })).getByRole(
         "button",
         { name: "Remove" }
       )
     )
+
     await user.click(screen.getByRole("button", { name: "Add metric" }))
+
     expect(screen.getByRole("group", { name: "Metric 2" })).toBeInTheDocument()
   })
 

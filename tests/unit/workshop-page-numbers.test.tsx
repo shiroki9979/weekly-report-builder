@@ -1,22 +1,22 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useState } from "react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
-import type { MetricInputControls } from "@/hooks/use-editing-session"
+import type { LayoutEditorControls } from "@/hooks/use-editing-session"
 import type { WeekDocument } from "@/lib/week-document"
 import {
   unusedComparisonMetricControls,
   unusedTrendControls,
 } from "./support/editor-controls"
 
-const noMetricInputControls: MetricInputControls = {
-  comparisonMetric: unusedComparisonMetricControls,
-  trend: unusedTrendControls,
+const unusedLayoutControls: LayoutEditorControls = {
+  evidenceDecision: unusedComparisonMetricControls,
+  trendTarget: unusedTrendControls,
 }
 
 function sampleWeek(showPageNumbers?: boolean): WeekDocument {
@@ -56,35 +56,10 @@ const idleCreate = {
 }
 
 describe("WorkshopToolbar showPageNumbers toggle", () => {
-  it("renders show page numbers checkbox checked by default and responds to changes", async () => {
-    const user = userEvent.setup()
-    let currentShow = true
-
-    const Harness = () => {
-      const [show, setShow] = useState(true)
-      currentShow = show
-      return (
-        <WorkshopToolbar
-          weeks={["2026-08-24"]}
-          selectedMonday="2026-08-24"
-          onWeekChange={() => {}}
-          save={idleSave}
-          create={idleCreate}
-          pageNumbers={{ show, onChange: setShow }}
-        />
-      )
-    }
-
-    render(<Harness />)
-
-    const checkbox = screen.getByRole("checkbox", { name: "Show page numbers" })
-    expect(checkbox).toBeChecked()
-
-    await user.click(checkbox)
-    expect(currentShow).toBe(false)
-  })
-
-  it("disables the checkbox when page numbers are disabled", () => {
+  function renderToolbar({
+    onChange = () => {},
+    disabled = false,
+  }: { onChange?: (show: boolean) => void; disabled?: boolean } = {}) {
     render(
       <WorkshopToolbar
         weeks={["2026-08-24"]}
@@ -92,29 +67,38 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
         onWeekChange={() => {}}
         save={idleSave}
         create={idleCreate}
-        pageNumbers={{ show: true, disabled: true, onChange: () => {} }}
+        pageNumbers={{ show: true, disabled, onChange }}
       />
     )
+    return screen.getByRole("checkbox", { name: "Show page numbers" })
+  }
 
-    const checkbox = screen.getByRole("checkbox", { name: "Show page numbers" })
+  it("checks the box while the week shows page numbers", () => {
+    const checkbox = renderToolbar()
+
+    expect(checkbox).toBeChecked()
+  })
+
+  it("reports hiding page numbers when the box is unchecked", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const checkbox = renderToolbar({ onChange })
+
+    await user.click(checkbox)
+
+    expect(onChange).toHaveBeenCalledWith(false)
+  })
+
+  it("disables the checkbox when page numbers are disabled", () => {
+    const checkbox = renderToolbar({ disabled: true })
+
     expect(checkbox).toHaveAttribute("aria-disabled", "true")
   })
 
   it("explains that HTML pages opt in to page numbers individually", () => {
-    render(
-      <WorkshopToolbar
-        weeks={["2026-08-24"]}
-        selectedMonday="2026-08-24"
-        onWeekChange={() => {}}
-        save={idleSave}
-        create={idleCreate}
-        pageNumbers={{ show: true, onChange: () => {} }}
-      />
-    )
+    const checkbox = renderToolbar()
 
-    expect(
-      screen.getByRole("checkbox", { name: "Show page numbers" })
-    ).toHaveAccessibleDescription(
+    expect(checkbox).toHaveAccessibleDescription(
       "HTML pages show a page number only when set on the page."
     )
   })
@@ -203,7 +187,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
         week={week}
         pageIndex={0}
         onChange={() => {}}
-        metricInputControls={noMetricInputControls}
+        layoutControls={unusedLayoutControls}
       />
     )
 
@@ -241,7 +225,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
         week={week}
         pageIndex={0}
         onChange={() => {}}
-        metricInputControls={noMetricInputControls}
+        layoutControls={unusedLayoutControls}
       />
     )
 

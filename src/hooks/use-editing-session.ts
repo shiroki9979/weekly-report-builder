@@ -43,10 +43,11 @@ import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 
-// Comparison Metric 與 Trend & Target 的 Metric Input 都由 Editing Session 持有，一併交給頁面編輯器
-export type MetricInputControls = {
-  comparisonMetric: MetricEditorControls
-  trend: TrendEditorControls
+// 需經 Editing Session 才能安全改動的版型專屬操作（Metric Input、metric 增刪移、Trend 端點與改日期）；
+// 鍵名對應 matchWeekPage 的版型，PageEditorForm 依版型分派給各自的編輯器
+export type LayoutEditorControls = {
+  evidenceDecision: MetricEditorControls
+  trendTarget: TrendEditorControls
 }
 
 export type EditingSessionResult = {
@@ -56,7 +57,7 @@ export type EditingSessionResult = {
   week: WeekDocument | null
   operationSnapshot: () => SessionOperationSnapshot | null
   editContent: (update: (week: WeekDocument) => WeekDocument) => void
-  metricInputControls: MetricInputControls
+  layoutControls: LayoutEditorControls
   addPage: (page: WeekPage) => void
   deletePage: (pageId: string) => void
   movePage: (pageId: string, direction: PageMoveDirection) => void
@@ -106,8 +107,8 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
     operationSnapshot: () => sessionOperationSnapshot(sessionRef.current),
     editContent: (change) =>
       update((current) => editSessionContent(current, change)),
-    metricInputControls: {
-      comparisonMetric: {
+    layoutControls: {
+      evidenceDecision: {
         read: (location) => readMetricInput(session, location),
         write: (location, raw) =>
           update((current) => writeMetricInput(current, location, raw)),
@@ -117,7 +118,7 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
           update((current) => removeSessionMetric(current, metric)),
         readiness: (pageId) => sessionReadiness(session, pageId),
       },
-      trend: {
+      trendTarget: {
         read: (location) => readTrendInput(session, location),
         write: (location, raw) =>
           update((current) => writeTrendInput(current, location, raw)),

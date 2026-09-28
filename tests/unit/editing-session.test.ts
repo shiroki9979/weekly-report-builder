@@ -35,16 +35,17 @@ function week(ids: string[]): WeekDocument {
 
 describe("Editing Session", () => {
   it("discards invalid input with its deleted page, including when the ID is reused", () => {
-    let session = createEditingSession(week(["p01", "p02"]))
-    session = writeMetricInput(
-      session,
+    const withInvalidInput = writeMetricInput(
+      createEditingSession(week(["p01", "p02"])),
       { pageId: "p02", metricIndex: 0, field: "baselineValue" },
       "bad"
     )
-    expect(canSaveSession(session).allowed).toBe(false)
+    const deleted = deleteSessionPage(withInvalidInput, "p02")
 
-    session = deleteSessionPage(session, "p02")
-    session = addSessionPage(session, createBlankEvidenceDecisionPage("p02"))
+    const session = addSessionPage(
+      deleted,
+      createBlankEvidenceDecisionPage("p02")
+    )
 
     expect(canSaveSession(session).allowed).toBe(true)
     expect(
@@ -56,47 +57,64 @@ describe("Editing Session", () => {
     ).toBe("")
   })
 
-  it("keeps verbatim input with metrics through moves and removals for colon IDs", () => {
-    let session = createEditingSession(week(["ops:1"]))
-    session = writeMetricInput(
-      session,
-      { pageId: "ops:1", metricIndex: 0, field: "baselineValue" },
-      "1.50"
-    )
-    session = writeMetricInput(
-      session,
-      { pageId: "ops:1", metricIndex: 1, field: "candidateValue" },
-      "bad"
-    )
+  describe("verbatim input on a colon Page ID", () => {
+    function sessionWithInputOnBothMetrics() {
+      const session = writeMetricInput(
+        createEditingSession(week(["ops:1"])),
+        { pageId: "ops:1", metricIndex: 0, field: "baselineValue" },
+        "1.50"
+      )
+      return writeMetricInput(
+        session,
+        { pageId: "ops:1", metricIndex: 1, field: "candidateValue" },
+        "bad"
+      )
+    }
 
-    session = moveSessionMetric(session, {
-      pageId: "ops:1",
-      fromIndex: 1,
-      toIndex: 0,
+    const moveSecondToFirst = { pageId: "ops:1", fromIndex: 1, toIndex: 0 }
+
+    it("moves with its metric", () => {
+      const session = moveSessionMetric(
+        sessionWithInputOnBothMetrics(),
+        moveSecondToFirst
+      )
+
+      expect(
+        readMetricInput(session, {
+          pageId: "ops:1",
+          metricIndex: 0,
+          field: "candidateValue",
+        })
+      ).toBe("bad")
+      expect(
+        readMetricInput(session, {
+          pageId: "ops:1",
+          metricIndex: 1,
+          field: "baselineValue",
+        })
+      ).toBe("1.50")
     })
-    expect(
-      readMetricInput(session, {
+
+    it("leaves with its removed metric while later input shifts up", () => {
+      const moved = moveSessionMetric(
+        sessionWithInputOnBothMetrics(),
+        moveSecondToFirst
+      )
+
+      const session = removeSessionMetric(moved, {
         pageId: "ops:1",
         metricIndex: 0,
-        field: "candidateValue",
       })
-    ).toBe("bad")
-    expect(
-      readMetricInput(session, {
-        pageId: "ops:1",
-        metricIndex: 1,
-        field: "baselineValue",
-      })
-    ).toBe("1.50")
-    session = removeSessionMetric(session, { pageId: "ops:1", metricIndex: 0 })
-    expect(
-      readMetricInput(session, {
-        pageId: "ops:1",
-        metricIndex: 0,
-        field: "baselineValue",
-      })
-    ).toBe("1.50")
-    expect(canSaveSession(session).allowed).toBe(true)
+
+      expect(
+        readMetricInput(session, {
+          pageId: "ops:1",
+          metricIndex: 0,
+          field: "baselineValue",
+        })
+      ).toBe("1.50")
+      expect(canSaveSession(session).allowed).toBe(true)
+    })
   })
 
   it("throws on forbidden removal without changing the session", () => {
@@ -160,38 +178,43 @@ describe("Editing Session", () => {
     expect(session.saveError).toBe("Fix invalid metric values before saving")
   })
 
-  it("updates valid values immediately while keeping exact display text", () => {
-    let session = createEditingSession(week(["p01"]))
-    session = writeMetricInput(
-      session,
-      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
-      "1.50"
-    )
-    expect(
-      readMetricInput(session, {
-        pageId: "p01",
-        metricIndex: 0,
-        field: "baselineValue",
-      })
-    ).toBe("1.50")
-    expect(session.week?.pages[0]).toHaveProperty(
-      "metrics.0.baselineValue",
-      1.5
-    )
+  describe("writing Metric Input", () => {
+    const baseline = {
+      pageId: "p01",
+      metricIndex: 0,
+      field: "baselineValue",
+    } as const
 
-    session = writeMetricInput(
-      session,
-      { pageId: "p01", metricIndex: 0, field: "baselineValue" },
-      "bad"
-    )
-    expect(session.week?.pages[0]).toHaveProperty(
-      "metrics.0.baselineValue",
-      1.5
-    )
-    expect(sessionReadiness(session, "p01")).toContainEqual({
-      code: "invalid-content",
-      path: "metrics[0].baselineValue",
-      message: "Metric value must be a finite non-negative number",
+    function sessionWithValidInput() {
+      return writeMetricInput(
+        createEditingSession(week(["p01"])),
+        baseline,
+        "1.50"
+      )
+    }
+
+    it("updates a valid value immediately while keeping exact display text", () => {
+      const session = sessionWithValidInput()
+
+      expect(readMetricInput(session, baseline)).toBe("1.50")
+      expect(session.week?.pages[0]).toHaveProperty(
+        "metrics.0.baselineValue",
+        1.5
+      )
+    })
+
+    it("keeps the last valid value and reports readiness for invalid text", () => {
+      const session = writeMetricInput(sessionWithValidInput(), baseline, "bad")
+
+      expect(session.week?.pages[0]).toHaveProperty(
+        "metrics.0.baselineValue",
+        1.5
+      )
+      expect(sessionReadiness(session, "p01")).toContainEqual({
+        code: "invalid-content",
+        path: "metrics[0].baselineValue",
+        message: "Metric value must be a finite non-negative number",
+      })
     })
   })
 

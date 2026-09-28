@@ -6,16 +6,16 @@ import {
 import type { ExportIssue } from "./export-readiness"
 import {
   clearInputText,
+  observationIndex,
+  observationPath,
   readInputText,
   writeInputText,
   type MetricInputMap,
   type TrendInputPath,
 } from "./metric-input"
 import {
-  endpointAddsWeek,
+  assertTrendEndpointAllowed,
   isStartSettled,
-  observationIndex,
-  observationPath,
   parseTrendNumber,
   remapTrendObservationInput,
   requireTrendNumber,
@@ -26,18 +26,14 @@ import {
 import { observationMonday, trendRangeEnd } from "./trend-target"
 import { isCalendarMonday } from "./week-id"
 import {
-  assertCanAddEntry,
-  assertCanRemoveEntry,
-  CARDINALITY,
   hasEnteredObservations,
   isTrendTargetPage,
+  type UnmeasuredState,
   type WeeklyObservation,
   type TrendTargetPage,
 } from "./week-document"
 
 export type ObservationLocation = { pageId: string; index: number }
-
-export type UnmeasuredState = Exclude<WeeklyObservation["state"], "measured">
 
 export type TrendEditorControls = {
   read: (location: TrendInputLocation) => string
@@ -107,7 +103,7 @@ export function changeTrendEndpoint(
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
   const startMonday = requireSettledStart(session.metricInput, page)
-  assertEndpointAllowed(page, action)
+  assertTrendEndpointAllowed(page.observations, action)
   const inputs = remapTrendObservationInput(session.metricInput, pageId, {
     action,
     length: page.observations.length,
@@ -246,8 +242,8 @@ function applyObservationValue(
 // 清空日期時若仍有已輸入週次，日期須留在 JSON；等最後一筆也清掉才真正解除日期
 function releaseClearedStart({ page, metricInput }: TrendEdit): TrendEdit {
   const cleared =
-    metricInput[page.id]?.startMonday === "" &&
-    !hasEnteredObservations(page.observations)
+    readInputText(metricInput, { pageId: page.id, path: "startMonday" }) ===
+      "" && !hasEnteredObservations(page.observations)
   if (!cleared) return { page, metricInput }
   return {
     page: { ...page, startMonday: null },
@@ -269,15 +265,6 @@ function requireSettledStart(
   if (!isStartSettled(page, pending))
     throw new Error("Set a valid starting Monday before changing the range")
   return page.startMonday
-}
-
-function assertEndpointAllowed(
-  page: TrendTargetPage,
-  action: TrendEndpointAction
-): void {
-  const rule = CARDINALITY.trendObservations
-  if (endpointAddsWeek(action)) assertCanAddEntry(page.observations, rule)
-  else assertCanRemoveEntry(page.observations, rule)
 }
 
 const ENDPOINT_MOVES: Record<

@@ -13,7 +13,7 @@ import type {
   PageEditorProps,
   PanelEditorProps,
 } from "@/components/workshop/page-editor-props"
-import type { MetricInputControls } from "@/hooks/use-editing-session"
+import type { LayoutEditorControls } from "@/hooks/use-editing-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
 import { TrendTargetEditorForm } from "@/components/workshop/trend-target-editor-form"
@@ -42,14 +42,14 @@ import {
 } from "@/lib/week-document"
 
 type PageEditorFormProps = Omit<PageEditorProps, "page"> & {
-  metricInputControls: MetricInputControls
+  layoutControls: LayoutEditorControls
 }
 
 export function PageEditorForm({
   week,
   pageIndex,
   onChange,
-  metricInputControls,
+  layoutControls,
   readOnly = false,
 }: PageEditorFormProps) {
   const page = week.pages[pageIndex]
@@ -69,7 +69,7 @@ export function PageEditorForm({
       <EvidenceDecisionEditorForm
         {...editor}
         page={decision}
-        metricControls={metricInputControls.comparisonMetric}
+        metricControls={layoutControls.evidenceDecision}
       />
     ),
     nextActions: (actions) => (
@@ -79,7 +79,7 @@ export function PageEditorForm({
       <TrendTargetEditorForm
         {...editor}
         page={trend}
-        trendControls={metricInputControls.trend}
+        trendControls={layoutControls.trendTarget}
       />
     ),
     unknown: () => (

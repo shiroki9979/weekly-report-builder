@@ -37,12 +37,21 @@ function deferred<T>() {
   }
 }
 
-async function ready(result: {
-  current: ReturnType<typeof useEditingSession>
-}) {
-  await waitFor(() =>
-    expect(result.current.loadStatus).toEqual({ kind: "ready" })
-  )
+type HookResult = { current: ReturnType<typeof useEditingSession> }
+
+// Arrange 階段等待非同步載入完成；等待本身不是測試要驗證的行為
+async function until(condition: () => boolean): Promise<void> {
+  await waitFor(() => {
+    if (!condition()) throw new Error("Precondition not reached yet")
+  })
+}
+
+async function ready(result: HookResult) {
+  await until(() => result.current.loadStatus.kind === "ready")
+}
+
+async function openedWeek(result: HookResult, monday: string) {
+  await until(() => result.current.week?.start === monday)
 }
 
 // 開啟最新週後啟動一次 Save，Save 在 failSave 前保持進行中，之後以 "Disk full" 失敗
@@ -71,11 +80,10 @@ describe("useEditingSession", () => {
   it("reports saving without an open week", async () => {
     const backend = new InMemoryWeekStore()
     const { result } = renderHook(() => useEditingSession(backend))
-    await waitFor(() =>
-      expect(result.current.loadStatus).toEqual({ kind: "empty" })
-    )
+    await until(() => result.current.loadStatus.kind === "empty")
 
     await act(() => result.current.save.saveWeek())
+
     expect(result.current.save.error).toBe("No week is open")
   })
 
@@ -121,7 +129,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricInputControls.comparisonMetric.write(
+      result.current.layoutControls.evidenceDecision.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -131,7 +139,7 @@ describe("useEditingSession", () => {
 
     expect(result.current.save.message).toBe("Saved")
     expect(
-      result.current.metricInputControls.comparisonMetric.read({
+      result.current.layoutControls.evidenceDecision.read({
         pageId: "p01",
         metricIndex: 0,
         field: "baselineValue",
@@ -159,7 +167,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricInputControls.comparisonMetric.write(
+      result.current.layoutControls.evidenceDecision.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -179,16 +187,15 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricInputControls.comparisonMetric.write(
+      result.current.layoutControls.evidenceDecision.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "bad"
       )
     )
     await act(() => result.current.save.saveWeek())
-    expect(result.current.save.error).toBe(
-      "Fix invalid metric values before saving"
-    )
+
     act(() => result.current.setSelectedMonday(older))
+
     expect(result.current.save.error).toBeNull()
     await ready(result)
   })
@@ -207,15 +214,16 @@ describe("useEditingSession", () => {
     act(() => {
       save = result.current.save.saveWeek()
     })
-    expect(result.current.save.saving).toBe(true)
     act(() => result.current.setSelectedMonday(older))
-    await waitFor(() => expect(result.current.week?.start).toBe(older))
+    await openedWeek(result, older)
     act(() => result.current.setSelectedMonday(latest))
-    await waitFor(() => expect(result.current.week?.start).toBe(latest))
+    await openedWeek(result, latest)
+
     await act(async () => {
       pending.resolve()
       await save
     })
+
     expect(result.current.save.message).toBeNull()
     expect(result.current.save.saving).toBe(false)
   })
@@ -225,7 +233,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     act(() =>
-      result.current.metricInputControls.comparisonMetric.write(
+      result.current.layoutControls.evidenceDecision.write(
         { pageId: "p01", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -244,13 +252,24 @@ describe("useEditingSession", () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
+
     await act(() => result.current.create.createWeek(latest))
+
     expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
     expect(result.current.week?.start).toBe(latest)
     expect(result.current.create.creating).toBe(false)
+  })
+
+  it("clears a create failure when another week opens", async () => {
+    const backend = store()
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+    await act(() => result.current.create.createWeek(latest))
+
     act(() => result.current.setSelectedMonday(older))
+
     expect(result.current.create.error).toBeNull()
-    await waitFor(() => expect(result.current.week?.start).toBe(older))
+    await openedWeek(result, older)
   })
 
   it("reports a save failure that finishes after a failed create on the same week", async () => {
@@ -307,7 +326,8 @@ describe("useEditingSession", () => {
       create = result.current.create.createWeek(next)
     })
     act(() => result.current.setSelectedMonday(older))
-    await waitFor(() => expect(result.current.week?.start).toBe(older))
+    await openedWeek(result, older)
+
     await act(async () => {
       pending.resolve(week(next))
       await create

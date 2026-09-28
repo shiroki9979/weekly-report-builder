@@ -13,10 +13,11 @@ import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-
 import { MetricFormatFields } from "@/components/workshop/metric-format-fields"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { issuePaths } from "@/lib/export-readiness"
+import { observationPath } from "@/lib/metric-input"
 import {
   canChangeTrendEndpoint,
   isStartSettled,
-  observationPath,
+  observationEntryPath,
   trendRangeError,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
@@ -196,7 +197,7 @@ function TrendObservationControls({
                 value={trendControls.read({ pageId: page.id, path })}
                 aria-invalid={
                   paths.has(path) ||
-                  paths.has(`observations[${index}]`) ||
+                  paths.has(observationEntryPath(index)) ||
                   undefined
                 }
                 onChange={(event) =>

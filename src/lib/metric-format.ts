@@ -1,12 +1,10 @@
-import { isFiniteNonNegative } from "./week-document"
+import { isFiniteNonNegative, type ComparisonMetric } from "./week-document"
 import { withUnit } from "./unit-format"
 
-export type MetricFormat = {
-  unit: string
-  unitPosition: "before" | "after"
-  unitSpacing: "none" | "space"
-  precision: 0 | 1 | 2
-}
+export type MetricFormat = Pick<
+  ComparisonMetric,
+  "unit" | "unitPosition" | "unitSpacing" | "precision"
+>
 
 export type MetricBarPercents = {
   baseline: number

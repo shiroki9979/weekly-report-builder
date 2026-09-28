@@ -262,10 +262,13 @@ describe("useStageExport", () => {
         },
       ],
     }
+    const capturedRoots: { canonical: boolean; offscreen: boolean }[] = []
     vi.mocked(stageCapture.captureStageToPng).mockImplementation(
       async (element) => {
-        expect(element.hasAttribute("data-stage-capture-root")).toBe(true)
-        expect(element.closest("[aria-hidden='true']")).not.toBeNull()
+        capturedRoots.push({
+          canonical: element.hasAttribute("data-stage-capture-root"),
+          offscreen: element.closest("[aria-hidden='true']") !== null,
+        })
         throw new Error("Screenshot failed")
       }
     )
@@ -278,6 +281,7 @@ describe("useStageExport", () => {
       await exportRef.current?.copyCurrentPage()
     })
 
+    expect(capturedRoots).toEqual([{ canonical: true, offscreen: true }])
     expect(exportRef.current?.exportResult).toBe(
       "Copy p03 from 2026-08-24: Screenshot failed"
     )

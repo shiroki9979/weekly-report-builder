@@ -1,6 +1,6 @@
 import { act, render, waitFor } from "@testing-library/react"
 import { useEffect } from "react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useStageExport } from "@/hooks/use-stage-export"
 import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
@@ -25,6 +25,15 @@ vi.mock("@/lib/download-blob", () => ({ downloadBlob: vi.fn() }))
 vi.mock("@/lib/clipboard-image", () => ({ copyImageToClipboard: vi.fn() }))
 
 type Commands = ReturnType<typeof useStageExport>
+type BatchRun = ReturnType<Commands["downloadVisiblePages"]>
+type CopyRun = ReturnType<Commands["copyCurrentPage"]>
+
+type HarnessProps = {
+  monday: string
+  week: WeekDocument
+  selectedPage: WeekPage
+  session?: EditingSession
+}
 
 function OperationHarness({
   monday,
@@ -32,13 +41,7 @@ function OperationHarness({
   selectedPage,
   session,
   commandsRef,
-}: {
-  monday: string
-  week: WeekDocument
-  selectedPage: WeekPage
-  session?: EditingSession
-  commandsRef: { current: Commands | null }
-}) {
+}: HarnessProps & { commandsRef: { current: Commands | null } }) {
   const operation = useStageExport({
     operationSnapshot: () =>
       sessionOperationSnapshot(
@@ -54,6 +57,17 @@ function OperationHarness({
   return null
 }
 
+function renderOperation(props: HarnessProps) {
+  const commandsRef: { current: Commands | null } = { current: null }
+  const view = render(<OperationHarness {...props} commandsRef={commandsRef} />)
+  return {
+    commands: () => commandsRef.current!,
+    rerender: (next: HarnessProps) =>
+      view.rerender(<OperationHarness {...next} commandsRef={commandsRef} />),
+    unmount: view.unmount,
+  }
+}
+
 function deferred<T>() {
   let resolve!: (value: T) => void
   const promise = new Promise<T>((settle) => {
@@ -62,166 +76,195 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
+// Arrange 階段等待非同步前置條件成立；等待本身不是測試要驗證的行為
+async function until(condition: () => boolean): Promise<void> {
+  await waitFor(() => {
+    if (!condition()) throw new Error("Precondition not reached yet")
+  })
+}
+
+function htmlPage(id: string, title: string): WeekPage {
+  return { id, layout: "html", title, htmlFile: `${id}.html` }
+}
+
+function singlePageWeek(): WeekDocument {
+  return {
+    start: "2026-08-24",
+    end: "2026-08-28",
+    pages: [htmlPage("p01", "First")],
+  }
+}
+
+// p01 的 capture 停在 pending，讓測試能在批次進行中改動 Editing Session
+function captureWithPendingFirstPage(firstCapture: Promise<Blob>) {
+  return (page: WeekPage) =>
+    page.id === "p01" ? firstCapture : Promise.resolve(new Blob(["png"]))
+}
+
+function preparedCapture(capture: () => Promise<Blob>, dispose = vi.fn()) {
+  return {
+    measure: async () => ({ status: "fit" as const }),
+    capture,
+    dispose,
+  }
+}
+
+function downloadedNames(): string[] {
+  return vi.mocked(downloadBlob).mock.calls.map((call) => call[1])
+}
+
+const prepare = vi.mocked(browserCaptureAdapter.prepare)
+
 describe("export operation lifecycle", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(browserCaptureAdapter.prepare).mockReset()
+    prepare.mockReset()
   })
 
-  it("keeps the starting week, page order, and Stage context after an edit and week switch; rejects overlapping Copy", async () => {
-    const firstCapture = deferred<Blob>()
-    const week: WeekDocument = {
-      start: "2026-08-18",
-      end: "2026-08-22",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-        { id: "p02", layout: "html", title: "Second", htmlFile: "second.html" },
-      ],
+  describe("a batch that outlives edits and a week switch", () => {
+    const otherWeek: WeekDocument = {
+      start: "2026-08-31",
+      end: "2026-09-04",
+      pages: [htmlPage("p01", "Other")],
     }
-    const seen: string[] = []
-    vi.mocked(browserCaptureAdapter.prepare).mockImplementation(
-      async (document, page) => {
+
+    it("exports the starting pages with their original Stage context", async () => {
+      const firstCapture = deferred<Blob>()
+      const capture = captureWithPendingFirstPage(firstCapture.promise)
+      const week: WeekDocument = {
+        start: "2026-08-18",
+        end: "2026-08-22",
+        pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
+      }
+      const seen: string[] = []
+      prepare.mockImplementation(async (document, page) => {
         const context = createStagePageContext(document, page.id)
         seen.push(
           `${page.id}:${page.title}:${context.weekLabel}:${context.pageLabel}`
         )
-        return {
-          measure: async () => ({ status: "fit" }),
-          capture: () =>
-            page.id === "p01"
-              ? firstCapture.promise
-              : Promise.resolve(new Blob(["png"])),
-          dispose: vi.fn(),
-        }
+        return preparedCapture(() => capture(page))
+      })
+      const operation = renderOperation({
+        monday: "2026-08-24",
+        week,
+        selectedPage: week.pages[0],
+      })
+      let batch!: BatchRun
+      act(() => {
+        batch = operation.commands().downloadVisiblePages()
+      })
+      await until(() => seen.length === 1)
+      week.pages[1].title = "Edited later"
+      week.pages.reverse()
+      operation.rerender({
+        monday: otherWeek.start,
+        week: otherWeek,
+        selectedPage: otherWeek.pages[0],
+      })
+
+      await act(async () => {
+        firstCapture.resolve(new Blob(["png"]))
+        await batch
+      })
+
+      expect(seen).toEqual([
+        "p01:First:2026-08-18 — 2026-08-22:1 / 2",
+        "p02:Second:2026-08-18 — 2026-08-22:2 / 2",
+      ])
+      expect(downloadedNames()).toEqual([
+        "2026-08-24-p01.png",
+        "2026-08-24-p02.png",
+      ])
+      expect(operation.commands().exportResult).toBe(
+        "Export for 2026-08-24: Downloads triggered: 2; Skipped: 0; Failed: 0; Not attempted: 0."
+      )
+    })
+
+    it("rejects an overlapping Copy while the batch is running", async () => {
+      const firstCapture = deferred<Blob>()
+      const capture = captureWithPendingFirstPage(firstCapture.promise)
+      prepare.mockImplementation(async (_document, page) =>
+        preparedCapture(() => capture(page))
+      )
+      const week: WeekDocument = {
+        start: "2026-08-18",
+        end: "2026-08-22",
+        pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
-    )
-    const commandsRef: { current: Commands | null } = { current: null }
-    const view = render(
-      <OperationHarness
-        monday="2026-08-24"
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
+      const operation = renderOperation({
+        monday: "2026-08-24",
+        week,
+        selectedPage: week.pages[0],
+      })
+      act(() => {
+        void operation.commands().downloadVisiblePages()
+      })
+      await until(() => prepare.mock.calls.length === 1)
 
-    let batch!: ReturnType<Commands["downloadVisiblePages"]>
-    act(() => {
-      batch = commandsRef.current!.downloadVisiblePages()
+      const copy = await operation.commands().copyCurrentPage()
+
+      expect(copy).toEqual({ kind: "busy" })
+      expect(operation.commands().exporting).toBe(true)
     })
-    await waitFor(() => expect(seen).toHaveLength(1))
-
-    week.pages[1].title = "Edited later"
-    week.pages.reverse()
-    const otherWeek: WeekDocument = {
-      start: "2026-08-31",
-      end: "2026-09-04",
-      pages: [
-        { id: "p01", layout: "html", title: "Other", htmlFile: "other.html" },
-      ],
-    }
-    view.rerender(
-      <OperationHarness
-        monday="2026-08-31"
-        week={otherWeek}
-        selectedPage={otherWeek.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
-    expect(await commandsRef.current!.copyCurrentPage()).toEqual({
-      kind: "busy",
-    })
-    expect(commandsRef.current!.exporting).toBe(true)
-
-    await act(async () => {
-      firstCapture.resolve(new Blob(["png"]))
-      await batch
-    })
-
-    expect(seen).toEqual([
-      "p01:First:2026-08-18 — 2026-08-22:1 / 2",
-      "p02:Second:2026-08-18 — 2026-08-22:2 / 2",
-    ])
-    expect(vi.mocked(downloadBlob).mock.calls.map((call) => call[1])).toEqual([
-      "2026-08-24-p01.png",
-      "2026-08-24-p02.png",
-    ])
-    expect(commandsRef.current!.exportResult).toBe(
-      "Export for 2026-08-24: Downloads triggered: 2; Skipped: 0; Failed: 0; Not attempted: 0."
-    )
   })
 
   it("exports every starting page with its original position after a page is deleted mid-batch", async () => {
     const firstCapture = deferred<Blob>()
+    const capture = captureWithPendingFirstPage(firstCapture.promise)
     const week: WeekDocument = {
       start: "2026-08-18",
       end: "2026-08-22",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-        { id: "p02", layout: "html", title: "Second", htmlFile: "second.html" },
-      ],
+      pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
     const seen: string[] = []
-    vi.mocked(browserCaptureAdapter.prepare).mockImplementation(
-      async (document, page) => {
-        seen.push(
-          `${page.id}:${createStagePageContext(document, page.id).pageLabel}`
-        )
-        return {
-          measure: async () => ({ status: "fit" }),
-          capture: () =>
-            page.id === "p01"
-              ? firstCapture.promise
-              : Promise.resolve(new Blob(["png"])),
-          dispose: vi.fn(),
-        }
-      }
-    )
-    const commandsRef: { current: Commands | null } = { current: null }
-    const view = render(
-      <OperationHarness
-        monday="2026-08-18"
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
-
-    let batch!: ReturnType<Commands["downloadVisiblePages"]>
-    act(() => {
-      batch = commandsRef.current!.downloadVisiblePages()
+    prepare.mockImplementation(async (document, page) => {
+      seen.push(
+        `${page.id}:${createStagePageContext(document, page.id).pageLabel}`
+      )
+      return preparedCapture(() => capture(page))
     })
-    await waitFor(() => expect(seen).toHaveLength(1))
-
+    const operation = renderOperation({
+      monday: "2026-08-18",
+      week,
+      selectedPage: week.pages[0],
+    })
+    let batch!: BatchRun
+    act(() => {
+      batch = operation.commands().downloadVisiblePages()
+    })
+    await until(() => seen.length === 1)
     const afterDeletion: WeekDocument = { ...week, pages: [week.pages[0]] }
     week.pages.splice(1, 1)
-    view.rerender(
-      <OperationHarness
-        monday="2026-08-18"
-        week={afterDeletion}
-        selectedPage={afterDeletion.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
+    operation.rerender({
+      monday: "2026-08-18",
+      week: afterDeletion,
+      selectedPage: afterDeletion.pages[0],
+    })
+
     await act(async () => {
       firstCapture.resolve(new Blob(["png"]))
       await batch
     })
 
     expect(seen).toEqual(["p01:1 / 2", "p02:2 / 2"])
-    expect(vi.mocked(downloadBlob).mock.calls.map((call) => call[1])).toEqual([
+    expect(downloadedNames()).toEqual([
       "2026-08-18-p01.png",
       "2026-08-18-p02.png",
     ])
   })
 
-  it("keeps the starting Metric Input and pages while later session edits set a fresh Copy target", async () => {
-    const firstCapture = deferred<Blob>()
+  describe("Metric Input fixed while a batch is running", () => {
+    const monday = "2026-08-24"
+    const baseline = {
+      pageId: "p02",
+      metricIndex: 0,
+      field: "baselineValue",
+    } as const
     const week: WeekDocument = {
-      start: "2026-08-24",
+      start: monday,
       end: "2026-08-28",
       pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
+        htmlPage("p01", "First"),
         {
           id: "p02",
           layout: "evidence-decision",
@@ -242,373 +285,353 @@ describe("export operation lifecycle", () => {
         },
       ],
     }
-    const prepare = vi.mocked(browserCaptureAdapter.prepare)
-    prepare.mockImplementation(async (_document, page) => ({
-      measure: async () => ({ status: "fit" }),
-      capture: () =>
-        page.id === "p01"
-          ? firstCapture.promise
-          : Promise.resolve(new Blob(["png"])),
-      dispose: vi.fn(),
-    }))
-    const commandsRef: { current: Commands | null } = { current: null }
-    let session = writeMetricInput(
-      createEditingSession(week),
-      { pageId: "p02", metricIndex: 0, field: "baselineValue" },
-      "invalid"
-    )
-    const view = render(
-      <OperationHarness
-        monday="2026-08-24"
-        week={week}
-        selectedPage={week.pages[0]}
-        session={session}
-        commandsRef={commandsRef}
-      />
-    )
-    let batch!: ReturnType<Commands["downloadVisiblePages"]>
-    act(() => {
-      batch = commandsRef.current!.downloadVisiblePages()
-    })
-    await waitFor(() => expect(prepare).toHaveBeenCalledOnce())
 
-    session = writeMetricInput(
-      session,
-      { pageId: "p02", metricIndex: 0, field: "baselineValue" },
-      "2.00"
-    )
-    session = moveSessionPage(session, "p02", "up")
-    session = selectSessionPage(session, "p02")
-    view.rerender(
-      <OperationHarness
-        monday="2026-08-24"
-        week={week}
-        selectedPage={session.week!.pages[0]}
-        session={session}
-        commandsRef={commandsRef}
-      />
-    )
-    await act(async () => {
-      firstCapture.resolve(new Blob(["png"]))
-      await batch
-    })
-    expect(commandsRef.current!.exportResult).toContain("p02")
-    expect(commandsRef.current!.exportResult).toContain("baselineValue")
-    expect(prepare).toHaveBeenCalledOnce()
-    expect(session.week?.pages.map((page) => page.id)).toEqual(["p02", "p01"])
-
-    await act(async () => {
-      expect(await commandsRef.current!.copyCurrentPage()).toEqual({
-        kind: "completed",
+    // 批次開始時 p02 的 Metric Input 非法；批次進行中修正輸入、把 p02 移到最前並選取
+    async function batchStartedBeforeInputFix() {
+      const firstCapture = deferred<Blob>()
+      const capture = captureWithPendingFirstPage(firstCapture.promise)
+      prepare.mockImplementation(async (_document, page) =>
+        preparedCapture(() => capture(page))
+      )
+      let session = writeMetricInput(
+        createEditingSession(week),
+        baseline,
+        "invalid"
+      )
+      const operation = renderOperation({
+        monday,
+        week,
+        selectedPage: week.pages[0],
+        session,
       })
-    })
-    expect(prepare.mock.calls.map((call) => call[1].id)).toEqual(["p01", "p02"])
-    expect(copyImageToClipboard).toHaveBeenCalledOnce()
-    expect(commandsRef.current!.exportResult).toBe(
-      "Copied p02 from 2026-08-24 to clipboard."
-    )
-  })
-
-  it("shows Copy success only after the clipboard resolves and preserves the busy result", async () => {
-    const clipboard = deferred<void>()
-    vi.mocked(browserCaptureAdapter.prepare).mockResolvedValue({
-      measure: async () => ({ status: "fit" }),
-      capture: async () => new Blob(["png"]),
-      dispose: vi.fn(),
-    })
-    vi.mocked(copyImageToClipboard).mockReturnValue(clipboard.promise)
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-      ],
+      let batch!: BatchRun
+      act(() => {
+        batch = operation.commands().downloadVisiblePages()
+      })
+      await until(() => prepare.mock.calls.length === 1)
+      session = writeMetricInput(session, baseline, "2.00")
+      session = selectSessionPage(moveSessionPage(session, "p02", "up"), "p02")
+      operation.rerender({
+        monday,
+        week,
+        selectedPage: session.week!.pages[0],
+        session,
+      })
+      const finishBatch = () =>
+        act(async () => {
+          firstCapture.resolve(new Blob(["png"]))
+          await batch
+        })
+      return { operation, finishBatch }
     }
-    const commandsRef: { current: Commands | null } = { current: null }
-    render(
-      <OperationHarness
-        monday={week.start}
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
 
-    let copy!: ReturnType<Commands["copyCurrentPage"]>
-    act(() => {
-      copy = commandsRef.current!.copyCurrentPage()
-    })
-    await waitFor(() => expect(copyImageToClipboard).toHaveBeenCalledOnce())
-    expect(commandsRef.current!.exportResult).toBeNull()
-    expect(await commandsRef.current!.downloadVisiblePages()).toEqual({
-      kind: "busy",
-    })
-    expect(commandsRef.current!.exportResult).toBeNull()
+    it("still skips the page by its starting Metric Input", async () => {
+      const { operation, finishBatch } = await batchStartedBeforeInputFix()
 
-    await act(async () => {
-      clipboard.resolve()
-      await copy
+      await finishBatch()
+
+      expect(operation.commands().exportResult).toContain("p02")
+      expect(operation.commands().exportResult).toContain("baselineValue")
+      expect(prepare).toHaveBeenCalledOnce()
     })
-    expect(commandsRef.current!.exportResult).toBe(
-      "Copied p01 from 2026-08-24 to clipboard."
-    )
+
+    it("lets the next Copy use the fixed input and the newly selected page", async () => {
+      const { operation, finishBatch } = await batchStartedBeforeInputFix()
+      await finishBatch()
+
+      let copy!: Awaited<CopyRun>
+      await act(async () => {
+        copy = await operation.commands().copyCurrentPage()
+      })
+
+      expect(copy).toEqual({ kind: "completed" })
+      expect(prepare.mock.calls.map((call) => call[1].id)).toEqual([
+        "p01",
+        "p02",
+      ])
+      expect(copyImageToClipboard).toHaveBeenCalledOnce()
+      expect(operation.commands().exportResult).toBe(
+        "Copied p02 from 2026-08-24 to clipboard."
+      )
+    })
   })
 
-  it("shows prior skips with a fatal page and replaces the result on the next accepted operation", async () => {
-    vi.mocked(browserCaptureAdapter.prepare).mockResolvedValue({
-      measure: async () => ({ status: "fit" }),
-      capture: async () => new Blob(["png"]),
-      dispose: vi.fn(),
+  describe("Copy awaiting the clipboard", () => {
+    function renderPendingClipboard() {
+      const clipboard = deferred<void>()
+      prepare.mockResolvedValue(preparedCapture(async () => new Blob(["png"])))
+      vi.mocked(copyImageToClipboard).mockReturnValue(clipboard.promise)
+      const week = singlePageWeek()
+      const operation = renderOperation({
+        monday: week.start,
+        week,
+        selectedPage: week.pages[0],
+      })
+      return { operation, clipboard }
+    }
+
+    // 回傳物件包住 pending 的 Copy，避免 async 函式把 promise 攤平而一路等到 clipboard 完成
+    async function startCopy(
+      operation: ReturnType<typeof renderOperation>
+    ): Promise<{ copy: CopyRun }> {
+      let copy!: CopyRun
+      act(() => {
+        copy = operation.commands().copyCurrentPage()
+      })
+      await until(() => vi.mocked(copyImageToClipboard).mock.calls.length > 0)
+      return { copy }
+    }
+
+    it("stays busy without a result until the clipboard settles", async () => {
+      const { operation } = renderPendingClipboard()
+
+      await startCopy(operation)
+
+      expect(operation.commands().copying).toBe(true)
+      expect(operation.commands().exportResult).toBeNull()
     })
-    vi.mocked(downloadBlob).mockImplementation((_blob, name) => {
-      if (name.endsWith("p03.png")) throw new Error("Downloads blocked")
+
+    it("rejects a batch without replacing the pending result", async () => {
+      const { operation } = renderPendingClipboard()
+      await startCopy(operation)
+
+      const batch = await operation.commands().downloadVisiblePages()
+
+      expect(batch).toEqual({ kind: "busy" })
+      expect(operation.commands().exportResult).toBeNull()
     })
+
+    it("shows success once the clipboard resolves", async () => {
+      const { operation, clipboard } = renderPendingClipboard()
+      const { copy } = await startCopy(operation)
+
+      await act(async () => {
+        clipboard.resolve()
+        await copy
+      })
+
+      expect(operation.commands().exportResult).toBe(
+        "Copied p01 from 2026-08-24 to clipboard."
+      )
+    })
+
+    it("ignores a completion that arrives after Workshop unmount", async () => {
+      const { operation, clipboard } = renderPendingClipboard()
+      const { copy } = await startCopy(operation)
+      operation.unmount()
+
+      let result!: Awaited<CopyRun>
+      await act(async () => {
+        clipboard.resolve()
+        result = await copy
+      })
+
+      expect(result).toEqual({ kind: "disposed" })
+    })
+  })
+
+  describe("a batch with a fatal download failure", () => {
     const week: WeekDocument = {
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
+        htmlPage("p01", "First"),
         { id: "p02", layout: "future-layout", title: "Unsupported" },
-        { id: "p03", layout: "html", title: "Third", htmlFile: "third.html" },
-        { id: "p04", layout: "html", title: "Fourth", htmlFile: "fourth.html" },
+        htmlPage("p03", "Third"),
+        htmlPage("p04", "Fourth"),
       ],
     }
-    const commandsRef: { current: Commands | null } = { current: null }
-    render(
-      <OperationHarness
-        monday={week.start}
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
 
-    await act(async () => {
-      await commandsRef.current!.downloadVisiblePages()
-    })
-    expect(commandsRef.current!.resultIsError).toBe(true)
-    expect(commandsRef.current!.exportResult).toContain(
-      "Downloads triggered: 1; Skipped: 1; Failed: 1; Not attempted: 1."
-    )
-    expect(commandsRef.current!.exportResult).toContain(
-      "p02: This layout cannot be exported"
-    )
-    expect(commandsRef.current!.exportResult).toContain(
-      "Failed page: p03: Download trigger failed: Downloads blocked"
-    )
+    function renderFailingDownloads() {
+      prepare.mockResolvedValue(preparedCapture(async () => new Blob(["png"])))
+      vi.mocked(downloadBlob).mockImplementation((_blob, name) => {
+        if (name.endsWith("p03.png")) throw new Error("Downloads blocked")
+      })
+      return renderOperation({
+        monday: week.start,
+        week,
+        selectedPage: week.pages[0],
+      })
+    }
 
-    await act(async () => {
-      await commandsRef.current!.copyCurrentPage()
+    it("reports prior skips with the failed and unattempted pages", async () => {
+      const operation = renderFailingDownloads()
+
+      await act(async () => {
+        await operation.commands().downloadVisiblePages()
+      })
+
+      const { exportResult, resultIsError } = operation.commands()
+      expect(resultIsError).toBe(true)
+      expect(exportResult).toContain(
+        "Downloads triggered: 1; Skipped: 1; Failed: 1; Not attempted: 1."
+      )
+      expect(exportResult).toContain("p02: This layout cannot be exported")
+      expect(exportResult).toContain(
+        "Failed page: p03: Download trigger failed: Downloads blocked"
+      )
     })
-    expect(commandsRef.current!.exportResult).toBe(
-      "Copied p01 from 2026-08-24 to clipboard."
-    )
+
+    it("is replaced by the next accepted operation's result", async () => {
+      const operation = renderFailingDownloads()
+      await act(async () => {
+        await operation.commands().downloadVisiblePages()
+      })
+
+      await act(async () => {
+        await operation.commands().copyCurrentPage()
+      })
+
+      expect(operation.commands().exportResult).toBe(
+        "Copied p01 from 2026-08-24 to clipboard."
+      )
+    })
   })
 
   it("labels a rejected clipboard write as an output failure rather than a page issue", async () => {
-    vi.mocked(browserCaptureAdapter.prepare).mockResolvedValue({
-      measure: async () => ({ status: "fit" }),
-      capture: async () => new Blob(["png"]),
-      dispose: vi.fn(),
-    })
+    prepare.mockResolvedValue(preparedCapture(async () => new Blob(["png"])))
     vi.mocked(copyImageToClipboard).mockRejectedValueOnce(
       new Error("Write permission denied")
     )
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-      ],
-    }
-    const commandsRef: { current: Commands | null } = { current: null }
-    render(
-      <OperationHarness
-        monday={week.start}
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
-
-    await act(async () => {
-      await commandsRef.current!.copyCurrentPage()
+    const week = singlePageWeek()
+    const operation = renderOperation({
+      monday: week.start,
+      week,
+      selectedPage: week.pages[0],
     })
 
-    expect(commandsRef.current!.resultIsError).toBe(true)
-    expect(commandsRef.current!.exportResult).toBe(
+    await act(async () => {
+      await operation.commands().copyCurrentPage()
+    })
+
+    expect(operation.commands().resultIsError).toBe(true)
+    expect(operation.commands().exportResult).toBe(
       "Copy p01 from 2026-08-24: Clipboard write failed: Write permission denied"
     )
   })
 
-  it("keeps timed-out output out of the original-week summary after a week switch and later Copy", async () => {
-    vi.useFakeTimers()
-    try {
+  describe("a capture that times out after a week switch", () => {
+    const week: WeekDocument = {
+      start: "2026-08-24",
+      end: "2026-08-28",
+      pages: [htmlPage("p01", "Slow"), htmlPage("p02", "Next")],
+    }
+    const nextWeek: WeekDocument = {
+      start: "2026-08-31",
+      end: "2026-09-04",
+      pages: [htmlPage("p03", "New")],
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    // p01 的 capture 永不在時限內完成；開始後切到下一週，再推進時間越過 PNG 產生上限
+    async function batchTimedOutAfterWeekSwitch() {
       const lateCapture = deferred<Blob>()
       const firstStarted = deferred<void>()
-      vi.mocked(browserCaptureAdapter.prepare).mockImplementation(
-        async (_document, page) => ({
-          measure: async () => ({ status: "fit" }),
-          capture: () => {
-            if (page.id === "p01") {
-              firstStarted.resolve()
-              return lateCapture.promise
-            }
-            return Promise.resolve(new Blob(["png"]))
-          },
-          dispose: vi.fn(),
+      prepare.mockImplementation(async (_document, page) =>
+        preparedCapture(() => {
+          if (page.id !== "p01") return Promise.resolve(new Blob(["png"]))
+          firstStarted.resolve()
+          return lateCapture.promise
         })
       )
-      const week: WeekDocument = {
-        start: "2026-08-24",
-        end: "2026-08-28",
-        pages: [
-          { id: "p01", layout: "html", title: "Slow", htmlFile: "slow.html" },
-          { id: "p02", layout: "html", title: "Next", htmlFile: "next.html" },
-        ],
-      }
-      const nextWeek: WeekDocument = {
-        start: "2026-08-31",
-        end: "2026-09-04",
-        pages: [
-          { id: "p03", layout: "html", title: "New", htmlFile: "new.html" },
-        ],
-      }
-      const commandsRef: { current: Commands | null } = { current: null }
-      const view = render(
-        <OperationHarness
-          monday={week.start}
-          week={week}
-          selectedPage={week.pages[0]}
-          commandsRef={commandsRef}
-        />
-      )
-      let batch!: ReturnType<Commands["downloadVisiblePages"]>
+      const operation = renderOperation({
+        monday: week.start,
+        week,
+        selectedPage: week.pages[0],
+      })
+      let batch!: BatchRun
       act(() => {
-        batch = commandsRef.current!.downloadVisiblePages()
+        batch = operation.commands().downloadVisiblePages()
       })
       await firstStarted.promise
-      view.rerender(
-        <OperationHarness
-          monday={nextWeek.start}
-          week={nextWeek}
-          selectedPage={nextWeek.pages[0]}
-          commandsRef={commandsRef}
-        />
-      )
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(15000)
-        await batch
+      operation.rerender({
+        monday: nextWeek.start,
+        week: nextWeek,
+        selectedPage: nextWeek.pages[0],
       })
+      const passTimeout = () =>
+        act(async () => {
+          await vi.advanceTimersByTimeAsync(15000)
+          await batch
+        })
+      return { operation, lateCapture, passTimeout }
+    }
 
-      expect(commandsRef.current!.exportResult).toContain(
+    it("reports the timed-out page in the original-week summary", async () => {
+      const { operation, passTimeout } = await batchTimedOutAfterWeekSwitch()
+
+      await passTimeout()
+
+      expect(operation.commands().exportResult).toContain(
         "Export for 2026-08-24: Downloads triggered: 1; Skipped: 1; Failed: 0; Not attempted: 0."
       )
-      expect(vi.mocked(downloadBlob).mock.calls.map((call) => call[1])).toEqual(
-        ["2026-08-24-p02.png"]
-      )
+      expect(downloadedNames()).toEqual(["2026-08-24-p02.png"])
+    })
+
+    it("does not download a capture that finishes after its timeout", async () => {
+      const { lateCapture, passTimeout } = await batchTimedOutAfterWeekSwitch()
+      await passTimeout()
+
       lateCapture.resolve(new Blob(["late"]))
       await Promise.resolve()
+
       expect(downloadBlob).toHaveBeenCalledOnce()
+    })
+
+    it("lets a later Copy use the newly opened week", async () => {
+      const { operation, passTimeout } = await batchTimedOutAfterWeekSwitch()
+      await passTimeout()
 
       await act(async () => {
-        await commandsRef.current!.copyCurrentPage()
+        await operation.commands().copyCurrentPage()
       })
-      expect(commandsRef.current!.exportResult).toBe(
+
+      expect(operation.commands().exportResult).toBe(
         "Copied p03 from 2026-08-31 to clipboard."
       )
-    } finally {
-      vi.useRealTimers()
-    }
+    })
   })
 
   it("stops output and later pages after Workshop unmount", async () => {
     const firstCapture = deferred<Blob>()
+    const capture = captureWithPendingFirstPage(firstCapture.promise)
     const dispose = vi.fn()
-    vi.mocked(browserCaptureAdapter.prepare).mockImplementation(
-      async (_document, page) => ({
-        measure: async () => ({ status: "fit" }),
-        capture: () =>
-          page.id === "p01"
-            ? firstCapture.promise
-            : Promise.resolve(new Blob(["png"])),
-        dispose,
-      })
+    prepare.mockImplementation(async (_document, page) =>
+      preparedCapture(() => capture(page), dispose)
     )
     const week: WeekDocument = {
       start: "2026-08-24",
       end: "2026-08-28",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-        { id: "p02", layout: "html", title: "Second", htmlFile: "second.html" },
-      ],
+      pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
-    const commandsRef: { current: Commands | null } = { current: null }
-    const view = render(
-      <OperationHarness
-        monday={week.start}
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
-    let batch!: ReturnType<Commands["downloadVisiblePages"]>
-    act(() => {
-      batch = commandsRef.current!.downloadVisiblePages()
+    const operation = renderOperation({
+      monday: week.start,
+      week,
+      selectedPage: week.pages[0],
     })
-    await waitFor(() =>
-      expect(browserCaptureAdapter.prepare).toHaveBeenCalledOnce()
-    )
-    view.unmount()
+    let batch!: BatchRun
+    act(() => {
+      batch = operation.commands().downloadVisiblePages()
+    })
+    await until(() => prepare.mock.calls.length === 1)
+    operation.unmount()
 
+    let result!: Awaited<BatchRun>
     await act(async () => {
       firstCapture.resolve(new Blob(["png"]))
-      expect(await batch).toEqual({ kind: "disposed" })
+      result = await batch
     })
+
+    expect(result).toEqual({ kind: "disposed" })
     expect(dispose).toHaveBeenCalledOnce()
     expect(downloadBlob).not.toHaveBeenCalled()
-    expect(browserCaptureAdapter.prepare).toHaveBeenCalledOnce()
-  })
-
-  it("keeps Copy busy until clipboard settles and ignores a late completion after unmount", async () => {
-    const clipboard = deferred<void>()
-    vi.mocked(browserCaptureAdapter.prepare).mockResolvedValue({
-      measure: async () => ({ status: "fit" }),
-      capture: async () => new Blob(["png"]),
-      dispose: vi.fn(),
-    })
-    vi.mocked(copyImageToClipboard).mockReturnValue(clipboard.promise)
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
-      pages: [
-        { id: "p01", layout: "html", title: "First", htmlFile: "first.html" },
-      ],
-    }
-    const commandsRef: { current: Commands | null } = { current: null }
-    const view = render(
-      <OperationHarness
-        monday={week.start}
-        week={week}
-        selectedPage={week.pages[0]}
-        commandsRef={commandsRef}
-      />
-    )
-    let copy!: ReturnType<Commands["copyCurrentPage"]>
-    act(() => {
-      copy = commandsRef.current!.copyCurrentPage()
-    })
-    await waitFor(() => expect(copyImageToClipboard).toHaveBeenCalledOnce())
-    expect(await commandsRef.current!.downloadVisiblePages()).toEqual({
-      kind: "busy",
-    })
-    expect(commandsRef.current!.copying).toBe(true)
-
-    view.unmount()
-    await act(async () => {
-      clipboard.resolve()
-      expect(await copy).toEqual({ kind: "disposed" })
-    })
-    expect(downloadBlob).not.toHaveBeenCalled()
+    expect(prepare).toHaveBeenCalledOnce()
   })
 })

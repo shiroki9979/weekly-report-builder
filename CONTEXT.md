@@ -127,7 +127,7 @@ A failure to obtain an HTML Page's referenced content because its file reference
 _Avoid_: Overflowing Page, missing authored content
 
 **Page Position**:
-A Week Page's stable order among all supported, non-hidden pages in its Week Document, regardless of whether those pages are Draft or Overflowing. Editorial Layout Family pages, HTML Pages, and Two-column Layouts with table, chart, flow, or checklist panels are supported; unknown layouts and the fields panel are not. A hidden page has no Page Position.
+A Week Page's stable order among all supported, non-hidden pages in its Week Document, regardless of whether those pages are Draft or Overflowing. Editorial Layout Family pages, Trend & Target pages, HTML Pages, and Two-column Layouts with table, chart, flow, or checklist panels are supported; unknown layouts and the fields panel are not. A hidden page has no Page Position.
 _Avoid_: Array index, layout page number
 
 **Week Label**:

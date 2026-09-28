@@ -1,7 +1,7 @@
 # 匯出 PNG 至團隊簡報
 
 建立日期：2026-08-31  
-最後更新：2026-09-27
+最後更新：2026-09-28
 
 ---
 
@@ -25,7 +25,7 @@
 
 - **包含**：未隱藏、內容完整、且能量測為符合 1280 × 720 capture Stage 的 Structured Layout；以及成功載入的 HTML Page。
 - **排除**：已勾選 **Hide page from export** 的頁面（靜默略過；見 [隱藏不需匯出的頁面](hide-pages-from-export.md)）
-- **略過並列出原因**：未知 layout、`fields` panel、Draft Page、Overflowing Page、非法 metric 草稿、HTML 載入失敗，以及量測或 PNG 產生失敗。其餘合格頁仍會輸出。
+- **略過並列出原因**：未知 layout、`fields` panel、Draft Page、Overflowing Page、非法 Metric Input、HTML 載入失敗，以及量測或 PNG 產生失敗。其餘合格頁仍會輸出。
 
 下載觸發或共用 capture 設施發生錯誤時，批次停止；摘要保留已觸發下載與已略過頁、標示失敗的當頁和後續未處理頁。失敗原因以 `Download trigger failed:` 開頭時，代表瀏覽器下載觸發失敗而非頁面內容問題；Copy 的 `Clipboard write failed:` 同理。全數略過或沒有可見頁時，摘要會明確顯示 **Downloads triggered: 0**。匯出途中可繼續編輯或切週；結果仍歸屬開始匯出時的週次。
 

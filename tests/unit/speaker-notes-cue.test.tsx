@@ -12,11 +12,12 @@ describe("SpeakerNotesCue", () => {
     expect(screen.getByText(/Line two/)).toBeInTheDocument()
   })
 
-  it("shows No speaker notes when notes are missing or blank", () => {
-    const { rerender } = render(<SpeakerNotesCue />)
-    expect(screen.getByText("No speaker notes")).toBeInTheDocument()
+  it.each([
+    { case: "missing", notes: undefined },
+    { case: "blank", notes: "   " },
+  ])("shows No speaker notes when notes are $case", ({ notes }) => {
+    render(<SpeakerNotesCue notes={notes} />)
 
-    rerender(<SpeakerNotesCue notes="   " />)
     expect(screen.getByText("No speaker notes")).toBeInTheDocument()
   })
 
@@ -29,15 +30,22 @@ describe("SpeakerNotesCue", () => {
     expect(screen.getByText("Cue body")).toBeInTheDocument()
   })
 
-  it("collapses and expands when the disclosure row is clicked", async () => {
+  it("collapses when the disclosure row is clicked", async () => {
     const user = userEvent.setup()
     render(<SpeakerNotesCue notes="Hide me" />)
-
     const toggle = screen.getByRole("button", { name: /Speaker notes/i })
+
     await user.click(toggle)
 
     expect(toggle).toHaveAttribute("aria-expanded", "false")
     expect(screen.queryByText("Hide me")).not.toBeInTheDocument()
+  })
+
+  it("expands again on a second click", async () => {
+    const user = userEvent.setup()
+    render(<SpeakerNotesCue notes="Hide me" />)
+    const toggle = screen.getByRole("button", { name: /Speaker notes/i })
+    await user.click(toggle)
 
     await user.click(toggle)
 
@@ -45,24 +53,27 @@ describe("SpeakerNotesCue", () => {
     expect(screen.getByText("Hide me")).toBeInTheDocument()
   })
 
-  it("lets the panel owner hide the notes while the button only requests a toggle", async () => {
-    const user = userEvent.setup()
-    const onToggle = vi.fn()
-    const { rerender } = render(
-      <SpeakerNotesCue notes="Hide me" expanded onToggle={onToggle} />
-    )
+  describe("when a panel owner controls expansion", () => {
+    it("only requests a toggle when clicked", async () => {
+      const user = userEvent.setup()
+      const onToggle = vi.fn()
+      render(<SpeakerNotesCue notes="Hide me" expanded onToggle={onToggle} />)
 
-    const toggle = screen.getByRole("button", { name: /Speaker notes/i })
-    await user.click(toggle)
+      await user.click(screen.getByRole("button", { name: /Speaker notes/i }))
 
-    expect(onToggle).toHaveBeenCalledOnce()
-    expect(screen.getByText("Hide me")).toBeInTheDocument()
+      expect(onToggle).toHaveBeenCalledOnce()
+      expect(screen.getByText("Hide me")).toBeInTheDocument()
+    })
 
-    rerender(
-      <SpeakerNotesCue notes="Hide me" expanded={false} onToggle={onToggle} />
-    )
+    it("hides the notes once the owner collapses it", () => {
+      render(
+        <SpeakerNotesCue notes="Hide me" expanded={false} onToggle={() => {}} />
+      )
 
-    expect(toggle).toHaveAttribute("aria-expanded", "false")
-    expect(screen.queryByText("Hide me")).not.toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /Speaker notes/i })
+      ).toHaveAttribute("aria-expanded", "false")
+      expect(screen.queryByText("Hide me")).not.toBeInTheDocument()
+    })
   })
 })
