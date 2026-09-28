@@ -20,13 +20,14 @@ import {
   type WeeklyOverviewPage,
 } from "./week-document"
 import { errorMessage } from "./error-message"
-import { isTrendDirection, trendBounds, trendEndMonday } from "./trend-target"
-import { isCalendarMonday } from "./week-id"
 import {
-  observationEntryPath,
+  isTrendDirection,
+  trendBounds,
   trendDatingError,
-  trendInputError,
-} from "./trend-input"
+  trendEndMonday,
+} from "./trend-target"
+import { isCalendarMonday } from "./week-id"
+import { observationEntryPath, trendInputError } from "./trend-input"
 
 import {
   invalidMetricInputMessage,

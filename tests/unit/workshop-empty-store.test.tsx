@@ -7,6 +7,7 @@ import { WorkshopShell } from "@/components/workshop/workshop-shell"
 import type { WeekDocument } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 import { InMemoryWeekStore } from "./support/in-memory-week-store"
+import { stubWorkshopDom } from "./support/workshop-dom"
 
 const LATEST_MONDAY = "2026-01-12"
 
@@ -44,36 +45,16 @@ function renderWorkshop(weekStore: WeekStore) {
 }
 
 describe("Workshop empty store vs list failure", () => {
+  let restoreDom: () => void
+
   beforeEach(() => {
     vi.restoreAllMocks()
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      }
-    )
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }))
-    Object.defineProperty(Element.prototype, "getAnimations", {
-      configurable: true,
-      writable: true,
-      value: () => [],
-    })
+    restoreDom = stubWorkshopDom()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    vi.unstubAllGlobals()
+    restoreDom()
   })
 
   it("explains the empty weeks directory and does not offer first-week creation", async () => {

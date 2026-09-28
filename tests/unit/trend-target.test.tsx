@@ -390,6 +390,24 @@ describe("Trend & Target", () => {
       expect(canSaveSession(next).allowed).toBe(true)
     })
 
+    it("refuses to confirm an invalid proposed Monday and names the reason", () => {
+      const session = writeTrendInput(
+        sessionWith(complete),
+        { pageId: "p01", path: "startMonday" },
+        "2026-07-14"
+      )
+
+      expect(() => confirmTrendRedate(session, "p01")).toThrow(
+        "Cannot confirm proposed Monday 2026-07-14: Starting Monday must be a real calendar Monday"
+      )
+    })
+
+    it("refuses to confirm when no Monday is proposed", () => {
+      expect(() => confirmTrendRedate(sessionWith(complete), "p01")).toThrow(
+        "No proposed Monday to confirm for p01"
+      )
+    })
+
     it("moves every observation to the confirmed Monday without changing values", () => {
       const session = sessionWithProposedMonday()
 
@@ -554,7 +572,12 @@ describe("Trend & Target", () => {
       {
         field: "a starting date that is not a Monday",
         page: { startMonday: "2026-07-07" },
-        error: /startMonday/,
+        error: /startMonday: Starting Monday must be a real calendar Monday/,
+      },
+      {
+        field: "a range that runs past supported ISO dates",
+        page: { startMonday: "9999-12-20" },
+        error: /observations: Trend range exceeds supported ISO dates/,
       },
       {
         field: "an unknown direction",

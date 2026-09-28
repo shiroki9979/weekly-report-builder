@@ -20,12 +20,15 @@ import {
   remapTrendObservationInput,
   requireTrendNumber,
   startMondayInput,
-  trendDatingError,
   trendInputError,
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
-import { observationMonday, trendRangeEnd } from "./trend-target"
+import {
+  observationMonday,
+  trendDatingError,
+  trendRangeEnd,
+} from "./trend-target"
 import {
   hasEnteredObservations,
   isTrendTargetPage,
@@ -121,8 +124,12 @@ export function confirmTrendRedate(
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
   const proposed = readInputText(session.metricInput, startMondayInput(pageId))
-  if (!proposed || trendDatingError(proposed, page.observations.length))
-    throw new Error("Choose a valid proposed Monday")
+  if (!proposed) throw new Error(`No proposed Monday to confirm for ${pageId}`)
+  const datingError = trendDatingError(proposed, page.observations.length)
+  if (datingError)
+    throw new Error(
+      `Cannot confirm proposed Monday ${proposed}: ${datingError.message}`
+    )
   return replaceTrend(session, pageIndex, {
     page: { ...page, startMonday: proposed },
     metricInput: clearInputText(session.metricInput, startMondayInput(pageId)),

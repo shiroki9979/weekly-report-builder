@@ -13,7 +13,11 @@ import { captureStageToPng } from "./stage-capture"
 import { abortError } from "./export-errors"
 import { HTML_LOAD_TIMEOUT_MS, PAINT_SETTLE_TIMEOUT_MS } from "./capture-limits"
 import type { CaptureAdapter, HtmlLoadFailure } from "./export-page-gate"
-import { isHtmlWeekPage } from "./week-document"
+import {
+  isHtmlWeekPage,
+  type WeekDocument,
+  type WeekPage,
+} from "./week-document"
 
 const OFFSCREEN_LEFT_PX = -10000
 const HTML_STATUS_POLL_MS = 16
@@ -78,64 +82,93 @@ async function waitForSlideSettled(
   return { kind: "ready" }
 }
 
+type CaptureHost = {
+  element: HTMLElement
+  mount: (week: WeekDocument, page: WeekPage) => void
+  dispose: () => void
+}
+
+// 離屏 host 與其 React root 同進同出：dispose 可重複呼叫，操作中止時也會自動清掉
+function createCaptureHost(signal?: AbortSignal): CaptureHost {
+  const element = document.createElement("div")
+  element.setAttribute("aria-hidden", "true")
+  element.style.cssText = `pointer-events:none;position:fixed;opacity:0;left:${OFFSCREEN_LEFT_PX}px;top:0;width:${CAPTURE_STAGE_WIDTH}px`
+  document.body.append(element)
+  let root: Root | undefined
+  let disposed = false
+  const dispose = () => {
+    if (disposed) return
+    disposed = true
+    signal?.removeEventListener("abort", dispose)
+    try {
+      root?.unmount()
+    } finally {
+      element.remove()
+    }
+  }
+  signal?.addEventListener("abort", dispose, { once: true })
+
+  const mount = (week: WeekDocument, page: WeekPage) => {
+    const mountedRoot = createRoot(element)
+    root = mountedRoot
+    // 同步提交，後續的 HTML 輪詢與 paint 等待才看得到完整的 Stage DOM
+    flushSync(() => {
+      mountedRoot.render(
+        <StageFrame>
+          <StageSlide
+            page={page}
+            context={createStagePageContext(week, page.id)}
+            isCapture
+          />
+        </StageFrame>
+      )
+    })
+  }
+
+  return { element, mount, dispose }
+}
+
+async function settleCaptureSlide(
+  host: HTMLElement,
+  page: WeekPage,
+  signal?: AbortSignal
+): Promise<HtmlLoadFailure | null> {
+  if (isHtmlWeekPage(page)) {
+    const load = await waitForSlideSettled(host, signal)
+    if (load.kind === "html-load-failed") return load
+  }
+  await waitForPaint(signal)
+  if (signal?.aborted) throw abortError()
+  return null
+}
+
+function captureStageRoot(host: HTMLElement): HTMLElement {
+  const stageRoot = host.querySelector(`[${STAGE_CAPTURE_ROOT_ATTR}]`)
+  if (!(stageRoot instanceof HTMLElement)) {
+    throw new Error("Capture stage not ready")
+  }
+  return stageRoot
+}
+
 export const browserCaptureAdapter: CaptureAdapter = {
   async prepare(week, page, signal) {
     if (signal?.aborted) throw abortError()
-    const host = document.createElement("div")
-    host.setAttribute("aria-hidden", "true")
-    host.style.cssText = `pointer-events:none;position:fixed;opacity:0;left:${OFFSCREEN_LEFT_PX}px;top:0;width:${CAPTURE_STAGE_WIDTH}px`
-    document.body.append(host)
-    let root: Root | undefined
-    let disposed = false
-    const dispose = () => {
-      if (disposed) return
-      disposed = true
-      signal?.removeEventListener("abort", dispose)
-      try {
-        root?.unmount()
-      } finally {
-        host.remove()
-      }
-    }
-    signal?.addEventListener("abort", dispose, { once: true })
-
+    const host = createCaptureHost(signal)
     try {
-      if (signal?.aborted) throw abortError()
-      const mountedRoot = createRoot(host)
-      root = mountedRoot
-      flushSync(() => {
-        mountedRoot.render(
-          <StageFrame>
-            <StageSlide
-              page={page}
-              context={createStagePageContext(week, page.id)}
-              isCapture
-            />
-          </StageFrame>
-        )
-      })
-      if (isHtmlWeekPage(page)) {
-        const load = await waitForSlideSettled(host, signal)
-        if (load.kind === "html-load-failed") {
-          dispose()
-          return load
-        }
+      host.mount(week, page)
+      const loadFailure = await settleCaptureSlide(host.element, page, signal)
+      if (loadFailure) {
+        host.dispose()
+        return loadFailure
       }
-      await waitForPaint(signal)
-      if (signal?.aborted) throw abortError()
-
-      const stageRoot = host.querySelector(`[${STAGE_CAPTURE_ROOT_ATTR}]`)
-      if (!(stageRoot instanceof HTMLElement)) {
-        throw new Error("Capture stage not ready")
-      }
-
+      const stageRoot = captureStageRoot(host.element)
       return {
         measure: () => measureStageOverflow(stageRoot),
         capture: () => captureStageToPng(stageRoot),
-        dispose,
+        dispose: host.dispose,
       }
     } catch (cause: unknown) {
-      dispose()
+      host.dispose()
       throw cause
     }
   },
