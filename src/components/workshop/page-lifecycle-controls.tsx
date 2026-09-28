@@ -10,8 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
+  ADDABLE_LAYOUTS,
+  ADDABLE_PANEL_KINDS,
   createBlankAddablePage,
   isAddableLayout,
+  isAddablePanelKind,
   nextPageId,
   type AddableLayout,
   type AddableTwoColumnPanelKind,
@@ -28,12 +31,20 @@ type PageLifecycleControlsProps = {
   disabled?: boolean
 }
 
-const PANEL_OPTIONS: { value: AddableTwoColumnPanelKind; label: string }[] = [
-  { value: "table", label: "Table" },
-  { value: "chart", label: "Chart" },
-  { value: "flow", label: "Flow" },
-  { value: "checklist", label: "Checklist" },
-]
+const LAYOUT_LABELS: Record<AddableLayout, string> = {
+  "two-column": "Two-column",
+  "weekly-overview": "Weekly Overview",
+  "evidence-decision": "Evidence-backed Decision",
+  "next-actions": "Next Actions",
+  "trend-target": "Trend & Target",
+}
+
+const PANEL_LABELS: Record<AddableTwoColumnPanelKind, string> = {
+  table: "Table",
+  chart: "Chart",
+  flow: "Flow",
+  checklist: "Checklist",
+}
 
 export function PageLifecycleControls({
   week,
@@ -100,25 +111,18 @@ export function PageLifecycleControls({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="two-column">Two-column</SelectItem>
-              <SelectItem value="weekly-overview">Weekly Overview</SelectItem>
-              <SelectItem value="evidence-decision">
-                Evidence-backed Decision
-              </SelectItem>
-              <SelectItem value="next-actions">Next Actions</SelectItem>
-              <SelectItem value="trend-target">Trend &amp; Target</SelectItem>
+              {ADDABLE_LAYOUTS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {LAYOUT_LABELS[option]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {layout === "two-column" ? (
             <Select
               value={panelKind}
               onValueChange={(value) => {
-                if (
-                  value === "table" ||
-                  value === "chart" ||
-                  value === "flow" ||
-                  value === "checklist"
-                ) {
+                if (isAddablePanelKind(value)) {
                   setPanelKind(value)
                 }
               }}
@@ -132,9 +136,9 @@ export function PageLifecycleControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PANEL_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {ADDABLE_PANEL_KINDS.map((kind) => (
+                  <SelectItem key={kind} value={kind}>
+                    {PANEL_LABELS[kind]}
                   </SelectItem>
                 ))}
               </SelectContent>

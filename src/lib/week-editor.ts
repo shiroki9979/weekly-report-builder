@@ -2,10 +2,11 @@ import { typedPageUpdater, updateWeekPage } from "@/lib/update-week-page"
 import {
   assertCanRemoveEntry,
   CARDINALITY,
+  isFlowStepVariant,
   isHtmlWeekPage,
   isTwoColumnWeekPage,
 } from "@/lib/week-document"
-import type { Panel, WeekDocument } from "@/lib/week-document"
+import type { FlowStepVariant, Panel, WeekDocument } from "@/lib/week-document"
 
 const updateTwoColumnPage = typedPageUpdater(
   isTwoColumnWeekPage,
@@ -410,7 +411,7 @@ export function setFlowStepVariant(
   week: WeekDocument,
   pageIndex: number,
   stepIndex: number,
-  variant: "default" | "ok" | ""
+  variant: FlowStepVariant | ""
 ): WeekDocument {
   return updateFlowPanel(week, pageIndex, (panel) => ({
     ...panel,
@@ -418,8 +419,7 @@ export function setFlowStepVariant(
       index === stepIndex
         ? {
             ...step,
-            variant:
-              variant === "default" || variant === "ok" ? variant : undefined,
+            variant: isFlowStepVariant(variant) ? variant : undefined,
           }
         : step
     ),

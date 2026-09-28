@@ -16,7 +16,21 @@ import { blankMetric } from "./evidence-decision-editor"
 import { blankCommitment } from "./next-actions-editor"
 import { blankOutcome } from "./weekly-overview-editor"
 
-export type AddableTwoColumnPanelKind = "table" | "chart" | "flow" | "checklist"
+// 新增選單的選項與輸入驗證都由這份清單推導，不另列字串
+export const ADDABLE_PANEL_KINDS = [
+  "table",
+  "chart",
+  "flow",
+  "checklist",
+] as const
+
+export type AddableTwoColumnPanelKind = (typeof ADDABLE_PANEL_KINDS)[number]
+
+export function isAddablePanelKind(
+  value: unknown
+): value is AddableTwoColumnPanelKind {
+  return (ADDABLE_PANEL_KINDS as readonly unknown[]).includes(value)
+}
 
 export type PageLifecycleResult = {
   week: WeekDocument
@@ -183,6 +197,11 @@ const BLANK_PAGE_FACTORIES: Record<
   "next-actions": createBlankNextActionsPage,
   "trend-target": createBlankTrendTargetPage,
 }
+
+// 新增選單依工廠表的鍵列出版型，新增版型只需在工廠表登記一次
+export const ADDABLE_LAYOUTS = Object.keys(
+  BLANK_PAGE_FACTORIES
+) as AddableLayout[]
 
 export function isAddableLayout(value: unknown): value is AddableLayout {
   return typeof value === "string" && Object.hasOwn(BLANK_PAGE_FACTORIES, value)
