@@ -28,8 +28,7 @@ function decision(week: WeekDocument): EvidenceDecisionPage {
 describe("evidence-decision schema", () => {
   it("parses a draft with null metric values and strips extra fields", () => {
     const doc = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -87,8 +86,7 @@ describe("evidence-decision schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -104,8 +102,7 @@ describe("evidence-decision schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -121,8 +118,7 @@ describe("evidence-decision schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -138,8 +134,7 @@ describe("evidence-decision schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -191,8 +186,7 @@ describe("evidence-decision factory and editor", () => {
 describe("evidence-decision clone and readiness", () => {
   it("keeps metric format and clears weekly values", () => {
     const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

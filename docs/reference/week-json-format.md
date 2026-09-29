@@ -19,12 +19,20 @@ weeks/<id>/<htmlFile>
 
 ## WeekDocument（根物件）
 
-| 欄位              | 型別         | 必填 | 說明                                                                                    |
-| ----------------- | ------------ | ---- | --------------------------------------------------------------------------------------- |
-| `start`           | `string`     | 是   | 週一，ISO 日期 `YYYY-MM-DD`                                                             |
-| `end`             | `string`     | 是   | 週五，ISO 日期 `YYYY-MM-DD`                                                             |
-| `pages`           | `WeekPage[]` | 是   | 至少一頁                                                                                |
-| `showPageNumbers` | `boolean`    | 否   | Editorial 的全週頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼 |
+| 欄位              | 型別         | 必填 | 說明                                                                                           |
+| ----------------- | ------------ | ---- | ---------------------------------------------------------------------------------------------- |
+| `period`          | `object`     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
+| `pages`           | `WeekPage[]` | 是   | 至少一頁                                                                                       |
+| `showPageNumbers` | `boolean`    | 否   | Editorial 的全週頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼        |
+
+舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
+
+```json
+{
+  "period": { "start": "2026-08-24", "end": "2026-08-28" },
+  "pages": []
+}
+```
 
 ## WeekPage（discriminated union）
 
@@ -153,7 +161,7 @@ Trend & Target 呈現單一指標的每週量測與固定目標。新頁有八�
 
 公開虛構示例在 [`demo/2026-01-05.json`](../../demo/2026-01-05.json)：`p06` 為 12 週 at-most 與精確比較、`p07` 為含負數和零的 at-least、`p08` 為末週 Missing。`p04` 未設 variant，對照 `p09` 的相同 Commitments、Rows 版面；`p10` 展示中英混合文字。
 
-可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Week Document 的 `start`，且通過 Stage fit。`missing` 保留週次位置並切斷折線；最後一週為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
+可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點不晚於 Deck 的 `period.start`，且通過 Stage fit。`missing` 保留週次位置並切斷折線；最後一週為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
 
 ### SlideItem
 

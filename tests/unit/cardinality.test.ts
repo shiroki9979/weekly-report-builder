@@ -50,8 +50,7 @@ describe("cardinality rules", () => {
   it("reports an exact Two-column item count in the parser error", () => {
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",

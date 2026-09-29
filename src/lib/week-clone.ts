@@ -186,8 +186,7 @@ export function cloneWeekFromPrevious(
 
   // 新週的 Editorial 頁碼回到預設顯示，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
   return {
-    start: range.start,
-    end: range.end,
+    period: range,
     pages: previous.pages.map(clearPage),
   }
 }

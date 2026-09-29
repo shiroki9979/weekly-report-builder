@@ -92,11 +92,12 @@ export type SessionLoadStatus =
   | { kind: "ready" }
 
 export function createEditingSession(
-  week: WeekDocument | null = null
+  week: WeekDocument | null = null,
+  deckId = ""
 ): EditingSession {
   return {
     weeks: [],
-    selectedMonday: week?.start ?? "",
+    selectedMonday: deckId,
     loadStatus: week ? { kind: "ready" } : { kind: "loading" },
     week,
     metricInput: {},
@@ -492,7 +493,7 @@ export function sessionReadiness(
   return isStructuredWeekPage(page)
     ? assessContentReadiness(page, {
         metricInput: session.metricInput,
-        reportingMonday: session.week?.start,
+        reportingMonday: session.week?.period?.start,
       })
     : []
 }

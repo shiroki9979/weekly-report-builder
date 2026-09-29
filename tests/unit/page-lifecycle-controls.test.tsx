@@ -24,8 +24,7 @@ import { unusedTrendControls } from "./support/editor-controls"
 
 function sampleWeek(): WeekDocument {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
       {
         id: "p01",
@@ -49,7 +48,7 @@ function LifecycleHarness({
   initialWeek?: WeekDocument
 }) {
   const [session, setSession] = useState(() =>
-    createEditingSession(initialWeek)
+    createEditingSession(initialWeek, "2026-08-24")
   )
   const week = session.week!
   const selectedPageId = session.selectedPageId!
@@ -144,8 +143,7 @@ describe("workshop page lifecycle", () => {
 
   it("marks draft two-column title as invalid", () => {
     const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [createBlankTwoColumnPage("p01", "table")],
     }
 

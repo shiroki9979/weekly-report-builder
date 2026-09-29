@@ -3,6 +3,7 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { parseWeekDocument } from "@/lib/week-document"
+import { serializeWeekDocument } from "@/lib/weeks-io"
 
 const twoColumnFixturePath = resolve(
   import.meta.dirname,
@@ -35,12 +36,77 @@ function twoColumnWeekWithPanel(panel: Record<string, unknown>) {
 }
 
 describe("parseWeekDocument", () => {
+  describe("period", () => {
+    const pages = twoColumnWeekWithPanel({
+      kind: "checklist",
+      title: "Checks",
+      items: [{ label: "Done" }],
+    }).pages
+
+    it("reads legacy top-level start and end as the period", () => {
+      const deck = parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages,
+      })
+
+      expect(deck.period).toEqual({ start: "2026-08-24", end: "2026-08-28" })
+      expect(deck).not.toHaveProperty("start")
+      expect(deck).not.toHaveProperty("end")
+    })
+
+    it("reads a period object", () => {
+      const deck = parseWeekDocument({
+        period: { start: "2026-08-24", end: "2026-08-28" },
+        pages,
+      })
+
+      expect(deck.period).toEqual({ start: "2026-08-24", end: "2026-08-28" })
+    })
+
+    it("allows a deck without a period", () => {
+      expect(parseWeekDocument({ pages })).not.toHaveProperty("period")
+    })
+
+    it("serializes a legacy document in the period format", () => {
+      const deck = parseWeekDocument({
+        start: "2026-08-24",
+        end: "2026-08-28",
+        pages,
+      })
+      const json = JSON.parse(serializeWeekDocument(deck))
+
+      expect(json.period).toEqual({ start: "2026-08-24", end: "2026-08-28" })
+      expect(json).not.toHaveProperty("start")
+    })
+
+    it("rejects a document with both formats or an incomplete period", () => {
+      expect(() =>
+        parseWeekDocument({
+          start: "2026-08-24",
+          end: "2026-08-28",
+          period: { start: "2026-08-24", end: "2026-08-28" },
+          pages,
+        })
+      ).toThrow(/either period or top-level start\/end/)
+      expect(() =>
+        parseWeekDocument({ period: { start: "2026-08-24" }, pages })
+      ).toThrow(/period\.end/)
+      expect(() => parseWeekDocument({ start: "2026-08-24", pages })).toThrow(
+        /end/
+      )
+      expect(() => parseWeekDocument({ period: "2026-08-24", pages })).toThrow(
+        /period must be an object/
+      )
+    })
+  })
+
   it("parses the week fixture with two-column layout and table panel", () => {
     const raw = readFileSync(twoColumnFixturePath, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
 
-    expect(week.start).toBe("2026-08-24")
-    expect(week.end).toBe("2026-08-28")
+    expect(week.period!.start).toBe("2026-08-24")
+    expect(week.period!.end).toBe("2026-08-28")
     expect(week.pages).toHaveLength(2)
 
     const page = week.pages[0]
@@ -73,8 +139,8 @@ describe("parseWeekDocument", () => {
     const raw = readFileSync(interleavedHtmlFixturePath, "utf-8")
     const week = parseWeekDocument(JSON.parse(raw))
 
-    expect(week.start).toBe("2026-08-31")
-    expect(week.end).toBe("2026-09-04")
+    expect(week.period!.start).toBe("2026-08-31")
+    expect(week.period!.end).toBe("2026-09-04")
     expect(week.pages.map((page) => page.id)).toEqual([
       "p01",
       "p02",

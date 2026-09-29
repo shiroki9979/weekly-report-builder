@@ -48,8 +48,8 @@ describe("week-clone", () => {
     const previous = loadPreviousWeek()
     const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
 
-    expect(cloned.start).toBe("2026-08-31")
-    expect(cloned.end).toBe("2026-09-04")
+    expect(cloned.period!.start).toBe("2026-08-31")
+    expect(cloned.period!.end).toBe("2026-09-04")
     expect(cloned.pages).toHaveLength(previous.pages.length)
 
     expect(cloned.pages.map((page) => page.id)).toEqual(
@@ -117,8 +117,7 @@ describe("week-clone", () => {
 
   it("clones html layout page with cleared title and notes while preserving htmlFile", () => {
     const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -153,8 +152,7 @@ describe("week-clone", () => {
 
   it("clones weekly-overview pages while keeping workstreams and collection length", () => {
     const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -227,8 +225,7 @@ describe("week-clone", () => {
 
   it("starts a new week with Editorial page numbers reset to the week default", () => {
     const previous: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: false,
       pages: [{ ...createBlankNextActionsPage("p01"), showPageNumber: true }],
     }
@@ -241,8 +238,7 @@ describe("week-clone", () => {
 
   it("keeps an HTML Page's page-number choice because HTML Pages opt in per page", () => {
     const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

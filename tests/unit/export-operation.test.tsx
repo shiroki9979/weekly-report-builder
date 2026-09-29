@@ -47,7 +47,10 @@ function OperationHarness({
     operationSnapshot: () =>
       sessionOperationSnapshot(
         session ?? {
-          ...selectSessionPage(createEditingSession(week), selectedPage.id),
+          ...selectSessionPage(
+            createEditingSession(week, "2026-08-24"),
+            selectedPage.id
+          ),
           selectedMonday: monday,
         }
       ),
@@ -75,8 +78,7 @@ function htmlPage(id: string, title: string): WeekPage {
 
 function singlePageWeek(): WeekDocument {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [htmlPage("p01", "First")],
   }
 }
@@ -109,8 +111,7 @@ describe("export operation lifecycle", () => {
 
   describe("a batch that outlives edits and a week switch", () => {
     const otherWeek: WeekDocument = {
-      start: "2026-08-31",
-      end: "2026-09-04",
+      period: { start: "2026-08-31", end: "2026-09-04" },
       pages: [htmlPage("p01", "Other")],
     }
 
@@ -118,15 +119,14 @@ describe("export operation lifecycle", () => {
       const firstCapture = deferred<Blob>()
       const capture = captureWithPendingFirstPage(firstCapture.promise)
       const week: WeekDocument = {
-        start: "2026-08-18",
-        end: "2026-08-22",
+        period: { start: "2026-08-18", end: "2026-08-22" },
         pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
       const seen: string[] = []
       prepare.mockImplementation(async (documentId, document, page) => {
         const context = createStagePageContext(documentId, document, page.id)
         seen.push(
-          `${page.id}:${page.title}:${context.weekLabel}:${context.pageLabel}`
+          `${page.id}:${page.title}:${context.frameLabel}:${context.pageLabel}`
         )
         return preparedCapture(() => capture(page))
       })
@@ -143,7 +143,7 @@ describe("export operation lifecycle", () => {
       week.pages[1].title = "Edited later"
       week.pages.reverse()
       operation.rerender({
-        monday: otherWeek.start,
+        monday: otherWeek.period!.start,
         week: otherWeek,
         selectedPage: otherWeek.pages[0],
       })
@@ -173,8 +173,7 @@ describe("export operation lifecycle", () => {
         preparedCapture(() => capture(page))
       )
       const week: WeekDocument = {
-        start: "2026-08-18",
-        end: "2026-08-22",
+        period: { start: "2026-08-18", end: "2026-08-22" },
         pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
       const operation = renderOperation({
@@ -198,8 +197,7 @@ describe("export operation lifecycle", () => {
     const firstCapture = deferred<Blob>()
     const capture = captureWithPendingFirstPage(firstCapture.promise)
     const week: WeekDocument = {
-      start: "2026-08-18",
-      end: "2026-08-22",
+      period: { start: "2026-08-18", end: "2026-08-22" },
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
     const seen: string[] = []
@@ -247,8 +245,7 @@ describe("export operation lifecycle", () => {
       field: "baselineValue",
     } as const
     const week: WeekDocument = {
-      start: monday,
-      end: "2026-08-28",
+      period: { start: monday, end: "2026-08-28" },
       pages: [
         htmlPage("p01", "First"),
         {
@@ -280,7 +277,7 @@ describe("export operation lifecycle", () => {
         preparedCapture(() => capture(page))
       )
       let session = writeMetricInput(
-        createEditingSession(week),
+        createEditingSession(week, "2026-08-24"),
         baseline,
         "invalid"
       )
@@ -349,7 +346,7 @@ describe("export operation lifecycle", () => {
       vi.mocked(copyImageToClipboard).mockReturnValue(clipboard.promise)
       const week = singlePageWeek()
       const operation = renderOperation({
-        monday: week.start,
+        monday: week.period!.start,
         week,
         selectedPage: week.pages[0],
       })
@@ -418,8 +415,7 @@ describe("export operation lifecycle", () => {
 
   describe("a batch with a fatal download failure", () => {
     const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         htmlPage("p01", "First"),
         { id: "p02", layout: "future-layout", title: "Unsupported" },
@@ -434,7 +430,7 @@ describe("export operation lifecycle", () => {
         if (name.endsWith("p03.png")) throw new Error("Downloads blocked")
       })
       return renderOperation({
-        monday: week.start,
+        monday: week.period!.start,
         week,
         selectedPage: week.pages[0],
       })
@@ -481,7 +477,7 @@ describe("export operation lifecycle", () => {
     )
     const week = singlePageWeek()
     const operation = renderOperation({
-      monday: week.start,
+      monday: week.period!.start,
       week,
       selectedPage: week.pages[0],
     })
@@ -498,13 +494,11 @@ describe("export operation lifecycle", () => {
 
   describe("a capture that times out after a week switch", () => {
     const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [htmlPage("p01", "Slow"), htmlPage("p02", "Next")],
     }
     const nextWeek: WeekDocument = {
-      start: "2026-08-31",
-      end: "2026-09-04",
+      period: { start: "2026-08-31", end: "2026-09-04" },
       pages: [htmlPage("p03", "New")],
     }
 
@@ -528,7 +522,7 @@ describe("export operation lifecycle", () => {
         })
       )
       const operation = renderOperation({
-        monday: week.start,
+        monday: week.period!.start,
         week,
         selectedPage: week.pages[0],
       })
@@ -538,7 +532,7 @@ describe("export operation lifecycle", () => {
       })
       await firstStarted.promise
       operation.rerender({
-        monday: nextWeek.start,
+        monday: nextWeek.period!.start,
         week: nextWeek,
         selectedPage: nextWeek.pages[0],
       })
@@ -593,12 +587,11 @@ describe("export operation lifecycle", () => {
       preparedCapture(() => capture(page), dispose)
     )
     const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
     const operation = renderOperation({
-      monday: week.start,
+      monday: week.period!.start,
       week,
       selectedPage: week.pages[0],
     })

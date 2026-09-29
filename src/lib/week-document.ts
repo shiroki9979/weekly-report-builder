@@ -231,11 +231,21 @@ export type WeekPage =
   | TrendTargetPage
   | UnknownWeekPage
 
-export type WeekDocument = {
+// 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
+export type DeckPeriod = {
   start: string
   end: string
+}
+
+export type WeekDocument = {
+  period?: DeckPeriod
   showPageNumbers?: boolean
   pages: WeekPage[]
+}
+
+// Editorial Frame 與 Workshop 標題共用；沒有期間時回傳空字串，由呼叫端決定不顯示
+export function periodLabel(period: DeckPeriod | undefined): string {
+  return period ? `${period.start} — ${period.end}` : ""
 }
 
 export function isHtmlWeekPage(page: WeekPage): page is HtmlWeekPage {
@@ -1152,10 +1162,35 @@ export function parseWeekDocument(value: unknown): WeekDocument {
       ? value.showPageNumbers
       : undefined
 
+  const period = parsePeriod(value)
+
+  return {
+    ...(period ? { period } : {}),
+    ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
+    pages: parsedPages,
+  }
+}
+
+// 舊格式把期間放在頂層 start／end；讀入時轉成 period，存檔後只留新格式
+function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
+  const hasLegacy = value.start !== undefined || value.end !== undefined
+  if (value.period !== undefined) {
+    if (hasLegacy) {
+      throw new Error(
+        "Invalid week document: use either period or top-level start/end, not both"
+      )
+    }
+    if (!isRecord(value.period)) {
+      throw new Error("Invalid week document: period must be an object")
+    }
+    return {
+      start: readNonEmptyString(value.period.start, "period.start"),
+      end: readNonEmptyString(value.period.end, "period.end"),
+    }
+  }
+  if (!hasLegacy) return undefined
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),
-    ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
-    pages: parsedPages,
   }
 }

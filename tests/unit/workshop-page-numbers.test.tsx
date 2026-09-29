@@ -21,8 +21,7 @@ const unusedLayoutControls: LayoutEditorControls = {
 
 function sampleWeek(showPageNumbers?: boolean): WeekDocument {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     showPageNumbers,
     pages: [
       {
@@ -198,8 +197,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
 
   it("does not render page number select for a two-column page", () => {
     const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

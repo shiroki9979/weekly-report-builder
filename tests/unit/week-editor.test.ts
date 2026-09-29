@@ -81,8 +81,7 @@ describe("week-editor", () => {
 
   it("maps htmlFile edits onto html layout pages", () => {
     const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -109,8 +108,7 @@ describe("week-editor", () => {
 
   it("rejects two-column item edits on an HTML page", () => {
     const htmlWeek = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -156,8 +154,7 @@ describe("week-editor", () => {
 
   it("keeps at least one entry in chart, flow, and checklist panels", () => {
     const weekWith = (kind: "chart" | "flow" | "checklist"): WeekDocument => ({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [createBlankTwoColumnPage("p01", kind)],
     })
 

@@ -28,8 +28,7 @@ function actions(week: WeekDocument): NextActionsPage {
 describe("next-actions schema", () => {
   it("reads omitted variants as Columns and rejects invalid supplied variants", () => {
     const source = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -61,8 +60,7 @@ describe("next-actions schema", () => {
 
   it("parses a draft and strips extra fields", () => {
     const doc = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -111,8 +109,7 @@ describe("next-actions schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -126,8 +123,7 @@ describe("next-actions schema", () => {
 
     expect(() =>
       parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -199,8 +195,7 @@ describe("next-actions factory and editor", () => {
 describe("next-actions clone and readiness", () => {
   it("keeps commitment count and clears weekly copy", () => {
     const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

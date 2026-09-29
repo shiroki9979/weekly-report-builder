@@ -22,8 +22,7 @@ function htmlPage(id: string, title = id): WeekDocument["pages"][number] {
 
 function weekWith(pages: WeekDocument["pages"]): WeekDocument {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages,
   }
 }

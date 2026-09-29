@@ -1,13 +1,15 @@
 import {
   isPageNumberVisible,
   isSupportedStagePage,
+  periodLabel,
   type WeekDocument,
 } from "./week-document"
 
-// documentId 是儲存層的文件識別，與給人看的 weekLabel 分開傳；HTML Page 靠它組資源路徑，不可由顯示文字反推
+// documentId 是儲存層的文件識別，與給人看的 frameLabel 分開傳；HTML Page 靠它組資源路徑，不可由顯示文字反推
 export type StagePageContext = {
   documentId: string
-  weekLabel: string
+  // 由 Deck 期間產生；沒有期間時為空字串，Editorial Frame 不顯示該行
+  frameLabel: string
   pageLabel: string
   showPageNumber: boolean
 }
@@ -22,11 +24,11 @@ export function createStagePageContext(
     throw new Error(`Unknown page id: ${pageId}`)
   }
 
-  const weekLabel = `${week.start} — ${week.end}`
+  const frameLabel = periodLabel(week.period)
   const showPageNumber = isPageNumberVisible(week, page)
 
   if (page.hidden) {
-    return { documentId, weekLabel, pageLabel: "Hidden", showPageNumber }
+    return { documentId, frameLabel, pageLabel: "Hidden", showPageNumber }
   }
 
   const supportedVisible = week.pages.filter(
@@ -34,12 +36,12 @@ export function createStagePageContext(
   )
   const position = supportedVisible.findIndex((entry) => entry.id === pageId)
   if (position === -1) {
-    return { documentId, weekLabel, pageLabel: "", showPageNumber }
+    return { documentId, frameLabel, pageLabel: "", showPageNumber }
   }
 
   return {
     documentId,
-    weekLabel,
+    frameLabel,
     pageLabel: `${position + 1} / ${supportedVisible.length}`,
     showPageNumber,
   }

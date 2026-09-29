@@ -13,8 +13,7 @@ const LATEST_MONDAY = "2026-01-12"
 
 function weekDocument(monday: string, title: string): WeekDocument {
   return {
-    start: monday,
-    end: monday,
+    period: { start: monday, end: monday },
     pages: [
       {
         id: "p01",

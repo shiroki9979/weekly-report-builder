@@ -63,7 +63,7 @@ Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 
   共同欄位：`id`、`layout`、`title`、可選 `hidden`、`notes`。
 
-- **路徑**：以週一次（week json 的 monday／`start`）組成 `weeks/<monday>/<htmlFile>`。只允許檔名層級（無 `/`）、禁止 `..`、絕對路徑、空白。超出該週目錄即錯誤。
+- **路徑**：以 Deck ID（檔名，週次即週一日期）組成 `weeks/<id>/<htmlFile>`。只允許檔名層級（無 `/`）、禁止 `..`、絕對路徑、空白。超出該週目錄即錯誤。
 - **載入**：預覽與 capture 都 fetch 片段字串，消毒後再掛上。不要把未消毒的檔案直接當 `srcdoc`。
 - **消毒**：掛上前以 DOMPurify 消毒，移除 `script`、事件屬性、危險 URL 與可執行內容的巢狀瀏覽環境（例如 `iframe`／`srcdoc`）；保留片段自帶的 `<style>`。這是防止 DOM XSS 的必要相依。
 - **預覽掛載**：`.stage-root` 內 Shadow DOM；**不要**把 `stage.css` stylesheet adopt 進 shadow。CSS 變數從 `.stage-root` 繼承即可。

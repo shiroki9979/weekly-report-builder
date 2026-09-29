@@ -9,7 +9,7 @@ type EditorialFrameProps = {
   children: ReactNode
 }
 
-/** 結論先入眼；週次與頁碼只做定位，不搶職能層級 */
+/** 結論先入眼；期間與頁碼只做定位，不搶職能層級 */
 export function EditorialFrame({
   eyebrow,
   headline,
@@ -21,7 +21,9 @@ export function EditorialFrame({
       <header className="editorial-header">
         <div className="editorial-meta">
           <p className="editorial-eyebrow">{eyebrow}</p>
-          <p className="editorial-week">{context.weekLabel}</p>
+          {context.frameLabel ? (
+            <p className="editorial-week">{context.frameLabel}</p>
+          ) : null}
         </div>
         <h1 className="editorial-headline">{headline}</h1>
       </header>

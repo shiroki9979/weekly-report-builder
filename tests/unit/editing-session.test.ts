@@ -27,8 +27,7 @@ import type { WeekDocument } from "@/lib/week-document"
 
 function week(ids: string[]): WeekDocument {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages: ids.map(createBlankEvidenceDecisionPage),
   }
 }
@@ -36,7 +35,7 @@ function week(ids: string[]): WeekDocument {
 describe("Editing Session", () => {
   it("discards invalid input with its deleted page, including when the ID is reused", () => {
     const withInvalidInput = writeMetricInput(
-      createEditingSession(week(["p01", "p02"])),
+      createEditingSession(week(["p01", "p02"]), "2026-08-24"),
       { pageId: "p02", metricIndex: 0, field: "baselineValue" },
       "bad"
     )
@@ -60,7 +59,7 @@ describe("Editing Session", () => {
   describe("verbatim input on a colon Page ID", () => {
     function sessionWithInputOnBothMetrics() {
       const session = writeMetricInput(
-        createEditingSession(week(["ops:1"])),
+        createEditingSession(week(["ops:1"]), "2026-08-24"),
         { pageId: "ops:1", metricIndex: 0, field: "baselineValue" },
         "1.50"
       )
@@ -118,7 +117,7 @@ describe("Editing Session", () => {
   })
 
   it("throws on forbidden removal without changing the session", () => {
-    let session = createEditingSession(week(["p01"]))
+    let session = createEditingSession(week(["p01"]), "2026-08-24")
     session = removeSessionMetric(session, { pageId: "p01", metricIndex: 1 })
     session = writeMetricInput(
       session,
@@ -141,7 +140,7 @@ describe("Editing Session", () => {
   })
 
   it("opens another week without previous Metric Input", () => {
-    let session = createEditingSession(week(["p01"]))
+    let session = createEditingSession(week(["p01"]), "2026-08-24")
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
@@ -161,7 +160,7 @@ describe("Editing Session", () => {
   })
 
   it("keeps the save error when Metric Input changes", () => {
-    let session = createEditingSession(week(["p01"]))
+    let session = createEditingSession(week(["p01"]), "2026-08-24")
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
@@ -187,7 +186,7 @@ describe("Editing Session", () => {
 
     function sessionWithValidInput() {
       return writeMetricInput(
-        createEditingSession(week(["p01"])),
+        createEditingSession(week(["p01"]), "2026-08-24"),
         baseline,
         "1.50"
       )
@@ -219,7 +218,7 @@ describe("Editing Session", () => {
   })
 
   it("keeps input and selection attached to pages across content edits and page moves", () => {
-    let session = createEditingSession(week(["p01", "p02"]))
+    let session = createEditingSession(week(["p01", "p02"]), "2026-08-24")
     session = selectSessionPage(session, "p02")
     session = writeMetricInput(
       session,
@@ -244,7 +243,7 @@ describe("Editing Session", () => {
   })
 
   it("keeps a read-only operation snapshot after metric, page, and week changes", () => {
-    let session = createEditingSession(week(["p01", "p02"]))
+    let session = createEditingSession(week(["p01", "p02"]), "2026-08-24")
     session = selectSessionPage(session, "p02")
     session = writeMetricInput(
       session,
@@ -272,7 +271,7 @@ describe("Editing Session", () => {
   })
 
   it("rejects metric removal through the general content edit entry", () => {
-    const session = createEditingSession(week(["p01"]))
+    const session = createEditingSession(week(["p01"]), "2026-08-24")
     expect(() =>
       editSessionContent(session, (current) => ({
         ...current,
@@ -293,7 +292,7 @@ describe("Editing Session", () => {
       throw new Error("Unexpected layout")
     page.metrics[0].label = "First"
     page.metrics[1].label = "Second"
-    let session = createEditingSession(document)
+    let session = createEditingSession(document, "2026-08-24")
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
@@ -330,7 +329,7 @@ describe("Editing Session", () => {
     if (page.layout !== "evidence-decision")
       throw new Error("Unexpected layout")
     page.metrics = [{ ...page.metrics[0], label: "Original" }]
-    let session = createEditingSession(document)
+    let session = createEditingSession(document, "2026-08-24")
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
@@ -364,7 +363,7 @@ describe("Editing Session", () => {
     if (page.layout !== "evidence-decision")
       throw new Error("Unexpected layout")
     page.metrics = [page.metrics[0]]
-    let session = createEditingSession(document)
+    let session = createEditingSession(document, "2026-08-24")
     session = writeMetricInput(
       session,
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
@@ -399,7 +398,7 @@ describe("Editing Session", () => {
     if (page.layout !== "evidence-decision")
       throw new Error("Unexpected layout")
     page.metrics = page.metrics.slice(0, 1)
-    let session = createEditingSession(document)
+    let session = createEditingSession(document, "2026-08-24")
     session = editSessionContent(session, (current) =>
       setDecisionMetricLabel(current, 0, 0, "Updated")
     )
@@ -429,7 +428,7 @@ describe("Editing Session", () => {
 
   it("allows one metric's format fields to change together", () => {
     const session = editSessionContent(
-      createEditingSession(week(["p01"])),
+      createEditingSession(week(["p01"]), "2026-08-24"),
       (current) =>
         setDecisionMetricFormat(current, 0, 0, {
           unitPosition: "before",

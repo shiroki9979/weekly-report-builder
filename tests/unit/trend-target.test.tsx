@@ -58,23 +58,26 @@ const complete: TrendTargetPage = {
 }
 
 // complete 的最後一筆觀測落在此報告週
-const reportingWeek = { start: "2026-07-20", end: "2026-07-24" }
+const reportingWeek = { period: { start: "2026-07-20", end: "2026-07-24" } }
 
 function weekWith(...pages: TrendTargetPage[]): WeekDocument {
   return { ...reportingWeek, pages }
 }
 
 function sessionWith(...pages: TrendTargetPage[]) {
-  return createEditingSession(weekWith(...pages))
+  return createEditingSession(weekWith(...pages), "2026-07-20")
 }
 
-function renderTrend(page: TrendTargetPage, weekLabel = reportingWeek.start) {
+function renderTrend(
+  page: TrendTargetPage,
+  frameLabel = reportingWeek.period!.start
+) {
   return render(
     <StageSlide
       page={page}
       context={{
         documentId: DOCUMENT_ID,
-        weekLabel,
+        frameLabel,
         pageLabel: "",
         showPageNumber: false,
       }}
@@ -171,7 +174,9 @@ describe("Trend & Target", () => {
 
       it("are ready for export", () => {
         expect(
-          assessContentReadiness(page, { reportingMonday: reportingWeek.start })
+          assessContentReadiness(page, {
+            reportingMonday: reportingWeek.period!.start,
+          })
         ).toEqual([])
       })
 
@@ -252,8 +257,7 @@ describe("Trend & Target", () => {
 
     function sessionWithRawInput() {
       let session = createEditingSession({
-        start: "2027-01-11",
-        end: "2027-01-15",
+        period: { start: "2027-01-11", end: "2027-01-15" },
         pages: [dated],
       })
       session = writeTrendInput(
@@ -319,8 +323,7 @@ describe("Trend & Target", () => {
 
     it("refuses to shrink below two weeks", () => {
       const session = createEditingSession({
-        start: "2027-01-11",
-        end: "2027-01-15",
+        period: { start: "2027-01-11", end: "2027-01-15" },
         pages: [{ ...dated, observations: dated.observations.slice(0, 2) }],
       })
 
@@ -332,8 +335,7 @@ describe("Trend & Target", () => {
     describe("at twelve positions", () => {
       function fullSession() {
         return createEditingSession({
-          start: "2026-03-23",
-          end: "2026-03-27",
+          period: { start: "2026-03-23", end: "2026-03-27" },
           pages: [
             {
               ...complete,
@@ -472,7 +474,7 @@ describe("Trend & Target", () => {
       const snapshot = session.week!
       const adapter = fakeAdapter()
 
-      const batch = await exportVisiblePages(snapshot.start, snapshot, {
+      const batch = await exportVisiblePages(snapshot.period!.start, snapshot, {
         adapter,
         metricInput: session.metricInput,
         download: () => {},
@@ -677,15 +679,14 @@ describe("Trend & Target", () => {
       observations: [...interiorMissing.observations, { state: "missing" }],
     }
     const finalMissingWeek = {
-      start: "2026-07-27",
-      end: "2026-07-31",
+      period: { start: "2026-07-27", end: "2026-07-31" },
       pages: [finalMissing],
     }
 
     it("are ready when interior", () => {
       expect(
         assessContentReadiness(interiorMissing, {
-          reportingMonday: reportingWeek.start,
+          reportingMonday: reportingWeek.period!.start,
         })
       ).toEqual([])
     })
@@ -693,7 +694,7 @@ describe("Trend & Target", () => {
     it("are ready when final", () => {
       expect(
         assessContentReadiness(finalMissing, {
-          reportingMonday: finalMissingWeek.start,
+          reportingMonday: finalMissingWeek.period!.start,
         })
       ).toEqual([])
     })
@@ -907,7 +908,9 @@ describe("Trend & Target", () => {
       },
     ])("reports $draft as not ready", ({ page, path, message }) => {
       expect(
-        assessContentReadiness(page, { reportingMonday: reportingWeek.start })
+        assessContentReadiness(page, {
+          reportingMonday: reportingWeek.period!.start,
+        })
       ).toContainEqual(expect.objectContaining({ path, message }))
     })
 
@@ -919,7 +922,7 @@ describe("Trend & Target", () => {
       )
       const downloaded: string[] = []
 
-      const result = await exportVisiblePages(week.start, week, {
+      const result = await exportVisiblePages(week.period!.start, week, {
         adapter: fakeAdapter(),
         download: (_blob, filename) => downloaded.push(filename),
       })
@@ -1084,7 +1087,7 @@ describe("Trend & Target", () => {
         const downloads: string[] = []
 
         const batch = await exportVisiblePages(
-          reportingWeek.start,
+          reportingWeek.period!.start,
           weekWith(session.week!.pages[0] as TrendTargetPage, {
             ...complete,
             id: "p02",
@@ -1110,7 +1113,7 @@ describe("Trend & Target", () => {
 
     function sessionWithInvalidDate() {
       return writeTrendInput(
-        createEditingSession(week),
+        createEditingSession(week, "2026-07-20"),
         startMonday,
         "2026-07-07"
       )
@@ -1144,13 +1147,12 @@ describe("Trend & Target", () => {
 
   describe("a reporting week before the final observation", () => {
     const earlyWeek = {
-      start: "2026-07-13",
-      end: "2026-07-17",
+      period: { start: "2026-07-13", end: "2026-07-17" },
       pages: [complete],
     }
 
     it("reports readiness in the editor", () => {
-      const session = createEditingSession(earlyWeek)
+      const session = createEditingSession(earlyWeek, earlyWeek.period!.start)
 
       expect(sessionReadiness(session, "p01")).toContainEqual(
         expect.objectContaining({
@@ -1174,10 +1176,14 @@ describe("Trend & Target", () => {
     it("is skipped by batch without preparing capture", async () => {
       const adapter = fakeAdapter()
 
-      const batch = await exportVisiblePages(earlyWeek.start, earlyWeek, {
-        adapter,
-        download: () => {},
-      })
+      const batch = await exportVisiblePages(
+        earlyWeek.period!.start,
+        earlyWeek,
+        {
+          adapter,
+          download: () => {},
+        }
+      )
 
       expect(batch.skipped).toEqual([
         expect.objectContaining({ pageId: "p01" }),

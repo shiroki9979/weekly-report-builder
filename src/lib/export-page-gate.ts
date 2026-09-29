@@ -79,7 +79,10 @@ export async function exportPage(
   }
   const gateDeps: GateDeps = {
     ...deps,
-    readiness: { metricInput: deps.metricInput, reportingMonday: week.start },
+    readiness: {
+      metricInput: deps.metricInput,
+      reportingMonday: week.period?.start,
+    },
   }
   const readinessIssues = preflightIssues(page, gateDeps.readiness)
   if (readinessIssues.length > 0) {

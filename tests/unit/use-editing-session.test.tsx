@@ -13,8 +13,7 @@ const next = "2026-01-19"
 
 function week(monday: string, title = monday): WeekDocument {
   return {
-    start: monday,
-    end: monday,
+    period: { start: monday, end: monday },
     pages: [{ ...createBlankEvidenceDecisionPage("p01"), title }],
   }
 }
@@ -35,7 +34,7 @@ async function ready(result: HookResult) {
 }
 
 async function openedWeek(result: HookResult, monday: string) {
-  await until(() => result.current.week?.start === monday)
+  await until(() => result.current.week?.period?.start === monday)
 }
 
 // 開啟最新週後啟動一次 Save，Save 在 failSave 前保持進行中，之後以 "Disk full" 失敗
@@ -76,7 +75,7 @@ describe("useEditingSession", () => {
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
     expect(result.current.selectedMonday).toBe(latest)
-    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.week?.period?.start).toBe(latest)
     expect(result.current.suggestedMonday).toBe(next)
   })
 
@@ -191,7 +190,7 @@ describe("useEditingSession", () => {
     act(() => result.current.setSelectedMonday(older))
     await ready(result)
 
-    expect(result.current.week?.start).toBe(older)
+    expect(result.current.week?.period?.start).toBe(older)
     expect(result.current.save.message).toBeNull()
     expect(result.current.operationSnapshot()?.metricInput).toEqual({})
   })
@@ -255,7 +254,7 @@ describe("useEditingSession", () => {
     await act(() => result.current.save.saveWeek())
     await act(() => result.current.create.createWeek(next))
     expect(result.current.selectedMonday).toBe(next)
-    expect(result.current.week?.start).toBe(next)
+    expect(result.current.week?.period?.start).toBe(next)
     expect(result.current.weeks).toContain(next)
     expect(result.current.save.message).toBeNull()
     expect(result.current.operationSnapshot()?.metricInput).toEqual({})
@@ -270,7 +269,7 @@ describe("useEditingSession", () => {
     await act(() => result.current.create.createWeek(latest))
 
     expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
-    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.week?.period?.start).toBe(latest)
     expect(result.current.create.creating).toBe(false)
   })
 
@@ -292,7 +291,7 @@ describe("useEditingSession", () => {
     await act(() => result.current.create.createWeek(latest))
     await failSave()
 
-    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.week?.period?.start).toBe(latest)
     expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
     expect(result.current.save.error).toBe("Disk full")
     expect(result.current.save.saving).toBe(false)
@@ -304,7 +303,7 @@ describe("useEditingSession", () => {
     await act(() => result.current.create.createWeek(next))
     await failSave()
 
-    expect(result.current.week?.start).toBe(next)
+    expect(result.current.week?.period?.start).toBe(next)
     expect(result.current.save.error).toBeNull()
     expect(result.current.save.saving).toBe(false)
   })
