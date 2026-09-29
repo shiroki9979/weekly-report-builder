@@ -33,6 +33,7 @@ import {
   changeTrendEndpoint,
   confirmTrendRedate,
   readTrendInput,
+  setTrendCadence,
   setTrendObservationState,
   writeTrendInput,
   type TrendEditorControls,
@@ -128,6 +129,8 @@ export function useEditingSession(store: WeekStore): EditingSessionResult {
           ),
         changeEndpoint: (pageId, action) =>
           update((current) => changeTrendEndpoint(current, pageId, action)),
+        setCadence: (pageId, cadence) =>
+          update((current) => setTrendCadence(current, pageId, cadence)),
         confirmRedate: (pageId) =>
           update((current) => confirmTrendRedate(current, pageId)),
         cancelRedate: (pageId) =>

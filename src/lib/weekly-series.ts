@@ -2,7 +2,7 @@
 // 通用的清空與建立規則在 deck-template，這裡只放週次專屬的日期規則
 import { createDeckFromTemplate } from "./deck-template"
 import type { DeckPeriod, WeekDocument } from "./week-document"
-import { isCalendarMonday } from "./week-id"
+import { isCalendarMonday } from "./calendar-date"
 
 function parseMonday(value: string): Date {
   if (!isCalendarMonday(value)) {

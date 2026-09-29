@@ -5,7 +5,7 @@ export type MetricValueField = "baselineValue" | "candidateValue"
 
 export type MetricInputPath = `metrics[${number}].${MetricValueField}`
 export type ObservationInputPath = `observations[${number}].value`
-export type TrendInputPath = "startMonday" | "target" | ObservationInputPath
+export type TrendInputPath = "start" | "target" | ObservationInputPath
 
 export type InputPath = MetricInputPath | TrendInputPath
 

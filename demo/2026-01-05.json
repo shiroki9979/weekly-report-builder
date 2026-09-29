@@ -156,7 +156,8 @@
         "unitSpacing": "space",
         "precision": 1
       },
-      "startMonday": "2025-10-20",
+      "cadence": "week",
+      "start": "2025-10-20",
       "observations": [
         {
           "state": "measured",
@@ -223,7 +224,8 @@
         "unitSpacing": "space",
         "precision": 0
       },
-      "startMonday": "2025-11-17",
+      "cadence": "week",
+      "start": "2025-11-17",
       "observations": [
         {
           "state": "measured",
@@ -275,7 +277,8 @@
         "unitSpacing": "space",
         "precision": 1
       },
-      "startMonday": "2025-11-17",
+      "cadence": "week",
+      "start": "2025-11-17",
       "observations": [
         {
           "state": "measured",

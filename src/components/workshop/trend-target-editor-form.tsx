@@ -19,14 +19,20 @@ import {
   isRedateProposal,
   isStartSettled,
   observationEntryPath,
-  startMondayInput,
+  trendStartInput,
   type TrendEndpointAction,
 } from "@/lib/trend-input"
-import type { TrendEditorControls } from "@/lib/trend-session"
 import {
+  TREND_CADENCE_LOCKED,
+  type TrendEditorControls,
+} from "@/lib/trend-session"
+import {
+  isTrendCadence,
   isTrendDirection,
-  observationMonday,
+  observationDate,
+  TREND_CADENCES,
   TREND_DIRECTIONS,
+  trendCadenceRule,
   trendDatingError,
   trendDirectionRule,
   trendRangeEnd,
@@ -34,6 +40,7 @@ import {
 } from "@/lib/trend-target"
 import { typedPageUpdater } from "@/lib/update-week-page"
 import {
+  hasEnteredObservations,
   isTrendTargetPage,
   type UnmeasuredState,
   type WeeklyObservation,
@@ -42,10 +49,11 @@ import {
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
-// 日期不合法時不顯示預覽即可；錯誤原因已由 readiness 的 startMonday issue 呈現
-function proposedRange(start: string, length: number): string | null {
-  if (trendDatingError(start, length)) return null
-  return `${start} – ${trendRangeEnd(start, length)}`
+// 日期不合法時不顯示預覽即可；錯誤原因已由 readiness 的 start issue 呈現
+function proposedRange(page: TrendTargetPage, start: string): string | null {
+  const length = page.observations.length
+  if (trendDatingError(page.cadence, start, length)) return null
+  return `${start} – ${trendRangeEnd(page.cadence, start, length)}`
 }
 
 // Missing 與輸入數值互為切換：按鈕文案與切換後的狀態都由目前狀態決定
@@ -58,11 +66,14 @@ function observationToggle(entry: WeeklyObservation): {
     : { label: UNMEASURED_COPY.missing.observation, next: "missing" }
 }
 
-const ENDPOINT_BUTTONS: { action: TrendEndpointAction; label: string }[] = [
-  { action: "prepend", label: "Add earlier week" },
-  { action: "append", label: "Add later week" },
-  { action: "remove-first", label: "Remove earliest week" },
-  { action: "remove-last", label: "Remove latest week" },
+const ENDPOINT_BUTTONS: {
+  action: TrendEndpointAction
+  label: (noun: string) => string
+}[] = [
+  { action: "prepend", label: (noun) => `Add earlier ${noun}` },
+  { action: "append", label: (noun) => `Add later ${noun}` },
+  { action: "remove-first", label: (noun) => `Remove earliest ${noun}` },
+  { action: "remove-last", label: (noun) => `Remove latest ${noun}` },
 ]
 
 type Props = PageEditorProps<TrendTargetPage> & {
@@ -102,42 +113,86 @@ function TrendMetricLabel({
   )
 }
 
+function TrendCadenceControl({
+  page,
+  trendControls,
+  readOnly,
+}: Pick<FieldProps, "page" | "trendControls"> & { readOnly?: boolean }) {
+  const locked = hasEnteredObservations(page.observations)
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="trend-cadence">Cadence</Label>
+      <Select
+        value={page.cadence}
+        disabled={readOnly || locked}
+        onValueChange={(value) => {
+          if (isTrendCadence(value)) trendControls.setCadence(page.id, value)
+        }}
+      >
+        <SelectTrigger id="trend-cadence" aria-describedby="trend-cadence-hint">
+          <SelectValue>
+            {(value: string | null) =>
+              isTrendCadence(value) ? trendCadenceRule(value).adjective : value
+            }
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {TREND_CADENCES.map((cadence) => (
+            <SelectItem key={cadence} value={cadence}>
+              {trendCadenceRule(cadence).adjective}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {locked ? (
+        <p id="trend-cadence-hint" className="text-xs text-muted-foreground">
+          {TREND_CADENCE_LOCKED}.
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 function TrendDateRangeControls({
   page,
   paths,
   trendControls,
   startText,
 }: FieldProps & { startText: string }) {
+  const rule = trendCadenceRule(page.cadence)
   const dateProposal = isRedateProposal(page, startText)
-    ? proposedRange(startText, page.observations.length)
+    ? proposedRange(page, startText)
     : null
   return (
     <div className="space-y-2">
-      <Label htmlFor="trend-start">Starting Monday</Label>
+      <Label htmlFor="trend-start">{rule.startLabel}</Label>
       <Input
         id="trend-start"
         placeholder="YYYY-MM-DD"
         value={startText}
-        aria-invalid={paths.has("startMonday") || undefined}
+        aria-invalid={paths.has("start") || undefined}
         onChange={(event) =>
-          trendControls.write(startMondayInput(page.id), event.target.value)
+          trendControls.write(trendStartInput(page.id), event.target.value)
         }
       />
       <p className="text-xs text-muted-foreground">
-        Set a Monday before entering values. Changing the date of entered weeks
-        requires confirmation.
+        {page.cadence === "week"
+          ? "Set a Monday before entering values."
+          : "Set the first day of a month before entering values."}{" "}
+        Changing the date of entered {rule.noun}s requires confirmation.
       </p>
-      {dateProposal && page.startMonday && (
+      {dateProposal && page.start && (
         <div
           className="space-y-2 rounded-md border p-3"
           role="group"
           aria-label="Review date change"
         >
           <p>
-            Current observed weeks:{" "}
-            {proposedRange(page.startMonday, page.observations.length)}
+            Current observed {rule.noun}s: {proposedRange(page, page.start)}
           </p>
-          <p>Proposed observed weeks: {dateProposal}</p>
+          <p>
+            Proposed observed {rule.noun}s: {dateProposal}
+          </p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -167,9 +222,13 @@ function TrendObservationControls({
   readOnly,
 }: FieldProps & { startText: string; readOnly?: boolean }) {
   const rangeReady = isStartSettled(page, startText)
+  const rule = trendCadenceRule(page.cadence)
+  const { start } = page
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
-      <legend className="px-1 text-sm font-medium">Weekly observations</legend>
+      <legend className="px-1 text-sm font-medium">
+        {rule.adjective} observations
+      </legend>
       <div className="flex flex-wrap gap-2">
         {ENDPOINT_BUTTONS.map(({ action, label }) => (
           <Button
@@ -181,15 +240,16 @@ function TrendObservationControls({
             }
             onClick={() => trendControls.changeEndpoint(page.id, action)}
           >
-            {label}
+            {label(rule.noun)}
           </Button>
         ))}
       </div>
       {page.observations.map((entry, index) => {
         const path = observationPath(index)
-        const label = page.startMonday
-          ? `Week ${index + 1} · ${observationMonday(page.startMonday, index)}`
-          : `Week ${index + 1}`
+        const position = `${rule.noun[0].toUpperCase()}${rule.noun.slice(1)} ${index + 1}`
+        const label = start
+          ? `${position} · ${observationDate(page.cadence, start, index)}`
+          : position
         const toggle = observationToggle(entry)
         return (
           <div key={index} className="space-y-1">
@@ -200,7 +260,7 @@ function TrendObservationControls({
               <Input
                 id={`trend-value-${index}`}
                 inputMode="decimal"
-                disabled={readOnly || !page.startMonday}
+                disabled={readOnly || !start}
                 value={trendControls.read({ pageId: page.id, path })}
                 aria-invalid={
                   paths.has(path) ||
@@ -219,7 +279,7 @@ function TrendObservationControls({
               type="button"
               variant="outline"
               size="sm"
-              disabled={readOnly || !page.startMonday}
+              disabled={readOnly || !start}
               aria-label={`${toggle.label} for ${label}`}
               onClick={() =>
                 trendControls.setObservationState(
@@ -346,7 +406,7 @@ export function TrendTargetEditorForm({
   const paths = issuePaths(issues)
   const update: UpdateTrend = (change) =>
     onChange((current) => updateTrendPage(current, pageIndex, change))
-  const startText = trendControls.read(startMondayInput(page.id))
+  const startText = trendControls.read(trendStartInput(page.id))
 
   return (
     <EditorialPageEditorChrome
@@ -359,6 +419,11 @@ export function TrendTargetEditorForm({
       readinessIssues={issues}
     >
       <TrendMetricLabel page={page} paths={paths} update={update} />
+      <TrendCadenceControl
+        page={page}
+        trendControls={trendControls}
+        readOnly={readOnly}
+      />
       <TrendDateRangeControls
         page={page}
         paths={paths}

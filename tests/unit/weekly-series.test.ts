@@ -8,7 +8,7 @@ import {
   nextMondayAfter,
   weekRangeForMonday,
 } from "@/lib/weekly-series"
-import { isCalendarMonday } from "@/lib/week-id"
+import { isCalendarMonday } from "@/lib/calendar-date"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
 import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
 
