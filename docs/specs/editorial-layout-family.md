@@ -501,7 +501,7 @@ Playwright 的引入只服務真實 browser layout 與 Workshop flow；純 domai
 
 各 slice 合併時同步文件，不提前把 proposed schema 寫成 current reference：
 
-- `docs/reference/week-json-format.md`：新增已實作 layout schema、cardinality、Page ID uniqueness 與 draft values。
+- `docs/reference/deck-json-format.md`：新增已實作 layout schema、cardinality、Page ID uniqueness 與 draft values。
 - `docs/explanation/workshop-architecture.md`：更新 page lifecycle、readiness、Stage context 與 export flow。
 - How-To：新增 Add/Delete/Reorder、Editorial Layout 編輯與 export blocker 排除步驟。
 - `docs/how-to/hide-pages-from-export.md`：說明 Hidden label、Copy 與 Page Position。

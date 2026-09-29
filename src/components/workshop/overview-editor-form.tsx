@@ -18,8 +18,8 @@ import {
   canRemoveEntry,
   CARDINALITY,
   type StatusTone,
-  type WeeklyOverviewPage,
-} from "@/lib/week-document"
+  type OverviewPage,
+} from "@/lib/deck"
 import {
   addSupportingOutcome,
   makeLead,
@@ -29,7 +29,7 @@ import {
   setOverviewLeadStatus,
   setOverviewSupportingField,
   setOverviewSupportingStatus,
-} from "@/lib/weekly-overview-editor"
+} from "@/lib/overview-editor"
 
 const TONE_OPTIONS: { value: StatusTone; label: string }[] = [
   { value: "positive", label: "Positive" },
@@ -37,13 +37,13 @@ const TONE_OPTIONS: { value: StatusTone; label: string }[] = [
   { value: "neutral", label: "Neutral" },
 ]
 
-export function WeeklyOverviewEditorForm({
-  week,
+export function OverviewEditorForm({
+  deck,
   pageIndex,
   page,
   onChange,
   readOnly = false,
-}: PageEditorProps<WeeklyOverviewPage>) {
+}: PageEditorProps<OverviewPage>) {
   const invalidPaths = issuePathsFor(page)
   const canAddSupporting = canAddEntry(
     page.supporting,
@@ -52,7 +52,7 @@ export function WeeklyOverviewEditorForm({
 
   return (
     <EditorialPageEditorChrome
-      week={week}
+      deck={deck}
       pageIndex={pageIndex}
       page={page}
       onChange={onChange}
@@ -66,13 +66,13 @@ export function WeeklyOverviewEditorForm({
         outcome={page.lead}
         invalidPaths={invalidPaths}
         onTextChange={(field, value) =>
-          onChange((currentWeek) =>
-            setOverviewLeadField(currentWeek, pageIndex, field, value)
+          onChange((currentDeck) =>
+            setOverviewLeadField(currentDeck, pageIndex, field, value)
           )
         }
         onStatusChange={(field, value) =>
-          onChange((currentWeek) =>
-            setOverviewLeadStatus(currentWeek, pageIndex, field, value)
+          onChange((currentDeck) =>
+            setOverviewLeadStatus(currentDeck, pageIndex, field, value)
           )
         }
       />
@@ -85,8 +85,8 @@ export function WeeklyOverviewEditorForm({
           size="sm"
           disabled={!canAddSupporting}
           onClick={() =>
-            onChange((currentWeek) =>
-              addSupportingOutcome(currentWeek, pageIndex)
+            onChange((currentDeck) =>
+              addSupportingOutcome(currentDeck, pageIndex)
             )
           }
         >
@@ -103,9 +103,9 @@ export function WeeklyOverviewEditorForm({
           outcome={outcome}
           invalidPaths={invalidPaths}
           onTextChange={(field, value) =>
-            onChange((currentWeek) =>
+            onChange((currentDeck) =>
               setOverviewSupportingField(
-                currentWeek,
+                currentDeck,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -114,9 +114,9 @@ export function WeeklyOverviewEditorForm({
             )
           }
           onStatusChange={(field, value) =>
-            onChange((currentWeek) =>
+            onChange((currentDeck) =>
               setOverviewSupportingStatus(
-                currentWeek,
+                currentDeck,
                 pageIndex,
                 supportingIndex,
                 field,
@@ -131,8 +131,8 @@ export function WeeklyOverviewEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange((currentWeek) =>
-                    makeLead(currentWeek, pageIndex, supportingIndex)
+                  onChange((currentDeck) =>
+                    makeLead(currentDeck, pageIndex, supportingIndex)
                   )
                 }
               >
@@ -144,9 +144,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === 0}
                 onClick={() =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     moveSupportingOutcome(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       supportingIndex,
                       supportingIndex - 1
@@ -162,9 +162,9 @@ export function WeeklyOverviewEditorForm({
                 size="sm"
                 disabled={supportingIndex === page.supporting.length - 1}
                 onClick={() =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     moveSupportingOutcome(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       supportingIndex,
                       supportingIndex + 1
@@ -185,9 +185,9 @@ export function WeeklyOverviewEditorForm({
                   )
                 }
                 onClick={() =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     removeSupportingOutcome(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       supportingIndex
                     )
@@ -210,7 +210,7 @@ type OutcomeFieldsProps = {
   idPrefix: string
   legend: string
   pathPrefix: string
-  outcome: WeeklyOverviewPage["lead"]
+  outcome: OverviewPage["lead"]
   invalidPaths: Set<string>
   onTextChange: (field: OutcomeTextField, value: string) => void
   onStatusChange: (field: "label" | "tone", value: string) => void

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HtmlSlide } from "@/components/stage/html-slide"
-import type { HtmlWeekPage } from "@/lib/week-document"
+import type { HtmlPage } from "@/lib/deck"
 
 describe("HtmlSlide", () => {
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe("HtmlSlide", () => {
   })
 
   it("renders a stage-warning with data-status=error when htmlFile is invalid", () => {
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "Test",
@@ -34,7 +34,7 @@ describe("HtmlSlide", () => {
       () => new Promise(() => {})
     )
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "Test",
@@ -55,7 +55,7 @@ describe("HtmlSlide", () => {
       statusText: "Not Found",
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "Test",
@@ -82,7 +82,7 @@ describe("HtmlSlide", () => {
       text: async () => rawHtml,
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "Preview Test",
@@ -111,7 +111,7 @@ describe("HtmlSlide", () => {
       text: async () => rawHtml,
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "Capture Test",

@@ -48,7 +48,7 @@
     },
     {
       "id": "p02",
-      "layout": "weekly-overview",
+      "layout": "overview",
       "title": "Fictional cut process held, and the pilot opened.",
       "lead": {
         "workstream": "Platform",

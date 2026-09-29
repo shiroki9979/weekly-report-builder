@@ -1,19 +1,19 @@
 import { readFile } from "node:fs/promises"
 import { expect, test, type Page } from "@playwright/test"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 async function unlockEditor(page: Page) {
   await page.getByRole("button", { name: "Edit", exact: true }).click()
 }
 
-async function openWeek(page: Page, monday: string, heading: string) {
+async function openDeck(page: Page, monday: string, heading: string) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: monday }).click()
   await expect(page.getByRole("heading", { name: heading })).toBeVisible()
 }
@@ -21,7 +21,7 @@ async function openWeek(page: Page, monday: string, heading: string) {
 test("previews, copies, and batch-exports a valid HTML Page", async ({
   page,
 }) => {
-  await openWeek(page, "2026-08-31", "Valid HTML Page")
+  await openDeck(page, "2026-08-31", "Valid HTML Page")
   await expect(
     page.getByTestId("stage-frame").getByRole("heading", {
       name: "Valid HTML Page",
@@ -60,7 +60,7 @@ test("blocks a 404 HTML Page and exports the next batch page", async ({
   page,
 }) => {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-07-27" }).click()
   await expect(
     page
@@ -101,11 +101,11 @@ test("blocks a 404 HTML Page and exports the next batch page", async ({
 })
 
 test("clones HTML Page files and clears title and notes", async ({ page }) => {
-  await openWeek(page, "2026-08-31", "Valid HTML Page")
+  await openDeck(page, "2026-08-31", "Valid HTML Page")
   await unlockEditor(page)
 
   await page.getByRole("button", { name: "Create week" }).click()
-  await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
+  await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-09-07"
   )
   await expect(

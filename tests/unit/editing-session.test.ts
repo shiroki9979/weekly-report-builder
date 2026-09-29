@@ -9,7 +9,7 @@ import {
   editSessionContent,
   moveSessionMetric,
   moveSessionPage,
-  openSessionWeek,
+  openSessionDeck,
   readMetricInput,
   removeSessionMetric,
   selectSessionPage,
@@ -23,9 +23,9 @@ import {
   setDecisionMetricFormat,
   setDecisionMetricLabel,
 } from "@/lib/evidence-decision-editor"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 
-function week(ids: string[]): WeekDocument {
+function week(ids: string[]): Deck {
   return {
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: ids.map(createBlankEvidenceDecisionPage),
@@ -128,7 +128,7 @@ describe("Editing Session", () => {
     expect(() =>
       removeSessionMetric(session, { pageId: "p01", metricIndex: 0 })
     ).toThrow("Evidence-backed Decision must keep at least 1 metric")
-    expect(session.week?.pages[0]).toHaveProperty("metrics.length", 1)
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.length", 1)
     expect(
       readMetricInput(session, {
         pageId: "p01",
@@ -147,7 +147,7 @@ describe("Editing Session", () => {
       "bad"
     )
     session = canSaveSession(session).session
-    session = openSessionWeek(session, week(["p01"]))
+    session = openSessionDeck(session, week(["p01"]))
     expect(
       readMetricInput(session, {
         pageId: "p01",
@@ -196,7 +196,7 @@ describe("Editing Session", () => {
       const session = sessionWithValidInput()
 
       expect(readMetricInput(session, baseline)).toBe("1.50")
-      expect(session.week?.pages[0]).toHaveProperty(
+      expect(session.deck?.pages[0]).toHaveProperty(
         "metrics.0.baselineValue",
         1.5
       )
@@ -205,7 +205,7 @@ describe("Editing Session", () => {
     it("keeps the last valid value and reports readiness for invalid text", () => {
       const session = writeMetricInput(sessionWithValidInput(), baseline, "bad")
 
-      expect(session.week?.pages[0]).toHaveProperty(
+      expect(session.deck?.pages[0]).toHaveProperty(
         "metrics.0.baselineValue",
         1.5
       )
@@ -232,7 +232,7 @@ describe("Editing Session", () => {
     }))
 
     expect(session.selectedPageId).toBe("p02")
-    expect(session.week?.pages.map((page) => page.id)).toEqual(["p02", "p01"])
+    expect(session.deck?.pages.map((page) => page.id)).toEqual(["p02", "p01"])
     expect(
       readMetricInput(session, {
         pageId: "p02",
@@ -259,15 +259,15 @@ describe("Editing Session", () => {
     )
     session = moveSessionPage(session, "p02", "up")
     session = deleteSessionPage(session, "p01")
-    session = openSessionWeek(session, week(["other"]))
+    session = openSessionDeck(session, week(["other"]))
 
-    expect(snapshot.monday).toBe("2026-08-24")
+    expect(snapshot.deckId).toBe("2026-08-24")
     expect(snapshot.selectedPageId).toBe("p02")
-    expect(snapshot.week.pages.map((page) => page.id)).toEqual(["p01", "p02"])
+    expect(snapshot.deck.pages.map((page) => page.id)).toEqual(["p01", "p02"])
     expect(snapshot.metricInput.p02["metrics[0].baselineValue"]).toBe("1.50")
-    expect(Object.isFrozen(snapshot.week.pages[1])).toBe(true)
+    expect(Object.isFrozen(snapshot.deck.pages[1])).toBe(true)
     expect(Object.isFrozen(snapshot.metricInput.p02)).toBe(true)
-    expect(session.week?.pages.map((page) => page.id)).toEqual(["other"])
+    expect(session.deck?.pages.map((page) => page.id)).toEqual(["other"])
   })
 
   it("rejects metric removal through the general content edit entry", () => {
@@ -282,7 +282,7 @@ describe("Editing Session", () => {
         ),
       }))
     ).toThrow("Metric changes require a dedicated Editing Session operation")
-    expect(session.week?.pages[0]).toHaveProperty("metrics.length", 2)
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.length", 2)
   })
 
   it("rejects cloned metric swaps so Metric Input stays with its metric", () => {
@@ -298,7 +298,7 @@ describe("Editing Session", () => {
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "1.50"
     )
-    const original = session.week
+    const original = session.deck
 
     expect(() =>
       editSessionContent(session, (current) => ({
@@ -313,7 +313,7 @@ describe("Editing Session", () => {
         ),
       }))
     ).toThrow("Metric changes require a dedicated Editing Session operation")
-    expect(session.week).toBe(original)
+    expect(session.deck).toBe(original)
     expect(
       readMetricInput(session, {
         pageId: "p01",
@@ -335,7 +335,7 @@ describe("Editing Session", () => {
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "bad"
     )
-    const original = session.week
+    const original = session.deck
 
     expect(() =>
       editSessionContent(session, (current) => {
@@ -347,7 +347,7 @@ describe("Editing Session", () => {
         return next
       })
     ).toThrow("Metric changes require a dedicated Editing Session operation")
-    expect(session.week).toBe(original)
+    expect(session.deck).toBe(original)
     expect(
       readMetricInput(session, {
         pageId: "p01",
@@ -369,7 +369,7 @@ describe("Editing Session", () => {
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "bad"
     )
-    const original = session.week
+    const original = session.deck
 
     expect(() =>
       editSessionContent(session, (current) => {
@@ -380,8 +380,8 @@ describe("Editing Session", () => {
         return current
       })
     ).toThrow()
-    expect(session.week).toBe(original)
-    expect(session.week?.pages[0]).toHaveProperty("metrics.length", 1)
+    expect(session.deck).toBe(original)
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.length", 1)
     expect(Object.isFrozen(original?.pages[0])).toBe(false)
     expect(
       readMetricInput(session, {
@@ -408,8 +408,8 @@ describe("Editing Session", () => {
       "bad"
     )
     session = addSessionMetric(session, "p01")
-    expect(session.week?.pages[0]).toHaveProperty("metrics.0.label", "Updated")
-    expect(session.week?.pages[0]).toHaveProperty("metrics.length", 2)
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.0.label", "Updated")
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.length", 2)
     expect(
       readMetricInput(session, {
         pageId: "p01",
@@ -437,14 +437,14 @@ describe("Editing Session", () => {
         })
     )
 
-    expect(session.week?.pages[0]).toHaveProperty(
+    expect(session.deck?.pages[0]).toHaveProperty(
       "metrics.0.unitPosition",
       "before"
     )
-    expect(session.week?.pages[0]).toHaveProperty(
+    expect(session.deck?.pages[0]).toHaveProperty(
       "metrics.0.unitSpacing",
       "none"
     )
-    expect(session.week?.pages[0]).toHaveProperty("metrics.0.precision", 2)
+    expect(session.deck?.pages[0]).toHaveProperty("metrics.0.precision", 2)
   })
 })

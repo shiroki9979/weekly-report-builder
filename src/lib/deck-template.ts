@@ -1,12 +1,12 @@
 import {
-  matchWeekPage,
+  matchPage,
   nextActionsVariant,
   type DeckPeriod,
   type Outcome,
   type Panel,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+  type Deck,
+  type Page,
+} from "./deck"
 import { blankCommitment } from "./next-actions-editor"
 
 function clearPanel(panel: Panel): Panel {
@@ -67,9 +67,9 @@ function clearOutcome(outcome: Outcome): Outcome {
   }
 }
 
-function clearPage(page: WeekPage): WeekPage {
+function clearPage(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
-  return matchWeekPage<WeekPage>(page, {
+  return matchPage<Page>(page, {
     // HTML Page 的頁碼須逐頁開啟、不吃週層級預設；沿用上週選擇才不會每週重開
     html: (htmlPage) => ({
       id: htmlPage.id,
@@ -80,9 +80,9 @@ function clearPage(page: WeekPage): WeekPage {
       notes: undefined,
       showPageNumber: htmlPage.showPageNumber,
     }),
-    weeklyOverview: (overview) => ({
+    overview: (overview) => ({
       id: overview.id,
-      layout: "weekly-overview",
+      layout: "overview",
       title: "",
       lead: clearOutcome(overview.lead),
       supporting: overview.supporting.map(clearOutcome),
@@ -139,9 +139,9 @@ function clearPage(page: WeekPage): WeekPage {
 
 // 保留版型、頁序與結構，清空作者文字；期間由呼叫端依用途決定（週報流程給週一到週五，其他 Deck 可不給）
 export function createDeckFromTemplate(
-  template: WeekDocument,
+  template: Deck,
   options: { period?: DeckPeriod } = {}
-): WeekDocument {
+): Deck {
   // Editorial 頁碼回到預設顯示，不沿用範本的開關，否則從隱藏頁碼的範本建立會改變既有輸出
   return {
     ...(options.period ? { period: options.period } : {}),

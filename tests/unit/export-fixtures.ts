@@ -1,7 +1,7 @@
 import { vi } from "vitest"
 
 import type { CaptureAdapter } from "@/lib/export-page-gate"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 
 export const completePage = {
   id: "p01",
@@ -20,7 +20,7 @@ export const completePage = {
   },
 }
 
-export const week: WeekDocument = {
+export const week: Deck = {
   period: { start: "2026-08-24", end: "2026-08-28" },
   pages: [
     completePage,

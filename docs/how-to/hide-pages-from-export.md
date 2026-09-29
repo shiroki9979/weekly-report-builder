@@ -28,4 +28,4 @@
 ## 相關文件
 
 - [匯出 PNG 至團隊簡報](export-slides-to-team-deck.md)
-- [週次 JSON 格式 — hidden](../reference/week-json-format.md#weekpage)
+- [週次 JSON 格式 — hidden](../reference/deck-json-format.md#weekpage)

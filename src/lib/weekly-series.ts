@@ -1,7 +1,7 @@
 // 週報流程：週次以週一日期當 Deck ID、期間固定週一到週五、新週以最新一週為範本。
 // 通用的清空與建立規則在 deck-template，這裡只放週次專屬的日期規則
 import { createDeckFromTemplate } from "./deck-template"
-import type { DeckPeriod, WeekDocument } from "./week-document"
+import type { DeckPeriod, Deck } from "./deck"
 import { isCalendarMonday } from "./calendar-date"
 
 function parseMonday(value: string): Date {
@@ -28,8 +28,8 @@ export function weekRangeForMonday(monday: string): DeckPeriod {
 }
 
 // 週報序列只看週一日期 id；其他 Deck 不能當建新週的起點
-export function latestWeekMonday(weeks: string[]): string | null {
-  return weeks.filter(isCalendarMonday).at(-1) ?? null
+export function latestWeekMonday(decks: string[]): string | null {
+  return decks.filter(isCalendarMonday).at(-1) ?? null
 }
 
 export function nextMondayAfter(monday: string): string {
@@ -39,9 +39,9 @@ export function nextMondayAfter(monday: string): string {
 }
 
 export function cloneWeekFromPrevious(
-  previous: WeekDocument,
+  previous: Deck,
   targetMonday: string
-): WeekDocument {
+): Deck {
   if (!isCalendarMonday(targetMonday)) {
     throw new Error(`Week file name must be a Monday date: ${targetMonday}`)
   }

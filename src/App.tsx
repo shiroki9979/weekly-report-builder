@@ -1,8 +1,8 @@
 import { WorkshopShell } from "@/components/workshop/workshop-shell"
-import { httpWeekStore } from "@/lib/week-store"
+import { httpDeckStore } from "@/lib/deck-store"
 
 export function App() {
-  return <WorkshopShell weekStore={httpWeekStore} />
+  return <WorkshopShell deckStore={httpDeckStore} />
 }
 
 export default App

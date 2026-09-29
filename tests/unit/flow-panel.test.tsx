@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { FlowPanelView } from "@/components/stage/panels/flow-panel"
-import type { FlowPanel } from "@/lib/week-document"
+import type { FlowPanel } from "@/lib/deck"
 
 const samplePanel: FlowPanel = {
   kind: "flow",

@@ -3,19 +3,16 @@ import {
   assertCanRemoveEntry,
   CARDINALITY,
   isStatusTone,
-  isWeeklyOverviewPage,
+  isOverviewPage,
   type Outcome,
-  type WeekDocument,
-} from "./week-document"
-import { typedPageUpdater } from "./update-week-page"
+  type Deck,
+} from "./deck"
+import { typedPageUpdater } from "./update-deck-page"
 
 type OutcomeTextField = "workstream" | "figure" | "result" | "impact"
 type StatusField = "label" | "tone"
 
-const updateOverview = typedPageUpdater(
-  isWeeklyOverviewPage,
-  "a weekly-overview page"
-)
+const updateOverview = typedPageUpdater(isOverviewPage, "an overview page")
 
 export function blankOutcome(): Outcome {
   return {
@@ -58,37 +55,37 @@ function updateOutcomeStatus(
 }
 
 export function setOverviewLeadField(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   field: OutcomeTextField,
   value: string
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => ({
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => ({
     ...page,
     lead: updateOutcomeText(page.lead, field, value),
   }))
 }
 
 export function setOverviewLeadStatus(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   field: StatusField,
   value: string
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => ({
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => ({
     ...page,
     lead: updateOutcomeStatus(page.lead, field, value),
   }))
 }
 
 export function setOverviewSupportingField(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   supportingIndex: number,
   field: OutcomeTextField,
   value: string
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => ({
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => ({
     ...page,
     supporting: page.supporting.map((entry, index) =>
       index === supportingIndex ? updateOutcomeText(entry, field, value) : entry
@@ -97,13 +94,13 @@ export function setOverviewSupportingField(
 }
 
 export function setOverviewSupportingStatus(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   supportingIndex: number,
   field: StatusField,
   value: string
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => ({
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => ({
     ...page,
     supporting: page.supporting.map((entry, index) =>
       index === supportingIndex
@@ -113,11 +110,8 @@ export function setOverviewSupportingStatus(
   }))
 }
 
-export function addSupportingOutcome(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => {
+export function addSupportingOutcome(deck: Deck, pageIndex: number): Deck {
+  return updateOverview(deck, pageIndex, (page) => {
     assertCanAddEntry(page.supporting, CARDINALITY.supportingOutcomes)
 
     return {
@@ -128,11 +122,11 @@ export function addSupportingOutcome(
 }
 
 export function removeSupportingOutcome(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   supportingIndex: number
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => {
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => {
     assertCanRemoveEntry(page.supporting, CARDINALITY.supportingOutcomes)
 
     return {
@@ -145,12 +139,12 @@ export function removeSupportingOutcome(
 }
 
 export function moveSupportingOutcome(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   fromIndex: number,
   toIndex: number
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => {
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => {
     if (
       fromIndex < 0 ||
       toIndex < 0 ||
@@ -169,11 +163,11 @@ export function moveSupportingOutcome(
 }
 
 export function makeLead(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   supportingIndex: number
-): WeekDocument {
-  return updateOverview(week, pageIndex, (page) => {
+): Deck {
+  return updateOverview(deck, pageIndex, (page) => {
     const supportingEntry = page.supporting[supportingIndex]
     if (!supportingEntry) {
       throw new Error(`Unknown supporting outcome: ${supportingIndex}`)

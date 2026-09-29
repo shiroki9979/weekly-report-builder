@@ -7,18 +7,18 @@ import {
 import {
   createBlankEvidenceDecisionPage,
   createBlankTwoColumnPage,
-  createBlankWeeklyOverviewPage,
+  createBlankOverviewPage,
 } from "@/lib/page-lifecycle"
 import type {
   EvidenceDecisionPage,
-  TwoColumnWeekPage,
-  UnknownWeekPage,
-  WeeklyOverviewPage,
-} from "@/lib/week-document"
+  TwoColumnPage,
+  UnknownPage,
+  OverviewPage,
+} from "@/lib/deck"
 
 function completeTablePage(
-  overrides: Partial<TwoColumnWeekPage> = {}
-): TwoColumnWeekPage {
+  overrides: Partial<TwoColumnPage> = {}
+): TwoColumnPage {
   return {
     id: "p01",
     layout: "two-column",
@@ -86,8 +86,8 @@ describe("assessContentReadiness", () => {
     expect(issues.every((issue) => issue.code === "missing-content")).toBe(true)
   })
 
-  it("lists weekly-overview missing-content issues in schema declaration order", () => {
-    const issues = assessContentReadiness(createBlankWeeklyOverviewPage("p01"))
+  it("lists overview missing-content issues in schema declaration order", () => {
+    const issues = assessContentReadiness(createBlankOverviewPage("p01"))
 
     expect(issues.map((issue) => issue.path)).toEqual([
       "title",
@@ -109,10 +109,10 @@ describe("assessContentReadiness", () => {
     ])
   })
 
-  it("treats a filled weekly-overview with neutral tone as complete", () => {
-    const page: WeeklyOverviewPage = {
+  it("treats a filled overview with neutral tone as complete", () => {
+    const page: OverviewPage = {
       id: "p01",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "Delivery recovered",
       lead: {
         workstream: "Delivery",
@@ -195,12 +195,12 @@ describe("assessContentReadiness", () => {
 
 describe("assessExportEligibility", () => {
   it("marks unknown layouts and fields panels as unsupported", () => {
-    const unknown: UnknownWeekPage = {
+    const unknown: UnknownPage = {
       id: "p04",
       layout: "future-layout",
       title: "Future",
     }
-    const fieldsPage: TwoColumnWeekPage = completeTablePage({
+    const fieldsPage: TwoColumnPage = completeTablePage({
       panel: { kind: "fields", title: "Meta", rows: [] },
     })
 

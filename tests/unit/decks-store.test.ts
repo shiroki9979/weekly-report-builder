@@ -10,26 +10,26 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { parseWeekDocument } from "@/lib/week-document"
-import { setPageHidden, setPageTitle } from "@/lib/week-editor"
+import { parseDeck } from "@/lib/deck"
+import { setPageHidden, setPageTitle } from "@/lib/deck-editor"
 import {
   createDeckFromTemplateFile,
   createWeekFromPrevious,
-  listWeeksInDirectory,
-  WeekAlreadyExistsError,
-  readWeekFile,
-  writeWeekFile,
-} from "../../server/weeks-store"
+  listDecksInDirectory,
+  DeckAlreadyExistsError,
+  readDeckFile,
+  writeDeckFile,
+} from "../../server/decks-store"
 
 const cloneFixturePath = join(
   import.meta.dirname,
   "../fixtures/clone-previous-week.json"
 )
 
-describe("weeks-store", () => {
+describe("decks-store", () => {
   it("writes a week file that reloads with the same content and hide flag", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const sourceWeek = parseWeekDocument({
+    const sourceWeek = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -58,12 +58,12 @@ describe("weeks-store", () => {
         true
       )
 
-      writeWeekFile(tempDir, "2026-08-24", edited)
-      expect(listWeeksInDirectory(tempDir)).toEqual(["2026-08-24"])
+      writeDeckFile(tempDir, "2026-08-24", edited)
+      expect(listDecksInDirectory(tempDir)).toEqual(["2026-08-24"])
 
-      const reloaded = readWeekFile(tempDir, "2026-08-24")
+      const reloaded = readDeckFile(tempDir, "2026-08-24")
       const raw = readFileSync(join(tempDir, "2026-08-24.json"), "utf-8")
-      const parsedAgain = parseWeekDocument(JSON.parse(raw))
+      const parsedAgain = parseDeck(JSON.parse(raw))
 
       expect(reloaded.pages[0].title).toBe("Weekly Report · saved")
       expect(reloaded.pages[0].hidden).toBe(true)
@@ -76,13 +76,13 @@ describe("weeks-store", () => {
   it("creates a new week file by cloning the latest week with cleared copy", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const previousRaw = readFileSync(cloneFixturePath, "utf-8")
-    const previous = parseWeekDocument(JSON.parse(previousRaw))
+    const previous = parseDeck(JSON.parse(previousRaw))
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", previous)
+      writeDeckFile(tempDir, "2026-08-24", previous)
       const created = createWeekFromPrevious(tempDir, "2026-08-31")
 
-      expect(listWeeksInDirectory(tempDir)).toEqual([
+      expect(listDecksInDirectory(tempDir)).toEqual([
         "2026-08-24",
         "2026-08-31",
       ])
@@ -92,7 +92,7 @@ describe("weeks-store", () => {
       expect(created.pages.every((page) => page.title === "")).toBe(true)
       expect(created.pages[1].hidden).toBe(true)
 
-      const reloaded = readWeekFile(tempDir, "2026-08-31")
+      const reloaded = readDeckFile(tempDir, "2026-08-31")
       expect(reloaded).toEqual(created)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
@@ -101,15 +101,15 @@ describe("weeks-store", () => {
 
   it("rejects creating a week that already exists with a WeekAlreadyExistsError", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const previous = parseWeekDocument(
+    const previous = parseDeck(
       JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
     )
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", previous)
+      writeDeckFile(tempDir, "2026-08-24", previous)
 
       expect(() => createWeekFromPrevious(tempDir, "2026-08-24")).toThrow(
-        WeekAlreadyExistsError
+        DeckAlreadyExistsError
       )
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
@@ -118,7 +118,7 @@ describe("weeks-store", () => {
 
   it("copies referenced html files into the new week directory during cloning", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const sourceWeek = parseWeekDocument({
+    const sourceWeek = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -132,7 +132,7 @@ describe("weeks-store", () => {
     })
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+      writeDeckFile(tempDir, "2026-08-24", sourceWeek)
       const sourceHtmlDir = join(tempDir, "2026-08-24")
       mkdirSync(sourceHtmlDir, { recursive: true })
       const htmlContent = '<div class="custom-chart">Content</div>'
@@ -158,7 +158,7 @@ describe("weeks-store", () => {
 
   it("throws an error when a referenced html file does not exist during cloning", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const sourceWeek = parseWeekDocument({
+    const sourceWeek = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -171,7 +171,7 @@ describe("weeks-store", () => {
     })
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+      writeDeckFile(tempDir, "2026-08-24", sourceWeek)
 
       // 驗證當來源週次宣告的 htmlFile 實體檔案不存在時，clone 流程應立即拋出明確錯誤中斷，避免產生無效週次
       expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
@@ -185,7 +185,7 @@ describe("weeks-store", () => {
 
   it("does not publish a week file when a referenced HTML path is not a file", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const sourceWeek = parseWeekDocument({
+    const sourceWeek = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -198,7 +198,7 @@ describe("weeks-store", () => {
     })
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", sourceWeek)
+      writeDeckFile(tempDir, "2026-08-24", sourceWeek)
       mkdirSync(join(tempDir, "2026-08-24", "p03.html"), {
         recursive: true,
       })
@@ -212,21 +212,19 @@ describe("weeks-store", () => {
 
   it("stores a deck under a non-date id and rejects ids that could escape the store", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const deck = parseWeekDocument(
-      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
-    )
+    const deck = parseDeck(JSON.parse(readFileSync(cloneFixturePath, "utf-8")))
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", deck)
-      writeWeekFile(tempDir, "q4-roadmap", deck)
+      writeDeckFile(tempDir, "2026-08-24", deck)
+      writeDeckFile(tempDir, "q4-roadmap", deck)
 
-      expect(listWeeksInDirectory(tempDir)).toEqual([
+      expect(listDecksInDirectory(tempDir)).toEqual([
         "2026-08-24",
         "q4-roadmap",
       ])
-      expect(readWeekFile(tempDir, "q4-roadmap")).toEqual(deck)
+      expect(readDeckFile(tempDir, "q4-roadmap")).toEqual(deck)
       for (const id of ["../escape", "Q4", "a/b", "a.b", "-lead", ""]) {
-        expect(() => writeWeekFile(tempDir, id, deck)).toThrow(/Invalid/)
+        expect(() => writeDeckFile(tempDir, id, deck)).toThrow(/Invalid/)
       }
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
@@ -235,14 +233,14 @@ describe("weeks-store", () => {
 
   it("clones a new week from the latest week, not from a later non-week deck", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const previous = parseWeekDocument(
+    const previous = parseDeck(
       JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
     )
     const other = setPageTitle(previous, 0, "Roadmap only")
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", previous)
-      writeWeekFile(tempDir, "zz-roadmap", {
+      writeDeckFile(tempDir, "2026-08-24", previous)
+      writeDeckFile(tempDir, "zz-roadmap", {
         ...other,
         pages: other.pages.slice(0, 1),
       })
@@ -257,12 +255,10 @@ describe("weeks-store", () => {
 
   it("refuses to clone when the store holds no week to start from", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const deck = parseWeekDocument(
-      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
-    )
+    const deck = parseDeck(JSON.parse(readFileSync(cloneFixturePath, "utf-8")))
 
     try {
-      writeWeekFile(tempDir, "q4-roadmap", deck)
+      writeDeckFile(tempDir, "q4-roadmap", deck)
 
       expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
         /No previous week/
@@ -274,14 +270,14 @@ describe("weeks-store", () => {
 
   it("creates a non-week deck from a template, copying its HTML files", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const template = parseWeekDocument({
+    const template = parseDeck({
       pages: [
         { id: "p01", layout: "html", title: "Map", htmlFile: "map.html" },
       ],
     })
 
     try {
-      writeWeekFile(tempDir, "q3-roadmap", template)
+      writeDeckFile(tempDir, "q3-roadmap", template)
       mkdirSync(join(tempDir, "q3-roadmap"))
       writeFileSync(join(tempDir, "q3-roadmap", "map.html"), "<p>map</p>")
 
@@ -293,13 +289,13 @@ describe("weeks-store", () => {
 
       expect(created).not.toHaveProperty("period")
       expect(created.pages[0].title).toBe("")
-      expect(readWeekFile(tempDir, "q4-roadmap")).toEqual(created)
+      expect(readDeckFile(tempDir, "q4-roadmap")).toEqual(created)
       expect(
         readFileSync(join(tempDir, "q4-roadmap", "map.html"), "utf-8")
       ).toBe("<p>map</p>")
       expect(() =>
         createDeckFromTemplateFile(tempDir, "q3-roadmap", "q4-roadmap")
-      ).toThrow(WeekAlreadyExistsError)
+      ).toThrow(DeckAlreadyExistsError)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }
@@ -307,12 +303,12 @@ describe("weeks-store", () => {
 
   it("rejects a week that is not a Monday before creating anything", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
-    const previous = parseWeekDocument(
+    const previous = parseDeck(
       JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
     )
 
     try {
-      writeWeekFile(tempDir, "2026-08-24", previous)
+      writeDeckFile(tempDir, "2026-08-24", previous)
 
       expect(() => createWeekFromPrevious(tempDir, "2026-09-01")).toThrow(
         "Week file name must be a Monday date: 2026-09-01"

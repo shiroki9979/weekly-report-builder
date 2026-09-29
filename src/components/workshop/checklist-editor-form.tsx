@@ -8,22 +8,18 @@ import {
   setChecklistItemChecked,
   setChecklistItemLabel,
   setChecklistPanelTitle,
-} from "@/lib/week-editor"
+} from "@/lib/deck-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
-import {
-  canRemoveEntry,
-  CARDINALITY,
-  type ChecklistPanel,
-} from "@/lib/week-document"
+import { canRemoveEntry, CARDINALITY, type ChecklistPanel } from "@/lib/deck"
 
 export function ChecklistEditorForm({
-  week,
+  deck,
   pageIndex,
   panel,
   onChange,
 }: PanelEditorProps<ChecklistPanel>) {
-  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+  const invalidPaths = issuePathsFor(deck.pages[pageIndex])
 
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
@@ -38,8 +34,8 @@ export function ChecklistEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange((currentWeek) =>
-              setChecklistPanelTitle(currentWeek, pageIndex, event.target.value)
+            onChange((currentDeck) =>
+              setChecklistPanelTitle(currentDeck, pageIndex, event.target.value)
             )
           }
         />
@@ -53,8 +49,8 @@ export function ChecklistEditorForm({
             variant="outline"
             size="sm"
             onClick={() =>
-              onChange((currentWeek) =>
-                addChecklistItem(currentWeek, pageIndex)
+              onChange((currentDeck) =>
+                addChecklistItem(currentDeck, pageIndex)
               )
             }
           >
@@ -72,9 +68,9 @@ export function ChecklistEditorForm({
                 id={`checklist-item-checked-${itemIndex}`}
                 checked={item.checked ?? false}
                 onCheckedChange={(checked) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setChecklistItemChecked(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       itemIndex,
                       checked === true
@@ -90,9 +86,9 @@ export function ChecklistEditorForm({
                   undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setChecklistItemLabel(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       itemIndex,
                       event.target.value
@@ -109,8 +105,8 @@ export function ChecklistEditorForm({
                 !canRemoveEntry(panel.items, CARDINALITY.checklistItems)
               }
               onClick={() =>
-                onChange((currentWeek) =>
-                  removeChecklistItem(currentWeek, pageIndex, itemIndex)
+                onChange((currentDeck) =>
+                  removeChecklistItem(currentDeck, pageIndex, itemIndex)
                 )
               }
             >

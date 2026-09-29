@@ -4,17 +4,17 @@ import { fileURLToPath } from "node:url"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
-export function e2eWeeksDir(): string {
-  const dir = process.env.E2E_WEEKS_DIR
+export function e2eDecksDir(): string {
+  const dir = process.env.E2E_DECKS_DIR
   if (!dir) {
-    throw new Error("E2E_WEEKS_DIR is not set")
+    throw new Error("E2E_DECKS_DIR is not set")
   }
   return dir
 }
 
-export function resetE2eWeeks(): void {
-  const target = e2eWeeksDir()
-  const source = path.resolve(rootDir, "fixtures/weeks")
+export function resetE2eDecks(): void {
+  const target = e2eDecksDir()
+  const source = path.resolve(rootDir, "fixtures/decks")
   fs.rmSync(target, { recursive: true, force: true })
   fs.cpSync(source, target, { recursive: true })
 }

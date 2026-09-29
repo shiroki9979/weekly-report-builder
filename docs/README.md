@@ -20,7 +20,7 @@
 | 文件                                                           | 說明                               |
 | -------------------------------------------------------------- | ---------------------------------- |
 | [建立新週次](how-to/create-new-week.md)                        | 自上一週 clone 結構並建立新檔      |
-| [編輯並儲存週次](how-to/edit-and-save-a-week.md)               | 修改頁面內容並寫回 JSON            |
+| [編輯並儲存 Deck](how-to/edit-and-save-a-deck.md)              | 修改頁面內容並寫回 JSON            |
 | [新增、刪除與重排頁面](how-to/add-delete-reorder-pages.md)     | Workshop 頁面生命週期操作          |
 | [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md)    | 批次下載或複製到剪貼簿             |
 | [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)         | 保留編輯但略過 PNG 匯出            |
@@ -30,11 +30,11 @@
 
 客觀描述格式、API 與指令，不含操作步驟。
 
-| 文件                                            | 說明                         |
-| ----------------------------------------------- | ---------------------------- |
-| [週次 JSON 格式](reference/week-json-format.md) | `weeks/YYYY-MM-DD.json` 結構 |
-| [開發伺服器 API](reference/dev-server-api.md)   | `GET/PUT/POST /api/weeks`    |
-| [pnpm 指令](reference/npm-scripts.md)           | 建置、測試、lint             |
+| 文件                                            | 說明                      |
+| ----------------------------------------------- | ------------------------- |
+| [Deck JSON 格式](reference/deck-json-format.md) | `decks/<id>.json` 結構    |
+| [開發伺服器 API](reference/dev-server-api.md)   | `GET/PUT/POST /api/decks` |
+| [pnpm 指令](reference/npm-scripts.md)           | 建置、測試、lint          |
 
 ## Explanation（架構闡述）
 

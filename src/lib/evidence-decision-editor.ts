@@ -1,14 +1,14 @@
 import type { MetricFormat } from "./metric-format"
 import type { MetricValueField } from "./metric-input"
-import { typedPageUpdater } from "./update-week-page"
+import { typedPageUpdater } from "./update-deck-page"
 import {
   assertCanAddEntry,
   assertCanRemoveEntry,
   CARDINALITY,
   isEvidenceDecisionPage,
   type ComparisonMetric,
-  type WeekDocument,
-} from "./week-document"
+  type Deck,
+} from "./deck"
 
 const updateDecision = typedPageUpdater(
   isEvidenceDecisionPage,
@@ -28,20 +28,20 @@ export function blankMetric(): ComparisonMetric {
 }
 
 export function setDecisionVerdict(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   verdict: string
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({ ...page, verdict }))
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => ({ ...page, verdict }))
 }
 
 export function setDecisionMetricLabel(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   metricIndex: number,
   label: string
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => ({
     ...page,
     metrics: page.metrics.map((metric, index) =>
       index === metricIndex ? { ...metric, label } : metric
@@ -50,12 +50,12 @@ export function setDecisionMetricLabel(
 }
 
 export function setDecisionMetricFormat(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   metricIndex: number,
   patch: Partial<MetricFormat>
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => ({
     ...page,
     metrics: page.metrics.map((metric, index) =>
       index === metricIndex ? { ...metric, ...patch } : metric
@@ -64,13 +64,13 @@ export function setDecisionMetricFormat(
 }
 
 export function setDecisionMetricValue(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   metricIndex: number,
   field: MetricValueField,
   value: number | null
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => ({
     ...page,
     metrics: page.metrics.map((metric, index) =>
       index === metricIndex ? { ...metric, [field]: value } : metric
@@ -78,22 +78,19 @@ export function setDecisionMetricValue(
   }))
 }
 
-export function addDecisionMetric(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+export function addDecisionMetric(deck: Deck, pageIndex: number): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     assertCanAddEntry(page.metrics, CARDINALITY.comparisonMetrics)
     return { ...page, metrics: [...page.metrics, blankMetric()] }
   })
 }
 
 export function removeDecisionMetric(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   metricIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     assertCanRemoveEntry(page.metrics, CARDINALITY.comparisonMetrics)
     return {
       ...page,
@@ -103,12 +100,12 @@ export function removeDecisionMetric(
 }
 
 export function moveDecisionMetric(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   fromIndex: number,
   toIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     if (
       fromIndex < 0 ||
       toIndex < 0 ||
@@ -125,12 +122,12 @@ export function moveDecisionMetric(
 }
 
 export function setDecisionInterpretation(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   interpretationIndex: number,
   value: string
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => ({
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => ({
     ...page,
     interpretations: page.interpretations.map((entry, index) =>
       index === interpretationIndex ? value : entry
@@ -138,22 +135,19 @@ export function setDecisionInterpretation(
   }))
 }
 
-export function addDecisionInterpretation(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+export function addDecisionInterpretation(deck: Deck, pageIndex: number): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     assertCanAddEntry(page.interpretations, CARDINALITY.interpretations)
     return { ...page, interpretations: [...page.interpretations, ""] }
   })
 }
 
 export function removeDecisionInterpretation(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   interpretationIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     assertCanRemoveEntry(page.interpretations, CARDINALITY.interpretations)
     return {
       ...page,
@@ -165,12 +159,12 @@ export function removeDecisionInterpretation(
 }
 
 export function moveDecisionInterpretation(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   fromIndex: number,
   toIndex: number
-): WeekDocument {
-  return updateDecision(week, pageIndex, (page) => {
+): Deck {
+  return updateDecision(deck, pageIndex, (page) => {
     if (
       fromIndex < 0 ||
       toIndex < 0 ||

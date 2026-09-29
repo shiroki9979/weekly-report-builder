@@ -1,4 +1,4 @@
-import type { ChecklistPanel } from "@/lib/week-document"
+import type { ChecklistPanel } from "@/lib/deck"
 
 type ChecklistPanelViewProps = {
   panel: ChecklistPanel

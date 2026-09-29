@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from "vitest"
 
 import type { CaptureAdapter } from "@/lib/export-page-gate"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 import {
   exportFileName,
   exportVisiblePages,
   formatBatchExportResult,
   formatSkippedExportWarning,
-} from "@/lib/week-export"
+} from "@/lib/deck-export"
 
 import { completePage, week, fakeAdapter } from "./export-fixtures"
 
@@ -20,7 +20,7 @@ describe("batch export", () => {
       title: `Page ${index + 1}`,
       htmlFile: "ok.html",
     }))
-    const batch: WeekDocument = {
+    const batch: Deck = {
       ...week,
       pages: [
         ...pages.slice(0, 5),
@@ -48,7 +48,7 @@ describe("batch export", () => {
     })
 
     expect(result).toMatchObject({
-      monday: "2026-08-24",
+      deckId: "2026-08-24",
       selectedCount: 10,
       downloadsTriggered: 3,
       failed: {
@@ -176,7 +176,7 @@ describe("batch export", () => {
   it("skips unsupported and Draft Pages then processes later pages", async () => {
     const adapter = fakeAdapter()
     const download = vi.fn()
-    const batch: WeekDocument = {
+    const batch: Deck = {
       ...week,
       pages: [
         { id: "p00", layout: "future-layout", title: "Future" },

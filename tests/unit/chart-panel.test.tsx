@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { ChartPanelView } from "@/components/stage/panels/chart-panel"
-import type { ChartPanel } from "@/lib/week-document"
+import type { ChartPanel } from "@/lib/deck"
 
 const samplePanel: ChartPanel = {
   kind: "chart",

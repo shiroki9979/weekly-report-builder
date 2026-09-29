@@ -7,17 +7,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import {
-  defaultPageNumberVisibility,
-  type WeekDocument,
-} from "@/lib/week-document"
-import { setPageShowPageNumber } from "@/lib/week-editor"
+import { defaultPageNumberVisibility, type Deck } from "@/lib/deck"
+import { setPageShowPageNumber } from "@/lib/deck-editor"
 
 type PageNumberSelectProps = {
-  week: WeekDocument
+  deck: Deck
   pageIndex: number
   disabled?: boolean
-  onChange: (update: (week: WeekDocument) => WeekDocument) => void
+  onChange: (update: (deck: Deck) => Deck) => void
 }
 
 // Select 只收字串；頁面欄位以 undefined 表示沿用週層級預設
@@ -55,13 +52,13 @@ function choiceLabel(choice: PageNumberChoice, defaultVisible: boolean) {
 }
 
 export function PageNumberSelect({
-  week,
+  deck,
   pageIndex,
   disabled = false,
   onChange,
 }: PageNumberSelectProps) {
-  const page = week.pages[pageIndex]
-  const defaultVisible = page ? defaultPageNumberVisibility(week, page) : true
+  const page = deck.pages[pageIndex]
+  const defaultVisible = page ? defaultPageNumberVisibility(deck, page) : true
 
   return (
     <div className={cn("space-y-2", disabled && "opacity-50")}>
@@ -78,9 +75,9 @@ export function PageNumberSelect({
         disabled={disabled}
         onValueChange={(value) => {
           if (!isPageNumberChoice(value)) return
-          onChange((currentWeek) =>
+          onChange((currentDeck) =>
             setPageShowPageNumber(
-              currentWeek,
+              currentDeck,
               pageIndex,
               OVERRIDE_BY_CHOICE[value]
             )

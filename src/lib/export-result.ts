@@ -1,8 +1,8 @@
-import { formatBatchExportResult, type BatchExportResult } from "./week-export"
+import { formatBatchExportResult, type BatchExportResult } from "./deck-export"
 
 export type ExportResult =
   | { kind: "batch"; data: BatchExportResult }
-  | { kind: "copy"; monday: string; pageId: string; error: string | null }
+  | { kind: "copy"; deckId: string; pageId: string; error: string | null }
 
 export type ExportResultSummary = { message: string; isError: boolean }
 
@@ -20,12 +20,12 @@ export function summarizeExportResult(
   }
   if (result.error) {
     return {
-      message: `Copy ${result.pageId} from ${result.monday}: ${result.error}`,
+      message: `Copy ${result.pageId} from ${result.deckId}: ${result.error}`,
       isError: true,
     }
   }
   return {
-    message: `Copied ${result.pageId} from ${result.monday} to clipboard.`,
+    message: `Copied ${result.pageId} from ${result.deckId} to clipboard.`,
     isError: false,
   }
 }

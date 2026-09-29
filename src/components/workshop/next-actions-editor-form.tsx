@@ -27,7 +27,7 @@ import {
   nextActionsVariant,
   type NextActionsPage,
   type NextActionsVariant,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 const VARIANT_LABELS: Record<NextActionsVariant, string> = {
   rows: "Rows",
@@ -35,7 +35,7 @@ const VARIANT_LABELS: Record<NextActionsVariant, string> = {
 }
 
 export function NextActionsEditorForm({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
@@ -45,7 +45,7 @@ export function NextActionsEditorForm({
 
   return (
     <EditorialPageEditorChrome
-      week={week}
+      deck={deck}
       pageIndex={pageIndex}
       page={page}
       onChange={onChange}
@@ -59,8 +59,8 @@ export function NextActionsEditorForm({
           disabled={readOnly}
           onValueChange={(value) => {
             if (isNextActionsVariant(value)) {
-              onChange((currentWeek) =>
-                setNextActionsVariant(currentWeek, pageIndex, value)
+              onChange((currentDeck) =>
+                setNextActionsVariant(currentDeck, pageIndex, value)
               )
             }
           }}
@@ -87,7 +87,7 @@ export function NextActionsEditorForm({
           size="sm"
           disabled={!canAddEntry(page.commitments, CARDINALITY.commitments)}
           onClick={() =>
-            onChange((currentWeek) => addCommitment(currentWeek, pageIndex))
+            onChange((currentDeck) => addCommitment(currentDeck, pageIndex))
           }
         >
           Add commitment
@@ -109,9 +109,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === 0}
               onClick={() =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   moveCommitment(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex - 1
@@ -127,9 +127,9 @@ export function NextActionsEditorForm({
               size="sm"
               disabled={commitmentIndex === page.commitments.length - 1}
               onClick={() =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   moveCommitment(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     commitmentIndex,
                     commitmentIndex + 1
@@ -147,8 +147,8 @@ export function NextActionsEditorForm({
                 !canRemoveEntry(page.commitments, CARDINALITY.commitments)
               }
               onClick={() =>
-                onChange((currentWeek) =>
-                  removeCommitment(currentWeek, pageIndex, commitmentIndex)
+                onChange((currentDeck) =>
+                  removeCommitment(currentDeck, pageIndex, commitmentIndex)
                 )
               }
             >
@@ -167,9 +167,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   setCommitmentField(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     commitmentIndex,
                     "title",
@@ -191,9 +191,9 @@ export function NextActionsEditorForm({
                 undefined
               }
               onChange={(event) =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   setCommitmentField(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     commitmentIndex,
                     "outcome",
@@ -216,9 +216,9 @@ export function NextActionsEditorForm({
                 ) || undefined
               }
               onChange={(event) =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   setCommitmentField(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     commitmentIndex,
                     "checkpoint",

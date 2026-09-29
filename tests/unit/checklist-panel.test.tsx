@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { ChecklistPanelView } from "@/components/stage/panels/checklist-panel"
-import type { ChecklistPanel } from "@/lib/week-document"
+import type { ChecklistPanel } from "@/lib/deck"
 
 const samplePanel: ChecklistPanel = {
   kind: "checklist",

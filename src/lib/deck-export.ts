@@ -5,7 +5,7 @@ import {
   type ExportPageDeps,
   type PageGateResult,
 } from "./export-page-gate"
-import type { WeekDocument, WeekPage } from "./week-document"
+import type { Deck, Page } from "./deck"
 
 export type SkippedExportPage = {
   pageId: string
@@ -18,7 +18,7 @@ export type FailedExportPage = {
 }
 
 export type BatchExportResult = {
-  monday: string
+  deckId: string
   selectedCount: number
   downloadsTriggered: number
   skipped: SkippedExportPage[]
@@ -27,8 +27,8 @@ export type BatchExportResult = {
   stopReason: string | null
 }
 
-export function exportFileName(monday: string, pageId: string): string {
-  return `${monday}-${pageId}.png`
+export function exportFileName(deckId: string, pageId: string): string {
+  return `${deckId}-${pageId}.png`
 }
 
 export type ExportVisiblePagesDeps = ExportPageDeps & {
@@ -44,20 +44,20 @@ type PageOutcome =
   | { kind: "failed"; reason: string }
 
 type BatchRun = {
-  monday: string
-  week: WeekDocument
+  deckId: string
+  deck: Deck
   deps: ExportVisiblePagesDeps
 }
 
 // 不會 reject：任何失敗都記入結果，已觸發的下載與略過頁面才能完整回報。
 export async function exportVisiblePages(
-  monday: string,
-  week: WeekDocument,
+  deckId: string,
+  deck: Deck,
   deps: ExportVisiblePagesDeps
 ): Promise<BatchExportResult> {
-  const pages = week.pages.filter((page) => !page.hidden)
+  const pages = deck.pages.filter((page) => !page.hidden)
   const outcome: BatchExportResult = {
-    monday,
+    deckId,
     selectedCount: pages.length,
     downloadsTriggered: 0,
     skipped: [],
@@ -73,7 +73,7 @@ export async function exportVisiblePages(
     return outcome
   }
 
-  const run: BatchRun = { monday, week, deps }
+  const run: BatchRun = { deckId, deck, deps }
   for (const page of pages) {
     if (deps.signal?.aborted) break
     const gateResult = await passPageThroughGate(run, page)
@@ -88,10 +88,10 @@ export async function exportVisiblePages(
 
 async function passPageThroughGate(
   run: BatchRun,
-  page: WeekPage
+  page: Page
 ): Promise<PageGateResult> {
   try {
-    return await exportPage(run.monday, run.week, page, run.deps)
+    return await exportPage(run.deckId, run.deck, page, run.deps)
   } catch (cause: unknown) {
     return { kind: "failed", cause }
   }
@@ -117,7 +117,7 @@ function triggerDownload(
   blob: Blob
 ): PageOutcome {
   try {
-    run.deps.download(blob, exportFileName(run.monday, pageId))
+    run.deps.download(blob, exportFileName(run.deckId, pageId))
     return { kind: "downloaded" }
   } catch (cause: unknown) {
     return {
@@ -144,7 +144,7 @@ function recordPageOutcome(
 }
 
 export function formatBatchExportResult(result: BatchExportResult): string {
-  const summary = `Export for ${result.monday}: Downloads triggered: ${result.downloadsTriggered}; Skipped: ${result.skipped.length}; Failed: ${result.failed ? 1 : 0}; Not attempted: ${result.notAttempted}.`
+  const summary = `Export for ${result.deckId}: Downloads triggered: ${result.downloadsTriggered}; Skipped: ${result.skipped.length}; Failed: ${result.failed ? 1 : 0}; Not attempted: ${result.notAttempted}.`
   const skipped = formatSkippedExportWarning(result.skipped)
   const details = [
     skipped,

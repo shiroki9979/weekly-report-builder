@@ -11,8 +11,8 @@ import { errorMessage } from "@/lib/error-message"
 import { exportPage } from "@/lib/export-page-gate"
 import { formatExportIssues } from "@/lib/export-readiness"
 import { summarizeExportResult, type ExportResult } from "@/lib/export-result"
-import type { WeekPage } from "@/lib/week-document"
-import { exportVisiblePages } from "@/lib/week-export"
+import type { Page } from "@/lib/deck"
+import { exportVisiblePages } from "@/lib/deck-export"
 
 type UseStageExportOptions = {
   operationSnapshot: () => SessionOperationSnapshot | null
@@ -95,18 +95,18 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
 
   const downloadVisiblePages =
     useCallback(async (): Promise<ExportCommandResult> => {
-      const started = start((snapshot) => snapshot.week)
+      const started = start((snapshot) => snapshot.deck)
       if (started.kind !== "started") {
         return started
       }
-      const { operation, target: week } = started
+      const { operation, target: deck } = started
 
       setExporting(true)
 
       try {
         const result = await exportVisiblePages(
-          operation.snapshot.monday,
-          week,
+          operation.snapshot.deckId,
+          deck,
           {
             adapter: browserCaptureAdapter,
             download: downloadBlob,
@@ -142,7 +142,7 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
         }
         setLastResult({
           kind: "copy",
-          monday: operation.snapshot.monday,
+          deckId: operation.snapshot.deckId,
           pageId: page.id,
           error: outcome.kind === "rejected" ? outcome.reason : null,
         })
@@ -163,10 +163,8 @@ export function useStageExport({ operationSnapshot }: UseStageExportOptions) {
   }
 }
 
-function selectedPage(
-  snapshot: SessionOperationSnapshot
-): WeekPage | undefined {
-  return snapshot.week.pages.find((page) => page.id === snapshot.selectedPageId)
+function selectedPage(snapshot: SessionOperationSnapshot): Page | undefined {
+  return snapshot.deck.pages.find((page) => page.id === snapshot.selectedPageId)
 }
 
 type CopyOutcome =
@@ -176,11 +174,11 @@ type CopyOutcome =
 
 async function copyPageImage(
   operation: ExportOperation,
-  page: WeekPage
+  page: Page
 ): Promise<CopyOutcome> {
   const result = await exportPage(
-    operation.snapshot.monday,
-    operation.snapshot.week,
+    operation.snapshot.deckId,
+    operation.snapshot.deck,
     page,
     {
       adapter: browserCaptureAdapter,

@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test"
 import { readFile, writeFile } from "node:fs/promises"
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
-test.beforeEach(() => resetE2eWeeks())
+test.beforeEach(() => resetE2eDecks())
 
 test("authors, saves, reloads, copies, and exports a measured Trend & Target page", async ({
   page,
@@ -358,7 +358,7 @@ test("clones dated evidence, maintains the window, confirms re-dating, and expor
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
   await page.getByRole("button", { name: "Create week" }).click()
-  await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
+  await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-09-07"
   )
   await page.getByRole("button", { name: "Edit", exact: true }).click()

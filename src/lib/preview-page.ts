@@ -1,5 +1,5 @@
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 
-export function getPreviewPage(week: WeekDocument) {
-  return week.pages.find((page) => !page.hidden) ?? week.pages[0]
+export function getPreviewPage(deck: Deck) {
+  return deck.pages.find((page) => !page.hidden) ?? deck.pages[0]
 }

@@ -1,7 +1,9 @@
 # Temporary files
 **/tmp/
 
-# Runtime authoring store — private weekly reports; seeded from tracked demo/
+# Runtime authoring store — private decks; seeded from tracked demo/.
+# /weeks/ is the pre-rename location; keep it ignored until seed:decks migrates it.
+/decks/
 /weeks/
 
 # Logs

@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { parseWeekDocument } from "@/lib/week-document"
-import { serializeWeekDocument } from "@/lib/weeks-io"
+import { parseDeck } from "@/lib/deck"
+import { serializeDeck } from "@/lib/decks-io"
 
 const twoColumnFixturePath = resolve(
   import.meta.dirname,
@@ -44,7 +44,7 @@ describe("parseWeekDocument", () => {
     }).pages
 
     it("reads legacy top-level start and end as the period", () => {
-      const deck = parseWeekDocument({
+      const deck = parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages,
@@ -56,7 +56,7 @@ describe("parseWeekDocument", () => {
     })
 
     it("reads a period object", () => {
-      const deck = parseWeekDocument({
+      const deck = parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages,
       })
@@ -65,16 +65,16 @@ describe("parseWeekDocument", () => {
     })
 
     it("allows a deck without a period", () => {
-      expect(parseWeekDocument({ pages })).not.toHaveProperty("period")
+      expect(parseDeck({ pages })).not.toHaveProperty("period")
     })
 
     it("serializes a legacy document in the period format", () => {
-      const deck = parseWeekDocument({
+      const deck = parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages,
       })
-      const json = JSON.parse(serializeWeekDocument(deck))
+      const json = JSON.parse(serializeDeck(deck))
 
       expect(json.period).toEqual({ start: "2026-08-24", end: "2026-08-28" })
       expect(json).not.toHaveProperty("start")
@@ -82,7 +82,7 @@ describe("parseWeekDocument", () => {
 
     it("rejects a document with both formats or an incomplete period", () => {
       expect(() =>
-        parseWeekDocument({
+        parseDeck({
           start: "2026-08-24",
           end: "2026-08-28",
           period: { start: "2026-08-24", end: "2026-08-28" },
@@ -90,12 +90,10 @@ describe("parseWeekDocument", () => {
         })
       ).toThrow(/either period or top-level start\/end/)
       expect(() =>
-        parseWeekDocument({ period: { start: "2026-08-24" }, pages })
+        parseDeck({ period: { start: "2026-08-24" }, pages })
       ).toThrow(/period\.end/)
-      expect(() => parseWeekDocument({ start: "2026-08-24", pages })).toThrow(
-        /end/
-      )
-      expect(() => parseWeekDocument({ period: "2026-08-24", pages })).toThrow(
+      expect(() => parseDeck({ start: "2026-08-24", pages })).toThrow(/end/)
+      expect(() => parseDeck({ period: "2026-08-24", pages })).toThrow(
         /period must be an object/
       )
     })
@@ -103,7 +101,7 @@ describe("parseWeekDocument", () => {
 
   it("parses the week fixture with two-column layout and table panel", () => {
     const raw = readFileSync(twoColumnFixturePath, "utf-8")
-    const week = parseWeekDocument(JSON.parse(raw))
+    const week = parseDeck(JSON.parse(raw))
 
     expect(week.period!.start).toBe("2026-08-24")
     expect(week.period!.end).toBe("2026-08-28")
@@ -137,7 +135,7 @@ describe("parseWeekDocument", () => {
 
   it("parses interleaved html pages among two-column pages", () => {
     const raw = readFileSync(interleavedHtmlFixturePath, "utf-8")
-    const week = parseWeekDocument(JSON.parse(raw))
+    const week = parseDeck(JSON.parse(raw))
 
     expect(week.period!.start).toBe("2026-08-31")
     expect(week.period!.end).toBe("2026-09-04")
@@ -167,12 +165,12 @@ describe("parseWeekDocument", () => {
 
   it("rejects documents without pages", () => {
     expect(() =>
-      parseWeekDocument({ start: "2026-08-24", end: "2026-08-28", pages: [] })
+      parseDeck({ start: "2026-08-24", end: "2026-08-28", pages: [] })
     ).toThrow(/pages/i)
   })
 
   it("parses html layout page without items or panel", () => {
-    const doc = parseWeekDocument({
+    const doc = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
@@ -205,7 +203,7 @@ describe("parseWeekDocument", () => {
   })
 
   it("preserves an unknown layout so the stage can warn and skip it", () => {
-    const doc = parseWeekDocument({
+    const doc = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
@@ -227,7 +225,7 @@ describe("parseWeekDocument", () => {
 
   it("rejects html layout page with missing or empty htmlFile", () => {
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
@@ -241,7 +239,7 @@ describe("parseWeekDocument", () => {
     ).toThrow(/htmlFile/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
@@ -258,7 +256,7 @@ describe("parseWeekDocument", () => {
 
   it("rejects a week document whose page ids are not unique", () => {
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
@@ -280,7 +278,7 @@ describe("parseWeekDocument", () => {
   })
 
   it("accepts custom non-pNN page ids when they are unique", () => {
-    const doc = parseWeekDocument({
+    const doc = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
@@ -296,14 +294,38 @@ describe("parseWeekDocument", () => {
     expect(doc.pages[0].id).toBe("escape-hatch")
   })
 
-  it("parses a weekly-overview page and strips extra nested fields", () => {
-    const doc = parseWeekDocument({
+  it("reads the legacy weekly-overview layout id as overview", () => {
+    const outcome = {
+      workstream: "Delivery",
+      figure: "5 days",
+      result: "Turnaround fell",
+      impact: "Same week",
+      status: { label: "On track", tone: "positive" },
+    }
+    const deck = parseDeck({
+      pages: [
+        {
+          id: "p01",
+          layout: "weekly-overview",
+          title: "Delivery recovered",
+          lead: outcome,
+          supporting: [outcome],
+        },
+      ],
+    })
+
+    expect(deck.pages[0].layout).toBe("overview")
+    expect(JSON.parse(serializeDeck(deck)).pages[0].layout).toBe("overview")
+  })
+
+  it("parses an overview page and strips extra nested fields", () => {
+    const doc = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
         {
           id: "p01",
-          layout: "weekly-overview",
+          layout: "overview",
           title: "Delivery recovered",
           extra: "drop-me",
           lead: {
@@ -333,7 +355,7 @@ describe("parseWeekDocument", () => {
 
     expect(doc.pages[0]).toEqual({
       id: "p01",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "Delivery recovered",
       lead: {
         workstream: "Delivery",
@@ -354,7 +376,7 @@ describe("parseWeekDocument", () => {
     })
   })
 
-  it("accepts a blank weekly-overview draft with one to three supporting outcomes", () => {
+  it("accepts a blank overview draft with one to three supporting outcomes", () => {
     const supporting = [
       {
         workstream: "",
@@ -372,13 +394,13 @@ describe("parseWeekDocument", () => {
       },
     ]
 
-    const doc = parseWeekDocument({
+    const doc = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       pages: [
         {
           id: "p01",
-          layout: "weekly-overview",
+          layout: "overview",
           title: "",
           lead: {
             workstream: "",
@@ -392,14 +414,14 @@ describe("parseWeekDocument", () => {
       ],
     })
 
-    expect(doc.pages[0].layout).toBe("weekly-overview")
-    if (doc.pages[0].layout !== "weekly-overview") {
-      throw new Error("expected weekly-overview")
+    expect(doc.pages[0].layout).toBe("overview")
+    if (doc.pages[0].layout !== "overview") {
+      throw new Error("expected overview")
     }
     expect(doc.pages[0].supporting).toHaveLength(2)
   })
 
-  it("rejects weekly-overview pages outside the supporting cardinality", () => {
+  it("rejects overview pages outside the supporting cardinality", () => {
     const blankOutcome = {
       workstream: "",
       figure: "",
@@ -409,13 +431,13 @@ describe("parseWeekDocument", () => {
     }
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
           {
             id: "p01",
-            layout: "weekly-overview",
+            layout: "overview",
             title: "",
             lead: blankOutcome,
             supporting: [],
@@ -425,13 +447,13 @@ describe("parseWeekDocument", () => {
     ).toThrow(/supporting/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
           {
             id: "p01",
-            layout: "weekly-overview",
+            layout: "overview",
             title: "",
             lead: blankOutcome,
             supporting: [
@@ -446,15 +468,15 @@ describe("parseWeekDocument", () => {
     ).toThrow(/supporting/i)
   })
 
-  it("rejects weekly-overview pages with an unknown status tone", () => {
+  it("rejects overview pages with an unknown status tone", () => {
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
           {
             id: "p01",
-            layout: "weekly-overview",
+            layout: "overview",
             title: "",
             lead: {
               workstream: "",
@@ -480,7 +502,7 @@ describe("parseWeekDocument", () => {
 
   it("rejects html layout page with invalid htmlFile paths", () => {
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
@@ -495,7 +517,7 @@ describe("parseWeekDocument", () => {
     ).toThrow(/htmlFile|traversal|path/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         start: "2026-08-24",
         end: "2026-08-28",
         pages: [
@@ -512,7 +534,7 @@ describe("parseWeekDocument", () => {
 
   it("rejects a chart panel whose series value is not a number", () => {
     expect(() =>
-      parseWeekDocument(
+      parseDeck(
         twoColumnWeekWithPanel({
           kind: "chart",
           title: "Latency",
@@ -532,14 +554,14 @@ describe("parseWeekDocument", () => {
     ]
 
     for (const panel of panels) {
-      expect(() => parseWeekDocument(twoColumnWeekWithPanel(panel))).toThrow(
+      expect(() => parseDeck(twoColumnWeekWithPanel(panel))).toThrow(
         /panel\.(categories|series|steps|items)/
       )
     }
   })
 
   it("parses optional showPageNumbers at the week root and showPageNumber on pages", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       showPageNumbers: false,
@@ -583,7 +605,7 @@ describe("parseWeekDocument", () => {
   })
 
   it("normalizes non-boolean showPageNumbers and showPageNumber as undefined", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       start: "2026-08-24",
       end: "2026-08-28",
       showPageNumbers: "invalid",

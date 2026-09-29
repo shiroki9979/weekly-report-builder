@@ -22,7 +22,7 @@ export function EditorialFrame({
         <div className="editorial-meta">
           <p className="editorial-eyebrow">{eyebrow}</p>
           {context.frameLabel ? (
-            <p className="editorial-week">{context.frameLabel}</p>
+            <p className="editorial-period">{context.frameLabel}</p>
           ) : null}
         </div>
         <h1 className="editorial-headline">{headline}</h1>

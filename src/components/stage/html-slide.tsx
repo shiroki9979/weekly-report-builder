@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
 
 import { preloadHtmlFragment, validateHtmlFileName } from "@/lib/html-page"
-import type { HtmlWeekPage } from "@/lib/week-document"
+import type { HtmlPage } from "@/lib/deck"
 
 export type HtmlSlideProps = {
-  page: HtmlWeekPage
+  page: HtmlPage
   documentId: string
   isCapture?: boolean
 }

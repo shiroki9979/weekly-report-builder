@@ -16,7 +16,7 @@ import {
   trendEndDate,
   UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import type { TrendTargetPage, WeeklyObservation } from "@/lib/week-document"
+import type { TrendTargetPage, TrendObservation } from "@/lib/deck"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
@@ -159,7 +159,7 @@ function chartGeometry(
 type ChartGeometry = ReturnType<typeof chartGeometry>
 
 function observationText(
-  entry: WeeklyObservation,
+  entry: TrendObservation,
   page: TrendTargetPage
 ): string {
   return entry.state === "measured"
@@ -214,7 +214,7 @@ function TrendMarker({
   isLatest,
   geometry,
 }: {
-  entry: WeeklyObservation
+  entry: TrendObservation
   index: number
   isLatest: boolean
   geometry: ChartGeometry

@@ -5,9 +5,9 @@ import {
   assertCanRemoveEntry,
   canAddEntry,
   CARDINALITY,
-  parseWeekDocument,
+  parseDeck,
   type Cardinality,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 describe("cardinality rules", () => {
   it("names the limit with a plural noun when it is more than one", () => {
@@ -22,7 +22,7 @@ describe("cardinality rules", () => {
   it("names the limit with a singular noun when it is exactly one", () => {
     expect(() =>
       assertCanRemoveEntry([1], CARDINALITY.supportingOutcomes)
-    ).toThrow("Weekly Overview must keep at least 1 supporting outcome")
+    ).toThrow("Overview must keep at least 1 supporting outcome")
   })
 
   it("uses the irregular plural a rule declares", () => {
@@ -49,7 +49,7 @@ describe("cardinality rules", () => {
 
   it("reports an exact Two-column item count in the parser error", () => {
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
@@ -61,6 +61,6 @@ describe("cardinality rules", () => {
           },
         ],
       })
-    ).toThrow("Invalid week document: pages[0].items must have 3 entries")
+    ).toThrow("Invalid deck: pages[0].items must have 3 entries")
   })
 })

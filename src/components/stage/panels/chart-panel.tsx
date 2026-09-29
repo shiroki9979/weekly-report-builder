@@ -1,5 +1,5 @@
 import { buildStackedBarSegments } from "@/lib/chart-stack"
-import type { ChartPanel } from "@/lib/week-document"
+import type { ChartPanel } from "@/lib/deck"
 
 type ChartPanelViewProps = {
   panel: ChartPanel

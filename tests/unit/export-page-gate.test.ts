@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest"
 
 import { exportPage, type CaptureAdapter } from "@/lib/export-page-gate"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
-import { exportVisiblePages } from "@/lib/week-export"
+import type { Deck } from "@/lib/deck"
+import { exportVisiblePages } from "@/lib/deck-export"
 
 import { completePage, week, fakeAdapter } from "./export-fixtures"
 
@@ -293,7 +293,7 @@ describe("single-page export gate", () => {
 
   it("blocks unsupported and Draft Pages before opening a session", async () => {
     const adapter = fakeAdapter()
-    const unsupportedWeek: WeekDocument = {
+    const unsupportedWeek: Deck = {
       ...week,
       pages: [{ id: "p04", layout: "future-layout", title: "Future" }],
     }
@@ -400,7 +400,7 @@ describe("single-page export gate", () => {
       htmlFile: "p04.html",
       hidden: true,
     }
-    const htmlWeek: WeekDocument = { ...week, pages: [...week.pages, htmlPage] }
+    const htmlWeek: Deck = { ...week, pages: [...week.pages, htmlPage] }
 
     expect(
       (await exportPage(DOCUMENT_ID, htmlWeek, htmlPage, { adapter })).kind

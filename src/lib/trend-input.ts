@@ -19,10 +19,10 @@ import {
   type Cardinality,
   hasEnteredObservations,
   isTrendTargetPage,
-  type WeeklyObservation,
+  type TrendObservation,
   type TrendTargetPage,
-  type WeekDocument,
-} from "./week-document"
+  type Deck,
+} from "./deck"
 
 export type TrendInputLocation = PageInputLocation<TrendInputPath>
 
@@ -30,7 +30,7 @@ export function trendStartInput(pageId: string): TrendInputLocation {
   return { pageId, path: "start" }
 }
 
-// readiness 以此 path 標記整個週次位置（例如 Unfilled），與該週數值的 Metric Input path 區分
+// readiness 以此 path 標記整個觀測位置（例如 Unfilled），與該位置數值的 Metric Input path 區分
 export function observationEntryPath(index: number): string {
   return `observations[${index}]`
 }
@@ -38,7 +38,7 @@ export function observationEntryPath(index: number): string {
 export type TrendEndpointAction =
   "prepend" | "append" | "remove-first" | "remove-last"
 
-function endpointAddsWeek(action: TrendEndpointAction): boolean {
+function endpointAddsPosition(action: TrendEndpointAction): boolean {
   return action === "prepend" || action === "append"
 }
 
@@ -48,18 +48,21 @@ type EntryGuard = {
 }
 
 // 按鈕可用性與實際增減共用同一組數量規則，UI 允許的操作不會在執行時被拒
-const ADD_WEEK: EntryGuard = { allows: canAddEntry, assert: assertCanAddEntry }
-const REMOVE_WEEK: EntryGuard = {
+const ADD_POSITION: EntryGuard = {
+  allows: canAddEntry,
+  assert: assertCanAddEntry,
+}
+const REMOVE_POSITION: EntryGuard = {
   allows: canRemoveEntry,
   assert: assertCanRemoveEntry,
 }
 
 function endpointGuard(action: TrendEndpointAction): EntryGuard {
-  return endpointAddsWeek(action) ? ADD_WEEK : REMOVE_WEEK
+  return endpointAddsPosition(action) ? ADD_POSITION : REMOVE_POSITION
 }
 
 export function canChangeTrendEndpoint(
-  observations: readonly WeeklyObservation[],
+  observations: readonly TrendObservation[],
   action: TrendEndpointAction
 ): boolean {
   return endpointGuard(action).allows(
@@ -69,7 +72,7 @@ export function canChangeTrendEndpoint(
 }
 
 export function assertTrendEndpointAllowed(
-  observations: readonly WeeklyObservation[],
+  observations: readonly TrendObservation[],
   action: TrendEndpointAction
 ): void {
   endpointGuard(action).assert(observations, CARDINALITY.trendObservations)
@@ -81,7 +84,7 @@ function isTrendInputPath(path: string): path is TrendInputPath {
   )
 }
 
-// null 代表該週已被移除，對應的 Metric Input 一併丟棄
+// null 代表該位置已被移除，對應的 Metric Input 一併丟棄
 const SHIFTED_INDEX: Record<
   TrendEndpointAction,
   (index: number, length: number) => number | null
@@ -203,11 +206,11 @@ export function hasInvalidTrendInput(
   )
 }
 
-export function weekHasInvalidTrendInputs(
-  week: WeekDocument,
+export function deckHasInvalidTrendInputs(
+  deck: Deck,
   inputs: MetricInputMap
 ): boolean {
-  return week.pages.some(
+  return deck.pages.some(
     (page) => isTrendTargetPage(page) && hasInvalidTrendInput(page, inputs)
   )
 }

@@ -4,14 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ThemeProvider } from "@/components/theme-provider"
 import { EMPTY_STORE_MESSAGE } from "@/components/workshop/empty-store-message"
 import { WorkshopShell } from "@/components/workshop/workshop-shell"
-import type { WeekDocument } from "@/lib/week-document"
-import type { WeekStore } from "@/lib/week-store"
-import { InMemoryWeekStore } from "./support/in-memory-week-store"
+import type { Deck } from "@/lib/deck"
+import type { DeckStore } from "@/lib/deck-store"
+import { InMemoryDeckStore } from "./support/in-memory-deck-store"
 import { stubWorkshopDom } from "./support/workshop-dom"
 
 const LATEST_MONDAY = "2026-01-12"
 
-function weekDocument(monday: string, title: string): WeekDocument {
+function weekDocument(monday: string, title: string): Deck {
   return {
     period: { start: monday, end: monday },
     pages: [
@@ -35,10 +35,10 @@ function weekDocument(monday: string, title: string): WeekDocument {
   }
 }
 
-function renderWorkshop(weekStore: WeekStore) {
+function renderWorkshop(deckStore: DeckStore) {
   return render(
     <ThemeProvider defaultTheme="light">
-      <WorkshopShell weekStore={weekStore} />
+      <WorkshopShell deckStore={deckStore} />
     </ThemeProvider>
   )
 }
@@ -57,7 +57,7 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("explains the empty weeks directory and does not offer first-week creation", async () => {
-    renderWorkshop(new InMemoryWeekStore())
+    renderWorkshop(new InMemoryDeckStore())
 
     await waitFor(() => {
       expect(screen.getAllByText(EMPTY_STORE_MESSAGE).length).toBeGreaterThan(0)
@@ -70,15 +70,15 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("keeps list failures in the error alert instead of the empty store", async () => {
-    const store = new InMemoryWeekStore()
-    store.listWeeks = async () => {
-      throw new Error("Failed to list week files (503)")
+    const store = new InMemoryDeckStore()
+    store.listDecks = async () => {
+      throw new Error("Failed to list deck files (503)")
     }
     renderWorkshop(store)
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Failed to list week files (503)"
+        "Failed to list deck files (503)"
       )
     })
 
@@ -87,7 +87,7 @@ describe("Workshop empty store vs list failure", () => {
 
   it("opens the latest listed week without a Create week empty-state", async () => {
     renderWorkshop(
-      new InMemoryWeekStore(
+      new InMemoryDeckStore(
         new Map([
           [LATEST_MONDAY, weekDocument(LATEST_MONDAY, "Harbor Grid latest")],
         ])

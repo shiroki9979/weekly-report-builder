@@ -26,27 +26,27 @@ import {
   useEditingSession,
   type LayoutEditorControls,
 } from "@/hooks/use-editing-session"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
-import type { WeekStore } from "@/lib/week-store"
+import type { Deck, Page } from "@/lib/deck"
+import type { DeckStore } from "@/lib/deck-store"
 import type { SessionLoadStatus } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
-import { setWeekShowPageNumbers } from "@/lib/week-editor"
+import { setDeckShowPageNumbers } from "@/lib/deck-editor"
 
 type PageSelection = {
   pageIndex: number
   pageId: string | null
   onSelect: (index: number) => void
-  onAdd: (page: WeekPage) => void
+  onAdd: (page: Page) => void
   onDelete: (pageId: string) => void
   onMove: (pageId: string, direction: PageMoveDirection) => void
 }
 
 type EditorSidebarProps = {
-  weeks: string[]
-  selectedMonday: string
-  onWeekChange: (monday: string) => void
-  week: WeekDocument | null
-  editContent: (update: (week: WeekDocument) => WeekDocument) => void
+  decks: string[]
+  selectedDeckId: string
+  onDeckChange: (deckId: string) => void
+  deck: Deck | null
+  editContent: (update: (deck: Deck) => Deck) => void
   layoutControls: LayoutEditorControls
   selection: PageSelection
   loadStatus: SessionLoadStatus
@@ -90,12 +90,12 @@ function SidebarModeHeader({
   )
 }
 
-/** 週次切換時以 key remount，editMode 自動回到鎖定 */
+/** 切換 Deck 時以 key remount，editMode 自動回到鎖定 */
 function EditorSidebar({
-  weeks,
-  selectedMonday,
-  onWeekChange,
-  week,
+  decks,
+  selectedDeckId,
+  onDeckChange,
+  deck,
   editContent,
   layoutControls,
   selection,
@@ -105,14 +105,14 @@ function EditorSidebar({
 }: EditorSidebarProps) {
   const [editMode, setEditMode] = useState(false)
   const loading = loadStatus.kind === "loading"
-  const editable = !loading && week !== null && editMode
+  const editable = !loading && deck !== null && editMode
 
   return (
     <ScrollArea className="h-full min-w-0">
       <div className="space-y-4 p-4">
         <SidebarModeHeader
           editMode={editMode}
-          disabled={loading || !week}
+          disabled={loading || !deck}
           onToggle={() => setEditMode((current) => !current)}
         />
 
@@ -123,34 +123,34 @@ function EditorSidebar({
           </p>
         ) : (
           <WorkshopToolbar
-            weeks={weeks}
-            selectedMonday={selectedMonday}
-            onWeekChange={onWeekChange}
-            weekSelectDisabled={loading}
+            decks={decks}
+            selectedDeckId={selectedDeckId}
+            onDeckChange={onDeckChange}
+            deckSelectDisabled={loading}
             save={{ ...save, disabled: !editable }}
             create={{
               ...create,
               disabled: loading || create.creating || !editMode,
             }}
             pageNumbers={{
-              show: week?.showPageNumbers ?? true,
+              show: deck?.showPageNumbers ?? true,
               disabled: !editable,
               onChange: (show) =>
-                editContent((current) => setWeekShowPageNumbers(current, show)),
+                editContent((current) => setDeckShowPageNumbers(current, show)),
             }}
           />
         )}
 
-        {week ? (
+        {deck ? (
           <>
             <PagePicker
-              week={week}
+              deck={deck}
               selectedPageIndex={selection.pageIndex}
               onSelect={selection.onSelect}
             />
             {selection.pageId ? (
               <PageLifecycleControls
-                week={week}
+                deck={deck}
                 selectedPageId={selection.pageId}
                 onAdd={selection.onAdd}
                 onDelete={selection.onDelete}
@@ -160,7 +160,7 @@ function EditorSidebar({
             ) : null}
             <Separator />
             <PageEditorForm
-              week={week}
+              deck={deck}
               pageIndex={selection.pageIndex}
               onChange={editContent}
               layoutControls={layoutControls}
@@ -174,22 +174,22 @@ function EditorSidebar({
 }
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
-export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
-  const session = useEditingSession(weekStore)
-  const { week, loadStatus, selectedPageIndex, setSelectedPageIndex } = session
+export function WorkshopShell({ deckStore }: { deckStore: DeckStore }) {
+  const session = useEditingSession(deckStore)
+  const { deck, loadStatus, selectedPageIndex, setSelectedPageIndex } = session
   const editorPanel = useCollapsiblePanel()
 
   usePageKeyboardNav({
-    pageCount: week?.pages.length ?? 0,
+    pageCount: deck?.pages.length ?? 0,
     selectedPageIndex,
     onSelect: setSelectedPageIndex,
-    enabled: loadStatus.kind !== "loading" && week !== null,
+    enabled: loadStatus.kind !== "loading" && deck !== null,
   })
 
   return (
     <div className="flex h-svh min-h-0 flex-col bg-background">
       <WorkshopHeader
-        week={week}
+        deck={deck}
         editorCollapsed={editorPanel.collapsed}
         onToggleEditor={editorPanel.toggle}
       />
@@ -209,11 +209,11 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
           onResize={editorPanel.syncCollapsed}
         >
           <EditorSidebar
-            key={session.selectedMonday}
-            weeks={session.weeks}
-            selectedMonday={session.selectedMonday}
-            onWeekChange={session.setSelectedMonday}
-            week={week}
+            key={session.selectedDeckId}
+            decks={session.decks}
+            selectedDeckId={session.selectedDeckId}
+            onDeckChange={session.selectDeck}
+            deck={deck}
             editContent={session.editContent}
             layoutControls={session.layoutControls}
             selection={{
@@ -229,7 +229,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
               saving: session.save.saving,
               message: session.save.message,
               error: session.save.error,
-              onSave: () => void session.save.saveWeek(),
+              onSave: () => void session.save.saveDeck(),
             }}
             create={{
               creating: session.create.creating,
@@ -249,8 +249,8 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
           groupResizeBehavior="preserve-relative-size"
         >
           <WorkshopPreview
-            documentId={session.selectedMonday}
-            week={week}
+            documentId={session.selectedDeckId}
+            deck={deck}
             selectedPageIndex={selectedPageIndex}
             onSelectPage={setSelectedPageIndex}
             loadStatus={loadStatus}

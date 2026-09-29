@@ -7,32 +7,32 @@ import type { IncomingMessage, ServerResponse } from "node:http"
 import type { Plugin, Connect } from "vite"
 import { defineConfig } from "vite"
 
-import { parseWeekDocument } from "./src/lib/week-document"
+import { parseDeck } from "./src/lib/deck"
 import { validateHtmlFileName } from "./src/lib/html-page"
 import { DECK_ID_SOURCE, isDeckId } from "./src/lib/deck-id"
 import {
-  listWeeksInDirectory,
-  writeWeekFile,
+  listDecksInDirectory,
+  writeDeckFile,
   createWeekFromPrevious,
-  WeekAlreadyExistsError,
-} from "./server/weeks-store"
+  DeckAlreadyExistsError,
+} from "./server/decks-store"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-const weeksDir = path.resolve(
-  process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
+const decksDir = path.resolve(
+  process.env.DECKS_DIR ?? path.resolve(rootDir, "decks")
 )
-const WEEK_API_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})$`)
-const WEEK_JSON_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE}\\.json)$`)
-const WEEK_HTML_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})/([^/]+)$`)
+const DECK_API_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})$`)
+const DECK_JSON_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE}\\.json)$`)
+const DECK_HTML_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})/([^/]+)$`)
 
-function copyInitializedWeeksForProductionBuild(
+function copyInitializedDecksForProductionBuild(
   sourceDir: string,
   outputDir: string
 ): void {
-  // 只複製已存在的 runtime store；安裝仍只走 seedWeeksFromDemo，build 不隱含 seed
+  // 只複製已存在的 runtime store；安裝仍只走 seedDecksFromDemo，build 不隱含 seed
   if (!fs.existsSync(sourceDir)) {
     throw new Error(
-      `Runtime weeks store is missing at ${sourceDir}. Run \`pnpm seed:weeks\` before building; production build does not seed or create weeks/.`
+      `Runtime decks store is missing at ${sourceDir}. Run \`pnpm seed:decks\` before building; production build does not seed or create decks/.`
     )
   }
 
@@ -82,7 +82,7 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
   res.end(JSON.stringify(payload))
 }
 
-function weeksApiMiddleware(
+function decksApiMiddleware(
   req: Connect.IncomingMessage,
   res: ServerResponse,
   next: Connect.NextFunction
@@ -95,28 +95,28 @@ function weeksApiMiddleware(
       return
     }
 
-    sendJson(res, 200, { weeks: listWeeksInDirectory(weeksDir) })
+    sendJson(res, 200, { decks: listDecksInDirectory(decksDir) })
     return
   }
 
-  const match = WEEK_API_ROUTE.exec(url)
+  const match = DECK_API_ROUTE.exec(url)
   if (!match) {
     next()
     return
   }
 
-  const monday = match[1]
+  const deckId = match[1]
 
   if (req.method === "PUT") {
     void readRequestBody(req)
       .then((body) => {
-        const week = parseWeekDocument(JSON.parse(body))
-        writeWeekFile(weeksDir, monday, week)
+        const deck = parseDeck(JSON.parse(body))
+        writeDeckFile(decksDir, deckId, deck)
         sendJson(res, 200, { ok: true })
       })
       .catch((error: unknown) => {
         const message =
-          error instanceof Error ? error.message : "Failed to save week file"
+          error instanceof Error ? error.message : "Failed to save deck file"
         sendJson(res, 400, { error: message })
       })
     return
@@ -124,12 +124,12 @@ function weeksApiMiddleware(
 
   if (req.method === "POST") {
     try {
-      const week = createWeekFromPrevious(weeksDir, monday)
-      sendJson(res, 201, { week })
+      const deck = createWeekFromPrevious(decksDir, deckId)
+      sendJson(res, 201, { deck })
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to create week file"
-      const status = error instanceof WeekAlreadyExistsError ? 409 : 400
+      const status = error instanceof DeckAlreadyExistsError ? 409 : 400
       sendJson(res, status, { error: message })
     }
     return
@@ -143,9 +143,9 @@ function sendNotFound(res: ServerResponse): void {
   res.end("Not found")
 }
 
-function serveWeekJson(fileName: string, res: ServerResponse): boolean {
-  const filePath = path.resolve(weeksDir, fileName)
-  if (!filePath.startsWith(weeksDir) || !fs.existsSync(filePath)) {
+function serveDeckJson(fileName: string, res: ServerResponse): boolean {
+  const filePath = path.resolve(decksDir, fileName)
+  if (!filePath.startsWith(decksDir) || !fs.existsSync(filePath)) {
     return false
   }
 
@@ -154,8 +154,8 @@ function serveWeekJson(fileName: string, res: ServerResponse): boolean {
   return true
 }
 
-function serveWeekHtml(
-  monday: string,
+function serveDeckHtml(
+  deckId: string,
   htmlFile: string,
   res: ServerResponse
 ): void {
@@ -166,10 +166,10 @@ function serveWeekHtml(
     return
   }
 
-  const mondayDir = path.resolve(weeksDir, monday)
-  const filePath = path.resolve(mondayDir, htmlFile)
+  const deckDir = path.resolve(decksDir, deckId)
+  const filePath = path.resolve(deckDir, htmlFile)
   if (
-    !filePath.startsWith(mondayDir) ||
+    !filePath.startsWith(deckDir) ||
     !fs.existsSync(filePath) ||
     !fs.statSync(filePath).isFile()
   ) {
@@ -181,56 +181,56 @@ function serveWeekHtml(
   fs.createReadStream(filePath).pipe(res)
 }
 
-function weeksStaticMiddleware(
+function decksStaticMiddleware(
   req: Connect.IncomingMessage,
   res: ServerResponse,
   next: Connect.NextFunction
 ): void {
   const requestPath = req.url?.split("?")[0] ?? ""
 
-  const jsonMatch = WEEK_JSON_ROUTE.exec(requestPath)
+  const jsonMatch = DECK_JSON_ROUTE.exec(requestPath)
   if (jsonMatch) {
-    if (!serveWeekJson(jsonMatch[1], res)) {
+    if (!serveDeckJson(jsonMatch[1], res)) {
       next()
     }
     return
   }
 
-  const htmlMatch = WEEK_HTML_ROUTE.exec(requestPath)
+  const htmlMatch = DECK_HTML_ROUTE.exec(requestPath)
   if (htmlMatch) {
-    serveWeekHtml(htmlMatch[1], htmlMatch[2], res)
+    serveDeckHtml(htmlMatch[1], htmlMatch[2], res)
     return
   }
 
   next()
 }
 
-function weeksStaticPlugin(): Plugin {
+function decksStaticPlugin(): Plugin {
   return {
-    name: "weeks-static",
+    name: "decks-static",
     configureServer(server) {
-      // 監聽週報目錄中的 HTML 檔案變更，使外部編輯器存檔時能立即觸發瀏覽器完整重新載入更新預覽
-      server.watcher.add(path.resolve(weeksDir, "**/*.html"))
+      // 監聽 Deck 目錄中的 HTML 檔案變更，使外部編輯器存檔時能立即觸發瀏覽器完整重新載入更新預覽
+      server.watcher.add(path.resolve(decksDir, "**/*.html"))
       server.watcher.on("change", (file) => {
-        if (file.startsWith(weeksDir) && file.endsWith(".html")) {
+        if (file.startsWith(decksDir) && file.endsWith(".html")) {
           server.ws.send({ type: "full-reload" })
         }
       })
 
-      server.middlewares.use("/api/weeks", weeksApiMiddleware)
-      server.middlewares.use("/weeks", weeksStaticMiddleware)
+      server.middlewares.use("/api/decks", decksApiMiddleware)
+      server.middlewares.use("/decks", decksStaticMiddleware)
     },
     closeBundle() {
-      copyInitializedWeeksForProductionBuild(
-        weeksDir,
-        path.resolve(rootDir, "dist/weeks")
+      copyInitializedDecksForProductionBuild(
+        decksDir,
+        path.resolve(rootDir, "dist/decks")
       )
     },
   }
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), weeksStaticPlugin()],
+  plugins: [react(), tailwindcss(), decksStaticPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(rootDir, "./src"),

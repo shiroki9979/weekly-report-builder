@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 async function unlockEditor(page: Page) {
@@ -12,7 +12,7 @@ async function unlockEditor(page: Page) {
 
 async function openDecisionWeek(page: Page) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-10" }).click()
   await expect(
     page.getByRole("heading", {
@@ -102,7 +102,7 @@ test("adds, saves, and reloads an evidence-backed decision draft", async ({
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
   await page.reload()
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-10" }).click()
   await unlockEditor(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
