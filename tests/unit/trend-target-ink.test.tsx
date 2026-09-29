@@ -29,7 +29,8 @@ const page: TrendTargetPage = {
     unitSpacing: "space",
     precision: 1,
   },
-  startMonday: "2026-07-06",
+  cadence: "week",
+  start: "2026-07-06",
   observations: [
     { state: "measured", value: 9.2 },
     { state: "missing" },

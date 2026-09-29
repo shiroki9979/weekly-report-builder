@@ -1,5 +1,9 @@
 import { validateHtmlFileName } from "./html-page"
-import { isTrendDirection, trendDatingError } from "./trend-target"
+import {
+  isTrendCadence,
+  isTrendDirection,
+  trendDatingError,
+} from "./trend-target"
 
 export type SlideItem = {
   heading: string
@@ -192,6 +196,8 @@ export type WeeklyObservation =
   | { state: "missing" }
   | { state: "unfilled" }
 
+export type TrendCadence = "week" | "month"
+
 export type TrendTargetPage = WeekPageChrome & {
   id: string
   layout: "trend-target"
@@ -200,7 +206,9 @@ export type TrendTargetPage = WeekPageChrome & {
     ComparisonMetric,
     "label" | "unit" | "unitPosition" | "unitSpacing" | "precision"
   >
-  startMonday: string | null
+  cadence: TrendCadence
+  // 第一個觀測週期的起點：week 為週一，month 為當月 1 日
+  start: string | null
   observations: WeeklyObservation[]
   target: number | null
   direction: "at-most" | "at-least"
@@ -285,7 +293,7 @@ export function isTrendTargetPage(page: WeekPage): page is TrendTargetPage {
 
 export type UnmeasuredState = Exclude<WeeklyObservation["state"], "measured">
 
-// 已輸入（Measured 或 Missing）的週次都掛在起始週一上，決定日期能否清空或需確認才能改
+// 已輸入（Measured 或 Missing）的觀測都掛在起點上，決定日期能否清空、cadence 能否切換或需確認才能改
 export function hasEnteredObservations(
   observations: readonly WeeklyObservation[]
 ): boolean {
@@ -946,12 +954,13 @@ function parseTrendTargetPage(
   chrome: ParsedPageChrome,
   field: string
 ): TrendTargetPage {
-  const startMonday = parseStartMonday(value.startMonday, field)
+  const { cadence, start } = parseTrendDating(value, field)
   const observations = parseWeeklyObservations(value.observations, field)
-  assertTrendDating({ startMonday, observations }, field)
+  assertTrendDating({ cadence, start, observations }, field)
   return withChrome(chrome, "trend-target", {
     metric: parseTrendMetric(value.metric, `${field}.metric`),
-    startMonday,
+    cadence,
+    start,
     observations,
     target:
       value.target === null
@@ -989,10 +998,35 @@ function parseTrendDirection(
   return direction
 }
 
-function parseStartMonday(value: unknown, field: string): string | null {
+// 舊文件只有 startMonday、沒有 cadence：讀成每週序列；存檔後改寫為 cadence + start
+function parseTrendDating(
+  value: Record<string, unknown>,
+  field: string
+): Pick<TrendTargetPage, "cadence" | "start"> {
+  if (value.startMonday !== undefined) {
+    if (value.start !== undefined || value.cadence !== undefined)
+      throw new Error(
+        `Invalid week document: ${field} uses either startMonday or cadence/start, not both`
+      )
+    return {
+      cadence: "week",
+      start: parseTrendStart(value.startMonday, `${field}.startMonday`),
+    }
+  }
+  if (!isTrendCadence(value.cadence))
+    throw new Error(
+      `Invalid week document: ${field}.cadence must be week or month`
+    )
+  return {
+    cadence: value.cadence,
+    start: parseTrendStart(value.start, `${field}.start`),
+  }
+}
+
+function parseTrendStart(value: unknown, field: string): string | null {
   if (value === null) return null
   if (typeof value !== "string")
-    throw new Error(`Invalid week document: ${field}.startMonday`)
+    throw new Error(`Invalid week document: ${field}`)
   return value
 }
 
@@ -1031,19 +1065,20 @@ function parseWeeklyObservation(
 
 function assertTrendDating(
   {
-    startMonday,
+    cadence,
+    start,
     observations,
-  }: Pick<TrendTargetPage, "startMonday" | "observations">,
+  }: Pick<TrendTargetPage, "cadence" | "start" | "observations">,
   field: string
 ): void {
-  if (startMonday === null) {
+  if (start === null) {
     if (hasEnteredObservations(observations))
       throw new Error(
-        `Invalid week document: ${field}.startMonday is required for entered observations`
+        `Invalid week document: ${field}.start is required for entered observations`
       )
     return
   }
-  const datingError = trendDatingError(startMonday, observations.length)
+  const datingError = trendDatingError(cadence, start, observations.length)
   if (datingError)
     throw new Error(
       `Invalid week document: ${field}.${datingError.path}: ${datingError.message}`

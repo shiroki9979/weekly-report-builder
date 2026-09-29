@@ -493,7 +493,7 @@ export function sessionReadiness(
   return isStructuredWeekPage(page)
     ? assessContentReadiness(page, {
         metricInput: session.metricInput,
-        reportingMonday: session.week?.period?.start,
+        asOf: session.week?.period?.end,
       })
     : []
 }

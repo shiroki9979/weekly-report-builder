@@ -7,12 +7,13 @@ import {
   exactTrendValue,
   formatTrendTarget,
   formatTrendValue,
-  observationMonday,
+  observationDate,
   TARGET_NOT_SET,
   targetMet,
   trendBounds,
   trendDirectionRule,
-  trendEndMonday,
+  trendCadenceRule,
+  trendEndDate,
   UNMEASURED_COPY,
 } from "@/lib/trend-target"
 import type { TrendTargetPage, WeeklyObservation } from "@/lib/week-document"
@@ -43,7 +44,7 @@ const MISSING_MARK_LIFT = 3
 const LATEST_POINT_RADIUS = 6
 const POINT_RADIUS = 4
 // 超過此週數時改為隔週標日期，避免日期標籤互相重疊
-const DENSE_X_AXIS_WEEKS = 8
+const DENSE_X_AXIS_POSITIONS = 8
 // 科學記號保留四位有效數字；跨度不到 1% 時改以 offset 顯示差值，避免刻度捨入後相同。
 const NARROW_RANGE_RATIO = 1e-2
 const OFFSET_TICK_DIGITS = 3
@@ -72,7 +73,7 @@ const SVG_STYLE = {
   missing: { fill: SVG_INK.mute, fontSize: 20, fontWeight: 700 },
 } as const
 
-function latestWeekStatus(page: TrendTargetPage): string {
+function latestStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
   if (!latest) return UNMEASURED_COPY.unfilled.latestStatus
   if (latest.state !== "measured")
@@ -103,12 +104,6 @@ function axisLabel(value: number, offset: number): string {
   return plain.length <= MAX_PLAIN_TICK_CHARS
     ? plain
     : rounded.toExponential(SCIENTIFIC_TICK_DECIMALS)
-}
-
-// 軸上空間只夠放月／日，年份由下方的 Observed weeks 範圍交代
-function monthDayLabel(monday: string): string {
-  const [, month, day] = monday.split("-")
-  return `${month}/${day}`
 }
 
 function axisOffsetFor([minimum, maximum]: [number, number]): number {
@@ -173,12 +168,12 @@ function observationText(
 }
 
 function trendDescription(page: TrendTargetPage): string {
-  const { startMonday } = page
-  if (!startMonday) return "Starting Monday not set"
+  const { cadence, start } = page
+  if (!start) return `${trendCadenceRule(cadence).startLabel} not set`
   return page.observations
     .map(
       (entry, index) =>
-        `${observationMonday(startMonday, index)}: ${observationText(entry, page)}`
+        `${observationDate(cadence, start, index)}: ${observationText(entry, page)}`
     )
     .join("; ")
 }
@@ -288,7 +283,9 @@ function TrendSeries({
 }
 
 function showsDateLabel(index: number, length: number): boolean {
-  return length <= DENSE_X_AXIS_WEEKS || index % 2 === 0 || index === length - 1
+  return (
+    length <= DENSE_X_AXIS_POSITIONS || index % 2 === 0 || index === length - 1
+  )
 }
 
 function TrendXAxis({
@@ -298,12 +295,13 @@ function TrendXAxis({
   page: TrendTargetPage
   geometry: ChartGeometry
 }) {
-  const { startMonday } = page
-  if (!startMonday) return null
+  const { cadence, start } = page
+  if (!start) return null
+  const rule = trendCadenceRule(cadence)
   return page.observations.map((_, index) => {
-    const monday = observationMonday(startMonday, index)
+    const date = observationDate(cadence, start, index)
     return (
-      <g key={monday}>
+      <g key={date}>
         <line
           className="editorial-trend-grid"
           {...SVG_STYLE.grid}
@@ -320,7 +318,7 @@ function TrendXAxis({
             y={geometry.bottom + X_LABEL_OFFSET}
             textAnchor="middle"
           >
-            {monthDayLabel(monday)}
+            {rule.axisLabel(date)}
           </text>
         ) : null}
       </g>
@@ -390,7 +388,9 @@ function TrendPlot({
         role="img"
         aria-label={`${metricCaption(page)}; ${targetLabel}`}
       >
-        <title>{metricCaption(page)} by week</title>
+        <title>
+          {metricCaption(page)} by {trendCadenceRule(page.cadence).noun}
+        </title>
         <desc>
           {trendDescription(page)}; {targetLabel}
         </desc>
@@ -423,8 +423,8 @@ function TrendLegend({
         ) : null}
       </div>
       <p className="editorial-trend-range">
-        Observed weeks: {page.startMonday ?? "—"} –{" "}
-        {trendEndMonday(page) ?? "—"}
+        Observed {trendCadenceRule(page.cadence).noun}s: {page.start ?? "—"} –{" "}
+        {trendEndDate(page) ?? "—"}
       </p>
     </>
   )
@@ -463,24 +463,25 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
 
 function TrendSummary({ page }: { page: TrendTargetPage }) {
   const latest = page.observations.at(-1)
+  const rule = trendCadenceRule(page.cadence)
   return (
     <section
       className="editorial-trend-summary"
-      aria-label="Latest week and target"
+      aria-label={`Latest ${rule.noun} and target`}
     >
       <div>
         <p className="editorial-trend-label">
-          Latest week · {trendEndMonday(page) ?? "—"}
+          Latest {rule.noun} · {trendEndDate(page) ?? "—"}
         </p>
         <p className="editorial-trend-value">
           {latest?.state === "measured"
             ? formatTrendValue(latest.value, page)
             : "—"}
         </p>
-        <p className="editorial-trend-status">{latestWeekStatus(page)}</p>
+        <p className="editorial-trend-status">{latestStatus(page)}</p>
       </div>
       <div>
-        <p className="editorial-trend-label">Weekly target</p>
+        <p className="editorial-trend-label">{rule.adjective} target</p>
         <p className="editorial-trend-value">
           {formatTrendTarget(page) ?? "—"}
         </p>

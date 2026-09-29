@@ -1,7 +1,15 @@
-import type { TrendTargetPage, UnmeasuredState } from "./week-document"
+import type {
+  TrendCadence,
+  TrendTargetPage,
+  UnmeasuredState,
+} from "./week-document"
 import { errorMessage } from "./error-message"
 import { withUnit } from "./unit-format"
-import { isCalendarMonday, isMondayId } from "./week-id"
+import {
+  isCalendarMonday,
+  isFirstOfMonth,
+  isIsoDateText,
+} from "./calendar-date"
 
 const DAYS_PER_WEEK = 7
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
@@ -9,24 +17,101 @@ const AXIS_PADDING_RATIO = 0.1
 // 所有值相同時沒有自然範圍，至少撐開 1 個單位才畫得出刻度
 const FLAT_SERIES_MIN_PADDING = 1
 
-export function observationMonday(start: string, index: number): string {
+const MONTH_ABBREVIATIONS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+]
+
+type TrendCadenceRule = {
+  // 名詞與形容詞用於編輯器與投影片文案，例如 Add later week、Monthly target
+  noun: string
+  adjective: string
+  startLabel: string
+  startHint: string
+  isPeriodStart: (value: string) => boolean
+  advance: (date: Date, periods: number) => void
+  axisLabel: (date: string) => string
+}
+
+// cadence 的日期規則與文案集中一處；parser、編輯器、readiness 與投影片都從這裡取
+const TREND_CADENCE_RULES: Record<TrendCadence, TrendCadenceRule> = {
+  week: {
+    noun: "week",
+    adjective: "Weekly",
+    startLabel: "Starting Monday",
+    startHint: "Starting Monday must be a real calendar Monday",
+    isPeriodStart: isCalendarMonday,
+    advance: (date, periods) =>
+      date.setUTCDate(date.getUTCDate() + DAYS_PER_WEEK * periods),
+    // 軸上空間只夠放月／日，年份由下方的觀測範圍交代
+    axisLabel: (date) => {
+      const [, month, day] = date.split("-")
+      return `${month}/${day}`
+    },
+  },
+  month: {
+    noun: "month",
+    adjective: "Monthly",
+    startLabel: "Starting month",
+    startHint: "Starting month must be the first day of a calendar month",
+    isPeriodStart: isFirstOfMonth,
+    // 起點固定是 1 日，逐月前進不會遇到月底進位
+    advance: (date, periods) => date.setUTCMonth(date.getUTCMonth() + periods),
+    // YYYY-MM 在圖框右緣會被裁切；只放月份縮寫，年份由下方的觀測範圍交代
+    axisLabel: (date) => MONTH_ABBREVIATIONS[Number(date.slice(5, 7)) - 1],
+  },
+}
+
+export const TREND_CADENCES = Object.keys(TREND_CADENCE_RULES) as TrendCadence[]
+
+export function isTrendCadence(value: unknown): value is TrendCadence {
+  return typeof value === "string" && Object.hasOwn(TREND_CADENCE_RULES, value)
+}
+
+export function trendCadenceRule(cadence: TrendCadence): TrendCadenceRule {
+  return TREND_CADENCE_RULES[cadence]
+}
+
+export function observationDate(
+  cadence: TrendCadence,
+  start: string,
+  index: number
+): string {
   const date = new Date(`${start}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() + DAYS_PER_WEEK * index)
+  trendCadenceRule(cadence).advance(date, index)
   const value = date.toISOString().slice(0, 10)
-  // 超出四位數年份時 toISOString 會改用 ±YYYYYY 格式，不再是合法的週一 id
-  if (!isMondayId(value))
+  // 超出四位數年份時 toISOString 會改用 ±YYYYYY 格式，不再是合法的 ISO 日期
+  if (!isIsoDateText(value))
     throw new Error("Trend range exceeds supported ISO dates")
   return value
 }
 
 // 超出 ISO 日期範圍時拋錯，呼叫端可藉此驗證整段區間都能標日期
-export function trendRangeEnd(start: string, length: number): string {
-  return observationMonday(start, length - 1)
+export function trendRangeEnd(
+  cadence: TrendCadence,
+  start: string,
+  length: number
+): string {
+  return observationDate(cadence, start, length - 1)
 }
 
-function trendRangeError(start: string, length: number): string | null {
+function trendRangeError(
+  cadence: TrendCadence,
+  start: string,
+  length: number
+): string | null {
   try {
-    trendRangeEnd(start, length)
+    trendRangeEnd(cadence, start, length)
     return null
   } catch (cause) {
     return errorMessage(cause, "Trend range cannot be dated")
@@ -34,28 +119,40 @@ function trendRangeError(start: string, length: number): string | null {
 }
 
 type TrendDatingError = {
-  path: "startMonday" | "observations"
+  path: "start" | "observations"
   message: string
 }
 
-// 起始週一須是真實週一，且整段區間都能標上 ISO 日期；parser、編輯中的輸入與 readiness 共用同一套檢查
+// 起點須是該 cadence 的真實週期起點，且整段區間都能標上 ISO 日期；parser、編輯中的輸入與 readiness 共用同一套檢查
 export function trendDatingError(
+  cadence: TrendCadence,
   start: string,
   length: number
 ): TrendDatingError | null {
-  if (!isCalendarMonday(start))
-    return {
-      path: "startMonday",
-      message: "Starting Monday must be a real calendar Monday",
-    }
-  const rangeError = trendRangeError(start, length)
+  const rule = trendCadenceRule(cadence)
+  if (!rule.isPeriodStart(start))
+    return { path: "start", message: rule.startHint }
+  const rangeError = trendRangeError(cadence, start, length)
   return rangeError ? { path: "observations", message: rangeError } : null
 }
 
-export function trendEndMonday(page: TrendTargetPage): string | null {
-  return page.startMonday
-    ? trendRangeEnd(page.startMonday, page.observations.length)
+export function trendEndDate(page: TrendTargetPage): string | null {
+  return page.start
+    ? trendRangeEnd(page.cadence, page.start, page.observations.length)
     : null
+}
+
+// 切換 cadence 時把起點對齊新週期：週 → 該月 1 日；月 → 當天或之後的第一個週一
+export function alignTrendStart(
+  cadence: TrendCadence,
+  start: string | null
+): string | null {
+  if (start === null) return null
+  if (cadence === "month") return `${start.slice(0, 7)}-01`
+  const date = new Date(`${start}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + ((8 - date.getUTCDay()) % 7))
+  const value = date.toISOString().slice(0, 10)
+  return isIsoDateText(value) ? value : null
 }
 
 // toFixed 會把 -0.04 印成 "-0.0"；投影片與比較邏輯都須以正規化後的字串為準

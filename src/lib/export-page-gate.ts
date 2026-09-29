@@ -47,7 +47,7 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
-// 同一頁的 preflight 與量測後判定須用同一份 Metric Input 與報告週一，在入口組好一次
+// 同一頁的 preflight 與量測後判定須用同一份 Metric Input 與期間終點，在入口組好一次
 type GateDeps = ExportPageDeps & { readiness: ReadinessContext }
 
 type PhaseLimit = { phase: string; timeoutMs: number }
@@ -81,7 +81,7 @@ export async function exportPage(
     ...deps,
     readiness: {
       metricInput: deps.metricInput,
-      reportingMonday: week.period?.start,
+      asOf: week.period?.end,
     },
   }
   const readinessIssues = preflightIssues(page, gateDeps.readiness)

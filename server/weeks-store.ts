@@ -9,7 +9,7 @@ import {
   type WeekDocument,
 } from "../src/lib/week-document"
 import { isDeckId } from "../src/lib/deck-id"
-import { isCalendarMonday } from "../src/lib/week-id"
+import { isCalendarMonday } from "../src/lib/calendar-date"
 import { latestWeekMonday, weekRangeForMonday } from "../src/lib/weekly-series"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 

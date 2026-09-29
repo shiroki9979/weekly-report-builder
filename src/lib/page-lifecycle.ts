@@ -169,7 +169,8 @@ export function createBlankTrendTargetPage(id: string): TrendTargetPage {
       unitSpacing: "space",
       precision: 1,
     },
-    startMonday: null,
+    cadence: "week",
+    start: null,
     observations: Array.from({ length: DEFAULT_TREND_WEEKS }, () => ({
       state: "unfilled",
     })),
