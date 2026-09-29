@@ -35,12 +35,9 @@ export function weekRangeForMonday(monday: string): {
   }
 }
 
+// 週報序列只看週一日期 id；其他 Deck 不能當建新週的起點
 export function latestWeekMonday(weeks: string[]): string | null {
-  if (weeks.length === 0) {
-    return null
-  }
-
-  return weeks[weeks.length - 1]
+  return weeks.filter(isCalendarMonday).at(-1) ?? null
 }
 
 export function nextMondayAfter(monday: string): string {

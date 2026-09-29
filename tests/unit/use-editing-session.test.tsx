@@ -80,6 +80,36 @@ describe("useEditingSession", () => {
     expect(result.current.suggestedMonday).toBe(next)
   })
 
+  it("keeps a non-date deck id after opening so Save writes back to it", async () => {
+    const backend = new InMemoryWeekStore(
+      new Map([["q4-roadmap", week(latest, "Roadmap")]])
+    )
+    const saved = vi.spyOn(backend, "saveWeek")
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+
+    expect(result.current.selectedMonday).toBe("q4-roadmap")
+    expect(result.current.suggestedMonday).toBe("")
+    await act(() => result.current.save.saveWeek())
+    expect(saved).toHaveBeenCalledWith("q4-roadmap", expect.anything())
+  })
+
+  it("opens the latest week rather than a later non-week deck", async () => {
+    const backend = new InMemoryWeekStore(
+      new Map([
+        [older, week(older)],
+        [latest, week(latest)],
+        ["zz-roadmap", week(older, "Roadmap")],
+      ])
+    )
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+
+    expect(result.current.selectedMonday).toBe(latest)
+    expect(result.current.weeks).toContain("zz-roadmap")
+    expect(result.current.suggestedMonday).toBe(next)
+  })
+
   it("shows an empty store without an open week", async () => {
     const backend = new InMemoryWeekStore()
 

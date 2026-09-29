@@ -116,7 +116,8 @@ export function openSessionWeek(
   return {
     ...createEditingSession(week),
     weeks: session.weeks,
-    selectedMonday: week?.start ?? session.selectedMonday,
+    // Deck ID 由開啟時的選擇決定（beginSessionOpen），不可由文件內容反推，否則非日期 id 的 Deck 會存到別的檔案
+    selectedMonday: session.selectedMonday,
   }
 }
 

@@ -9,7 +9,7 @@ import { defineConfig } from "vite"
 
 import { parseWeekDocument } from "./src/lib/week-document"
 import { validateHtmlFileName } from "./src/lib/html-page"
-import { isMondayId, MONDAY_ID_SOURCE } from "./src/lib/week-id"
+import { DECK_ID_SOURCE, isDeckId } from "./src/lib/deck-id"
 import {
   listWeeksInDirectory,
   writeWeekFile,
@@ -21,9 +21,9 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const weeksDir = path.resolve(
   process.env.WEEKS_DIR ?? path.resolve(rootDir, "weeks")
 )
-const WEEK_API_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE})$`)
-const WEEK_JSON_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE}\\.json)$`)
-const WEEK_HTML_ROUTE = new RegExp(`^/(${MONDAY_ID_SOURCE})/([^/]+)$`)
+const WEEK_API_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})$`)
+const WEEK_JSON_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE}\\.json)$`)
+const WEEK_HTML_ROUTE = new RegExp(`^/(${DECK_ID_SOURCE})/([^/]+)$`)
 
 function copyInitializedWeeksForProductionBuild(
   sourceDir: string,
@@ -44,7 +44,7 @@ function copyInitializedWeeksForProductionBuild(
         path.resolve(sourceDir, entry.name),
         path.resolve(outputDir, entry.name)
       )
-    } else if (entry.isDirectory() && isMondayId(entry.name)) {
+    } else if (entry.isDirectory() && isDeckId(entry.name)) {
       const targetSubDir = path.resolve(outputDir, entry.name)
       fs.mkdirSync(targetSubDir, { recursive: true })
       const sourceSubDir = path.resolve(sourceDir, entry.name)

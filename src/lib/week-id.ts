@@ -1,4 +1,4 @@
-// 週次 id 即週一 ISO 日期；檔名、dev server 路由與前端共用同一個格式來源
+// 週一 ISO 日期格式；只用於週報流程與 Trend & Target 的日期，儲存層 id 改由 deck-id 檢查
 export const MONDAY_ID_SOURCE = String.raw`\d{4}-\d{2}-\d{2}`
 
 const MONDAY_ID_PATTERN = new RegExp(`^${MONDAY_ID_SOURCE}$`)

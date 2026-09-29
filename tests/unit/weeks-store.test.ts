@@ -212,4 +212,66 @@ describe("weeks-store", () => {
       rmSync(tempDir, { recursive: true, force: true })
     }
   })
+
+  it("stores a deck under a non-date id and rejects ids that could escape the store", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const deck = parseWeekDocument(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", deck)
+      writeWeekFile(tempDir, "q4-roadmap", deck)
+
+      expect(listWeeksInDirectory(tempDir)).toEqual([
+        "2026-08-24",
+        "q4-roadmap",
+      ])
+      expect(readWeekFile(tempDir, "q4-roadmap")).toEqual(deck)
+      for (const id of ["../escape", "Q4", "a/b", "a.b", "-lead", ""]) {
+        expect(() => writeWeekFile(tempDir, id, deck)).toThrow(/Invalid/)
+      }
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("clones a new week from the latest week, not from a later non-week deck", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const previous = parseWeekDocument(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+    const other = setPageTitle(previous, 0, "Roadmap only")
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", previous)
+      writeWeekFile(tempDir, "zz-roadmap", {
+        ...other,
+        pages: other.pages.slice(0, 1),
+      })
+
+      const created = createWeekFromPrevious(tempDir, "2026-08-31")
+
+      expect(created.pages).toHaveLength(previous.pages.length)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("refuses to clone when the store holds no week to start from", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const deck = parseWeekDocument(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+
+    try {
+      writeWeekFile(tempDir, "q4-roadmap", deck)
+
+      expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
+        /No previous week/
+      )
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
 })

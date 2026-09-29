@@ -7,7 +7,8 @@ import {
   parseWeekDocument,
   type WeekDocument,
 } from "../src/lib/week-document"
-import { isMondayId } from "../src/lib/week-id"
+import { isDeckId } from "../src/lib/deck-id"
+import { isCalendarMonday } from "../src/lib/week-id"
 import { listWeekMondays, serializeWeekDocument } from "../src/lib/weeks-io"
 
 // dev server 依型別而非訊息字串對應 409，避免改文案就改變 HTTP 語意
@@ -19,7 +20,7 @@ export class WeekAlreadyExistsError extends Error {
 }
 
 function resolveWeekFilePath(weeksDir: string, monday: string): string {
-  if (!isMondayId(monday)) {
+  if (!isDeckId(monday)) {
     throw new Error(`Invalid week id: ${monday}`)
   }
 
@@ -61,7 +62,8 @@ export function createWeekFromPrevious(
   monday: string
 ): WeekDocument {
   const filePath = resolveWeekFilePath(weeksDir, monday)
-  const weeks = listWeeksInDirectory(weeksDir)
+  // 只以週次文件當範本；其他 Deck 不屬於週報序列
+  const weeks = listWeeksInDirectory(weeksDir).filter(isCalendarMonday)
   const latestMonday = weeks.at(-1)
 
   if (!latestMonday) {

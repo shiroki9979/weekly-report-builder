@@ -284,8 +284,9 @@ async function openLatestWeek(
     description: "list weeks",
     resolved: (weeks) => {
       update((current) => setSessionWeeks(current, weeks))
-      const latest = latestWeekMonday(weeks)
-      if (latest) void openWeek(lifecycle, latest)
+      // 沒有週次時仍開啟最後一份 Deck，避免只有非週報 Deck 的 store 停在空白
+      const initial = latestWeekMonday(weeks) ?? weeks.at(-1)
+      if (initial) void openWeek(lifecycle, initial)
     },
     rejected: (cause) =>
       update((current) =>

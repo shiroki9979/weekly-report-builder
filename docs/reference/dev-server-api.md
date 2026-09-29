@@ -3,37 +3,37 @@
 # 開發伺服器 API
 
 建立日期：2026-08-31  
-最後更新：2026-09-26
+最後更新：2026-09-29
 
 ---
 
-僅在 `pnpm dev` 開發模式下可用。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。可用環境變數 `WEEKS_DIR` 覆寫 weeks 目錄；Playwright 以此注入測試專用複本，不寫入 production `weeks/`。
+僅在 `pnpm dev` 開發模式下可用。路徑中的 `{id}` 是 Deck ID：`^[a-z0-9][a-z0-9-]{0,63}$`（`src/lib/deck-id.ts`），週次使用週一日期 `YYYY-MM-DD`，其他 Deck 可用任意符合格式的 slug。實作：`vite.config.ts`（`weeksStaticPlugin`）、`server/weeks-store.ts`。可用環境變數 `WEEKS_DIR` 覆寫 weeks 目錄；Playwright 以此注入測試專用複本，不寫入 production `weeks/`。
 
 ## GET /api/weeks
 
-列出 `weeks/` 目錄下所有週一日期。
+列出 `weeks/` 目錄下所有 Deck ID（含週一日期與其他 slug）。
 
 ### Response 200
 
 ```json
 {
-  "weeks": ["2026-08-24", "2026-08-31"]
+  "weeks": ["2026-08-24", "2026-08-31", "q4-roadmap"]
 }
 ```
 
-週次依日期升序排列。
+依字串升序排列；週一日期因此依日期排序。
 
-## GET /weeks/{monday}.json
+## GET /weeks/{id}.json
 
 靜態讀取週次 JSON（Vite 靜態 middleware）。
 
-| 參數       | 說明         |
-| ---------- | ------------ |
-| `{monday}` | `YYYY-MM-DD` |
+| 參數   | 說明    |
+| ------ | ------- |
+| `{id}` | Deck ID |
 
 **Response**：週次 JSON 檔案內容；不存在時 404。
 
-## PUT /api/weeks/{monday}
+## PUT /api/weeks/{id}
 
 寫入或覆寫週次檔。body 須通過 `parseWeekDocument` 驗證。
 
@@ -53,7 +53,7 @@
 
 ## POST /api/weeks/{monday}
 
-自最新週次 clone 結構並建立新檔。見 [建立新週次](../how-to/create-new-week.md)。
+自最新週次（只看週一日期 id，其他 Deck 不作為範本）clone 結構並建立新檔。見 [建立新週次](../how-to/create-new-week.md)。
 
 ### Response 201
 
