@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-09-28
+最後更新：2026-09-29
 
 ## Tutorials（入門教學）
 
@@ -58,6 +58,14 @@
 | [HTML Page export failure policy](specs/html-page-error-png.md)                     | HTML 載入／截圖失敗政策與共用 Export gate                                                                 |
 | [Editorial Layout Family production adoption](specs/editorial-layout-family.md)     | Editorial Layout Family 的 production 規格                                                                |
 | [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md) | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)） |
+
+## Decisions（ADR）
+
+已定案、之後的變更需先回來檢視的架構決策。
+
+| 文件                                                                                     | 說明                                                                                                                        |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [ADR-0001 週報流程與 slide 核心解耦](adr/0001-decouple-weekly-report-from-slide-core.md) | 改稱 Deck、`decks/` 儲存、選填期間與 Trend cadence（[#50](https://github.com/shiroki9979/weekly-report-builder/issues/50)） |
 
 ## 其他
 

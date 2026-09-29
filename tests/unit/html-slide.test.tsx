@@ -21,7 +21,7 @@ describe("HtmlSlide", () => {
       htmlFile: "../invalid.html",
     }
 
-    render(<HtmlSlide page={page} monday="2026-08-24" />)
+    render(<HtmlSlide page={page} documentId="2026-08-24" />)
 
     const statusEl = screen.getByRole("status")
     expect(statusEl).toHaveTextContent("Invalid HTML file: ../invalid.html")
@@ -41,7 +41,7 @@ describe("HtmlSlide", () => {
       htmlFile: "p03.html",
     }
 
-    render(<HtmlSlide page={page} monday="2026-08-24" />)
+    render(<HtmlSlide page={page} documentId="2026-08-24" />)
 
     const placeholder = screen.getByRole("status")
     expect(placeholder).toHaveTextContent("Loading HTML slide…")
@@ -62,7 +62,7 @@ describe("HtmlSlide", () => {
       htmlFile: "missing.html",
     }
 
-    render(<HtmlSlide page={page} monday="2026-08-24" />)
+    render(<HtmlSlide page={page} documentId="2026-08-24" />)
 
     await waitFor(() => {
       const statusEl = screen.getByRole("status")
@@ -89,7 +89,7 @@ describe("HtmlSlide", () => {
       htmlFile: "p03.html",
     }
 
-    render(<HtmlSlide page={page} monday="2026-08-24" isCapture={false} />)
+    render(<HtmlSlide page={page} documentId="2026-08-24" isCapture={false} />)
 
     await waitFor(() => {
       const shadowHost = screen.getByTestId("html-slide-shadow")
@@ -118,7 +118,7 @@ describe("HtmlSlide", () => {
       htmlFile: "p03.html",
     }
 
-    render(<HtmlSlide page={page} monday="2026-08-24" isCapture={true} />)
+    render(<HtmlSlide page={page} documentId="2026-08-24" isCapture={true} />)
 
     await waitFor(() => {
       const captureEl = screen.getByTestId("html-slide-capture")

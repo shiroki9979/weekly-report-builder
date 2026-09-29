@@ -123,8 +123,8 @@ describe("export operation lifecycle", () => {
         pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
       const seen: string[] = []
-      prepare.mockImplementation(async (document, page) => {
-        const context = createStagePageContext(document, page.id)
+      prepare.mockImplementation(async (documentId, document, page) => {
+        const context = createStagePageContext(documentId, document, page.id)
         seen.push(
           `${page.id}:${page.title}:${context.weekLabel}:${context.pageLabel}`
         )
@@ -169,7 +169,7 @@ describe("export operation lifecycle", () => {
     it("rejects an overlapping Copy while the batch is running", async () => {
       const firstCapture = deferred<Blob>()
       const capture = captureWithPendingFirstPage(firstCapture.promise)
-      prepare.mockImplementation(async (_document, page) =>
+      prepare.mockImplementation(async (_documentId, _document, page) =>
         preparedCapture(() => capture(page))
       )
       const week: WeekDocument = {
@@ -203,9 +203,9 @@ describe("export operation lifecycle", () => {
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
     const seen: string[] = []
-    prepare.mockImplementation(async (document, page) => {
+    prepare.mockImplementation(async (documentId, document, page) => {
       seen.push(
-        `${page.id}:${createStagePageContext(document, page.id).pageLabel}`
+        `${page.id}:${createStagePageContext(documentId, document, page.id).pageLabel}`
       )
       return preparedCapture(() => capture(page))
     })
@@ -276,7 +276,7 @@ describe("export operation lifecycle", () => {
     async function batchStartedBeforeInputFix() {
       const firstCapture = deferred<Blob>()
       const capture = captureWithPendingFirstPage(firstCapture.promise)
-      prepare.mockImplementation(async (_document, page) =>
+      prepare.mockImplementation(async (_documentId, _document, page) =>
         preparedCapture(() => capture(page))
       )
       let session = writeMetricInput(
@@ -331,7 +331,7 @@ describe("export operation lifecycle", () => {
       })
 
       expect(copy).toEqual({ kind: "completed" })
-      expect(prepare.mock.calls.map((call) => call[1].id)).toEqual([
+      expect(prepare.mock.calls.map((call) => call[2].id)).toEqual([
         "p01",
         "p02",
       ])
@@ -520,7 +520,7 @@ describe("export operation lifecycle", () => {
     async function batchTimedOutAfterWeekSwitch() {
       const lateCapture = deferred<Blob>()
       const firstStarted = deferred<void>()
-      prepare.mockImplementation(async (_document, page) =>
+      prepare.mockImplementation(async (_documentId, _document, page) =>
         preparedCapture(() => {
           if (page.id !== "p01") return Promise.resolve(new Blob(["png"]))
           firstStarted.resolve()
@@ -589,7 +589,7 @@ describe("export operation lifecycle", () => {
     const firstCapture = deferred<Blob>()
     const capture = captureWithPendingFirstPage(firstCapture.promise)
     const dispose = vi.fn()
-    prepare.mockImplementation(async (_document, page) =>
+    prepare.mockImplementation(async (_documentId, _document, page) =>
       preparedCapture(() => capture(page), dispose)
     )
     const week: WeekDocument = {

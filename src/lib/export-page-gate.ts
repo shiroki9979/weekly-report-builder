@@ -29,6 +29,7 @@ export type PreparedCapture = CaptureSession | HtmlLoadFailure
 
 export type CaptureAdapter = {
   prepare: (
+    documentId: string,
     week: WeekDocument,
     page: WeekPage,
     signal?: AbortSignal
@@ -68,6 +69,7 @@ export function isHtmlLoadFailure(
 }
 
 export async function exportPage(
+  documentId: string,
   week: WeekDocument,
   page: WeekPage,
   deps: ExportPageDeps
@@ -85,7 +87,7 @@ export async function exportPage(
   }
 
   try {
-    const prepared = await prepareSession(week, page, gateDeps)
+    const prepared = await prepareSession(documentId, week, page, gateDeps)
     if (isHtmlLoadFailure(prepared)) {
       return {
         kind: "blocked",
@@ -112,11 +114,12 @@ function preflightIssues(
 }
 
 async function prepareSession(
+  documentId: string,
   week: WeekDocument,
   page: WeekPage,
   deps: GateDeps
 ): Promise<PreparedCapture> {
-  const pending = deps.adapter.prepare(week, page, deps.signal)
+  const pending = deps.adapter.prepare(documentId, week, page, deps.signal)
   let accepted = false
   try {
     const prepared = await runPhase(

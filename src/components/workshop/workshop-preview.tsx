@@ -33,6 +33,7 @@ import { createStagePageContext } from "@/lib/stage-page-context"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 
 type WorkshopPreviewProps = {
+  documentId: string
   week: WeekDocument | null
   selectedPageIndex: number
   onSelectPage: (index: number) => void
@@ -41,6 +42,7 @@ type WorkshopPreviewProps = {
 }
 
 export function WorkshopPreview({
+  documentId,
   week,
   selectedPageIndex,
   onSelectPage,
@@ -59,6 +61,7 @@ export function WorkshopPreview({
     <PreviewStage
       stageRef={stageRef}
       loadStatus={loadStatus}
+      documentId={documentId}
       week={week}
       selectedPage={selectedPage}
     />
@@ -179,11 +182,13 @@ function PreviewToolbar({
 function PreviewStage({
   stageRef,
   loadStatus,
+  documentId,
   week,
   selectedPage,
 }: {
   stageRef: RefObject<HTMLDivElement | null>
   loadStatus: SessionLoadStatus
+  documentId: string
   week: WeekDocument | null
   selectedPage: WeekPage | null
 }) {
@@ -209,7 +214,11 @@ function PreviewStage({
             {!loading && selectedPage && week ? (
               <StageSlide
                 page={selectedPage}
-                context={createStagePageContext(week, selectedPage.id)}
+                context={createStagePageContext(
+                  documentId,
+                  week,
+                  selectedPage.id
+                )}
               />
             ) : null}
           </StageFrame>

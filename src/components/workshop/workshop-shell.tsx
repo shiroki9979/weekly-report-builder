@@ -249,6 +249,7 @@ export function WorkshopShell({ weekStore }: { weekStore: WeekStore }) {
           groupResizeBehavior="preserve-relative-size"
         >
           <WorkshopPreview
+            documentId={session.selectedMonday}
             week={week}
             selectedPageIndex={selectedPageIndex}
             onSelectPage={setSelectedPageIndex}

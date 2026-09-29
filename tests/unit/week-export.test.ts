@@ -29,7 +29,7 @@ describe("batch export", () => {
       ],
     }
     const adapter: CaptureAdapter = {
-      prepare: async (_document, page) =>
+      prepare: async (_documentId, _document, page) =>
         page.id === "p02" || page.id === "p04"
           ? { kind: "html-load-failed", message: "HTTP 404" }
           : {
@@ -162,7 +162,7 @@ describe("batch export", () => {
 
     expect(result.skipped).toEqual([])
     expect(result.downloadsTriggered).toBe(2)
-    expect(adapter.prepare.mock.calls.map((call) => call[1].id)).toEqual([
+    expect(adapter.prepare.mock.calls.map((call) => call[2].id)).toEqual([
       "p01",
       "p03",
     ])
@@ -196,7 +196,7 @@ describe("batch export", () => {
       ["p00", "unsupported"],
       ["p01", "missing-content"],
     ])
-    expect(adapter.prepare.mock.calls.map((call) => call[1].id)).toEqual([
+    expect(adapter.prepare.mock.calls.map((call) => call[2].id)).toEqual([
       "p02",
     ])
     expect(download).toHaveBeenCalledOnce()
