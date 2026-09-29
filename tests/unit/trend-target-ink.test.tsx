@@ -5,7 +5,7 @@ import { render } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import type { TrendTargetPage } from "@/lib/week-document"
+import type { TrendTargetPage } from "@/lib/deck"
 
 // 投影片 SVG 以字面色碼繪製（html-to-image 不帶 var()），須與 stage token 保持一致
 function cssToken(stylesheet: string, token: string): string {

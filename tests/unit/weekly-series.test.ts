@@ -10,7 +10,7 @@ import {
 } from "@/lib/weekly-series"
 import { isCalendarMonday } from "@/lib/calendar-date"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
-import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
+import { parseDeck, type Deck } from "@/lib/deck"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -18,7 +18,7 @@ const fixturePath = resolve(
 )
 
 function loadPreviousWeek() {
-  return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
+  return parseDeck(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
 describe("weekly-series", () => {
@@ -112,11 +112,11 @@ describe("weekly-series", () => {
       { cells: ["", "", ""], emphasis: [1] },
     ])
 
-    expect(() => parseWeekDocument(cloned)).not.toThrow()
+    expect(() => parseDeck(cloned)).not.toThrow()
   })
 
   it("clones html layout page with cleared title and notes while preserving htmlFile", () => {
-    const previous = parseWeekDocument({
+    const previous = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -147,16 +147,16 @@ describe("weekly-series", () => {
     // @ts-expect-error HTML 頁面不應具有 panel
     expect(page.panel).toBeUndefined()
 
-    expect(() => parseWeekDocument(cloned)).not.toThrow()
+    expect(() => parseDeck(cloned)).not.toThrow()
   })
 
-  it("clones weekly-overview pages while keeping workstreams and collection length", () => {
-    const previous = parseWeekDocument({
+  it("clones overview pages while keeping workstreams and collection length", () => {
+    const previous = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
-          layout: "weekly-overview",
+          layout: "overview",
           title: "Delivery recovered",
           notes: "Speaker notes",
           lead: {
@@ -188,13 +188,13 @@ describe("weekly-series", () => {
 
     const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
     const page = cloned.pages[0]
-    if (page.layout !== "weekly-overview") {
-      throw new Error("expected weekly-overview")
+    if (page.layout !== "overview") {
+      throw new Error("expected overview")
     }
 
     expect(page).toEqual({
       id: "p01",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "",
       lead: {
         workstream: "Delivery",
@@ -220,11 +220,11 @@ describe("weekly-series", () => {
         },
       ],
     })
-    expect(() => parseWeekDocument(cloned)).not.toThrow()
+    expect(() => parseDeck(cloned)).not.toThrow()
   })
 
   it("starts a new week with Editorial page numbers reset to the week default", () => {
-    const previous: WeekDocument = {
+    const previous: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: false,
       pages: [{ ...createBlankNextActionsPage("p01"), showPageNumber: true }],
@@ -237,7 +237,7 @@ describe("weekly-series", () => {
   })
 
   it("keeps an HTML Page's page-number choice because HTML Pages opt in per page", () => {
-    const previous = parseWeekDocument({
+    const previous = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {

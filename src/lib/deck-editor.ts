@@ -1,32 +1,32 @@
-import { typedPageUpdater, updateWeekPage } from "@/lib/update-week-page"
+import { typedPageUpdater, updateDeckPage } from "@/lib/update-deck-page"
 import {
   assertCanRemoveEntry,
   CARDINALITY,
   isFlowStepVariant,
-  isHtmlWeekPage,
-  isTwoColumnWeekPage,
-} from "@/lib/week-document"
-import type { FlowStepVariant, Panel, WeekDocument } from "@/lib/week-document"
+  isHtmlPage,
+  isTwoColumnPage,
+} from "@/lib/deck"
+import type { FlowStepVariant, Panel, Deck } from "@/lib/deck"
 
 const updateTwoColumnPage = typedPageUpdater(
-  isTwoColumnWeekPage,
+  isTwoColumnPage,
   "a two-column page"
 )
 
-const updateHtmlPage = typedPageUpdater(isHtmlWeekPage, "an HTML page")
+const updateHtmlPage = typedPageUpdater(isHtmlPage, "an HTML page")
 
 type PanelOfKind<K extends Panel["kind"]> = Extract<Panel, { kind: K }>
 
 // 各 panel 編輯函式共用同一個 two-column 與 panel kind 防衛，不再各寫一份 require*Panel
 function panelUpdater<K extends Panel["kind"]>(kind: K) {
   return (
-    week: WeekDocument,
+    deck: Deck,
     pageIndex: number,
     updater: (panel: PanelOfKind<K>) => PanelOfKind<K>
-  ): WeekDocument =>
-    updateTwoColumnPage(week, pageIndex, (page) => {
+  ): Deck =>
+    updateTwoColumnPage(deck, pageIndex, (page) => {
       if (page.panel.kind !== kind) {
-        throw new Error(`Week Page ${page.id} does not have a ${kind} panel`)
+        throw new Error(`Page ${page.id} does not have a ${kind} panel`)
       }
       // 泛型 K 無法讓 TS 從 kind 比較收窄 union，上面的執行期檢查已保證型別
       return { ...page, panel: updater(page.panel as PanelOfKind<K>) }
@@ -50,29 +50,29 @@ function moveItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
 }
 
 export function setPageTitle(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   title: string
-): WeekDocument {
-  return updateWeekPage(week, pageIndex, (page) => ({ ...page, title }))
+): Deck {
+  return updateDeckPage(deck, pageIndex, (page) => ({ ...page, title }))
 }
 
 export function setPageHtmlFile(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   htmlFile: string
-): WeekDocument {
-  return updateHtmlPage(week, pageIndex, (page) => ({ ...page, htmlFile }))
+): Deck {
+  return updateHtmlPage(deck, pageIndex, (page) => ({ ...page, htmlFile }))
 }
 
 export function setPageItem(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   itemIndex: number,
   field: "heading" | "body",
   value: string
-): WeekDocument {
-  return updateTwoColumnPage(week, pageIndex, (page) => ({
+): Deck {
+  return updateTwoColumnPage(deck, pageIndex, (page) => ({
     ...page,
     items: page.items.map((item, index) =>
       index === itemIndex ? { ...item, [field]: value } : item
@@ -81,64 +81,64 @@ export function setPageItem(
 }
 
 export function setPageNotes(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   notes: string
-): WeekDocument {
-  return updateWeekPage(week, pageIndex, (page) => ({
+): Deck {
+  return updateDeckPage(deck, pageIndex, (page) => ({
     ...page,
     notes: notes === "" ? undefined : notes,
   }))
 }
 
 export function setPageHidden(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   hidden: boolean
-): WeekDocument {
-  return updateWeekPage(week, pageIndex, (page) => ({
+): Deck {
+  return updateDeckPage(deck, pageIndex, (page) => ({
     ...page,
     hidden: hidden ? true : undefined,
   }))
 }
 
-export function setWeekShowPageNumbers(
-  week: WeekDocument,
+export function setDeckShowPageNumbers(
+  deck: Deck,
   showPageNumbers: boolean
-): WeekDocument {
+): Deck {
   return {
-    ...week,
+    ...deck,
     showPageNumbers,
   }
 }
 
 export function setPageShowPageNumber(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   showPageNumber: boolean | undefined
-): WeekDocument {
-  return updateWeekPage(week, pageIndex, (page) => ({
+): Deck {
+  return updateDeckPage(deck, pageIndex, (page) => ({
     ...page,
     showPageNumber,
   }))
 }
 
 export function setTablePanelTitle(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   title: string
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => ({ ...panel, title }))
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({ ...panel, title }))
 }
 
 export function setTablePanelCell(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   rowIndex: number,
   cellIndex: number,
   value: string
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({
     ...panel,
     rows: panel.rows.map((row, index) =>
       index === rowIndex
@@ -154,12 +154,12 @@ export function setTablePanelCell(
 }
 
 export function setTablePanelColumn(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   columnIndex: number,
   value: string
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({
     ...panel,
     columns: panel.columns.map((column, index) =>
       index === columnIndex ? value : column
@@ -167,22 +167,19 @@ export function setTablePanelColumn(
   }))
 }
 
-export function addTableRow(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => ({
+export function addTableRow(deck: Deck, pageIndex: number): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({
     ...panel,
     rows: [...panel.rows, { cells: panel.columns.map(() => "") }],
   }))
 }
 
 export function removeTableRow(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   rowIndex: number
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.rows, CARDINALITY.tableRows)
 
     return {
@@ -192,11 +189,8 @@ export function removeTableRow(
   })
 }
 
-export function addTableColumn(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => ({
+export function addTableColumn(deck: Deck, pageIndex: number): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({
     ...panel,
     columns: [...panel.columns, ""],
     rows: panel.rows.map((row) => ({ ...row, cells: [...row.cells, ""] })),
@@ -204,11 +198,11 @@ export function addTableColumn(
 }
 
 export function removeTableColumn(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   columnIndex: number
-): WeekDocument {
-  return updateTablePanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.columns, CARDINALITY.tableColumns)
 
     return {
@@ -226,23 +220,23 @@ export function removeTableColumn(
 }
 
 export function setChartPanelTitle(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   title: string
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     title,
   }))
 }
 
 export function setChartCategory(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   categoryIndex: number,
   label: string
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     categories: panel.categories.map((category, index) =>
       index === categoryIndex ? label : category
@@ -250,11 +244,8 @@ export function setChartCategory(
   }))
 }
 
-export function addChartCategory(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+export function addChartCategory(deck: Deck, pageIndex: number): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     categories: [...panel.categories, ""],
     series: panel.series.map((series) => ({
@@ -265,11 +256,11 @@ export function addChartCategory(
 }
 
 export function removeChartCategory(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   categoryIndex: number
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.categories, CARDINALITY.chartCategories)
     return {
       ...panel,
@@ -285,12 +276,12 @@ export function removeChartCategory(
 }
 
 export function setChartSeriesName(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   seriesIndex: number,
   name: string
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     series: panel.series.map((series, index) =>
       index === seriesIndex ? { ...series, name } : series
@@ -299,12 +290,12 @@ export function setChartSeriesName(
 }
 
 export function setChartSeriesColor(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   seriesIndex: number,
   color: string
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     series: panel.series.map((series, index) =>
       index === seriesIndex
@@ -315,13 +306,13 @@ export function setChartSeriesColor(
 }
 
 export function setChartSeriesValue(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   seriesIndex: number,
   categoryIndex: number,
   value: number
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     series: panel.series.map((series, index) => {
       if (index !== seriesIndex) {
@@ -336,11 +327,8 @@ export function setChartSeriesValue(
   }))
 }
 
-export function addChartSeries(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => ({
+export function addChartSeries(deck: Deck, pageIndex: number): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => ({
     ...panel,
     series: [
       ...panel.series,
@@ -353,11 +341,11 @@ export function addChartSeries(
 }
 
 export function removeChartSeries(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   seriesIndex: number
-): WeekDocument {
-  return updateChartPanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateChartPanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.series, CARDINALITY.chartSeries)
     return {
       ...panel,
@@ -367,23 +355,23 @@ export function removeChartSeries(
 }
 
 export function setFlowPanelTitle(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   title: string
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     title,
   }))
 }
 
 export function setFlowStepLabel(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   stepIndex: number,
   label: string
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     steps: panel.steps.map((step, index) =>
       index === stepIndex ? { ...step, label } : step
@@ -392,12 +380,12 @@ export function setFlowStepLabel(
 }
 
 export function setFlowStepCaption(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   stepIndex: number,
   caption: string
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     steps: panel.steps.map((step, index) =>
       index === stepIndex
@@ -408,12 +396,12 @@ export function setFlowStepCaption(
 }
 
 export function setFlowStepVariant(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   stepIndex: number,
   variant: FlowStepVariant | ""
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     steps: panel.steps.map((step, index) =>
       index === stepIndex
@@ -426,22 +414,19 @@ export function setFlowStepVariant(
   }))
 }
 
-export function addFlowStep(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+export function addFlowStep(deck: Deck, pageIndex: number): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     steps: [...panel.steps, { label: "" }],
   }))
 }
 
 export function removeFlowStep(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   stepIndex: number
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.steps, CARDINALITY.flowSteps)
     return {
       ...panel,
@@ -451,35 +436,35 @@ export function removeFlowStep(
 }
 
 export function moveFlowStep(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   fromIndex: number,
   toIndex: number
-): WeekDocument {
-  return updateFlowPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
     steps: moveItems(panel.steps, fromIndex, toIndex),
   }))
 }
 
 export function setChecklistPanelTitle(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   title: string
-): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChecklistPanel(deck, pageIndex, (panel) => ({
     ...panel,
     title,
   }))
 }
 
 export function setChecklistItemLabel(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   itemIndex: number,
   label: string
-): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChecklistPanel(deck, pageIndex, (panel) => ({
     ...panel,
     items: panel.items.map((item, index) =>
       index === itemIndex ? { ...item, label } : item
@@ -488,12 +473,12 @@ export function setChecklistItemLabel(
 }
 
 export function setChecklistItemChecked(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   itemIndex: number,
   checked: boolean
-): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => ({
+): Deck {
+  return updateChecklistPanel(deck, pageIndex, (panel) => ({
     ...panel,
     items: panel.items.map((item, index) =>
       index === itemIndex
@@ -503,22 +488,19 @@ export function setChecklistItemChecked(
   }))
 }
 
-export function addChecklistItem(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => ({
+export function addChecklistItem(deck: Deck, pageIndex: number): Deck {
+  return updateChecklistPanel(deck, pageIndex, (panel) => ({
     ...panel,
     items: [...panel.items, { label: "", checked: false }],
   }))
 }
 
 export function removeChecklistItem(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   itemIndex: number
-): WeekDocument {
-  return updateChecklistPanel(week, pageIndex, (panel) => {
+): Deck {
+  return updateChecklistPanel(deck, pageIndex, (panel) => {
     assertCanRemoveEntry(panel.items, CARDINALITY.checklistItems)
     return {
       ...panel,

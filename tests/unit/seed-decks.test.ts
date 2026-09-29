@@ -17,9 +17,9 @@ import { join, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { seedWeeksFromDemo } from "../../scripts/seed-weeks.ts"
+import { migrateLegacyStore, seedDecksFromDemo } from "../../scripts/seed-decks"
 
-const SEED_SCRIPT = resolve(import.meta.dirname, "../../scripts/seed-weeks.ts")
+const SEED_SCRIPT = resolve(import.meta.dirname, "../../scripts/seed-decks.ts")
 const PACKAGE_JSON = resolve(import.meta.dirname, "../../package.json")
 
 // 用真實暫存目錄驗證可觀察的檔案系統與行程結果，不斷言內部 copy 步驟
@@ -72,136 +72,136 @@ function spawnSeedCli(
   env: NodeJS.ProcessEnv = {}
 ): ReturnType<typeof spawnSync> {
   mkdirSync(join(repoRoot, "scripts"), { recursive: true })
-  copyFileSync(SEED_SCRIPT, join(repoRoot, "scripts", "seed-weeks.ts"))
-  return spawnSync(process.execPath, ["scripts/seed-weeks.ts"], {
+  copyFileSync(SEED_SCRIPT, join(repoRoot, "scripts", "seed-decks.ts"))
+  return spawnSync(process.execPath, ["scripts/seed-decks.ts"], {
     cwd: repoRoot,
     encoding: "utf8",
     env: { ...process.env, ...env },
   })
 }
 
-describe("seedWeeksFromDemo", () => {
+describe("seedDecksFromDemo", () => {
   it("copies the complete demo tree when the target path is absent", () => {
-    const root = makeTempDir("seed-weeks-absent-")
+    const root = makeTempDir("seed-decks-absent-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
 
-    const result = seedWeeksFromDemo(demoDir, weeksDir)
+    const result = seedDecksFromDemo(demoDir, decksDir)
 
     expect(result).toEqual({ status: "seeded" })
-    expect(readFileSync(join(weeksDir, "2026-01-05.json"), "utf8")).toBe(
+    expect(readFileSync(join(decksDir, "2026-01-05.json"), "utf8")).toBe(
       '{"start":"2026-01-05"}\n'
     )
-    expect(readFileSync(join(weeksDir, "2026-01-05", "p05.html"), "utf8")).toBe(
+    expect(readFileSync(join(decksDir, "2026-01-05", "p05.html"), "utf8")).toBe(
       "<svg></svg>\n"
     )
-    expect(readFileSync(join(weeksDir, "extra-note.txt"), "utf8")).toBe(
+    expect(readFileSync(join(decksDir, "extra-note.txt"), "utf8")).toBe(
       "keep-me\n"
     )
-    expect(unexpectedSiblings(root, ["demo", "weeks"])).toEqual([])
+    expect(unexpectedSiblings(root, ["demo", "decks"])).toEqual([])
   })
 
   it("skips an existing directory, including an empty one", () => {
-    const root = makeTempDir("seed-weeks-empty-dir-")
+    const root = makeTempDir("seed-decks-empty-dir-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
-    mkdirSync(weeksDir)
+    mkdirSync(decksDir)
 
-    const result = seedWeeksFromDemo(demoDir, weeksDir)
+    const result = seedDecksFromDemo(demoDir, decksDir)
 
     expect(result).toEqual({ status: "skipped", reason: "target-exists" })
-    expect(readdirSync(weeksDir)).toEqual([])
+    expect(readdirSync(decksDir)).toEqual([])
   })
 
   it("does not merge into an existing directory that already has files", () => {
-    const root = makeTempDir("seed-weeks-existing-dir-")
+    const root = makeTempDir("seed-decks-existing-dir-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
-    mkdirSync(weeksDir)
-    writeFileSync(join(weeksDir, "author-note.txt"), "do-not-touch")
+    mkdirSync(decksDir)
+    writeFileSync(join(decksDir, "author-note.txt"), "do-not-touch")
 
-    const result = seedWeeksFromDemo(demoDir, weeksDir)
+    const result = seedDecksFromDemo(demoDir, decksDir)
 
     expect(result).toEqual({ status: "skipped", reason: "target-exists" })
-    expect(readdirSync(weeksDir)).toEqual(["author-note.txt"])
-    expect(existsSync(join(weeksDir, "2026-01-05.json"))).toBe(false)
+    expect(readdirSync(decksDir)).toEqual(["author-note.txt"])
+    expect(existsSync(join(decksDir, "2026-01-05.json"))).toBe(false)
   })
 
   it("fails when the target is a file and leaves that file unchanged", () => {
-    const root = makeTempDir("seed-weeks-file-")
+    const root = makeTempDir("seed-decks-file-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
-    writeFileSync(weeksDir, "not-a-directory")
+    writeFileSync(decksDir, "not-a-directory")
 
-    expect(() => seedWeeksFromDemo(demoDir, weeksDir)).toThrow(
+    expect(() => seedDecksFromDemo(demoDir, decksDir)).toThrow(
       /exists and is a file/i
     )
-    expect(readFileSync(weeksDir, "utf8")).toBe("not-a-directory")
-    expect(unexpectedSiblings(root, ["demo", "weeks"])).toEqual([])
+    expect(readFileSync(decksDir, "utf8")).toBe("not-a-directory")
+    expect(unexpectedSiblings(root, ["demo", "decks"])).toEqual([])
   })
 
   it("fails when the target is a symlink and does not follow it", () => {
-    const root = makeTempDir("seed-weeks-symlink-")
+    const root = makeTempDir("seed-decks-symlink-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
-    const realDir = join(root, "real-weeks")
+    const decksDir = join(root, "decks")
+    const realDir = join(root, "real-decks")
     writeDemoTree(demoDir)
     mkdirSync(realDir)
     writeFileSync(join(realDir, "keep.txt"), "keep")
-    symlinkSync(realDir, weeksDir)
+    symlinkSync(realDir, decksDir)
 
-    expect(() => seedWeeksFromDemo(demoDir, weeksDir)).toThrow(/symlink/i)
-    expect(lstatSync(weeksDir).isSymbolicLink()).toBe(true)
+    expect(() => seedDecksFromDemo(demoDir, decksDir)).toThrow(/symlink/i)
+    expect(lstatSync(decksDir).isSymbolicLink()).toBe(true)
     expect(readdirSync(realDir)).toEqual(["keep.txt"])
-    expect(unexpectedSiblings(root, ["demo", "weeks", "real-weeks"])).toEqual(
+    expect(unexpectedSiblings(root, ["demo", "decks", "real-decks"])).toEqual(
       []
     )
   })
 
   it("fails when demo is missing and does not create the target", () => {
-    const root = makeTempDir("seed-weeks-missing-demo-")
+    const root = makeTempDir("seed-decks-missing-demo-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
 
-    expect(() => seedWeeksFromDemo(demoDir, weeksDir)).toThrow(
+    expect(() => seedDecksFromDemo(demoDir, decksDir)).toThrow(
       /Demo directory not found/
     )
-    expect(existsSync(weeksDir)).toBe(false)
+    expect(existsSync(decksDir)).toBe(false)
     expect(unexpectedSiblings(root, [])).toEqual([])
   })
 
   it("fails a copy error without leaving a partial target or temp siblings", () => {
-    const root = makeTempDir("seed-weeks-copy-fail-")
+    const root = makeTempDir("seed-decks-copy-fail-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
     const lockedDir = join(demoDir, "locked")
     mkdirSync(lockedDir)
     writeFileSync(join(lockedDir, "secret.txt"), "secret")
     chmodSync(lockedDir, 0)
 
-    expect(() => seedWeeksFromDemo(demoDir, weeksDir)).toThrow(
-      /Failed to seed weeks/
+    expect(() => seedDecksFromDemo(demoDir, decksDir)).toThrow(
+      /Failed to seed decks/
     )
-    expect(existsSync(weeksDir)).toBe(false)
+    expect(existsSync(decksDir)).toBe(false)
     expect(unexpectedSiblings(root, ["demo"])).toEqual([])
   })
 
   it("keeps the winner and skips the loser when two seeds race", async () => {
-    const root = makeTempDir("seed-weeks-race-")
+    const root = makeTempDir("seed-decks-race-")
     const demoDir = join(root, "demo")
-    const weeksDir = join(root, "weeks")
+    const decksDir = join(root, "decks")
     writeDemoTree(demoDir)
 
     const runner = `
-      import { seedWeeksFromDemo } from ${JSON.stringify(pathToFileURL(SEED_SCRIPT).href)};
-      const result = seedWeeksFromDemo(
+      import { seedDecksFromDemo } from ${JSON.stringify(pathToFileURL(SEED_SCRIPT).href)};
+      const result = seedDecksFromDemo(
         ${JSON.stringify(demoDir)},
-        ${JSON.stringify(weeksDir)}
+        ${JSON.stringify(decksDir)}
       );
       process.stdout.write(JSON.stringify(result));
     `
@@ -239,60 +239,116 @@ describe("seedWeeksFromDemo", () => {
       .map((result: { status: string }) => result.status)
       .sort()
     expect(statuses).toEqual(["seeded", "skipped"])
-    expect(readFileSync(join(weeksDir, "extra-note.txt"), "utf8")).toBe(
+    expect(readFileSync(join(decksDir, "extra-note.txt"), "utf8")).toBe(
       "keep-me\n"
     )
-    expect(unexpectedSiblings(root, ["demo", "weeks"])).toEqual([])
+    expect(unexpectedSiblings(root, ["demo", "decks"])).toEqual([])
   })
 })
 
-describe("seed:weeks CLI", () => {
-  it("uses the same command for postinstall and seed:weeks", () => {
+describe("seed:decks CLI", () => {
+  it("uses the same command for postinstall and seed:decks", () => {
     const pkg = JSON.parse(readFileSync(PACKAGE_JSON, "utf8")) as {
       scripts: Record<string, string>
     }
 
-    expect(pkg.scripts.postinstall).toBe(pkg.scripts["seed:weeks"])
-    expect(pkg.scripts["seed:weeks"]).toContain("scripts/seed-weeks.ts")
+    expect(pkg.scripts.postinstall).toBe(pkg.scripts["seed:decks"])
+    expect(pkg.scripts["seed:decks"]).toContain("scripts/seed-decks.ts")
   })
 
-  it("copies demo to weeks, ignores WEEKS_DIR, and exits 0", () => {
+  it("copies demo to decks, ignores DECKS_DIR, and exits 0", () => {
     const repoRoot = makeTempDir("seed-cli-success-")
-    const overrideDir = join(makeTempDir("seed-cli-weeks-dir-"), "override")
+    const overrideDir = join(makeTempDir("seed-cli-decks-dir-"), "override")
     mkdirSync(overrideDir)
     writeDemoTree(join(repoRoot, "demo"))
 
-    const spawned = spawnSeedCli(repoRoot, { WEEKS_DIR: overrideDir })
+    const spawned = spawnSeedCli(repoRoot, { DECKS_DIR: overrideDir })
 
     expect(spawned.status).toBe(0)
     expect(spawned.stdout).toMatch(/copied demo/i)
-    expect(existsSync(join(repoRoot, "weeks", "2026-01-05.json"))).toBe(true)
+    expect(existsSync(join(repoRoot, "decks", "2026-01-05.json"))).toBe(true)
     expect(readdirSync(overrideDir)).toEqual([])
   })
 
-  it("skips an existing weeks directory with exit 0", () => {
+  it("skips an existing decks directory with exit 0", () => {
     const repoRoot = makeTempDir("seed-cli-skip-")
     writeDemoTree(join(repoRoot, "demo"))
-    mkdirSync(join(repoRoot, "weeks"))
-    writeFileSync(join(repoRoot, "weeks", "author.txt"), "keep")
+    mkdirSync(join(repoRoot, "decks"))
+    writeFileSync(join(repoRoot, "decks", "author.txt"), "keep")
 
     const spawned = spawnSeedCli(repoRoot)
 
     expect(spawned.status).toBe(0)
     expect(spawned.stdout).toMatch(/skipped/i)
-    expect(readdirSync(join(repoRoot, "weeks"))).toEqual(["author.txt"])
+    expect(readdirSync(join(repoRoot, "decks"))).toEqual(["author.txt"])
   })
 
   it("fails a file target with a contextual error and non-zero exit", () => {
     const repoRoot = makeTempDir("seed-cli-fail-")
     writeDemoTree(join(repoRoot, "demo"))
-    writeFileSync(join(repoRoot, "weeks"), "blocked")
+    writeFileSync(join(repoRoot, "decks"), "blocked")
 
     const spawned = spawnSeedCli(repoRoot)
 
     expect(spawned.status).not.toBe(0)
-    expect(spawned.stderr).toMatch(/seed:weeks failed/i)
+    expect(spawned.stderr).toMatch(/seed:decks failed/i)
     expect(spawned.stderr).toMatch(/file/i)
-    expect(readFileSync(join(repoRoot, "weeks"), "utf8")).toBe("blocked")
+    expect(readFileSync(join(repoRoot, "decks"), "utf8")).toBe("blocked")
+  })
+
+  it("moves a legacy weeks directory to decks without seeding over it", () => {
+    const repoRoot = makeTempDir("seed-cli-migrate-")
+    writeDemoTree(join(repoRoot, "demo"))
+    mkdirSync(join(repoRoot, "weeks", "2026-08-24"), { recursive: true })
+    writeFileSync(join(repoRoot, "weeks", "2026-08-24.json"), "mine")
+    writeFileSync(join(repoRoot, "weeks", "2026-08-24", "p01.html"), "<p/>")
+
+    const spawned = spawnSeedCli(repoRoot)
+
+    expect(spawned.status).toBe(0)
+    expect(spawned.stdout).toMatch(/moved weeks\//)
+    expect(existsSync(join(repoRoot, "weeks"))).toBe(false)
+    expect(
+      readFileSync(join(repoRoot, "decks", "2026-08-24.json"), "utf8")
+    ).toBe("mine")
+    expect(existsSync(join(repoRoot, "decks", "2026-08-24", "p01.html"))).toBe(
+      true
+    )
+    expect(existsSync(join(repoRoot, "decks", "2026-01-05.json"))).toBe(false)
+  })
+})
+
+describe("migrateLegacyStore", () => {
+  it("reports absent when there is no legacy store", () => {
+    const root = makeTempDir("migrate-absent-")
+
+    expect(
+      migrateLegacyStore(join(root, "weeks"), join(root, "decks"))
+    ).toEqual({ status: "absent" })
+    expect(existsSync(join(root, "decks"))).toBe(false)
+  })
+
+  it("refuses to merge when both stores exist and leaves both untouched", () => {
+    const root = makeTempDir("migrate-both-")
+    mkdirSync(join(root, "weeks"))
+    writeFileSync(join(root, "weeks", "old.json"), "old")
+    mkdirSync(join(root, "decks"))
+    writeFileSync(join(root, "decks", "new.json"), "new")
+
+    expect(() =>
+      migrateLegacyStore(join(root, "weeks"), join(root, "decks"))
+    ).toThrow(/Both .* exist/)
+    expect(readdirSync(join(root, "weeks"))).toEqual(["old.json"])
+    expect(readdirSync(join(root, "decks"))).toEqual(["new.json"])
+  })
+
+  it("refuses a legacy path that is not a directory", () => {
+    const root = makeTempDir("migrate-file-")
+    writeFileSync(join(root, "weeks"), "blocked")
+
+    expect(() =>
+      migrateLegacyStore(join(root, "weeks"), join(root, "decks"))
+    ).toThrow(/not a directory/)
+    expect(existsSync(join(root, "decks"))).toBe(false)
   })
 })

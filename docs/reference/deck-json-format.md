@@ -1,4 +1,4 @@
-# 週次 JSON 格式
+# Deck JSON 格式
 
 建立日期：2026-08-31  
 最後更新：2026-09-29
@@ -8,22 +8,22 @@
 ## 檔案路徑
 
 ```text
-weeks/<id>.json
-weeks/<id>/<htmlFile>
+decks/<id>.json
+decks/<id>/<htmlFile>
 ```
 
 - `<id>`：Deck ID，格式 `^[a-z0-9][a-z0-9-]{0,63}$`
-- 週次以該週**週一**日期當 id，例如 `weeks/2026-08-24.json`；建新週、開啟時預設的最新週只看這類 id
-- 其他 Deck 可用任意符合格式的 slug，例如 `weeks/q4-roadmap.json`
-- HTML 全幅頁檔案放置於同名子目錄，例如 `weeks/2026-08-24/p03.html`
+- 週次以該週**週一**日期當 id，例如 `decks/2026-08-24.json`；建新週、開啟時預設的最新週只看這類 id
+- 其他 Deck 可用任意符合格式的 slug，例如 `decks/q4-roadmap.json`
+- HTML 全幅頁檔案放置於同名子目錄，例如 `decks/2026-08-24/p03.html`
 
-## WeekDocument（根物件）
+## Deck（根物件）
 
-| 欄位              | 型別         | 必填 | 說明                                                                                           |
-| ----------------- | ------------ | ---- | ---------------------------------------------------------------------------------------------- |
-| `period`          | `object`     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
-| `pages`           | `WeekPage[]` | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean`    | 否   | Editorial 的全週頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼        |
+| 欄位              | 型別      | 必填 | 說明                                                                                           |
+| ----------------- | --------- | ---- | ---------------------------------------------------------------------------------------------- |
+| `period`          | `object`  | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
+| `pages`           | `Page[]`  | 是   | 至少一頁                                                                                       |
+| `showPageNumbers` | `boolean` | 否   | Editorial 的全週頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼        |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -34,20 +34,20 @@ weeks/<id>/<htmlFile>
 }
 ```
 
-## WeekPage（discriminated union）
+## Page（discriminated union）
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
 | 欄位             | 型別      | 必填 | 說明                                                                                                              |
 | ---------------- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------- |
-| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Week Document 內必須唯一；匯出 PNG 檔名之一部分                                          |
-| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"weekly-overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`        |
+| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                   |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`               |
 | `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                          |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                        |
 | `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                     |
 | `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承全週設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 忽略此欄 |
 
-Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
+Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### `layout: "two-column"`
 
@@ -66,9 +66,9 @@ Parser 會拒絕同一 Week Document 內重複的 `id`。自訂非 `pNN` 的非�
 | ---------- | -------- | ---- | ----------------------------------------------------------------------------------- |
 | `htmlFile` | `string` | 是   | 相對該週目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
 
-### `layout: "weekly-overview"`
+### `layout: "overview"`
 
-結論先行的週次總覽。Eyebrow 由 renderer 固定為 `Weekly Overview`，不寫入 JSON。
+結論先行的週次總覽。Eyebrow 由 renderer 固定為 `Overview`，不寫入 JSON。
 
 | 欄位         | 型別        | 必填 | 說明                       |
 | ------------ | ----------- | ---- | -------------------------- |
@@ -152,7 +152,7 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 | `metric`             | `object`                    | 是   | `label`、`unit`、`unitPosition`、`unitSpacing`、`precision`；格式選項同 Comparison Metric，預設為一位小數、單位置後、以空格分隔 |
 | `cadence`            | `"week" \| "month"`         | 是   | 觀測週期                                                                                                                        |
 | `start`              | `string \| null`            | 是   | 第一個觀測週期的起點：`week` 為真實 ISO 週一，`month` 為當月 1 日；未設定時只能有 `unfilled` 位置                               |
-| `observations`       | `WeeklyObservation[]`       | 是   | 2–12 個連續位置；日期由 `start` 起以 UTC 每次加一週或一個月                                                                     |
+| `observations`       | `TrendObservation[]`        | 是   | 2–12 個連續位置；日期由 `start` 起以 UTC 每次加一週或一個月                                                                     |
 | `target`             | `number \| null`            | 是   | 有限的固定門檻；`null` 是草稿                                                                                                   |
 | `direction`          | `"at-most"` \| `"at-least"` | 是   | 包含等號的比較方向                                                                                                              |
 | `interpretation`     | `string`                    | 是   | 對趨勢的文字解讀                                                                                                                |
@@ -228,9 +228,9 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 
 ## 解析實作
 
-`src/lib/week-document.ts` — `parseWeekDocument()`
+`src/lib/deck.ts` — `parseDeck()`
 
 ## 相關文件
 
 - [開發伺服器 API](dev-server-api.md)
-- [編輯並儲存週次](../how-to/edit-and-save-a-week.md)
+- [編輯並儲存週次](../how-to/edit-and-save-a-deck.md)

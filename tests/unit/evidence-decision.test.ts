@@ -10,14 +10,14 @@ import {
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import { cloneWeekFromPrevious } from "@/lib/weekly-series"
-import { parseWeekDocument } from "@/lib/week-document"
-import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
+import { parseDeck } from "@/lib/deck"
+import type { EvidenceDecisionPage, Deck } from "@/lib/deck"
 
-function weekWith(page: EvidenceDecisionPage): WeekDocument {
+function weekWith(page: EvidenceDecisionPage): Deck {
   return { start: "2026-08-24", end: "2026-08-28", pages: [page] }
 }
 
-function decision(week: WeekDocument): EvidenceDecisionPage {
+function decision(week: Deck): EvidenceDecisionPage {
   const page = week.pages[0]
   if (page.layout !== "evidence-decision") {
     throw new Error("expected evidence-decision")
@@ -27,7 +27,7 @@ function decision(week: WeekDocument): EvidenceDecisionPage {
 
 describe("evidence-decision schema", () => {
   it("parses a draft with null metric values and strips extra fields", () => {
-    const doc = parseWeekDocument({
+    const doc = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -85,7 +85,7 @@ describe("evidence-decision schema", () => {
     }
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
@@ -101,7 +101,7 @@ describe("evidence-decision schema", () => {
     ).toThrow(/metrics/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
@@ -117,7 +117,7 @@ describe("evidence-decision schema", () => {
     ).toThrow(/metrics/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
@@ -133,7 +133,7 @@ describe("evidence-decision schema", () => {
     ).toThrow(/interpretations/i)
 
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
@@ -185,7 +185,7 @@ describe("evidence-decision factory and editor", () => {
 
 describe("evidence-decision clone and readiness", () => {
   it("keeps metric format and clears weekly values", () => {
-    const previous = parseWeekDocument({
+    const previous = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {

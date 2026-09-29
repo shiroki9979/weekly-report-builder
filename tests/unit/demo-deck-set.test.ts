@@ -3,24 +3,24 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
-  isHtmlWeekPage,
+  isHtmlPage,
   isNextActionsPage,
   isTrendTargetPage,
-  parseWeekDocument,
-  type WeekPage,
-} from "@/lib/week-document"
+  parseDeck,
+  type Page,
+} from "@/lib/deck"
 
 const demoDir = resolve(import.meta.dirname, "../../demo")
-const week = parseWeekDocument(
+const week = parseDeck(
   JSON.parse(readFileSync(resolve(demoDir, "2026-01-05.json"), "utf8"))
 )
 
 const CJK = /[一-鿿]/u
 const LATIN = /[A-Za-z]/
 
-function pageAt<T extends WeekPage>(
+function pageAt<T extends Page>(
   index: number,
-  hasLayout: (page: WeekPage) => page is T
+  hasLayout: (page: Page) => page is T
 ): T {
   const page = week.pages[index]
   if (!page || !hasLayout(page))
@@ -34,13 +34,13 @@ function measuredValues(index: number): number[] {
   )
 }
 
-describe("Demo Week Set", () => {
+describe("Demo Deck Set", () => {
   it("covers the reporting week with every production layout in order", () => {
     expect(week.period!.start).toBe("2026-01-05")
     expect(week.period!.end).toBe("2026-01-09")
     expect(week.pages.map((page) => page.layout)).toEqual([
       "two-column",
-      "weekly-overview",
+      "overview",
       "evidence-decision",
       "next-actions",
       "html",
@@ -108,7 +108,7 @@ describe("Demo Week Set", () => {
     const htmlPath = resolve(
       demoDir,
       "2026-01-05",
-      pageAt(4, isHtmlWeekPage).htmlFile
+      pageAt(4, isHtmlPage).htmlFile
     )
 
     expect(existsSync(htmlPath)).toBe(true)

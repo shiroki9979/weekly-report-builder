@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 文件期間改為選填的 `period: { start, end }`；舊格式的頂層 `start`／`end` 仍可讀取，存檔後改寫為新格式。沒有期間的 Deck 可正常預覽與匯出，Editorial Frame 不顯示期間；公開 Demo 改用新格式（[#52](https://github.com/shiroki9979/weekly-report-builder/issues/52)）。
 - 「保留結構、清空內容建立新文件」抽成通用的 `createDeckFromTemplate`，不依賴日期；週報專屬規則（最新週次當範本、下一個週一、週一到週五期間）集中在 `weekly-series`。建新週的行為不變（[#53](https://github.com/shiroki9979/weekly-report-builder/issues/53)）。
 - Trend & Target 支援每月序列：新增 `cadence`（week／month）並以 `start` 取代 `startMonday`，舊檔自動讀成每週序列。編輯器可在尚未輸入觀測時切換 cadence；文案、軸標籤與日期檢查依 cadence 調整。Readiness 改與 Deck 的 `period.end` 比較，沒有期間時略過（[#54](https://github.com/shiroki9979/weekly-report-builder/issues/54)）。
+- 用語與儲存改為 Deck：`weeks/` → `decks/`（`seed:decks` 會在 `decks/` 不存在時自動搬移舊目錄，兩者並存時停止並請作者處理）、`/api/weeks` → `/api/decks`、`WEEKS_DIR` → `DECKS_DIR`、`seed:weeks` → `seed:decks`。Weekly Overview 改名為 Overview（layout id `overview`，舊 id 仍可讀取）。Workshop 的 Week 選單改稱 Deck；週報專屬的 New week 流程保留（[#55](https://github.com/shiroki9979/weekly-report-builder/issues/55)）。
 - Stage 改由呼叫端明確傳入文件 id，HTML Page 不再從投影片上顯示的週次文字反推資源路徑；為週報與 slide 核心解耦的第一步（[ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)、[#50](https://github.com/shiroki9979/weekly-report-builder/issues/50)）。
 
 ## [0.3.0] - 2026-09-28

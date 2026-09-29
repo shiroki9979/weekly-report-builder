@@ -20,12 +20,12 @@ import {
   type AddableTwoColumnPanelKind,
   type PageMoveDirection,
 } from "@/lib/page-lifecycle"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { Deck, Page } from "@/lib/deck"
 
 type PageLifecycleControlsProps = {
-  week: WeekDocument
+  deck: Deck
   selectedPageId: string
-  onAdd: (page: WeekPage) => void
+  onAdd: (page: Page) => void
   onDelete: (pageId: string) => void
   onMove: (pageId: string, direction: PageMoveDirection) => void
   disabled?: boolean
@@ -33,7 +33,7 @@ type PageLifecycleControlsProps = {
 
 const LAYOUT_LABELS: Record<AddableLayout, string> = {
   "two-column": "Two-column",
-  "weekly-overview": "Weekly Overview",
+  overview: "Overview",
   "evidence-decision": "Evidence-backed Decision",
   "next-actions": "Next Actions",
   "trend-target": "Trend & Target",
@@ -47,7 +47,7 @@ const PANEL_LABELS: Record<AddableTwoColumnPanelKind, string> = {
 }
 
 export function PageLifecycleControls({
-  week,
+  deck,
   selectedPageId,
   onAdd,
   onDelete,
@@ -59,14 +59,14 @@ export function PageLifecycleControls({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  const selectedIndex = week.pages.findIndex(
+  const selectedIndex = deck.pages.findIndex(
     (page) => page.id === selectedPageId
   )
-  const selectedPage = week.pages[selectedIndex]
+  const selectedPage = deck.pages[selectedIndex]
   const canMoveUp = selectedIndex > 0
   const canMoveDown =
-    selectedIndex >= 0 && selectedIndex < week.pages.length - 1
-  const canDelete = week.pages.length > 1
+    selectedIndex >= 0 && selectedIndex < deck.pages.length - 1
+  const canDelete = deck.pages.length > 1
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -150,7 +150,7 @@ export function PageLifecycleControls({
             size="sm"
             disabled={disabled}
             onClick={() => {
-              const id = nextPageId(week.pages.map((page) => page.id))
+              const id = nextPageId(deck.pages.map((page) => page.id))
               onAdd(createBlankAddablePage(id, layout, panelKind))
             }}
           >

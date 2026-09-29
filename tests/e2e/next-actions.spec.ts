@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test"
 import fs from "node:fs"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 async function unlockEditor(page: Page) {
@@ -13,7 +13,7 @@ async function unlockEditor(page: Page) {
 
 async function openActionsWeek(page: Page) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-03" }).click()
   await expect(
     page.getByRole("heading", {
@@ -87,7 +87,7 @@ test("adds, saves, and reloads a next-actions draft", async ({ page }) => {
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
   await page.reload()
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-03" }).click()
   await unlockEditor(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
@@ -121,13 +121,13 @@ test("switches legacy Columns to Rows, saves, and carries the choice into a new 
   await page.getByRole("button", { name: "Save" }).click()
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
   await page.reload()
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-03" }).click()
   await unlockEditor(page)
   await expect(
     page.getByRole("combobox", { name: "Composition" })
   ).toContainText("Rows")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-31" }).click()
   await unlockEditor(page)
   await page.getByRole("combobox", { name: "Add page" }).click()
@@ -143,7 +143,7 @@ test("switches legacy Columns to Rows, saves, and carries the choice into a new 
   await page.getByRole("button", { name: "Save" }).click()
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Create week" }).click()
-  await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
+  await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-09-07"
   )
   await unlockEditor(page)

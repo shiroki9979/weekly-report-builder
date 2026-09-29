@@ -22,10 +22,10 @@ function makeTempDir(prefix: string): string {
   return dir
 }
 
-describe("production build weeks copy", () => {
+describe("production build decks copy", () => {
   it("fails with a seed instruction when the runtime store is missing", () => {
-    const root = makeTempDir("wrb-build-weeks-missing-")
-    const weeksDir = join(root, "weeks")
+    const root = makeTempDir("wrb-build-decks-missing-")
+    const decksDir = join(root, "decks")
     const outDir = join(root, "dist")
 
     const result = spawnSync(
@@ -34,13 +34,13 @@ describe("production build weeks copy", () => {
       {
         cwd: repoRoot,
         encoding: "utf8",
-        env: { ...process.env, WEEKS_DIR: weeksDir },
+        env: { ...process.env, DECKS_DIR: decksDir },
       }
     )
 
     const output = `${result.stdout}${result.stderr}`
     expect(result.status).not.toBe(0)
-    expect(output).toMatch(/pnpm seed:weeks/)
-    expect(existsSync(weeksDir)).toBe(false)
+    expect(output).toMatch(/pnpm seed:decks/)
+    expect(existsSync(decksDir)).toBe(false)
   }, 60_000)
 })

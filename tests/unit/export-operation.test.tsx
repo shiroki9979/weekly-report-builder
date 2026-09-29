@@ -15,7 +15,7 @@ import {
   type EditingSession,
 } from "@/lib/editing-session"
 import { createStagePageContext } from "@/lib/stage-page-context"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { Deck, Page } from "@/lib/deck"
 import { deferred, until } from "./support/async"
 
 vi.mock("@/lib/browser-capture-adapter", () => ({
@@ -31,8 +31,8 @@ type CopyRun = ReturnType<Commands["copyCurrentPage"]>
 
 type HarnessProps = {
   monday: string
-  week: WeekDocument
-  selectedPage: WeekPage
+  week: Deck
+  selectedPage: Page
   session?: EditingSession
 }
 
@@ -51,7 +51,7 @@ function OperationHarness({
             createEditingSession(week, "2026-08-24"),
             selectedPage.id
           ),
-          selectedMonday: monday,
+          selectedDeckId: monday,
         }
       ),
   })
@@ -72,11 +72,11 @@ function renderOperation(props: HarnessProps) {
   }
 }
 
-function htmlPage(id: string, title: string): WeekPage {
+function htmlPage(id: string, title: string): Page {
   return { id, layout: "html", title, htmlFile: `${id}.html` }
 }
 
-function singlePageWeek(): WeekDocument {
+function singlePageWeek(): Deck {
   return {
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [htmlPage("p01", "First")],
@@ -85,7 +85,7 @@ function singlePageWeek(): WeekDocument {
 
 // p01 的 capture 停在 pending，讓測試能在批次進行中改動 Editing Session
 function captureWithPendingFirstPage(firstCapture: Promise<Blob>) {
-  return (page: WeekPage) =>
+  return (page: Page) =>
     page.id === "p01" ? firstCapture : Promise.resolve(new Blob(["png"]))
 }
 
@@ -110,7 +110,7 @@ describe("export operation lifecycle", () => {
   })
 
   describe("a batch that outlives edits and a week switch", () => {
-    const otherWeek: WeekDocument = {
+    const otherWeek: Deck = {
       period: { start: "2026-08-31", end: "2026-09-04" },
       pages: [htmlPage("p01", "Other")],
     }
@@ -118,7 +118,7 @@ describe("export operation lifecycle", () => {
     it("exports the starting pages with their original Stage context", async () => {
       const firstCapture = deferred<Blob>()
       const capture = captureWithPendingFirstPage(firstCapture.promise)
-      const week: WeekDocument = {
+      const week: Deck = {
         period: { start: "2026-08-18", end: "2026-08-22" },
         pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
@@ -172,7 +172,7 @@ describe("export operation lifecycle", () => {
       prepare.mockImplementation(async (_documentId, _document, page) =>
         preparedCapture(() => capture(page))
       )
-      const week: WeekDocument = {
+      const week: Deck = {
         period: { start: "2026-08-18", end: "2026-08-22" },
         pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
       }
@@ -196,7 +196,7 @@ describe("export operation lifecycle", () => {
   it("exports every starting page with its original position after a page is deleted mid-batch", async () => {
     const firstCapture = deferred<Blob>()
     const capture = captureWithPendingFirstPage(firstCapture.promise)
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: "2026-08-18", end: "2026-08-22" },
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
@@ -217,7 +217,7 @@ describe("export operation lifecycle", () => {
       batch = operation.commands().downloadVisiblePages()
     })
     await until(() => seen.length === 1)
-    const afterDeletion: WeekDocument = { ...week, pages: [week.pages[0]] }
+    const afterDeletion: Deck = { ...week, pages: [week.pages[0]] }
     week.pages.splice(1, 1)
     operation.rerender({
       monday: "2026-08-18",
@@ -244,7 +244,7 @@ describe("export operation lifecycle", () => {
       metricIndex: 0,
       field: "baselineValue",
     } as const
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: monday, end: "2026-08-28" },
       pages: [
         htmlPage("p01", "First"),
@@ -297,7 +297,7 @@ describe("export operation lifecycle", () => {
       operation.rerender({
         monday,
         week,
-        selectedPage: session.week!.pages[0],
+        selectedPage: session.deck!.pages[0],
         session,
       })
       const finishBatch = () =>
@@ -414,7 +414,7 @@ describe("export operation lifecycle", () => {
   })
 
   describe("a batch with a fatal download failure", () => {
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         htmlPage("p01", "First"),
@@ -493,11 +493,11 @@ describe("export operation lifecycle", () => {
   })
 
   describe("a capture that times out after a week switch", () => {
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [htmlPage("p01", "Slow"), htmlPage("p02", "Next")],
     }
-    const nextWeek: WeekDocument = {
+    const nextWeek: Deck = {
       period: { start: "2026-08-31", end: "2026-09-04" },
       pages: [htmlPage("p03", "New")],
     }
@@ -586,7 +586,7 @@ describe("export operation lifecycle", () => {
     prepare.mockImplementation(async (_documentId, _document, page) =>
       preparedCapture(() => capture(page), dispose)
     )
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }

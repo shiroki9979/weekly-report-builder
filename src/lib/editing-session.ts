@@ -4,7 +4,7 @@ import {
   readMetricInputText,
   remapMetricInputAfterMove,
   remapMetricInputAfterRemove,
-  weekHasInvalidMetricInputs,
+  deckHasInvalidMetricInputs,
   writeMetricInputText,
   type MetricInputLocation,
   type MetricInputMap,
@@ -12,7 +12,7 @@ import {
   type MetricMove,
 } from "./metric-input"
 import { parseMetricInput } from "./metric-format"
-import { weekHasInvalidTrendInputs } from "./trend-input"
+import { deckHasInvalidTrendInputs } from "./trend-input"
 import {
   addPageAfter,
   deleteSelectedPage,
@@ -28,17 +28,17 @@ import {
 import {
   isEvidenceDecisionPage,
   isTrendTargetPage,
-  isStructuredWeekPage,
+  isStructuredPage,
   type ComparisonMetric,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+  type Deck,
+  type Page,
+} from "./deck"
 
 export type EditingSession = {
-  readonly weeks: string[]
-  readonly selectedMonday: string
+  readonly decks: string[]
+  readonly selectedDeckId: string
   readonly loadStatus: SessionLoadStatus
-  readonly week: WeekDocument | null
+  readonly deck: Deck | null
   readonly metricInput: MetricInputMap
   readonly selectedPageId: string | null
   readonly saveError: string | null
@@ -50,8 +50,8 @@ export type EditingSession = {
 
 // 快照在執行期深度凍結；匯出流程沿用 WeekDocument 型別，誤寫會直接拋錯而不會改到快照
 export type SessionOperationSnapshot = Readonly<{
-  monday: string
-  week: WeekDocument
+  deckId: string
+  deck: Deck
   selectedPageId: string | null
   metricInput: MetricInputMap
 }>
@@ -67,10 +67,10 @@ function freezeDeep<T extends object>(value: T): T {
 export function sessionOperationSnapshot(
   session: EditingSession
 ): SessionOperationSnapshot | null {
-  if (!session.week || session.loadStatus.kind !== "ready") return null
+  if (!session.deck || session.loadStatus.kind !== "ready") return null
   return freezeDeep({
-    monday: session.selectedMonday,
-    week: structuredClone(session.week),
+    deckId: session.selectedDeckId,
+    deck: structuredClone(session.deck),
     selectedPageId: session.selectedPageId,
     metricInput: structuredClone(session.metricInput),
   })
@@ -92,16 +92,16 @@ export type SessionLoadStatus =
   | { kind: "ready" }
 
 export function createEditingSession(
-  week: WeekDocument | null = null,
+  deck: Deck | null = null,
   deckId = ""
 ): EditingSession {
   return {
-    weeks: [],
-    selectedMonday: deckId,
-    loadStatus: week ? { kind: "ready" } : { kind: "loading" },
-    week,
+    decks: [],
+    selectedDeckId: deckId,
+    loadStatus: deck ? { kind: "ready" } : { kind: "loading" },
+    deck,
     metricInput: {},
-    selectedPageId: week?.pages[0]?.id ?? null,
+    selectedPageId: deck?.pages[0]?.id ?? null,
     saveError: null,
     saving: false,
     savedMessage: null,
@@ -110,34 +110,34 @@ export function createEditingSession(
   }
 }
 
-export function openSessionWeek(
+export function openSessionDeck(
   session: EditingSession,
-  week: WeekDocument | null
+  deck: Deck | null
 ): EditingSession {
   return {
-    ...createEditingSession(week),
-    weeks: session.weeks,
+    ...createEditingSession(deck),
+    decks: session.decks,
     // Deck ID 由開啟時的選擇決定（beginSessionOpen），不可由文件內容反推，否則非日期 id 的 Deck 會存到別的檔案
-    selectedMonday: session.selectedMonday,
+    selectedDeckId: session.selectedDeckId,
   }
 }
 
 export function beginSessionOpen(
   session: EditingSession,
-  monday: string
+  deckId: string
 ): EditingSession {
   return {
-    ...openSessionWeek(session, null),
-    selectedMonday: monday,
+    ...openSessionDeck(session, null),
+    selectedDeckId: deckId,
     loadStatus: { kind: "loading" },
   }
 }
 
 export function finishSessionOpen(
   session: EditingSession,
-  week: WeekDocument
+  deck: Deck
 ): EditingSession {
-  return { ...openSessionWeek(session, week), loadStatus: { kind: "ready" } }
+  return { ...openSessionDeck(session, deck), loadStatus: { kind: "ready" } }
 }
 
 export function failSessionOpen(
@@ -145,19 +145,19 @@ export function failSessionOpen(
   message: string
 ): EditingSession {
   return {
-    ...openSessionWeek(session, null),
+    ...openSessionDeck(session, null),
     loadStatus: { kind: "error", message },
   }
 }
 
-export function setSessionWeeks(
+export function setSessionDecks(
   session: EditingSession,
-  weeks: string[]
+  decks: string[]
 ): EditingSession {
   return {
     ...session,
-    weeks,
-    loadStatus: weeks.length ? session.loadStatus : { kind: "empty" },
+    decks,
+    loadStatus: decks.length ? session.loadStatus : { kind: "empty" },
   }
 }
 
@@ -197,24 +197,24 @@ export function failSessionCreate(
   return { ...session, creating: false, createError: message }
 }
 
-export function requireWeek(session: EditingSession): WeekDocument {
-  if (!session.week) {
-    throw new Error("No week is open")
+export function requireDeck(session: EditingSession): Deck {
+  if (!session.deck) {
+    throw new Error("No deck is open")
   }
-  return session.week
+  return session.deck
 }
 
 // 以 Page ID 找出特定版型的頁面；版型不符視同找不到，呼叫端再依自身語意回報錯誤
-export function findSessionPage<T extends WeekPage>(
+export function findSessionPage<T extends Page>(
   session: EditingSession,
   pageId: string,
-  hasLayout: (page: WeekPage) => page is T
-): { week: WeekDocument; pageIndex: number; page: T } | null {
-  const week = requireWeek(session)
-  const pageIndex = week.pages.findIndex((page) => page.id === pageId)
-  const page = week.pages[pageIndex]
+  hasLayout: (page: Page) => page is T
+): { deck: Deck; pageIndex: number; page: T } | null {
+  const deck = requireDeck(session)
+  const pageIndex = deck.pages.findIndex((page) => page.id === pageId)
+  const page = deck.pages[pageIndex]
   if (!page || !hasLayout(page)) return null
-  return { week, pageIndex, page }
+  return { deck, pageIndex, page }
 }
 
 function requireMetric(
@@ -230,10 +230,10 @@ function requireMetric(
 
 export function editSessionContent(
   session: EditingSession,
-  update: (week: WeekDocument) => WeekDocument
+  update: (deck: Deck) => Deck
 ): EditingSession {
   // 用凍結副本作比較基準，避免回呼原地修改時連傳入的 Session 一起改掉。
-  const baseline = freezeDeep(structuredClone(requireWeek(session)))
+  const baseline = freezeDeep(structuredClone(requireDeck(session)))
   const next = update(baseline)
   if (changesPageStructure(baseline, next)) {
     throw new Error(
@@ -250,10 +250,10 @@ export function editSessionContent(
       "Metric changes require a dedicated Editing Session operation"
     )
   }
-  return { ...session, week: next }
+  return { ...session, deck: next }
 }
 
-function changesTrendRange(before: WeekDocument, after: WeekDocument): boolean {
+function changesTrendRange(before: Deck, after: Deck): boolean {
   return after.pages.some((afterPage, index) => {
     const beforePage = before.pages[index]
     return (
@@ -264,10 +264,7 @@ function changesTrendRange(before: WeekDocument, after: WeekDocument): boolean {
   })
 }
 
-function changesPageStructure(
-  before: WeekDocument,
-  after: WeekDocument
-): boolean {
+function changesPageStructure(before: Deck, after: Deck): boolean {
   return (
     after.pages.length !== before.pages.length ||
     after.pages.some(
@@ -278,10 +275,7 @@ function changesPageStructure(
   )
 }
 
-function changesMetricsUnsafely(
-  before: WeekDocument,
-  after: WeekDocument
-): boolean {
+function changesMetricsUnsafely(before: Deck, after: Deck): boolean {
   return after.pages.some((afterPage, pageIndex) => {
     const beforePage = before.pages[pageIndex]
     return (
@@ -348,7 +342,7 @@ export function selectSessionPage(
   session: EditingSession,
   pageId: string
 ): EditingSession {
-  if (!requireWeek(session).pages.some((page) => page.id === pageId)) {
+  if (!requireDeck(session).pages.some((page) => page.id === pageId)) {
     throw new Error(`Unknown page id: ${pageId}`)
   }
   return { ...session, selectedPageId: pageId }
@@ -373,20 +367,20 @@ export function writeMetricInput(
   raw: string
 ): EditingSession {
   const { metricIndex, field } = location
-  const { week, pageIndex } = requireMetric(session, location)
+  const { deck, pageIndex } = requireMetric(session, location)
   const parsed = parseMetricInput(raw)
   const metricInput = writeMetricInputText(session.metricInput, location, raw)
   const nextWeek =
     parsed.status === "invalid"
-      ? week
+      ? deck
       : setDecisionMetricValue(
-          week,
+          deck,
           pageIndex,
           metricIndex,
           field,
           parsed.status === "empty" ? null : parsed.value
         )
-  return { ...session, week: nextWeek, metricInput }
+  return { ...session, deck: nextWeek, metricInput }
 }
 
 export function moveSessionMetric(
@@ -394,17 +388,17 @@ export function moveSessionMetric(
   move: MetricMove
 ): EditingSession {
   const { pageId, fromIndex, toIndex } = move
-  const { week, pageIndex, page } = requireMetric(session, {
+  const { deck, pageIndex, page } = requireMetric(session, {
     pageId,
     metricIndex: fromIndex,
   })
   if (!page.metrics[toIndex]) {
     throw new Error(`Unknown Comparison Metric: ${pageId}[${toIndex}]`)
   }
-  const next = moveDecisionMetric(week, pageIndex, fromIndex, toIndex)
+  const next = moveDecisionMetric(deck, pageIndex, fromIndex, toIndex)
   return {
     ...session,
-    week: next,
+    deck: next,
     metricInput: remapMetricInputAfterMove(session.metricInput, move),
   }
 }
@@ -413,42 +407,42 @@ export function addSessionMetric(
   session: EditingSession,
   pageId: string
 ): EditingSession {
-  const { week, pageIndex } = requireMetric(session, {
+  const { deck, pageIndex } = requireMetric(session, {
     pageId,
     metricIndex: 0,
   })
-  return { ...session, week: addDecisionMetric(week, pageIndex) }
+  return { ...session, deck: addDecisionMetric(deck, pageIndex) }
 }
 
 export function removeSessionMetric(
   session: EditingSession,
   metric: MetricLocation
 ): EditingSession {
-  const { week, pageIndex } = requireMetric(session, metric)
+  const { deck, pageIndex } = requireMetric(session, metric)
   // 先驗證版面數量限制，例外發生時原 Session 與 Metric Input 都不會改動。
-  const next = removeDecisionMetric(week, pageIndex, metric.metricIndex)
+  const next = removeDecisionMetric(deck, pageIndex, metric.metricIndex)
   return {
     ...session,
-    week: next,
+    deck: next,
     metricInput: remapMetricInputAfterRemove(session.metricInput, metric),
   }
 }
 
 export function addSessionPage(
   session: EditingSession,
-  page: WeekPage
+  page: Page
 ): EditingSession {
-  const week = requireWeek(session)
-  if (week.pages.some((existing) => existing.id === page.id)) {
+  const deck = requireDeck(session)
+  if (deck.pages.some((existing) => existing.id === page.id)) {
     throw new Error(`Duplicate page id: ${page.id}`)
   }
   if (!session.selectedPageId) {
     throw new Error("No page is selected")
   }
-  const result = addPageAfter(week, session.selectedPageId, page)
+  const result = addPageAfter(deck, session.selectedPageId, page)
   return {
     ...session,
-    week: result.week,
+    deck: result.deck,
     selectedPageId: result.selectedPageId,
   }
 }
@@ -457,13 +451,13 @@ export function deleteSessionPage(
   session: EditingSession,
   pageId: string
 ): EditingSession {
-  const result = deleteSelectedPage(requireWeek(session), pageId)
+  const result = deleteSelectedPage(requireDeck(session), pageId)
   const metricInput = Object.fromEntries(
     Object.entries(session.metricInput).filter(([id]) => id !== pageId)
   )
   return {
     ...session,
-    week: result.week,
+    deck: result.deck,
     metricInput,
     selectedPageId: result.selectedPageId,
   }
@@ -474,10 +468,10 @@ export function moveSessionPage(
   pageId: string,
   direction: PageMoveDirection
 ): EditingSession {
-  const result = moveSelectedPage(requireWeek(session), pageId, direction)
+  const result = moveSelectedPage(requireDeck(session), pageId, direction)
   return {
     ...session,
-    week: result.week,
+    deck: result.deck,
     selectedPageId: result.selectedPageId,
   }
 }
@@ -486,14 +480,14 @@ export function sessionReadiness(
   session: EditingSession,
   pageId: string
 ): ExportIssue[] {
-  const page = requireWeek(session).pages.find((entry) => entry.id === pageId)
+  const page = requireDeck(session).pages.find((entry) => entry.id === pageId)
   if (!page) {
     throw new Error(`Unknown page id: ${pageId}`)
   }
-  return isStructuredWeekPage(page)
+  return isStructuredPage(page)
     ? assessContentReadiness(page, {
         metricInput: session.metricInput,
-        asOf: session.week?.period?.end,
+        asOf: session.deck?.period?.end,
       })
     : []
 }
@@ -502,17 +496,14 @@ export function canSaveSession(session: EditingSession): {
   session: EditingSession
   allowed: boolean
 } {
-  const saveError = saveBlockReason(requireWeek(session), session.metricInput)
+  const saveError = saveBlockReason(requireDeck(session), session.metricInput)
   return { session: { ...session, saveError }, allowed: saveError === null }
 }
 
-function saveBlockReason(
-  week: WeekDocument,
-  inputs: MetricInputMap
-): string | null {
-  if (weekHasInvalidMetricInputs(week, inputs))
+function saveBlockReason(deck: Deck, inputs: MetricInputMap): string | null {
+  if (deckHasInvalidMetricInputs(deck, inputs))
     return "Fix invalid metric values before saving"
-  if (weekHasInvalidTrendInputs(week, inputs))
+  if (deckHasInvalidTrendInputs(deck, inputs))
     return "Fix invalid Trend & Target input before saving"
   return null
 }

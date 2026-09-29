@@ -11,22 +11,18 @@ import {
   setChartSeriesColor,
   setChartSeriesName,
   setChartSeriesValue,
-} from "@/lib/week-editor"
+} from "@/lib/deck-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
-import {
-  canRemoveEntry,
-  CARDINALITY,
-  type ChartPanel,
-} from "@/lib/week-document"
+import { canRemoveEntry, CARDINALITY, type ChartPanel } from "@/lib/deck"
 
 export function ChartEditorForm({
-  week,
+  deck,
   pageIndex,
   panel,
   onChange,
 }: PanelEditorProps<ChartPanel>) {
-  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+  const invalidPaths = issuePathsFor(deck.pages[pageIndex])
 
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
@@ -41,8 +37,8 @@ export function ChartEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange((currentWeek) =>
-              setChartPanelTitle(currentWeek, pageIndex, event.target.value)
+            onChange((currentDeck) =>
+              setChartPanelTitle(currentDeck, pageIndex, event.target.value)
             )
           }
         />
@@ -56,8 +52,8 @@ export function ChartEditorForm({
             variant="outline"
             size="sm"
             onClick={() =>
-              onChange((currentWeek) =>
-                addChartCategory(currentWeek, pageIndex)
+              onChange((currentDeck) =>
+                addChartCategory(currentDeck, pageIndex)
               )
             }
           >
@@ -75,9 +71,9 @@ export function ChartEditorForm({
                   undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setChartCategory(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       categoryIndex,
                       event.target.value
@@ -90,8 +86,8 @@ export function ChartEditorForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  onChange((currentWeek) =>
-                    removeChartCategory(currentWeek, pageIndex, categoryIndex)
+                  onChange((currentDeck) =>
+                    removeChartCategory(currentDeck, pageIndex, categoryIndex)
                   )
                 }
                 disabled={
@@ -113,7 +109,7 @@ export function ChartEditorForm({
             variant="outline"
             size="sm"
             onClick={() =>
-              onChange((currentWeek) => addChartSeries(currentWeek, pageIndex))
+              onChange((currentDeck) => addChartSeries(currentDeck, pageIndex))
             }
           >
             Add series
@@ -139,9 +135,9 @@ export function ChartEditorForm({
                     undefined
                   }
                   onChange={(event) =>
-                    onChange((currentWeek) =>
+                    onChange((currentDeck) =>
                       setChartSeriesName(
-                        currentWeek,
+                        currentDeck,
                         pageIndex,
                         seriesIndex,
                         event.target.value
@@ -157,9 +153,9 @@ export function ChartEditorForm({
                   placeholder="#2e75b6"
                   value={series.color ?? ""}
                   onChange={(event) =>
-                    onChange((currentWeek) =>
+                    onChange((currentDeck) =>
                       setChartSeriesColor(
-                        currentWeek,
+                        currentDeck,
                         pageIndex,
                         seriesIndex,
                         event.target.value
@@ -190,9 +186,9 @@ export function ChartEditorForm({
                     }
                     value={series.values[categoryIndex] ?? 0}
                     onChange={(event) =>
-                      onChange((currentWeek) =>
+                      onChange((currentDeck) =>
                         setChartSeriesValue(
-                          currentWeek,
+                          currentDeck,
                           pageIndex,
                           seriesIndex,
                           categoryIndex,
@@ -209,8 +205,8 @@ export function ChartEditorForm({
               variant="outline"
               size="sm"
               onClick={() =>
-                onChange((currentWeek) =>
-                  removeChartSeries(currentWeek, pageIndex, seriesIndex)
+                onChange((currentDeck) =>
+                  removeChartSeries(currentDeck, pageIndex, seriesIndex)
                 )
               }
               disabled={!canRemoveEntry(panel.series, CARDINALITY.chartSeries)}

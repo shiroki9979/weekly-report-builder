@@ -5,11 +5,11 @@ import {
   addTableRow,
   removeTableColumn,
   removeTableRow,
-} from "@/lib/week-editor"
-import { parseWeekDocument } from "@/lib/week-document"
+} from "@/lib/deck-editor"
+import { parseDeck } from "@/lib/deck"
 
 function tableWeek() {
-  return parseWeekDocument({
+  return parseDeck({
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
       {

@@ -1,18 +1,18 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 async function unlockEditor(page: Page) {
   await page.getByRole("button", { name: "Edit", exact: true }).click()
 }
 
-async function openWeek(page: Page, monday: string, heading: string) {
+async function openDeck(page: Page, monday: string, heading: string) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: monday }).click()
   await expect(page.getByRole("heading", { name: heading })).toBeVisible()
 }
@@ -55,7 +55,7 @@ async function assertCopyFits1280Capture(page: Page) {
 test("reaches lifecycle controls from the keyboard and confirms delete in a dialog", async ({
   page,
 }) => {
-  await openWeek(page, "2026-08-24", "Fit table")
+  await openDeck(page, "2026-08-24", "Fit table")
   await unlockEditor(page)
 
   const addPage = page.getByRole("button", { name: "Add page" })
@@ -81,7 +81,7 @@ test("reaches lifecycle controls from the keyboard and confirms delete in a dial
 test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 450 and 1280 × 720", async ({
   page,
 }) => {
-  await openWeek(
+  await openDeck(
     page,
     "2026-08-17",
     "Delivery recovered, and the week closed with two durable gains."
@@ -105,7 +105,7 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
   await assertPreviewFits800x450(page)
   await assertCopyFits1280Capture(page)
 
-  await openWeek(
+  await openDeck(
     page,
     "2026-08-10",
     "Ship the candidate. The baseline is slower."
@@ -125,7 +125,7 @@ test("fits English, Chinese, and mixed Editorial Layout Family pages at 800 × 4
   await assertPreviewFits800x450(page)
   await assertCopyFits1280Capture(page)
 
-  await openWeek(page, "2026-08-03", "Five-day reviews and a held reserve.")
+  await openDeck(page, "2026-08-03", "Five-day reviews and a held reserve.")
   await assertPreviewFits800x450(page)
   await assertCopyFits1280Capture(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()

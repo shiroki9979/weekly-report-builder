@@ -2,17 +2,13 @@ import { EvidenceDecisionSlide } from "@/components/stage/evidence-decision-slid
 import { HtmlSlide } from "@/components/stage/html-slide"
 import { NextActionsSlide } from "@/components/stage/next-actions-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
-import { WeeklyOverviewSlide } from "@/components/stage/weekly-overview-slide"
+import { OverviewSlide } from "@/components/stage/overview-slide"
 import { TrendTargetSlide } from "@/components/stage/trend-target-slide"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import {
-  isHtmlWeekPage,
-  matchWeekPage,
-  type WeekPage,
-} from "@/lib/week-document"
+import { isHtmlPage, matchPage, type Page } from "@/lib/deck"
 
 export type StageSlideProps = {
-  page: WeekPage
+  page: Page
   context: StagePageContext
   isCapture?: boolean
 }
@@ -29,7 +25,7 @@ export function StageSlide({
           Hidden
         </p>
       ) : null}
-      {matchWeekPage(page, {
+      {matchPage(page, {
         html: (htmlPage) => (
           <HtmlSlide
             page={htmlPage}
@@ -38,8 +34,8 @@ export function StageSlide({
           />
         ),
         twoColumn: (twoColumn) => <TwoColumnSlide page={twoColumn} />,
-        weeklyOverview: (overview) => (
-          <WeeklyOverviewSlide page={overview} context={context} />
+        overview: (overview) => (
+          <OverviewSlide page={overview} context={context} />
         ),
         evidenceDecision: (decision) => (
           <EvidenceDecisionSlide page={decision} context={context} />
@@ -56,7 +52,7 @@ export function StageSlide({
           </div>
         ),
       })}
-      {isHtmlWeekPage(page) && context.showPageNumber && context.pageLabel ? (
+      {isHtmlPage(page) && context.showPageNumber && context.pageLabel ? (
         <footer className="stage-page-number">{context.pageLabel}</footer>
       ) : null}
     </div>

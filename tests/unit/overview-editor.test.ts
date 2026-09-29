@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createBlankWeeklyOverviewPage } from "@/lib/page-lifecycle"
+import { createBlankOverviewPage } from "@/lib/page-lifecycle"
 import {
   addSupportingOutcome,
   makeLead,
@@ -10,27 +10,27 @@ import {
   setOverviewLeadStatus,
   setOverviewSupportingField,
   setOverviewSupportingStatus,
-} from "@/lib/weekly-overview-editor"
-import type { WeekDocument, WeeklyOverviewPage } from "@/lib/week-document"
+} from "@/lib/overview-editor"
+import type { Deck, OverviewPage } from "@/lib/deck"
 
-function weekWith(page: WeeklyOverviewPage): WeekDocument {
+function weekWith(page: OverviewPage): Deck {
   return {
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [page],
   }
 }
 
-function overview(week: WeekDocument): WeeklyOverviewPage {
+function overview(week: Deck): OverviewPage {
   const page = week.pages[0]
-  if (page.layout !== "weekly-overview") {
-    throw new Error("expected weekly-overview")
+  if (page.layout !== "overview") {
+    throw new Error("expected overview")
   }
   return page
 }
 
-describe("weekly overview editor", () => {
+describe("overview editor", () => {
   it("updates lead and supporting text and status fields", () => {
-    const week = weekWith(createBlankWeeklyOverviewPage("p01"))
+    const week = weekWith(createBlankOverviewPage("p01"))
 
     const withLead = setOverviewLeadStatus(
       setOverviewLeadField(week, 0, "workstream", "Delivery"),
@@ -57,7 +57,7 @@ describe("weekly overview editor", () => {
   })
 
   it("adds a supporting outcome until the maximum of three", () => {
-    const week = weekWith(createBlankWeeklyOverviewPage("p01"))
+    const week = weekWith(createBlankOverviewPage("p01"))
     const added = addSupportingOutcome(week, 0)
 
     expect(overview(added).supporting).toHaveLength(3)
@@ -72,7 +72,7 @@ describe("weekly overview editor", () => {
   })
 
   it("removes a supporting outcome until the minimum of one", () => {
-    const week = weekWith(createBlankWeeklyOverviewPage("p01"))
+    const week = weekWith(createBlankOverviewPage("p01"))
     const removed = removeSupportingOutcome(week, 0, 0)
 
     expect(overview(removed).supporting).toHaveLength(1)
@@ -80,7 +80,7 @@ describe("weekly overview editor", () => {
   })
 
   it("reorders supporting outcomes and swaps a supporting outcome into the lead", () => {
-    const week = weekWith(createBlankWeeklyOverviewPage("p01"))
+    const week = weekWith(createBlankOverviewPage("p01"))
     const named = setOverviewSupportingField(
       setOverviewSupportingField(
         setOverviewLeadField(week, 0, "workstream", "Delivery"),

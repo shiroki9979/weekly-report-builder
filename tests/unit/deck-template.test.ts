@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import { createDeckFromTemplate } from "@/lib/deck-template"
-import { parseWeekDocument } from "@/lib/week-document"
+import { parseDeck } from "@/lib/deck"
 
-const template = parseWeekDocument({
+const template = parseDeck({
   showPageNumbers: false,
   pages: [
     {

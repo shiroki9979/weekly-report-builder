@@ -2,14 +2,36 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-09-28
+Last updated: 2026-09-29
 
-Weekly Report Builder is an authoring workspace for composing Week Pages, reviewing them on a presentation Stage, and exporting them for a shared deck.
+Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
+
+## Decks
+
+**Deck**:
+An ordered set of Pages authored and exported together, stored as one JSON file.
+_Avoid_: Week Document, presentation, slideshow
+
+**Deck ID**:
+The path-safe identifier of a Deck (lowercase letters, digits, and hyphens) that names its file and its HTML Page folder. A Weekly Series Deck uses its Monday date.
+_Avoid_: Monday, file name
+
+**Deck Period**:
+Optional start and end dates a Deck reports on. It produces the Frame Label and bounds Trend & Target observations; a Deck without one has neither.
+_Avoid_: Reporting week, date range
+
+**Weekly Series**:
+The weekly-report workflow: Decks named by their Monday, each with a Monday-to-Friday Deck Period, created from the latest one with authored copy cleared.
+_Avoid_: Weeks, report history
+
+**Deck Template**:
+An existing Deck used to create a new one that keeps its layouts, order, and structure but clears authored copy.
+_Avoid_: Clone, copy
 
 ## Page layouts
 
 **Structured Layout**:
-A reusable Week Page format organized around a recurring communication job and supported throughout authoring, preview, weekly reuse, and export.
+A reusable Page format organized around a recurring communication job and supported throughout authoring, preview, reuse through a Deck Template, and export.
 _Avoid_: Production layout, template
 
 **Layout Variant**:
@@ -17,7 +39,7 @@ An alternative composition of a Structured Layout that preserves its communicati
 _Avoid_: New layout, theme
 
 **Editorial Layout Family**:
-The three Structured Layouts—Weekly Overview, Evidence-backed Decision, and Next Actions—that communicate what changed, what the evidence supports, and what happens next.
+The three Structured Layouts—Overview, Evidence-backed Decision, and Next Actions—that communicate what changed, what the evidence supports, and what happens next.
 _Avoid_: Prototype layouts, three layouts
 
 **Two-column Layout**:
@@ -25,11 +47,11 @@ The existing general-purpose Structured Layout that presents three narrative ite
 _Avoid_: Legacy layout, deprecated layout
 
 **Trend & Target**:
-A Structured Layout that presents one metric's weekly time series against a fixed target threshold.
+A Structured Layout that presents one metric's time series, at a weekly or monthly Cadence, against a fixed target threshold.
 _Avoid_: Trend panel, KPI dashboard
 
 **HTML Page**:
-A one-off Week Page whose Stage content is supplied as standalone HTML instead of a Structured Layout.
+A one-off Page whose Stage content is supplied as standalone HTML instead of a Structured Layout.
 _Avoid_: Structured Layout, HTML layout
 
 ## Editorial content
@@ -46,16 +68,20 @@ _Avoid_: Status color, traffic light
 A named measure that compares numeric baseline and candidate values expressed with one shared unit and display format.
 _Avoid_: Bar, chart value
 
-**Weekly Observation**:
-A position in a Trend & Target series associated with one reporting week. It contains a measured value, a Missing Observation, or an Unfilled Observation.
+**Cadence**:
+The period one Trend & Target position covers: a week starting on Monday or a calendar month starting on its first day.
+_Avoid_: Frequency, granularity
+
+**Observation**:
+A position in a Trend & Target series associated with one period of its Cadence. It contains a measured value, a Missing Observation, or an Unfilled Observation.
 _Avoid_: Chart point, data row
 
 **Missing Observation**:
-An author's explicit statement that a weekly measurement is unavailable. It differs from both a measured zero and unfinished authoring.
+An author's explicit statement that a period's measurement is unavailable. It differs from both a measured zero and unfinished authoring.
 _Avoid_: Empty value, zero
 
 **Unfilled Observation**:
-A Weekly Observation for which neither a measured value nor an explicit missing state has been authored.
+An Observation for which neither a measured value nor an explicit missing state has been authored.
 _Avoid_: Missing observation, zero
 
 **Measurement Context**:
@@ -67,17 +93,17 @@ A priority action that pairs an intended outcome with a verification checkpoint.
 _Avoid_: Task, to-do
 
 **Editorial Frame**:
-The shared context around an Editorial Layout Family page: its communication job, central conclusion, reporting week, and page position.
+The shared context around an Editorial Layout Family page: its communication job, central conclusion, Frame Label, and page position.
 _Avoid_: Header, wrapper
 
 ## Editorial layouts
 
-**Weekly Overview**:
+**Overview**:
 A Structured Layout containing one Lead Outcome and between one and three Supporting Outcomes.
 _Avoid_: Overview grid, status dashboard
 
 **Lead Outcome**:
-The single Outcome that carries the strongest visual priority on a Weekly Overview.
+The single Outcome that carries the strongest visual priority on an Overview.
 _Avoid_: Primary card, first item
 
 **Supporting Outcome**:
@@ -99,11 +125,11 @@ _Avoid_: Action table, task list
 ## Page context
 
 **Page ID**:
-A non-empty identifier that is unique within a Week Document and remains attached to the same Week Page when pages are reordered.
+A non-empty identifier that is unique within a Deck and remains attached to the same Page when pages are reordered.
 _Avoid_: Page index, array position
 
 **Hidden Page**:
-A Week Page retained for authoring and individual preview or copy, but excluded from batch export and Page Position.
+A Page retained for authoring and individual preview or copy, but excluded from batch export and Page Position.
 _Avoid_: Deleted page, unsupported page
 
 **Draft Page**:
@@ -127,19 +153,19 @@ A failure to obtain an HTML Page's referenced content because its file reference
 _Avoid_: Overflowing Page, missing authored content
 
 **Page Position**:
-A Week Page's stable order among all supported, non-hidden pages in its Week Document, regardless of whether those pages are Draft or Overflowing. Editorial Layout Family pages, Trend & Target pages, HTML Pages, and Two-column Layouts with table, chart, flow, or checklist panels are supported; unknown layouts and the fields panel are not. A hidden page has no Page Position.
+A Page's stable order among all supported, non-hidden pages in its Deck, regardless of whether those pages are Draft or Overflowing. Editorial Layout Family pages, Trend & Target pages, HTML Pages, and Two-column Layouts with table, chart, flow, or checklist panels are supported; unknown layouts and the fields panel are not. A hidden page has no Page Position.
 _Avoid_: Array index, layout page number
 
-**Week Label**:
-The ISO date range from Monday through Friday that identifies the reporting week.
-_Avoid_: Stored week text, localized date label
+**Frame Label**:
+The Deck Period shown as an ISO date range on the Editorial Frame; empty when the Deck has no period.
+_Avoid_: Week Label, localized date label
 
 ## Authoring
 
 **Editing Session**:
-The Workshop's unsaved working state for one open Week Document, lasting from opening that week until another week is opened; saving does not end it.
-_Avoid_: Week Draft, working copy, unsaved week
+The Workshop's unsaved working state for one open Deck, lasting from opening that Deck until another is opened; saving does not end it.
+_Avoid_: Week Draft, working copy, unsaved deck
 
 **Metric Input**:
-The verbatim text an author typed for a Comparison Metric value or a Trend & Target numeric or date field (target, Weekly Observation value, or starting Monday), kept for the rest of the Editing Session. An invalid Metric Input blocks Save and Copy, and batch export skips its page.
+The verbatim text an author typed for a Comparison Metric value or a Trend & Target numeric or date field (target, Observation value, or series start), kept for the rest of the Editing Session. An invalid Metric Input blocks Save and Copy, and batch export skips its page.
 _Avoid_: Metric draft, raw buffer

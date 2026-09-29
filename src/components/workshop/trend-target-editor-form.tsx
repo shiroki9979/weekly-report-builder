@@ -38,14 +38,14 @@ import {
   trendRangeEnd,
   UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import { typedPageUpdater } from "@/lib/update-week-page"
+import { typedPageUpdater } from "@/lib/update-deck-page"
 import {
   hasEnteredObservations,
   isTrendTargetPage,
   type UnmeasuredState,
-  type WeeklyObservation,
+  type TrendObservation,
   type TrendTargetPage,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 const updateTrendPage = typedPageUpdater(isTrendTargetPage, "Trend & Target")
 
@@ -57,7 +57,7 @@ function proposedRange(page: TrendTargetPage, start: string): string | null {
 }
 
 // Missing 與輸入數值互為切換：按鈕文案與切換後的狀態都由目前狀態決定
-function observationToggle(entry: WeeklyObservation): {
+function observationToggle(entry: TrendObservation): {
   label: string
   next: UnmeasuredState
 } {
@@ -395,7 +395,7 @@ function TrendNarrativeControls({
 }
 
 export function TrendTargetEditorForm({
-  week,
+  deck,
   page,
   pageIndex,
   onChange,
@@ -410,7 +410,7 @@ export function TrendTargetEditorForm({
 
   return (
     <EditorialPageEditorChrome
-      week={week}
+      deck={deck}
       page={page}
       pageIndex={pageIndex}
       onChange={onChange}

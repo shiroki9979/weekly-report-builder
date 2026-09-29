@@ -6,22 +6,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { Deck, Page } from "@/lib/deck"
 
 type PagePickerProps = {
-  week: WeekDocument
+  deck: Deck
   selectedPageIndex: number
   onSelect: (index: number) => void
 }
 
-// clone 後的新週會清空標題；以 Page ID 代替，避免下拉選單出現無名稱的選項
-function pageOptionLabel(page: WeekPage): string {
+// 從範本建立的 Deck 會清空標題；以 Page ID 代替，避免下拉選單出現無名稱的選項
+function pageOptionLabel(page: Page): string {
   const label = page.title.trim() || page.id
   return page.hidden ? `${label} (hidden)` : label
 }
 
 export function PagePicker({
-  week,
+  deck,
   selectedPageIndex,
   onSelect,
 }: PagePickerProps) {
@@ -43,7 +43,7 @@ export function PagePicker({
                 return null
               }
 
-              const page = week.pages[Number(value)]
+              const page = deck.pages[Number(value)]
               if (!page) {
                 return value
               }
@@ -53,7 +53,7 @@ export function PagePicker({
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {week.pages.map((page, index) => (
+          {deck.pages.map((page, index) => (
             <SelectItem key={page.id} value={String(index)}>
               {pageOptionLabel(page)}
             </SelectItem>

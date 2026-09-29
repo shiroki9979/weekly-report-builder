@@ -17,8 +17,8 @@ import {
   trendDatingError,
   trendEndDate,
 } from "@/lib/trend-target"
-import { parseWeekDocument, type TrendTargetPage } from "@/lib/week-document"
-import { serializeWeekDocument } from "@/lib/weeks-io"
+import { parseDeck, type TrendTargetPage } from "@/lib/deck"
+import { serializeDeck } from "@/lib/decks-io"
 
 const monthly: TrendTargetPage = {
   id: "p01",
@@ -79,7 +79,7 @@ describe("Trend & Target cadence", () => {
     const legacy = { ...monthly, cadence: undefined, start: undefined }
 
     it("reads a legacy startMonday as a weekly series and saves the new fields", () => {
-      const deck = parseWeekDocument({
+      const deck = parseDeck({
         pages: [
           {
             ...legacy,
@@ -93,13 +93,13 @@ describe("Trend & Target cadence", () => {
         cadence: "week",
         start: "2026-07-06",
       })
-      const saved = JSON.parse(serializeWeekDocument(deck)).pages[0]
+      const saved = JSON.parse(serializeDeck(deck)).pages[0]
       expect(saved).not.toHaveProperty("startMonday")
       expect(saved).toMatchObject({ cadence: "week", start: "2026-07-06" })
     })
 
     it("round-trips a monthly series", () => {
-      const deck = parseWeekDocument({ pages: [monthly] })
+      const deck = parseDeck({ pages: [monthly] })
       expect(deck.pages[0]).toEqual(monthly)
     })
 
@@ -120,7 +120,7 @@ describe("Trend & Target cadence", () => {
         error: /start: Starting month must be the first day/,
       },
     ])("rejects $field", ({ page, error }) => {
-      expect(() => parseWeekDocument({ pages: [page] })).toThrow(error)
+      expect(() => parseDeck({ pages: [page] })).toThrow(error)
     })
   })
 
@@ -174,7 +174,7 @@ describe("Trend & Target cadence", () => {
 
       session = setTrendCadence(session, "p01", "month")
 
-      expect(session.week?.pages[0]).toMatchObject({
+      expect(session.deck?.pages[0]).toMatchObject({
         cadence: "month",
         start: "2026-07-01",
       })

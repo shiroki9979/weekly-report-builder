@@ -54,4 +54,4 @@ Copy 目前頁時，若該頁是 Draft、Overflowing、量測／PNG 產生失敗
 
 ## 相關文件
 
-- 檔名規則細節：[週次 JSON 格式 — 頁面 id](../reference/week-json-format.md#page)
+- 檔名規則細節：[週次 JSON 格式 — 頁面 id](../reference/deck-json-format.md#page)

@@ -1,9 +1,9 @@
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import type { Outcome, WeeklyOverviewPage } from "@/lib/week-document"
+import type { Outcome, OverviewPage } from "@/lib/deck"
 
-type WeeklyOverviewSlideProps = {
-  page: WeeklyOverviewPage
+type OverviewSlideProps = {
+  page: OverviewPage
   context: StagePageContext
 }
 
@@ -27,16 +27,9 @@ function OutcomeBlock({
   )
 }
 
-export function WeeklyOverviewSlide({
-  page,
-  context,
-}: WeeklyOverviewSlideProps) {
+export function OverviewSlide({ page, context }: OverviewSlideProps) {
   return (
-    <EditorialFrame
-      eyebrow="Weekly Overview"
-      headline={page.title}
-      context={context}
-    >
+    <EditorialFrame eyebrow="Overview" headline={page.title} context={context}>
       <div className="editorial-overview">
         <OutcomeBlock outcome={page.lead} lead />
         <div className="editorial-supporting">

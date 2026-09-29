@@ -14,24 +14,24 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-type WeekPickerProps = {
-  weeks: string[]
+type DeckPickerProps = {
+  decks: string[]
   value: string
-  onChange: (monday: string) => void
+  onChange: (deckId: string) => void
   disabled?: boolean
   trailing?: ReactNode
 }
 
-export function WeekPicker({
-  weeks,
+export function DeckPicker({
+  decks,
   value,
   onChange,
   disabled,
   trailing,
-}: WeekPickerProps) {
+}: DeckPickerProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="week-picker">Week</Label>
+      <Label htmlFor="deck-picker">Deck</Label>
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-40 flex-1">
           <Select
@@ -43,13 +43,13 @@ export function WeekPicker({
             }}
             disabled={disabled}
           >
-            <SelectTrigger id="week-picker" className="w-full">
+            <SelectTrigger id="deck-picker" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {weeks.map((monday) => (
-                <SelectItem key={monday} value={monday}>
-                  {monday}
+              {decks.map((deckId) => (
+                <SelectItem key={deckId} value={deckId}>
+                  {deckId}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -70,7 +70,7 @@ export type ToolbarSaveControls = {
 }
 
 export type ToolbarCreateControls = {
-  onCreate: (monday: string) => void
+  onCreate: (deckId: string) => void
   creating: boolean
   error: string | null
   suggestedMonday: string
@@ -84,35 +84,35 @@ export type ToolbarPageNumberControls = {
 }
 
 type WorkshopToolbarProps = {
-  weeks: string[]
-  selectedMonday: string
-  onWeekChange: (monday: string) => void
-  weekSelectDisabled?: boolean
+  decks: string[]
+  selectedDeckId: string
+  onDeckChange: (deckId: string) => void
+  deckSelectDisabled?: boolean
   save: ToolbarSaveControls
   create: ToolbarCreateControls
   pageNumbers?: ToolbarPageNumberControls
 }
 
 export function WorkshopToolbar({
-  weeks,
-  selectedMonday,
-  onWeekChange,
-  weekSelectDisabled,
+  decks,
+  selectedDeckId,
+  onDeckChange,
+  deckSelectDisabled,
   save,
   create,
   pageNumbers,
 }: WorkshopToolbarProps) {
-  if (weeks.length === 0) {
+  if (decks.length === 0) {
     return null
   }
 
   return (
     <div className="space-y-3">
-      <WeekPicker
-        weeks={weeks}
-        value={selectedMonday}
-        onChange={onWeekChange}
-        disabled={weekSelectDisabled}
+      <DeckPicker
+        decks={decks}
+        value={selectedDeckId}
+        onChange={onDeckChange}
+        disabled={deckSelectDisabled}
         trailing={<SaveStatus save={save} />}
       />
       {pageNumbers ? <PageNumbersToggle pageNumbers={pageNumbers} /> : null}
@@ -161,16 +161,16 @@ function PageNumbersToggle({
     >
       <div className="flex items-center gap-2">
         <Checkbox
-          id="week-show-page-numbers"
+          id="deck-show-page-numbers"
           checked={pageNumbers.show}
           disabled={disabled}
-          aria-describedby="week-show-page-numbers-hint"
+          aria-describedby="deck-show-page-numbers-hint"
           onCheckedChange={(checked) =>
             pageNumbers.onChange?.(checked === true)
           }
         />
         <Label
-          htmlFor="week-show-page-numbers"
+          htmlFor="deck-show-page-numbers"
           className={
             disabled ? "cursor-not-allowed text-muted-foreground" : undefined
           }
@@ -179,7 +179,7 @@ function PageNumbersToggle({
         </Label>
       </div>
       <p
-        id="week-show-page-numbers-hint"
+        id="deck-show-page-numbers-hint"
         className="text-xs text-muted-foreground"
       >
         HTML pages show a page number only when set on the page.
@@ -190,7 +190,7 @@ function PageNumbersToggle({
 
 type NewWeekFormProps = {
   suggestedMonday: string
-  onCreate: (monday: string) => void
+  onCreate: (deckId: string) => void
   creating: boolean
   createError: string | null
   disabled?: boolean

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { WorkshopPreview } from "@/components/workshop/workshop-preview"
 import { measureStageOverflow } from "@/lib/overflow-measurement"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 import { completePage } from "./export-fixtures"
 import { stubWorkshopDom } from "./support/workshop-dom"
 
@@ -12,7 +12,7 @@ vi.mock("@/lib/overflow-measurement", async (importOriginal) => ({
   measureStageOverflow: vi.fn(),
 }))
 
-const week: WeekDocument = {
+const week: Deck = {
   period: { start: "2026-08-24", end: "2026-08-28" },
   pages: [completePage],
 }
@@ -20,7 +20,7 @@ const week: WeekDocument = {
 function renderPreview() {
   render(
     <WorkshopPreview
-      week={week}
+      deck={week}
       selectedPageIndex={0}
       onSelectPage={() => {}}
       loadStatus={{ kind: "ready" }}

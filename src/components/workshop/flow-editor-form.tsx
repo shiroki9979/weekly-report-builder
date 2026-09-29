@@ -16,22 +16,18 @@ import {
   setFlowStepCaption,
   setFlowStepLabel,
   setFlowStepVariant,
-} from "@/lib/week-editor"
+} from "@/lib/deck-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import type { PanelEditorProps } from "@/components/workshop/page-editor-props"
-import {
-  canRemoveEntry,
-  CARDINALITY,
-  type FlowPanel,
-} from "@/lib/week-document"
+import { canRemoveEntry, CARDINALITY, type FlowPanel } from "@/lib/deck"
 
 export function FlowEditorForm({
-  week,
+  deck,
   pageIndex,
   panel,
   onChange,
 }: PanelEditorProps<FlowPanel>) {
-  const invalidPaths = issuePathsFor(week.pages[pageIndex])
+  const invalidPaths = issuePathsFor(deck.pages[pageIndex])
 
   return (
     <fieldset className="space-y-3 rounded-md border p-3">
@@ -46,8 +42,8 @@ export function FlowEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange((currentWeek) =>
-              setFlowPanelTitle(currentWeek, pageIndex, event.target.value)
+            onChange((currentDeck) =>
+              setFlowPanelTitle(currentDeck, pageIndex, event.target.value)
             )
           }
         />
@@ -61,7 +57,7 @@ export function FlowEditorForm({
             variant="outline"
             size="sm"
             onClick={() =>
-              onChange((currentWeek) => addFlowStep(currentWeek, pageIndex))
+              onChange((currentDeck) => addFlowStep(currentDeck, pageIndex))
             }
           >
             Add step
@@ -86,9 +82,9 @@ export function FlowEditorForm({
                   undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setFlowStepLabel(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       stepIndex,
                       event.target.value
@@ -103,9 +99,9 @@ export function FlowEditorForm({
                 id={`flow-step-caption-${stepIndex}`}
                 value={step.caption ?? ""}
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setFlowStepCaption(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       stepIndex,
                       event.target.value
@@ -123,9 +119,9 @@ export function FlowEditorForm({
                     return
                   }
 
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setFlowStepVariant(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       stepIndex,
                       next as "default" | "ok" | ""
@@ -153,9 +149,9 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={stepIndex === 0}
                 onClick={() =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     moveFlowStep(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       stepIndex,
                       stepIndex - 1
@@ -171,9 +167,9 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={stepIndex === panel.steps.length - 1}
                 onClick={() =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     moveFlowStep(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       stepIndex,
                       stepIndex + 1
@@ -189,8 +185,8 @@ export function FlowEditorForm({
                 size="sm"
                 disabled={!canRemoveEntry(panel.steps, CARDINALITY.flowSteps)}
                 onClick={() =>
-                  onChange((currentWeek) =>
-                    removeFlowStep(currentWeek, pageIndex, stepIndex)
+                  onChange((currentDeck) =>
+                    removeFlowStep(currentDeck, pageIndex, stepIndex)
                   )
                 }
               >

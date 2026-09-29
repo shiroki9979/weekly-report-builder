@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 async function unlockEditor(page: Page) {
@@ -12,7 +12,7 @@ async function unlockEditor(page: Page) {
 
 async function openOverviewWeek(page: Page) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-17" }).click()
   await expect(
     page.getByRole("heading", {
@@ -21,13 +21,11 @@ async function openOverviewWeek(page: Page) {
   ).toBeVisible()
 }
 
-test("renders English, Chinese, and mixed weekly overview pages", async ({
-  page,
-}) => {
+test("renders English, Chinese, and mixed overview pages", async ({ page }) => {
   await openOverviewWeek(page)
 
   await expect(
-    page.getByTestId("stage-frame").getByText("Weekly Overview")
+    page.getByTestId("stage-frame").getByText("Overview")
   ).toBeVisible()
   await expect(page.getByText("2026-08-17 — 2026-08-21")).toBeVisible()
   await expect(page.getByText("Delivery", { exact: true })).toBeVisible()
@@ -55,12 +53,12 @@ test("renders English, Chinese, and mixed weekly overview pages", async ({
   await expect(page.getByText("3 slots")).toBeVisible()
 })
 
-test("adds, saves, and reloads a weekly overview draft", async ({ page }) => {
+test("adds, saves, and reloads a overview draft", async ({ page }) => {
   await openOverviewWeek(page)
   await unlockEditor(page)
 
   await page.getByRole("combobox", { name: "Add page" }).click()
-  await page.getByRole("option", { name: "Weekly Overview" }).click()
+  await page.getByRole("option", { name: "Overview" }).click()
   await page.getByRole("button", { name: "Add page" }).click()
 
   await expect(page.getByRole("alert")).toContainText("Draft Page")
@@ -86,7 +84,7 @@ test("adds, saves, and reloads a weekly overview draft", async ({ page }) => {
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
   await page.reload()
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-17" }).click()
   await unlockEditor(page)
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
@@ -99,9 +97,7 @@ test("adds, saves, and reloads a weekly overview draft", async ({ page }) => {
   ).toBeVisible()
 })
 
-test("skips an overflowing weekly overview during batch export", async ({
-  page,
-}) => {
+test("skips an overflowing overview during batch export", async ({ page }) => {
   await openOverviewWeek(page)
   await unlockEditor(page)
   await page.getByRole("button", { name: "Download PNGs" }).click()

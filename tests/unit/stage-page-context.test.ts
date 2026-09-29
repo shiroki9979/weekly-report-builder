@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { createStagePageContext } from "@/lib/stage-page-context"
-import { parseWeekDocument } from "@/lib/week-document"
+import { parseDeck } from "@/lib/deck"
 
 function weekDocument() {
-  return parseWeekDocument({
+  return parseDeck({
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
       {
@@ -106,7 +106,7 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext("2026-08-24", week, "p05").pageLabel).toBe("")
   })
 
-  it("counts weekly-overview pages among supported page positions", () => {
+  it("counts overview pages among supported page positions", () => {
     const blankOutcome = {
       workstream: "",
       figure: "",
@@ -114,12 +114,12 @@ describe("createStagePageContext", () => {
       impact: "",
       status: { label: "", tone: "neutral" },
     }
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
-          layout: "weekly-overview",
+          layout: "overview",
           title: "Overview",
           lead: blankOutcome,
           supporting: [blankOutcome],
@@ -142,7 +142,7 @@ describe("createStagePageContext", () => {
   })
 
   it("counts evidence-decision and next-actions pages among supported page positions", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -201,7 +201,7 @@ describe("createStagePageContext", () => {
   })
 
   it("lets an HTML Page opt in to a page number when the week hides them", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: false,
       pages: [
@@ -230,7 +230,7 @@ describe("createStagePageContext", () => {
   })
 
   it("does not overlay a page number on an HTML Page without an override, even when the week shows them", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: true,
       pages: [
@@ -259,7 +259,7 @@ describe("createStagePageContext", () => {
   })
 
   it("does not show a page number on a hidden page or a two-column page", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {

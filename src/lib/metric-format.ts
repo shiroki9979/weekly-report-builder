@@ -1,4 +1,4 @@
-import { isFiniteNonNegative, type ComparisonMetric } from "./week-document"
+import { isFiniteNonNegative, type ComparisonMetric } from "./deck"
 import { withUnit } from "./unit-format"
 
 export type MetricFormat = Pick<

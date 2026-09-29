@@ -1,4 +1,4 @@
-import type { ChartPanel } from "./week-document"
+import type { ChartPanel } from "./deck"
 
 export type ChartStackInput = Pick<ChartPanel, "categories" | "series">
 

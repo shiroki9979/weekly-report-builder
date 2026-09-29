@@ -2,19 +2,19 @@ import { readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { expect, test, type Page } from "@playwright/test"
 
-import { e2eWeeksDir, resetE2eWeeks } from "./weeks-reset"
+import { e2eDecksDir, resetE2eDecks } from "./decks-reset"
 
 test.beforeEach(() => {
-  resetE2eWeeks()
+  resetE2eDecks()
 })
 
 test("keeps the original Page Position and download week after switching weeks", async ({
   page,
 }) => {
-  const weekPath = path.join(e2eWeeksDir(), "2026-08-31.json")
-  const week = JSON.parse(readFileSync(weekPath, "utf8"))
+  const deckPath = path.join(e2eDecksDir(), "2026-08-31.json")
+  const week = JSON.parse(readFileSync(deckPath, "utf8"))
   week.pages[0].showPageNumber = true
-  writeFileSync(weekPath, JSON.stringify(week))
+  writeFileSync(deckPath, JSON.stringify(week))
 
   await openHtmlWeek(page)
   const request = await holdHtmlRequest(page)
@@ -31,7 +31,7 @@ test("keeps the original Page Position and download week after switching weeks",
   const capture = page.locator("[aria-hidden='true'] [data-stage-capture-root]")
   await expect(capture).toContainText("1 / 2")
 
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-24" }).click()
   await expect(page.getByRole("heading", { name: "Fit table" })).toBeVisible()
   await expect(capture).toContainText("1 / 2")
@@ -60,7 +60,7 @@ async function holdHtmlRequest(page: Page) {
   const released = new Promise<void>((resolve) => {
     releaseRequest = resolve
   })
-  await page.route("**/weeks/2026-08-31/ok.html", async (route) => {
+  await page.route("**/decks/2026-08-31/ok.html", async (route) => {
     requestStarted()
     await released
     await route.continue()
@@ -70,7 +70,7 @@ async function holdHtmlRequest(page: Page) {
 
 async function openHtmlWeek(page: Page) {
   await page.goto("/")
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-31" }).click()
   await expect(
     page.getByRole("heading", { name: "Valid HTML Page" })
@@ -118,7 +118,7 @@ test("leaves no capture host, late download, or stale result after the Workshop 
   await request.started
   await page.reload()
   request.release()
-  await page.getByRole("combobox", { name: "Week" }).click()
+  await page.getByRole("combobox", { name: "Deck" }).click()
   await page.getByRole("option", { name: "2026-08-31" }).click()
   await expect(
     page.getByRole("heading", { name: "Valid HTML Page" })

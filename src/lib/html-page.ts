@@ -35,7 +35,7 @@ export function resolveHtmlUrl(deckId: string, htmlFile: string): string {
 
   validateHtmlFileName(htmlFile)
 
-  return `/weeks/${deckId}/${htmlFile}`
+  return `/decks/${deckId}/${htmlFile}`
 }
 
 export function sanitizeHtmlFragment(rawHtml: string): string {

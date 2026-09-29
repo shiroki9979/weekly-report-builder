@@ -1,10 +1,10 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import type { WeekPage } from "@/lib/week-document"
+import type { Page } from "@/lib/deck"
 
 type PageNavigatorProps = {
-  pages: WeekPage[]
+  pages: Page[]
   selectedPageIndex: number
   onSelect: (index: number) => void
   disabled?: boolean

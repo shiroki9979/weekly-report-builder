@@ -15,10 +15,10 @@ import {
   setPageTitle,
   setTablePanelCell,
   setTablePanelTitle,
-  setWeekShowPageNumbers,
-} from "@/lib/week-editor"
+  setDeckShowPageNumbers,
+} from "@/lib/deck-editor"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
+import { parseDeck, type Deck } from "@/lib/deck"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -26,10 +26,10 @@ const fixturePath = resolve(
 )
 
 function loadFixture() {
-  return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
+  return parseDeck(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
-describe("week-editor", () => {
+describe("deck-editor", () => {
   it("maps title edits onto the week document", () => {
     const week = loadFixture()
     const next = setPageTitle(week, 0, "Eval Gate (edited)")
@@ -80,7 +80,7 @@ describe("week-editor", () => {
   })
 
   it("maps htmlFile edits onto html layout pages", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -107,7 +107,7 @@ describe("week-editor", () => {
   })
 
   it("rejects two-column item edits on an HTML page", () => {
-    const htmlWeek = parseWeekDocument({
+    const htmlWeek = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -121,7 +121,7 @@ describe("week-editor", () => {
 
     // 驗證針對非 two-column 頁面執行結構化編輯操作時會拋出明確錯誤，防止資料結構毀損
     expect(() => setPageItem(htmlWeek, 0, 0, "heading", "fail")).toThrow(
-      "Week Page p03 is not a two-column page"
+      "Page p03 is not a two-column page"
     )
   })
 
@@ -130,7 +130,7 @@ describe("week-editor", () => {
     (show) => {
       const week = loadFixture()
 
-      const updated = setWeekShowPageNumbers(week, show)
+      const updated = setDeckShowPageNumbers(week, show)
 
       expect(updated.showPageNumbers).toBe(show)
       expect(week.showPageNumbers).toBeUndefined()
@@ -153,7 +153,7 @@ describe("week-editor", () => {
   )
 
   it("keeps at least one entry in chart, flow, and checklist panels", () => {
-    const weekWith = (kind: "chart" | "flow" | "checklist"): WeekDocument => ({
+    const weekWith = (kind: "chart" | "flow" | "checklist"): Deck => ({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [createBlankTwoColumnPage("p01", kind)],
     })

@@ -19,10 +19,10 @@ import {
   writeMetricInput,
 } from "@/lib/editing-session"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 import { unusedTrendControls } from "./support/editor-controls"
 
-function sampleWeek(): WeekDocument {
+function sampleWeek(): Deck {
   return {
     period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
@@ -45,12 +45,12 @@ function sampleWeek(): WeekDocument {
 function LifecycleHarness({
   initialWeek = sampleWeek(),
 }: {
-  initialWeek?: WeekDocument
+  initialWeek?: Deck
 }) {
   const [session, setSession] = useState(() =>
     createEditingSession(initialWeek, "2026-08-24")
   )
-  const week = session.week!
+  const week = session.deck!
   const selectedPageId = session.selectedPageId!
 
   return (
@@ -60,7 +60,7 @@ function LifecycleHarness({
         {week.pages.map((page) => page.id).join(",")}
       </p>
       <PageLifecycleControls
-        week={week}
+        deck={week}
         selectedPageId={selectedPageId}
         onAdd={(page) => setSession((current) => addSessionPage(current, page))}
         onDelete={(pageId) =>
@@ -71,7 +71,7 @@ function LifecycleHarness({
         }
       />
       <PageEditorForm
-        week={week}
+        deck={week}
         pageIndex={week.pages.findIndex((page) => page.id === selectedPageId)}
         onChange={(update) =>
           setSession((current) => editSessionContent(current, update))
@@ -142,7 +142,7 @@ describe("workshop page lifecycle", () => {
   })
 
   it("marks draft two-column title as invalid", () => {
-    const week: WeekDocument = {
+    const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [createBlankTwoColumnPage("p01", "table")],
     }
@@ -159,11 +159,11 @@ describe("workshop page lifecycle", () => {
     ).toBeInTheDocument()
   })
 
-  it("adds a weekly overview page and shows its editor", async () => {
+  it("adds a overview page and shows its editor", async () => {
     const user = userEvent.setup()
     render(<LifecycleHarness />)
 
-    await chooseAddPageLayout(user, "Weekly Overview")
+    await chooseAddPageLayout(user, "Overview")
     await user.click(screen.getByRole("button", { name: "Add page" }))
 
     expect(screen.getByTestId("page-ids")).toHaveTextContent("p01,p03,p02")

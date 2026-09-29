@@ -15,7 +15,7 @@ import type {
 } from "@/components/workshop/page-editor-props"
 import type { LayoutEditorControls } from "@/hooks/use-editing-session"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import { WeeklyOverviewEditorForm } from "@/components/workshop/weekly-overview-editor-form"
+import { OverviewEditorForm } from "@/components/workshop/overview-editor-form"
 import { TrendTargetEditorForm } from "@/components/workshop/trend-target-editor-form"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
@@ -31,40 +31,38 @@ import {
   setTablePanelCell,
   setTablePanelColumn,
   setTablePanelTitle,
-} from "@/lib/week-editor"
+} from "@/lib/deck-editor"
 import {
   canRemoveEntry,
   CARDINALITY,
-  matchWeekPage,
-  type HtmlWeekPage,
+  matchPage,
+  type HtmlPage,
   type TablePanel,
-  type TwoColumnWeekPage,
-} from "@/lib/week-document"
+  type TwoColumnPage,
+} from "@/lib/deck"
 
 type PageEditorFormProps = Omit<PageEditorProps, "page"> & {
   layoutControls: LayoutEditorControls
 }
 
 export function PageEditorForm({
-  week,
+  deck,
   pageIndex,
   onChange,
   layoutControls,
   readOnly = false,
 }: PageEditorFormProps) {
-  const page = week.pages[pageIndex]
+  const page = deck.pages[pageIndex]
 
   if (!page) {
     return null
   }
 
-  const editor = { week, pageIndex, onChange, readOnly }
+  const editor = { deck, pageIndex, onChange, readOnly }
 
-  return matchWeekPage(page, {
+  return matchPage(page, {
     html: (htmlPage) => <HtmlPageEditorForm {...editor} page={htmlPage} />,
-    weeklyOverview: (overview) => (
-      <WeeklyOverviewEditorForm {...editor} page={overview} />
-    ),
+    overview: (overview) => <OverviewEditorForm {...editor} page={overview} />,
     evidenceDecision: (decision) => (
       <EvidenceDecisionEditorForm
         {...editor}
@@ -94,12 +92,12 @@ export function PageEditorForm({
 }
 
 function HtmlPageEditorForm({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
   readOnly = false,
-}: PageEditorProps<HtmlWeekPage>) {
+}: PageEditorProps<HtmlPage>) {
   return (
     <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
       <fieldset
@@ -112,8 +110,8 @@ function HtmlPageEditorForm({
             id="page-title"
             value={page.title}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageTitle(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageTitle(currentDeck, pageIndex, event.target.value)
               )
             }
           />
@@ -125,8 +123,8 @@ function HtmlPageEditorForm({
             id="page-html-file"
             value={page.htmlFile}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageHtmlFile(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageHtmlFile(currentDeck, pageIndex, event.target.value)
               )
             }
           />
@@ -138,15 +136,15 @@ function HtmlPageEditorForm({
             id="speaker-notes"
             value={page.notes ?? ""}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageNotes(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageNotes(currentDeck, pageIndex, event.target.value)
               )
             }
           />
         </div>
 
         <PageNumberSelect
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           disabled={readOnly}
           onChange={onChange}
@@ -157,8 +155,8 @@ function HtmlPageEditorForm({
             id="page-hidden"
             checked={page.hidden ?? false}
             onCheckedChange={(checked) =>
-              onChange((currentWeek) =>
-                setPageHidden(currentWeek, pageIndex, checked === true)
+              onChange((currentDeck) =>
+                setPageHidden(currentDeck, pageIndex, checked === true)
               )
             }
           />
@@ -170,12 +168,12 @@ function HtmlPageEditorForm({
 }
 
 function TwoColumnPageEditorForm({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
   readOnly = false,
-}: PageEditorProps<TwoColumnWeekPage>) {
+}: PageEditorProps<TwoColumnPage>) {
   const invalidPaths = issuePathsFor(page)
 
   return (
@@ -192,8 +190,8 @@ function TwoColumnPageEditorForm({
             value={page.title}
             aria-invalid={invalidPaths.has("title") || undefined}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageTitle(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageTitle(currentDeck, pageIndex, event.target.value)
               )
             }
           />
@@ -213,9 +211,9 @@ function TwoColumnPageEditorForm({
                   invalidPaths.has(`items[${itemIndex}].heading`) || undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setPageItem(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       itemIndex,
                       "heading",
@@ -234,9 +232,9 @@ function TwoColumnPageEditorForm({
                   invalidPaths.has(`items[${itemIndex}].body`) || undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setPageItem(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       itemIndex,
                       "body",
@@ -250,7 +248,7 @@ function TwoColumnPageEditorForm({
         ))}
 
         <TwoColumnPanelEditor
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           page={page}
           onChange={onChange}
@@ -264,8 +262,8 @@ function TwoColumnPageEditorForm({
             id="speaker-notes"
             value={page.notes ?? ""}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageNotes(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageNotes(currentDeck, pageIndex, event.target.value)
               )
             }
           />
@@ -276,8 +274,8 @@ function TwoColumnPageEditorForm({
             id="page-hidden"
             checked={page.hidden ?? false}
             onCheckedChange={(checked) =>
-              onChange((currentWeek) =>
-                setPageHidden(currentWeek, pageIndex, checked === true)
+              onChange((currentDeck) =>
+                setPageHidden(currentDeck, pageIndex, checked === true)
               )
             }
           />
@@ -288,12 +286,12 @@ function TwoColumnPageEditorForm({
   )
 }
 
-type TwoColumnPanelEditorProps = PageEditorProps<TwoColumnWeekPage> & {
+type TwoColumnPanelEditorProps = PageEditorProps<TwoColumnPage> & {
   invalidPaths: Set<string>
 }
 
 function TwoColumnPanelEditor({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
@@ -305,7 +303,7 @@ function TwoColumnPanelEditor({
     case "table":
       return (
         <TablePanelEditorForm
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           panel={panel}
           onChange={onChange}
@@ -316,7 +314,7 @@ function TwoColumnPanelEditor({
     case "chart":
       return (
         <ChartEditorForm
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           panel={panel}
           onChange={onChange}
@@ -325,7 +323,7 @@ function TwoColumnPanelEditor({
     case "flow":
       return (
         <FlowEditorForm
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           panel={panel}
           onChange={onChange}
@@ -334,7 +332,7 @@ function TwoColumnPanelEditor({
     case "checklist":
       return (
         <ChecklistEditorForm
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           panel={panel}
           onChange={onChange}
@@ -374,8 +372,8 @@ function TablePanelEditorForm({
           value={panel.title}
           aria-invalid={invalidPaths.has("panel.title") || undefined}
           onChange={(event) =>
-            onChange((currentWeek) =>
-              setTablePanelTitle(currentWeek, pageIndex, event.target.value)
+            onChange((currentDeck) =>
+              setTablePanelTitle(currentDeck, pageIndex, event.target.value)
             )
           }
         />
@@ -387,7 +385,7 @@ function TablePanelEditorForm({
           size="sm"
           disabled={readOnly}
           onClick={() =>
-            onChange((currentWeek) => addTableRow(currentWeek, pageIndex))
+            onChange((currentDeck) => addTableRow(currentDeck, pageIndex))
           }
         >
           Add row
@@ -400,8 +398,8 @@ function TablePanelEditorForm({
             readOnly || !canRemoveEntry(panel.rows, CARDINALITY.tableRows)
           }
           onClick={() =>
-            onChange((currentWeek) =>
-              removeTableRow(currentWeek, pageIndex, panel.rows.length - 1)
+            onChange((currentDeck) =>
+              removeTableRow(currentDeck, pageIndex, panel.rows.length - 1)
             )
           }
         >
@@ -413,7 +411,7 @@ function TablePanelEditorForm({
           size="sm"
           disabled={readOnly}
           onClick={() =>
-            onChange((currentWeek) => addTableColumn(currentWeek, pageIndex))
+            onChange((currentDeck) => addTableColumn(currentDeck, pageIndex))
           }
         >
           Add column
@@ -426,9 +424,9 @@ function TablePanelEditorForm({
             readOnly || !canRemoveEntry(panel.columns, CARDINALITY.tableColumns)
           }
           onClick={() =>
-            onChange((currentWeek) =>
+            onChange((currentDeck) =>
               removeTableColumn(
-                currentWeek,
+                currentDeck,
                 pageIndex,
                 panel.columns.length - 1
               )
@@ -451,9 +449,9 @@ function TablePanelEditorForm({
                 invalidPaths.has(`panel.columns[${columnIndex}]`) || undefined
               }
               onChange={(event) =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   setTablePanelColumn(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     columnIndex,
                     event.target.value
@@ -480,9 +478,9 @@ function TablePanelEditorForm({
                   ) || undefined
                 }
                 onChange={(event) =>
-                  onChange((currentWeek) =>
+                  onChange((currentDeck) =>
                     setTablePanelCell(
-                      currentWeek,
+                      currentDeck,
                       pageIndex,
                       rowIndex,
                       cellIndex,

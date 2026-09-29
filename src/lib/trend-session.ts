@@ -1,6 +1,6 @@
 import {
   findSessionPage,
-  requireWeek,
+  requireDeck,
   type EditingSession,
 } from "./editing-session"
 import type { ExportIssue } from "./export-readiness"
@@ -35,9 +35,9 @@ import {
   isTrendTargetPage,
   type TrendCadence,
   type UnmeasuredState,
-  type WeeklyObservation,
+  type TrendObservation,
   type TrendTargetPage,
-} from "./week-document"
+} from "./deck"
 
 export type ObservationLocation = { pageId: string; index: number }
 
@@ -185,9 +185,9 @@ function replaceTrend(
   pageIndex: number,
   { page, metricInput }: TrendEdit
 ): EditingSession {
-  const week = requireWeek(session)
-  const pages = week.pages.with(pageIndex, page)
-  return { ...session, week: { ...week, pages }, metricInput }
+  const deck = requireDeck(session)
+  const pages = deck.pages.with(pageIndex, page)
+  return { ...session, deck: { ...deck, pages }, metricInput }
 }
 
 function committedTrendText(
@@ -232,7 +232,7 @@ function applyObservationValue(
   if (observation.state === "missing")
     throw new Error(`Missing Trend observation is not editable: ${path}`)
   const value = requireTrendNumber(raw)
-  const next: WeeklyObservation =
+  const next: TrendObservation =
     value === null ? { state: "unfilled" } : { state: "measured", value }
   return releaseClearedStart({
     page: { ...page, observations: page.observations.with(index, next) },

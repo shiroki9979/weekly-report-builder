@@ -2,10 +2,10 @@ import {
   CARDINALITY,
   hasValidMetricFormat,
   isFiniteNonNegative,
-  isHtmlWeekPage,
-  isStructuredWeekPage,
+  isHtmlPage,
+  isStructuredPage,
   isSupportedStagePage,
-  matchWeekPage,
+  matchPage,
   type ChartPanel,
   type ChecklistPanel,
   type FlowPanel,
@@ -13,12 +13,12 @@ import {
   type NextActionsPage,
   type TrendTargetPage,
   type Outcome,
-  type StructuredWeekPage,
+  type StructuredPage,
   type TablePanel,
-  type TwoColumnWeekPage,
-  type WeekPage,
-  type WeeklyOverviewPage,
-} from "./week-document"
+  type TwoColumnPage,
+  type Page,
+  type OverviewPage,
+} from "./deck"
 import { errorMessage } from "./error-message"
 import {
   isTrendDirection,
@@ -204,7 +204,7 @@ function assessChecklist(panel: ChecklistPanel): ExportIssue[] {
   )
 }
 
-function assessTwoColumn(page: TwoColumnWeekPage): ExportIssue[] {
+function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -265,7 +265,7 @@ function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
   return issues
 }
 
-function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
+function assessOverview(page: OverviewPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -516,12 +516,12 @@ export type ReadinessContext = {
 
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
-  page: StructuredWeekPage,
+  page: StructuredPage,
   { metricInput = {}, asOf }: ReadinessContext = {}
 ): ExportIssue[] {
-  return matchWeekPage(page, {
+  return matchPage(page, {
     twoColumn: assessTwoColumn,
-    weeklyOverview: assessWeeklyOverview,
+    overview: assessOverview,
     evidenceDecision: (decision) =>
       assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
@@ -539,15 +539,15 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 }
 
 export function assessExportEligibility(
-  page: WeekPage,
+  page: Page,
   capture?: CaptureAssessment,
   context: ReadinessContext = {}
 ): ExportAssessment {
-  if (isHtmlWeekPage(page)) {
+  if (isHtmlPage(page)) {
     return { eligible: true, issues: [] }
   }
 
-  if (!isSupportedStagePage(page) || !isStructuredWeekPage(page)) {
+  if (!isSupportedStagePage(page) || !isStructuredPage(page)) {
     return {
       eligible: false,
       issues: [
@@ -611,10 +611,8 @@ export function formatExportIssues(issues: ExportIssue[]): string {
   return issues.map(formatExportIssue).join("; ")
 }
 
-export function issuePathsFor(page: WeekPage): Set<string> {
-  return issuePaths(
-    isStructuredWeekPage(page) ? assessContentReadiness(page) : []
-  )
+export function issuePathsFor(page: Page): Set<string> {
+  return issuePaths(isStructuredPage(page) ? assessContentReadiness(page) : [])
 }
 
 export function issuePaths(issues: ExportIssue[]): Set<string> {

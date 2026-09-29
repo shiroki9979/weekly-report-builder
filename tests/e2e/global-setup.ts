@@ -1,5 +1,5 @@
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
 export default function globalSetup(): void {
-  resetE2eWeeks()
+  resetE2eDecks()
 }

@@ -2,7 +2,7 @@ import type { CSSProperties } from "react"
 
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import { nextActionsVariant, type NextActionsPage } from "@/lib/week-document"
+import { nextActionsVariant, type NextActionsPage } from "@/lib/deck"
 
 type NextActionsSlideProps = {
   page: NextActionsPage

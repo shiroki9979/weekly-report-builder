@@ -80,19 +80,19 @@ export type Panel =
 export type SlideLayout =
   | "two-column"
   | "html"
-  | "weekly-overview"
+  | "overview"
   | "evidence-decision"
   | "next-actions"
   | "trend-target"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
-export type WeekPageChrome = {
+export type PageChrome = {
   hidden?: boolean
   notes?: string
   showPageNumber?: boolean
 }
 
-export type TwoColumnWeekPage = WeekPageChrome & {
+export type TwoColumnPage = PageChrome & {
   id: string
   layout: "two-column"
   title: string
@@ -100,7 +100,7 @@ export type TwoColumnWeekPage = WeekPageChrome & {
   panel: Panel
 }
 
-export type HtmlWeekPage = WeekPageChrome & {
+export type HtmlPage = PageChrome & {
   id: string
   layout: "html"
   title: string
@@ -122,9 +122,9 @@ export type Outcome = {
   status: StatusSignal
 }
 
-export type WeeklyOverviewPage = WeekPageChrome & {
+export type OverviewPage = PageChrome & {
   id: string
-  layout: "weekly-overview"
+  layout: "overview"
   title: string
   lead: Outcome
   supporting: Outcome[]
@@ -168,7 +168,7 @@ export type ComparisonMetric = {
   precision: MetricPrecision
 }
 
-export type EvidenceDecisionPage = WeekPageChrome & {
+export type EvidenceDecisionPage = PageChrome & {
   id: string
   layout: "evidence-decision"
   title: string
@@ -183,7 +183,7 @@ export type Commitment = {
   checkpoint: string
 }
 
-export type NextActionsPage = WeekPageChrome & {
+export type NextActionsPage = PageChrome & {
   id: string
   layout: "next-actions"
   variant?: NextActionsVariant
@@ -191,14 +191,14 @@ export type NextActionsPage = WeekPageChrome & {
   commitments: Commitment[]
 }
 
-export type WeeklyObservation =
+export type TrendObservation =
   | { state: "measured"; value: number }
   | { state: "missing" }
   | { state: "unfilled" }
 
 export type TrendCadence = "week" | "month"
 
-export type TrendTargetPage = WeekPageChrome & {
+export type TrendTargetPage = PageChrome & {
   id: string
   layout: "trend-target"
   title: string
@@ -209,35 +209,35 @@ export type TrendTargetPage = WeekPageChrome & {
   cadence: TrendCadence
   // 第一個觀測週期的起點：week 為週一，month 為當月 1 日
   start: string | null
-  observations: WeeklyObservation[]
+  observations: TrendObservation[]
   target: number | null
   direction: "at-most" | "at-least"
   interpretation: string
   measurementContext: string
 }
 
-export type UnknownWeekPage = WeekPageChrome & {
+export type UnknownPage = PageChrome & {
   id: string
   layout: string
   title: string
   [key: string]: unknown
 }
 
-export type StructuredWeekPage =
-  | TwoColumnWeekPage
-  | WeeklyOverviewPage
+export type StructuredPage =
+  | TwoColumnPage
+  | OverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
 
-export type WeekPage =
-  | TwoColumnWeekPage
-  | HtmlWeekPage
-  | WeeklyOverviewPage
+export type Page =
+  | TwoColumnPage
+  | HtmlPage
+  | OverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
-  | UnknownWeekPage
+  | UnknownPage
 
 // 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
 export type DeckPeriod = {
@@ -245,10 +245,10 @@ export type DeckPeriod = {
   end: string
 }
 
-export type WeekDocument = {
+export type Deck = {
   period?: DeckPeriod
   showPageNumbers?: boolean
-  pages: WeekPage[]
+  pages: Page[]
 }
 
 // Editorial Frame 與 Workshop 標題共用；沒有期間時回傳空字串，由呼叫端決定不顯示
@@ -256,24 +256,20 @@ export function periodLabel(period: DeckPeriod | undefined): string {
   return period ? `${period.start} — ${period.end}` : ""
 }
 
-export function isHtmlWeekPage(page: WeekPage): page is HtmlWeekPage {
+export function isHtmlPage(page: Page): page is HtmlPage {
   return page.layout === "html" && "htmlFile" in page
 }
 
-export function isTwoColumnWeekPage(page: WeekPage): page is TwoColumnWeekPage {
+export function isTwoColumnPage(page: Page): page is TwoColumnPage {
   return page.layout === "two-column" && "items" in page && "panel" in page
 }
 
-export function isWeeklyOverviewPage(
-  page: WeekPage
-): page is WeeklyOverviewPage {
-  return (
-    page.layout === "weekly-overview" && "lead" in page && "supporting" in page
-  )
+export function isOverviewPage(page: Page): page is OverviewPage {
+  return page.layout === "overview" && "lead" in page && "supporting" in page
 }
 
 export function isEvidenceDecisionPage(
-  page: WeekPage
+  page: Page
 ): page is EvidenceDecisionPage {
   return (
     page.layout === "evidence-decision" &&
@@ -283,29 +279,27 @@ export function isEvidenceDecisionPage(
   )
 }
 
-export function isNextActionsPage(page: WeekPage): page is NextActionsPage {
+export function isNextActionsPage(page: Page): page is NextActionsPage {
   return page.layout === "next-actions" && "commitments" in page
 }
 
-export function isTrendTargetPage(page: WeekPage): page is TrendTargetPage {
+export function isTrendTargetPage(page: Page): page is TrendTargetPage {
   return page.layout === "trend-target" && "observations" in page
 }
 
-export type UnmeasuredState = Exclude<WeeklyObservation["state"], "measured">
+export type UnmeasuredState = Exclude<TrendObservation["state"], "measured">
 
 // 已輸入（Measured 或 Missing）的觀測都掛在起點上，決定日期能否清空、cadence 能否切換或需確認才能改
 export function hasEnteredObservations(
-  observations: readonly WeeklyObservation[]
+  observations: readonly TrendObservation[]
 ): boolean {
   return observations.some((entry) => entry.state !== "unfilled")
 }
 
-export function isStructuredWeekPage(
-  page: WeekPage
-): page is StructuredWeekPage {
+export function isStructuredPage(page: Page): page is StructuredPage {
   return (
-    isTwoColumnWeekPage(page) ||
-    isWeeklyOverviewPage(page) ||
+    isTwoColumnPage(page) ||
+    isOverviewPage(page) ||
     isEvidenceDecisionPage(page) ||
     isNextActionsPage(page) ||
     isTrendTargetPage(page)
@@ -319,10 +313,10 @@ const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
   "checklist",
 ])
 
-export function isSupportedStagePage(page: WeekPage): boolean {
-  return matchWeekPage(page, {
+export function isSupportedStagePage(page: Page): boolean {
+  return matchPage(page, {
     html: () => true,
-    weeklyOverview: () => true,
+    overview: () => true,
     evidenceDecision: () => true,
     nextActions: () => true,
     trendTarget: () => true,
@@ -333,10 +327,10 @@ export function isSupportedStagePage(page: WeekPage): boolean {
 }
 
 // 經 matchWeekPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
-function hasPageNumberSlot(page: WeekPage): boolean {
-  return matchWeekPage(page, {
+function hasPageNumberSlot(page: Page): boolean {
+  return matchPage(page, {
     html: () => true,
-    weeklyOverview: () => true,
+    overview: () => true,
     evidenceDecision: () => true,
     nextActions: () => true,
     trendTarget: () => true,
@@ -349,53 +343,44 @@ function hasPageNumberSlot(page: WeekPage): boolean {
  * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
  * 疊加 overlay 會改變既有輸出，所以不繼承週層級預設、須逐頁開啟。
  */
-export function defaultPageNumberVisibility(
-  week: WeekDocument,
-  page: WeekPage
-): boolean {
-  if (isHtmlWeekPage(page)) {
+export function defaultPageNumberVisibility(deck: Deck, page: Page): boolean {
+  if (isHtmlPage(page)) {
     return false
   }
-  return week.showPageNumbers ?? true
+  return deck.showPageNumbers ?? true
 }
 
 /**
  * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
  * 單頁設定優先於預設。
  */
-export function isPageNumberVisible(
-  week: WeekDocument,
-  page: WeekPage
-): boolean {
+export function isPageNumberVisible(deck: Deck, page: Page): boolean {
   if (page.hidden || !hasPageNumberSlot(page)) {
     return false
   }
-  return page.showPageNumber ?? defaultPageNumberVisibility(week, page)
+  return page.showPageNumber ?? defaultPageNumberVisibility(deck, page)
 }
 
-type WeekPageMatchers<T> = {
-  html: (page: HtmlWeekPage) => T
-  twoColumn: (page: TwoColumnWeekPage) => T
-  weeklyOverview: (page: WeeklyOverviewPage) => T
+type PageMatchers<T> = {
+  html: (page: HtmlPage) => T
+  twoColumn: (page: TwoColumnPage) => T
+  overview: (page: OverviewPage) => T
   evidenceDecision: (page: EvidenceDecisionPage) => T
   nextActions: (page: NextActionsPage) => T
   trendTarget: (page: TrendTargetPage) => T
-  unknown: (page: WeekPage) => T
+  unknown: (page: Page) => T
 }
 
 // 已解析頁面的 layout 分支只在這裡打開一次，preview／editor／clone／readiness 共用同一組 identity
-export function matchWeekPage<T>(
-  page: WeekPage,
-  matchers: WeekPageMatchers<T>
-): T {
-  if (isHtmlWeekPage(page)) {
+export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {
+  if (isHtmlPage(page)) {
     return matchers.html(page)
   }
-  if (isTwoColumnWeekPage(page)) {
+  if (isTwoColumnPage(page)) {
     return matchers.twoColumn(page)
   }
-  if (isWeeklyOverviewPage(page)) {
-    return matchers.weeklyOverview(page)
+  if (isOverviewPage(page)) {
+    return matchers.overview(page)
   }
   if (isEvidenceDecisionPage(page)) {
     return matchers.evidenceDecision(page)
@@ -425,7 +410,7 @@ export const CARDINALITY = {
   supportingOutcomes: {
     min: 1,
     max: 3,
-    owner: "Weekly Overview",
+    owner: "Overview",
     noun: "supporting outcome",
   },
   comparisonMetrics: {
@@ -517,7 +502,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readString(value: unknown, field: string): string {
   if (typeof value !== "string") {
-    throw new Error(`Invalid week document: ${field} must be a string`)
+    throw new Error(`Invalid deck: ${field} must be a string`)
   }
 
   return value
@@ -526,9 +511,7 @@ function readString(value: unknown, field: string): string {
 function readNonEmptyString(value: unknown, field: string): string {
   const text = readString(value, field)
   if (text.trim() === "") {
-    throw new Error(
-      `Invalid week document: ${field} must be a non-empty string`
-    )
+    throw new Error(`Invalid deck: ${field} must be a non-empty string`)
   }
 
   return text
@@ -536,7 +519,7 @@ function readNonEmptyString(value: unknown, field: string): string {
 
 function parseSlideItem(value: unknown, index: number): SlideItem {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: items[${index}] must be an object`)
+    throw new Error(`Invalid deck: items[${index}] must be an object`)
   }
 
   return {
@@ -547,7 +530,7 @@ function parseSlideItem(value: unknown, index: number): SlideItem {
 
 function readArray(value: unknown, field: string): unknown[] {
   if (!Array.isArray(value)) {
-    throw new Error(`Invalid week document: ${field} must be an array`)
+    throw new Error(`Invalid deck: ${field} must be an array`)
   }
 
   return value
@@ -556,7 +539,7 @@ function readArray(value: unknown, field: string): unknown[] {
 function readNonEmptyArray(value: unknown, field: string): unknown[] {
   const entries = readArray(value, field)
   if (entries.length === 0) {
-    throw new Error(`Invalid week document: ${field} must not be empty`)
+    throw new Error(`Invalid deck: ${field} must not be empty`)
   }
 
   return entries
@@ -564,7 +547,7 @@ function readNonEmptyArray(value: unknown, field: string): unknown[] {
 
 function readNumber(value: unknown, field: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Invalid week document: ${field} must be a finite number`)
+    throw new Error(`Invalid deck: ${field} must be a finite number`)
   }
 
   return value
@@ -572,7 +555,7 @@ function readNumber(value: unknown, field: string): number {
 
 function readRecord(value: unknown, field: string): Record<string, unknown> {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: ${field} must be an object`)
+    throw new Error(`Invalid deck: ${field} must be an object`)
   }
 
   return value
@@ -696,7 +679,7 @@ function parsePanel(value: unknown): Panel {
     case "fields":
       return parseFieldsPanel(panel)
     default:
-      throw new Error(`Invalid week document: unknown panel kind "${kind}"`)
+      throw new Error(`Invalid deck: unknown panel kind "${kind}"`)
   }
 }
 
@@ -708,12 +691,12 @@ export function isStatusTone(value: string): value is StatusTone {
 
 function parseStatusSignal(value: unknown, field: string): StatusSignal {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: ${field} must be an object`)
+    throw new Error(`Invalid deck: ${field} must be an object`)
   }
 
   const tone = readNonEmptyString(value.tone, `${field}.tone`)
   if (!isStatusTone(tone)) {
-    throw new Error(`Invalid week document: ${field}.tone`)
+    throw new Error(`Invalid deck: ${field}.tone`)
   }
 
   return {
@@ -724,7 +707,7 @@ function parseStatusSignal(value: unknown, field: string): StatusSignal {
 
 function parseOutcome(value: unknown, field: string): Outcome {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: ${field} must be an object`)
+    throw new Error(`Invalid deck: ${field} must be an object`)
   }
 
   return {
@@ -736,7 +719,7 @@ function parseOutcome(value: unknown, field: string): Outcome {
   }
 }
 
-type ParsedPageChrome = WeekPageChrome & {
+type ParsedPageChrome = PageChrome & {
   id: string
   title: string
 }
@@ -780,26 +763,24 @@ function readEntries(
     value.length < rule.min ||
     (rule.max !== undefined && value.length > rule.max)
   ) {
-    throw new Error(
-      `Invalid week document: ${field} must have ${entryRangeLabel(rule)}`
-    )
+    throw new Error(`Invalid deck: ${field} must have ${entryRangeLabel(rule)}`)
   }
 
   return value
 }
 
-function parseWeeklyOverviewPage(
+function parseOverviewPage(
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
   field: string
-): WeeklyOverviewPage {
+): OverviewPage {
   const supporting = readEntries(
     value.supporting,
     `${field}.supporting`,
     CARDINALITY.supportingOutcomes
   )
 
-  return withChrome(chrome, "weekly-overview", {
+  return withChrome(chrome, "overview", {
     lead: parseOutcome(value.lead, `${field}.lead`),
     supporting: supporting.map((entry, supportingIndex) =>
       parseOutcome(entry, `${field}.supporting[${supportingIndex}]`)
@@ -825,7 +806,7 @@ function parseNullableMetricValue(
     return null
   }
   if (typeof value !== "number" || !isFiniteNonNegative(value)) {
-    throw new Error(`Invalid week document: ${field}`)
+    throw new Error(`Invalid deck: ${field}`)
   }
   return value
 }
@@ -835,7 +816,7 @@ function parseComparisonMetric(
   field: string
 ): ComparisonMetric {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: ${field} must be an object`)
+    throw new Error(`Invalid deck: ${field} must be an object`)
   }
 
   const format = parseMetricFormat(value, field)
@@ -863,7 +844,7 @@ function parseMetricFormat(
     `${field}.unitPosition`
   )
   if (!isOneOf(UNIT_POSITIONS, unitPosition)) {
-    throw new Error(`Invalid week document: ${field}.unitPosition`)
+    throw new Error(`Invalid deck: ${field}.unitPosition`)
   }
 
   const unitSpacing = readNonEmptyString(
@@ -871,12 +852,12 @@ function parseMetricFormat(
     `${field}.unitSpacing`
   )
   if (!isOneOf(UNIT_SPACINGS, unitSpacing)) {
-    throw new Error(`Invalid week document: ${field}.unitSpacing`)
+    throw new Error(`Invalid deck: ${field}.unitSpacing`)
   }
 
   const { precision } = value
   if (!isOneOf(METRIC_PRECISIONS, precision)) {
-    throw new Error(`Invalid week document: ${field}.precision`)
+    throw new Error(`Invalid deck: ${field}.precision`)
   }
 
   return { unitPosition, unitSpacing, precision }
@@ -911,7 +892,7 @@ function parseEvidenceDecisionPage(
 
 function parseCommitment(value: unknown, field: string): Commitment {
   if (!isRecord(value)) {
-    throw new Error(`Invalid week document: ${field} must be an object`)
+    throw new Error(`Invalid deck: ${field} must be an object`)
   }
 
   return {
@@ -946,7 +927,7 @@ function parseNextActionsVariant(
 ): NextActionsVariant {
   if (value === undefined) return LEGACY_NEXT_ACTIONS_VARIANT
   if (isNextActionsVariant(value)) return value
-  throw new Error(`Invalid week document: ${field} must be columns or rows`)
+  throw new Error(`Invalid deck: ${field} must be columns or rows`)
 }
 
 function parseTrendTargetPage(
@@ -955,7 +936,7 @@ function parseTrendTargetPage(
   field: string
 ): TrendTargetPage {
   const { cadence, start } = parseTrendDating(value, field)
-  const observations = parseWeeklyObservations(value.observations, field)
+  const observations = parseTrendObservations(value.observations, field)
   assertTrendDating({ cadence, start, observations }, field)
   return withChrome(chrome, "trend-target", {
     metric: parseTrendMetric(value.metric, `${field}.metric`),
@@ -993,8 +974,7 @@ function parseTrendDirection(
   field: string
 ): TrendTargetPage["direction"] {
   const direction = readNonEmptyString(value, field)
-  if (!isTrendDirection(direction))
-    throw new Error(`Invalid week document: ${field}`)
+  if (!isTrendDirection(direction)) throw new Error(`Invalid deck: ${field}`)
   return direction
 }
 
@@ -1006,7 +986,7 @@ function parseTrendDating(
   if (value.startMonday !== undefined) {
     if (value.start !== undefined || value.cadence !== undefined)
       throw new Error(
-        `Invalid week document: ${field} uses either startMonday or cadence/start, not both`
+        `Invalid deck: ${field} uses either startMonday or cadence/start, not both`
       )
     return {
       cadence: "week",
@@ -1014,9 +994,7 @@ function parseTrendDating(
     }
   }
   if (!isTrendCadence(value.cadence))
-    throw new Error(
-      `Invalid week document: ${field}.cadence must be week or month`
-    )
+    throw new Error(`Invalid deck: ${field}.cadence must be week or month`)
   return {
     cadence: value.cadence,
     start: parseTrendStart(value.start, `${field}.start`),
@@ -1025,29 +1003,25 @@ function parseTrendDating(
 
 function parseTrendStart(value: unknown, field: string): string | null {
   if (value === null) return null
-  if (typeof value !== "string")
-    throw new Error(`Invalid week document: ${field}`)
+  if (typeof value !== "string") throw new Error(`Invalid deck: ${field}`)
   return value
 }
 
-function parseWeeklyObservations(
+function parseTrendObservations(
   value: unknown,
   field: string
-): WeeklyObservation[] {
+): TrendObservation[] {
   const entries = readEntries(
     value,
     `${field}.observations`,
     CARDINALITY.trendObservations
   )
   return entries.map((entry, index) =>
-    parseWeeklyObservation(entry, `${field}.observations[${index}]`)
+    parseTrendObservation(entry, `${field}.observations[${index}]`)
   )
 }
 
-function parseWeeklyObservation(
-  value: unknown,
-  path: string
-): WeeklyObservation {
+function parseTrendObservation(value: unknown, path: string): TrendObservation {
   const observation = readRecord(value, path)
   if (observation.state === "measured")
     return {
@@ -1060,7 +1034,7 @@ function parseWeeklyObservation(
     !Object.hasOwn(observation, "value")
   )
     return { state: observation.state }
-  throw new Error(`Invalid week document: ${path}`)
+  throw new Error(`Invalid deck: ${path}`)
 }
 
 function assertTrendDating(
@@ -1074,14 +1048,14 @@ function assertTrendDating(
   if (start === null) {
     if (hasEnteredObservations(observations))
       throw new Error(
-        `Invalid week document: ${field}.start is required for entered observations`
+        `Invalid deck: ${field}.start is required for entered observations`
       )
     return
   }
   const datingError = trendDatingError(cadence, start, observations.length)
   if (datingError)
     throw new Error(
-      `Invalid week document: ${field}.${datingError.path}: ${datingError.message}`
+      `Invalid deck: ${field}.${datingError.path}: ${datingError.message}`
     )
 }
 
@@ -1089,14 +1063,14 @@ function parseHtmlPage(
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
   field: string
-): HtmlWeekPage {
+): HtmlPage {
   const htmlFile = readNonEmptyString(value.htmlFile, `${field}.htmlFile`)
 
   try {
     validateHtmlFileName(htmlFile)
   } catch (cause: unknown) {
     const message = cause instanceof Error ? cause.message : "Invalid htmlFile"
-    throw new Error(`Invalid week document: ${field}.htmlFile: ${message}`, {
+    throw new Error(`Invalid deck: ${field}.htmlFile: ${message}`, {
       cause,
     })
   }
@@ -1108,7 +1082,7 @@ function parseTwoColumnPage(
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
   field: string
-): TwoColumnWeekPage {
+): TwoColumnPage {
   const items = readEntries(
     value.items,
     `${field}.items`,
@@ -1125,13 +1099,13 @@ type PageParser = (
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
   field: string
-) => WeekPage
+) => Page
 
 // parser 面對的是未驗證 JSON，無法走 matchWeekPage；以 layout 表格分派，新增版面只改這裡
 const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
-  "weekly-overview": parseWeeklyOverviewPage,
+  overview: parseOverviewPage,
   "evidence-decision": parseEvidenceDecisionPage,
   "next-actions": parseNextActionsPage,
   "trend-target": parseTrendTargetPage,
@@ -1157,37 +1131,43 @@ function parsePageChrome(
   }
 }
 
-function parseWeekPage(value: unknown, index: number): WeekPage {
+// 改名前的 layout id；讀入時換成現行 id，存檔後只留新名稱
+const LEGACY_LAYOUT_IDS: Record<string, SlideLayout> = {
+  "weekly-overview": "overview",
+}
+
+function parsePage(value: unknown, index: number): Page {
   const field = `pages[${index}]`
   const page = readRecord(value, field)
   const chrome = parsePageChrome(page, field)
-  const layout = readNonEmptyString(page.layout, `${field}.layout`)
+  const rawLayout = readNonEmptyString(page.layout, `${field}.layout`)
+  const layout = Object.hasOwn(LEGACY_LAYOUT_IDS, rawLayout)
+    ? LEGACY_LAYOUT_IDS[rawLayout]
+    : rawLayout
 
   if (!isKnownLayout(layout)) {
-    // 保留未知版面讓 stage 顯示警告並略過匯出，而不是整份週報讀不進來
+    // 保留未知版面讓 stage 顯示警告並略過匯出，而不是整份 Deck 讀不進來
     return { ...page, ...withChrome(chrome, layout, {}) }
   }
 
   return PAGE_PARSERS[layout](page, chrome, field)
 }
 
-export function parseWeekDocument(value: unknown): WeekDocument {
+export function parseDeck(value: unknown): Deck {
   if (!isRecord(value)) {
-    throw new Error("Invalid week document: root must be an object")
+    throw new Error("Invalid deck: root must be an object")
   }
 
   const pages = value.pages
   if (!Array.isArray(pages) || pages.length === 0) {
-    throw new Error("Invalid week document: pages must be a non-empty array")
+    throw new Error("Invalid deck: pages must be a non-empty array")
   }
 
-  const parsedPages = pages.map((page, index) => parseWeekPage(page, index))
+  const parsedPages = pages.map((page, index) => parsePage(page, index))
   const seenIds = new Set<string>()
   for (const page of parsedPages) {
     if (seenIds.has(page.id)) {
-      throw new Error(
-        `Invalid week document: page id "${page.id}" is not unique`
-      )
+      throw new Error(`Invalid deck: page id "${page.id}" is not unique`)
     }
     seenIds.add(page.id)
   }
@@ -1212,11 +1192,11 @@ function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
   if (value.period !== undefined) {
     if (hasLegacy) {
       throw new Error(
-        "Invalid week document: use either period or top-level start/end, not both"
+        "Invalid deck: use either period or top-level start/end, not both"
       )
     }
     if (!isRecord(value.period)) {
-      throw new Error("Invalid week document: period must be an object")
+      throw new Error("Invalid deck: period must be an object")
     }
     return {
       start: readNonEmptyString(value.period.start, "period.start"),

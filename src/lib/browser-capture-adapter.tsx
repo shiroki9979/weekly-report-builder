@@ -13,11 +13,7 @@ import { captureStageToPng } from "./stage-capture"
 import { abortError } from "./export-errors"
 import { HTML_LOAD_TIMEOUT_MS, PAINT_SETTLE_TIMEOUT_MS } from "./capture-limits"
 import type { CaptureAdapter, HtmlLoadFailure } from "./export-page-gate"
-import {
-  isHtmlWeekPage,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+import { isHtmlPage, type Deck, type Page } from "./deck"
 
 const OFFSCREEN_LEFT_PX = -10000
 const HTML_STATUS_POLL_MS = 16
@@ -84,7 +80,7 @@ async function waitForSlideSettled(
 
 type CaptureHost = {
   element: HTMLElement
-  mount: (documentId: string, week: WeekDocument, page: WeekPage) => void
+  mount: (documentId: string, deck: Deck, page: Page) => void
   dispose: () => void
 }
 
@@ -108,7 +104,7 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
   }
   signal?.addEventListener("abort", dispose, { once: true })
 
-  const mount = (documentId: string, week: WeekDocument, page: WeekPage) => {
+  const mount = (documentId: string, deck: Deck, page: Page) => {
     const mountedRoot = createRoot(element)
     root = mountedRoot
     // 同步提交，後續的 HTML 輪詢與 paint 等待才看得到完整的 Stage DOM
@@ -117,7 +113,7 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
         <StageFrame>
           <StageSlide
             page={page}
-            context={createStagePageContext(documentId, week, page.id)}
+            context={createStagePageContext(documentId, deck, page.id)}
             isCapture
           />
         </StageFrame>
@@ -130,10 +126,10 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
 
 async function settleCaptureSlide(
   host: HTMLElement,
-  page: WeekPage,
+  page: Page,
   signal?: AbortSignal
 ): Promise<HtmlLoadFailure | null> {
-  if (isHtmlWeekPage(page)) {
+  if (isHtmlPage(page)) {
     const load = await waitForSlideSettled(host, signal)
     if (load.kind === "html-load-failed") return load
   }
@@ -151,11 +147,11 @@ function captureStageRoot(host: HTMLElement): HTMLElement {
 }
 
 export const browserCaptureAdapter: CaptureAdapter = {
-  async prepare(documentId, week, page, signal) {
+  async prepare(documentId, deck, page, signal) {
     if (signal?.aborted) throw abortError()
     const host = createCaptureHost(signal)
     try {
-      host.mount(documentId, week, page)
+      host.mount(documentId, deck, page)
       const loadFailure = await settleCaptureSlide(host.element, page, signal)
       if (loadFailure) {
         host.dispose()

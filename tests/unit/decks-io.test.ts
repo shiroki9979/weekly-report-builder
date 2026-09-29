@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { serializeWeekDocument } from "@/lib/weeks-io"
-import { parseWeekDocument } from "@/lib/week-document"
-import { setPageTitle } from "@/lib/week-editor"
+import { serializeDeck } from "@/lib/decks-io"
+import { parseDeck } from "@/lib/deck"
+import { setPageTitle } from "@/lib/deck-editor"
 
 describe("serializeWeekDocument", () => {
   it("round-trips a week document through JSON", () => {
-    const week = parseWeekDocument({
+    const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
@@ -31,9 +31,7 @@ describe("serializeWeekDocument", () => {
     })
 
     const edited = setPageTitle(week, 0, "Weekly Report · edited")
-    const roundTrip = parseWeekDocument(
-      JSON.parse(serializeWeekDocument(edited))
-    )
+    const roundTrip = parseDeck(JSON.parse(serializeDeck(edited)))
 
     expect(roundTrip.pages[0].title).toBe("Weekly Report · edited")
     expect(roundTrip.pages[0].hidden).toBe(true)
