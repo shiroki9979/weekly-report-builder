@@ -9,7 +9,7 @@ import {
   setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
+import { cloneWeekFromPrevious } from "@/lib/weekly-series"
 import { parseWeekDocument } from "@/lib/week-document"
 import type { NextActionsPage, WeekDocument } from "@/lib/week-document"
 

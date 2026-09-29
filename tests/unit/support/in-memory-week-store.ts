@@ -1,4 +1,4 @@
-import { cloneWeekFromPrevious, latestWeekMonday } from "@/lib/week-clone"
+import { cloneWeekFromPrevious, latestWeekMonday } from "@/lib/weekly-series"
 import type { WeekDocument } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 

@@ -1,50 +1,13 @@
 import {
   matchWeekPage,
   nextActionsVariant,
+  type DeckPeriod,
   type Outcome,
   type Panel,
   type WeekDocument,
   type WeekPage,
 } from "./week-document"
 import { blankCommitment } from "./next-actions-editor"
-import { isCalendarMonday } from "./week-id"
-
-function parseMonday(value: string): Date {
-  if (!isCalendarMonday(value)) {
-    throw new Error(`Invalid date: ${value}`)
-  }
-
-  return new Date(`${value}T00:00:00Z`)
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
-
-export function weekRangeForMonday(monday: string): {
-  start: string
-  end: string
-} {
-  const startDate = parseMonday(monday)
-  const endDate = new Date(startDate)
-  endDate.setUTCDate(endDate.getUTCDate() + 4)
-
-  return {
-    start: formatDate(startDate),
-    end: formatDate(endDate),
-  }
-}
-
-// 週報序列只看週一日期 id；其他 Deck 不能當建新週的起點
-export function latestWeekMonday(weeks: string[]): string | null {
-  return weeks.filter(isCalendarMonday).at(-1) ?? null
-}
-
-export function nextMondayAfter(monday: string): string {
-  const date = parseMonday(monday)
-  date.setUTCDate(date.getUTCDate() + 7)
-  return formatDate(date)
-}
 
 function clearPanel(panel: Panel): Panel {
   switch (panel.kind) {
@@ -174,19 +137,14 @@ function clearPage(page: WeekPage): WeekPage {
   })
 }
 
-export function cloneWeekFromPrevious(
-  previous: WeekDocument,
-  targetMonday: string
+// 保留版型、頁序與結構，清空作者文字；期間由呼叫端依用途決定（週報流程給週一到週五，其他 Deck 可不給）
+export function createDeckFromTemplate(
+  template: WeekDocument,
+  options: { period?: DeckPeriod } = {}
 ): WeekDocument {
-  if (!isCalendarMonday(targetMonday)) {
-    throw new Error(`Week file name must be a Monday date: ${targetMonday}`)
-  }
-
-  const range = weekRangeForMonday(targetMonday)
-
-  // 新週的 Editorial 頁碼回到預設顯示，不沿用上一週的開關，否則從隱藏頁碼的週次建立會改變既有輸出
+  // Editorial 頁碼回到預設顯示，不沿用範本的開關，否則從隱藏頁碼的範本建立會改變既有輸出
   return {
-    period: range,
-    pages: previous.pages.map(clearPage),
+    ...(options.period ? { period: options.period } : {}),
+    pages: template.pages.map(clearPage),
   }
 }

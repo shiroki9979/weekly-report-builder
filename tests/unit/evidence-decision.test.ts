@@ -9,7 +9,7 @@ import {
 } from "@/lib/evidence-decision-editor"
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
+import { cloneWeekFromPrevious } from "@/lib/weekly-series"
 import { parseWeekDocument } from "@/lib/week-document"
 import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
 
