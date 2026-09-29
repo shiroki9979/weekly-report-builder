@@ -1,20 +1,21 @@
 # 週次 JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-28
+最後更新：2026-09-29
 
 ---
 
 ## 檔案路徑
 
 ```text
-weeks/YYYY-MM-DD.json
-weeks/YYYY-MM-DD/<htmlFile>
+weeks/<id>.json
+weeks/<id>/<htmlFile>
 ```
 
-- `YYYY-MM-DD`：該週**週一**日期
-- 範例：`weeks/2026-08-24.json`
-- HTML 全幅頁檔案放置於該週子目錄，例如 `weeks/2026-08-24/p03.html`
+- `<id>`：Deck ID，格式 `^[a-z0-9][a-z0-9-]{0,63}$`
+- 週次以該週**週一**日期當 id，例如 `weeks/2026-08-24.json`；建新週、開啟時預設的最新週只看這類 id
+- 其他 Deck 可用任意符合格式的 slug，例如 `weeks/q4-roadmap.json`
+- HTML 全幅頁檔案放置於同名子目錄，例如 `weeks/2026-08-24/p03.html`
 
 ## WeekDocument（根物件）
 

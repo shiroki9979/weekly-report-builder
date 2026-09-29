@@ -39,6 +39,8 @@ describe("week-clone", () => {
 
   it("picks the latest week and the following Monday", () => {
     expect(latestWeekMonday(["2026-08-17", "2026-08-24"])).toBe("2026-08-24")
+    expect(latestWeekMonday(["2026-08-17", "q4-roadmap"])).toBe("2026-08-17")
+    expect(latestWeekMonday(["q4-roadmap"])).toBeNull()
     expect(nextMondayAfter("2026-08-24")).toBe("2026-08-31")
   })
 

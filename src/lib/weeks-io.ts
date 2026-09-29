@@ -1,7 +1,7 @@
 import type { WeekDocument } from "./week-document"
-import { MONDAY_ID_SOURCE } from "./week-id"
+import { DECK_ID_SOURCE } from "./deck-id"
 
-const WEEK_FILE_NAME = new RegExp(`^(${MONDAY_ID_SOURCE})\\.json$`)
+const WEEK_FILE_NAME = new RegExp(`^(${DECK_ID_SOURCE})\\.json$`)
 
 export function serializeWeekDocument(week: WeekDocument): string {
   return `${JSON.stringify(week, null, 2)}\n`
