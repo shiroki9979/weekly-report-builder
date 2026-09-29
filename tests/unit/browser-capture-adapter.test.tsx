@@ -50,7 +50,11 @@ describe("browserCaptureAdapter", () => {
       return new Blob(["png"], { type: "image/png" })
     })
 
-    const prepared = await browserCaptureAdapter.prepare(week, page)
+    const prepared = await browserCaptureAdapter.prepare(
+      "2026-08-24",
+      week,
+      page
+    )
     if (isHtmlLoadFailure(prepared)) throw new Error(prepared.message)
     const measurement = await prepared.measure()
     const blob = await prepared.capture()
@@ -74,7 +78,11 @@ describe("browserCaptureAdapter", () => {
     )
     vi.stubGlobal("cancelAnimationFrame", vi.fn())
     try {
-      const preparation = browserCaptureAdapter.prepare(week, page)
+      const preparation = browserCaptureAdapter.prepare(
+        "2026-08-24",
+        week,
+        page
+      )
       await vi.advanceTimersByTimeAsync(1000)
       const session = await preparation
       expect("capture" in session).toBe(true)
@@ -96,6 +104,7 @@ describe("browserCaptureAdapter", () => {
     try {
       const controller = new AbortController()
       const preparation = browserCaptureAdapter.prepare(
+        "2026-08-24",
         week,
         page,
         controller.signal

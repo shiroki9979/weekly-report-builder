@@ -6,12 +6,16 @@ import type { HtmlWeekPage } from "@/lib/week-document"
 
 export type HtmlSlideProps = {
   page: HtmlWeekPage
-  monday: string
+  documentId: string
   isCapture?: boolean
 }
 
-export function HtmlSlide({ page, monday, isCapture = false }: HtmlSlideProps) {
-  const currentKey = `${monday}:${page.htmlFile}`
+export function HtmlSlide({
+  page,
+  documentId,
+  isCapture = false,
+}: HtmlSlideProps) {
+  const currentKey = `${documentId}:${page.htmlFile}`
 
   const [fetchedState, setFetchedState] = useState<{
     key: string
@@ -48,7 +52,7 @@ export function HtmlSlide({ page, monday, isCapture = false }: HtmlSlideProps) {
     async function load() {
       try {
         const sanitized = await preloadHtmlFragment(
-          monday,
+          documentId,
           page.htmlFile,
           controller.signal
         )
@@ -81,7 +85,7 @@ export function HtmlSlide({ page, monday, isCapture = false }: HtmlSlideProps) {
     return () => {
       controller.abort()
     }
-  }, [currentKey, monday, page.htmlFile, validationError])
+  }, [currentKey, documentId, page.htmlFile, validationError])
 
   useEffect(() => {
     // 預覽環境掛載於 Shadow DOM 以隔離 CSS 樣式；截圖模式則由 React 直接注入 Light DOM

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Stage 改由呼叫端明確傳入文件 id，HTML Page 不再從投影片上顯示的週次文字反推資源路徑；為週報與 slide 核心解耦的第一步（[ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)、[#50](https://github.com/shiroki9979/weekly-report-builder/issues/50)）。
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

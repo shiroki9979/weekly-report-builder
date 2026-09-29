@@ -4,10 +4,7 @@ import { NextActionsSlide } from "@/components/stage/next-actions-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import { WeeklyOverviewSlide } from "@/components/stage/weekly-overview-slide"
 import { TrendTargetSlide } from "@/components/stage/trend-target-slide"
-import {
-  mondayFromWeekLabel,
-  type StagePageContext,
-} from "@/lib/stage-page-context"
+import type { StagePageContext } from "@/lib/stage-page-context"
 import {
   isHtmlWeekPage,
   matchWeekPage,
@@ -25,8 +22,6 @@ export function StageSlide({
   context,
   isCapture = false,
 }: StageSlideProps) {
-  const monday = mondayFromWeekLabel(context.weekLabel)
-
   return (
     <div className="stage-slide-host">
       {context.pageLabel === "Hidden" ? (
@@ -36,7 +31,11 @@ export function StageSlide({
       ) : null}
       {matchWeekPage(page, {
         html: (htmlPage) => (
-          <HtmlSlide page={htmlPage} monday={monday} isCapture={isCapture} />
+          <HtmlSlide
+            page={htmlPage}
+            documentId={context.documentId}
+            isCapture={isCapture}
+          />
         ),
         twoColumn: (twoColumn) => <TwoColumnSlide page={twoColumn} />,
         weeklyOverview: (overview) => (

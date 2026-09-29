@@ -69,29 +69,33 @@ function weekDocument() {
 
 describe("createStagePageContext", () => {
   it("builds an ISO week label from Monday through Friday", () => {
-    expect(createStagePageContext(weekDocument(), "p01").weekLabel).toBe(
-      "2026-08-24 — 2026-08-28"
-    )
+    expect(
+      createStagePageContext("2026-08-24", weekDocument(), "p01").weekLabel
+    ).toBe("2026-08-24 — 2026-08-28")
   })
 
   it("numbers supported non-hidden pages and ignores draft or overflowing content", () => {
     const week = weekDocument()
 
-    expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 2")
-    expect(createStagePageContext(week, "p03").pageLabel).toBe("2 / 2")
+    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
+      "1 / 2"
+    )
+    expect(createStagePageContext("2026-08-24", week, "p03").pageLabel).toBe(
+      "2 / 2"
+    )
   })
 
   it("labels hidden pages without giving them a page position", () => {
-    expect(createStagePageContext(weekDocument(), "p02").pageLabel).toBe(
-      "Hidden"
-    )
+    expect(
+      createStagePageContext("2026-08-24", weekDocument(), "p02").pageLabel
+    ).toBe("Hidden")
   })
 
   it("does not assign a page position to unsupported layouts", () => {
     const week = weekDocument()
 
-    expect(createStagePageContext(week, "p04").pageLabel).toBe("")
-    expect(createStagePageContext(week, "p05").pageLabel).toBe("")
+    expect(createStagePageContext("2026-08-24", week, "p04").pageLabel).toBe("")
+    expect(createStagePageContext("2026-08-24", week, "p05").pageLabel).toBe("")
   })
 
   it("counts weekly-overview pages among supported page positions", () => {
@@ -122,8 +126,12 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 2")
-    expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 2")
+    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
+      "1 / 2"
+    )
+    expect(createStagePageContext("2026-08-24", week, "p02").pageLabel).toBe(
+      "2 / 2"
+    )
   })
 
   it("counts evidence-decision and next-actions pages among supported page positions", () => {
@@ -175,9 +183,15 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(week, "p01").pageLabel).toBe("1 / 3")
-    expect(createStagePageContext(week, "p02").pageLabel).toBe("2 / 3")
-    expect(createStagePageContext(week, "p03").pageLabel).toBe("3 / 3")
+    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
+      "1 / 3"
+    )
+    expect(createStagePageContext("2026-08-24", week, "p02").pageLabel).toBe(
+      "2 / 3"
+    )
+    expect(createStagePageContext("2026-08-24", week, "p03").pageLabel).toBe(
+      "3 / 3"
+    )
   })
 
   it("lets an HTML Page opt in to a page number when the week hides them", () => {
@@ -202,8 +216,12 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(week, "p01").showPageNumber).toBe(false)
-    expect(createStagePageContext(week, "p02").showPageNumber).toBe(true)
+    expect(
+      createStagePageContext("2026-08-24", week, "p01").showPageNumber
+    ).toBe(false)
+    expect(
+      createStagePageContext("2026-08-24", week, "p02").showPageNumber
+    ).toBe(true)
   })
 
   it("does not overlay a page number on an HTML Page without an override, even when the week shows them", () => {
@@ -228,8 +246,12 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(week, "p01").showPageNumber).toBe(false)
-    expect(createStagePageContext(week, "p02").showPageNumber).toBe(false)
+    expect(
+      createStagePageContext("2026-08-24", week, "p01").showPageNumber
+    ).toBe(false)
+    expect(
+      createStagePageContext("2026-08-24", week, "p02").showPageNumber
+    ).toBe(false)
   })
 
   it("does not show a page number on a hidden page or a two-column page", () => {
@@ -265,10 +287,12 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext(week, "p01")).toMatchObject({
+    expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
       pageLabel: "Hidden",
       showPageNumber: false,
     })
-    expect(createStagePageContext(week, "p02").showPageNumber).toBe(false)
+    expect(
+      createStagePageContext("2026-08-24", week, "p02").showPageNumber
+    ).toBe(false)
   })
 })

@@ -63,6 +63,7 @@ describe("Trend & Target SVG ink", () => {
         <StageSlide
           page={page}
           context={{
+            documentId: "2026-07-20",
             weekLabel: "2026-07-20",
             pageLabel: "",
             showPageNumber: false,

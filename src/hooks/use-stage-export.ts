@@ -178,11 +178,16 @@ async function copyPageImage(
   operation: ExportOperation,
   page: WeekPage
 ): Promise<CopyOutcome> {
-  const result = await exportPage(operation.snapshot.week, page, {
-    adapter: browserCaptureAdapter,
-    metricInput: operation.snapshot.metricInput,
-    signal: operation.controller.signal,
-  })
+  const result = await exportPage(
+    operation.snapshot.monday,
+    operation.snapshot.week,
+    page,
+    {
+      adapter: browserCaptureAdapter,
+      metricInput: operation.snapshot.metricInput,
+      signal: operation.controller.signal,
+    }
+  )
   if (result.kind === "blocked") {
     return { kind: "rejected", reason: formatExportIssues(result.issues) }
   }

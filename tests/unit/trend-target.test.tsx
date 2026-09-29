@@ -32,6 +32,8 @@ import { exportVisiblePages } from "@/lib/week-export"
 import { trendBounds } from "@/lib/trend-target"
 import { canChangeTrendEndpoint } from "@/lib/trend-input"
 
+const DOCUMENT_ID = "2026-07-20"
+
 const complete: TrendTargetPage = {
   id: "p01",
   layout: "trend-target",
@@ -70,7 +72,12 @@ function renderTrend(page: TrendTargetPage, weekLabel = reportingWeek.start) {
   return render(
     <StageSlide
       page={page}
-      context={{ weekLabel, pageLabel: "", showPageNumber: false }}
+      context={{
+        documentId: DOCUMENT_ID,
+        weekLabel,
+        pageLabel: "",
+        showPageNumber: false,
+      }}
     />
   )
 }
@@ -449,7 +456,7 @@ describe("Trend & Target", () => {
       const session = sessionWithClearedDating()
       const snapshot = session.week!
 
-      const copy = await exportPage(snapshot, snapshot.pages[0], {
+      const copy = await exportPage(DOCUMENT_ID, snapshot, snapshot.pages[0], {
         adapter: fakeAdapter(),
         metricInput: session.metricInput,
       })
@@ -692,9 +699,14 @@ describe("Trend & Target", () => {
     })
 
     it("export when final", async () => {
-      const result = await exportPage(finalMissingWeek, finalMissing, {
-        adapter: fakeAdapter(),
-      })
+      const result = await exportPage(
+        DOCUMENT_ID,
+        finalMissingWeek,
+        finalMissing,
+        {
+          adapter: fakeAdapter(),
+        }
+      )
 
       expect(result.kind).toBe("captured")
     })
@@ -1053,10 +1065,15 @@ describe("Trend & Target", () => {
         const snapshot = session.week!
         const adapter = fakeAdapter()
 
-        const copy = await exportPage(snapshot, snapshot.pages[0], {
-          adapter,
-          metricInput: session.metricInput,
-        })
+        const copy = await exportPage(
+          DOCUMENT_ID,
+          snapshot,
+          snapshot.pages[0],
+          {
+            adapter,
+            metricInput: session.metricInput,
+          }
+        )
 
         expect(copy.kind).toBe("blocked")
         expect(adapter.prepare).not.toHaveBeenCalled()
@@ -1144,7 +1161,7 @@ describe("Trend & Target", () => {
     })
 
     it("blocks Copy", async () => {
-      const copy = await exportPage(earlyWeek, complete, {
+      const copy = await exportPage(DOCUMENT_ID, earlyWeek, complete, {
         adapter: fakeAdapter(),
       })
 
@@ -1170,7 +1187,7 @@ describe("Trend & Target", () => {
   })
 
   it("blocks Copy when the canonical stage overflows", async () => {
-    const copy = await exportPage(weekWith(complete), complete, {
+    const copy = await exportPage(DOCUMENT_ID, weekWith(complete), complete, {
       adapter: fakeAdapter("overflow"),
     })
 

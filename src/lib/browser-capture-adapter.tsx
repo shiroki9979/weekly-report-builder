@@ -84,7 +84,7 @@ async function waitForSlideSettled(
 
 type CaptureHost = {
   element: HTMLElement
-  mount: (week: WeekDocument, page: WeekPage) => void
+  mount: (documentId: string, week: WeekDocument, page: WeekPage) => void
   dispose: () => void
 }
 
@@ -108,7 +108,7 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
   }
   signal?.addEventListener("abort", dispose, { once: true })
 
-  const mount = (week: WeekDocument, page: WeekPage) => {
+  const mount = (documentId: string, week: WeekDocument, page: WeekPage) => {
     const mountedRoot = createRoot(element)
     root = mountedRoot
     // 同步提交，後續的 HTML 輪詢與 paint 等待才看得到完整的 Stage DOM
@@ -117,7 +117,7 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
         <StageFrame>
           <StageSlide
             page={page}
-            context={createStagePageContext(week, page.id)}
+            context={createStagePageContext(documentId, week, page.id)}
             isCapture
           />
         </StageFrame>
@@ -151,11 +151,11 @@ function captureStageRoot(host: HTMLElement): HTMLElement {
 }
 
 export const browserCaptureAdapter: CaptureAdapter = {
-  async prepare(week, page, signal) {
+  async prepare(documentId, week, page, signal) {
     if (signal?.aborted) throw abortError()
     const host = createCaptureHost(signal)
     try {
-      host.mount(week, page)
+      host.mount(documentId, week, page)
       const loadFailure = await settleCaptureSlide(host.element, page, signal)
       if (loadFailure) {
         host.dispose()

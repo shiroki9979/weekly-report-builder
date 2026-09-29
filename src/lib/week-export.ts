@@ -91,7 +91,7 @@ async function passPageThroughGate(
   page: WeekPage
 ): Promise<PageGateResult> {
   try {
-    return await exportPage(run.week, page, run.deps)
+    return await exportPage(run.monday, run.week, page, run.deps)
   } catch (cause: unknown) {
     return { kind: "failed", cause }
   }

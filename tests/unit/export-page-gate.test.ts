@@ -7,6 +7,8 @@ import { exportVisiblePages } from "@/lib/week-export"
 
 import { completePage, week, fakeAdapter } from "./export-fixtures"
 
+const DOCUMENT_ID = "2026-08-24"
+
 describe("single-page export gate", () => {
   it("bounds a stalled preparation and disposes a session that arrives late", async () => {
     vi.useFakeTimers()
@@ -21,7 +23,7 @@ describe("single-page export gate", () => {
     const dispose = vi.fn()
 
     try {
-      const result = exportPage(week, completePage, {
+      const result = exportPage(DOCUMENT_ID, week, completePage, {
         adapter: { prepare: () => pending },
       })
       await vi.advanceTimersByTimeAsync(5000)
@@ -49,14 +51,19 @@ describe("single-page export gate", () => {
       title: "",
       htmlFile: "missing.html",
     }
-    const result = await exportPage({ ...week, pages: [page] }, page, {
-      adapter: {
-        prepare: async () => ({
-          kind: "html-load-failed",
-          message: "Failed to load HTML file: missing.html (status 404)",
-        }),
-      },
-    })
+    const result = await exportPage(
+      DOCUMENT_ID,
+      { ...week, pages: [page] },
+      page,
+      {
+        adapter: {
+          prepare: async () => ({
+            kind: "html-load-failed",
+            message: "Failed to load HTML file: missing.html (status 404)",
+          }),
+        },
+      }
+    )
 
     expect(result).toEqual({
       kind: "blocked",
@@ -82,17 +89,22 @@ describe("single-page export gate", () => {
             }
           : completePage
       const dispose = vi.fn()
-      const result = await exportPage({ ...week, pages: [page] }, page, {
-        adapter: {
-          prepare: async () => ({
-            measure: async () => ({ status: "fit" }),
-            capture: async () => {
-              throw new Error("PNG encoder rejected")
-            },
-            dispose,
-          }),
-        },
-      })
+      const result = await exportPage(
+        DOCUMENT_ID,
+        { ...week, pages: [page] },
+        page,
+        {
+          adapter: {
+            prepare: async () => ({
+              measure: async () => ({ status: "fit" }),
+              capture: async () => {
+                throw new Error("PNG encoder rejected")
+              },
+              dispose,
+            }),
+          },
+        }
+      )
 
       expect(result).toEqual({
         kind: "blocked",
@@ -105,7 +117,7 @@ describe("single-page export gate", () => {
   it("blocks a hung measurement with measurement-failed after five seconds", async () => {
     vi.useFakeTimers()
     try {
-      const result = exportPage(week, completePage, {
+      const result = exportPage(DOCUMENT_ID, week, completePage, {
         adapter: {
           prepare: async () => ({
             measure: () => new Promise(() => undefined),
@@ -129,7 +141,7 @@ describe("single-page export gate", () => {
   it("blocks a hung PNG generation with capture-failed after fifteen seconds", async () => {
     vi.useFakeTimers()
     try {
-      const result = exportPage(week, completePage, {
+      const result = exportPage(DOCUMENT_ID, week, completePage, {
         adapter: {
           prepare: async () => ({
             measure: async () => ({ status: "fit" }),
@@ -159,7 +171,7 @@ describe("single-page export gate", () => {
       const download = vi.fn()
       const dispose = vi.fn()
       const adapter: CaptureAdapter = {
-        prepare: async (_week, page) => ({
+        prepare: async (_documentId, _week, page) => ({
           measure: async () => ({ status: "fit" }),
           capture: () =>
             page.id === "p01"
@@ -195,7 +207,7 @@ describe("single-page export gate", () => {
       })
       const download = vi.fn()
       const adapter: CaptureAdapter = {
-        prepare: async (_week, page) => ({
+        prepare: async (_documentId, _week, page) => ({
           measure: async () => ({ status: "fit" }),
           capture: () =>
             page.id === "p01"
@@ -229,7 +241,7 @@ describe("single-page export gate", () => {
     const capture = new Promise<Blob>((resolve) => {
       resolveLate = resolve
     })
-    const run = exportPage(week, completePage, {
+    const run = exportPage(DOCUMENT_ID, week, completePage, {
       adapter: {
         prepare: async () => ({
           measure: async () => ({ status: "fit" }),
@@ -265,7 +277,9 @@ describe("single-page export gate", () => {
       }),
     }
 
-    const result = await exportPage(week, week.pages[0], { adapter })
+    const result = await exportPage(DOCUMENT_ID, week, week.pages[0], {
+      adapter,
+    })
 
     expect(result.kind).toBe("captured")
     expect(dispose).toHaveBeenCalledOnce()
@@ -280,10 +294,18 @@ describe("single-page export gate", () => {
     const draft = createBlankTwoColumnPage("p05", "table")
 
     expect(
-      (await exportPage(unsupportedWeek, unsupportedWeek.pages[0], { adapter }))
-        .kind
+      (
+        await exportPage(
+          DOCUMENT_ID,
+          unsupportedWeek,
+          unsupportedWeek.pages[0],
+          { adapter }
+        )
+      ).kind
     ).toBe("blocked")
-    expect((await exportPage(week, draft, { adapter })).kind).toBe("blocked")
+    expect((await exportPage(DOCUMENT_ID, week, draft, { adapter })).kind).toBe(
+      "blocked"
+    )
     expect(adapter.prepare).not.toHaveBeenCalled()
   })
 
@@ -298,7 +320,9 @@ describe("single-page export gate", () => {
       }),
     }
 
-    const result = await exportPage(week, week.pages[0], { adapter })
+    const result = await exportPage(DOCUMENT_ID, week, week.pages[0], {
+      adapter,
+    })
 
     expect(result).toMatchObject({
       kind: "blocked",
@@ -321,7 +345,9 @@ describe("single-page export gate", () => {
       }),
     }
 
-    expect(await exportPage(week, week.pages[0], { adapter })).toEqual({
+    expect(
+      await exportPage(DOCUMENT_ID, week, week.pages[0], { adapter })
+    ).toEqual({
       kind: "blocked",
       issues: [{ code: "capture-failed", message: failure.message }],
     })
@@ -336,7 +362,9 @@ describe("single-page export gate", () => {
       },
     }
 
-    expect(await exportPage(week, week.pages[0], { adapter })).toEqual({
+    expect(
+      await exportPage(DOCUMENT_ID, week, week.pages[0], { adapter })
+    ).toEqual({
       kind: "failed",
       cause,
     })
@@ -365,9 +393,9 @@ describe("single-page export gate", () => {
     }
     const htmlWeek: WeekDocument = { ...week, pages: [...week.pages, htmlPage] }
 
-    expect((await exportPage(htmlWeek, htmlPage, { adapter })).kind).toBe(
-      "captured"
-    )
+    expect(
+      (await exportPage(DOCUMENT_ID, htmlWeek, htmlPage, { adapter })).kind
+    ).toBe("captured")
     expect(measure).not.toHaveBeenCalled()
     expect(capture).toHaveBeenCalledOnce()
   })

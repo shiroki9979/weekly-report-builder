@@ -12,6 +12,7 @@ import {
 } from "@/lib/week-document"
 
 const weekContext = {
+  documentId: "2026-08-24",
   weekLabel: "2026-08-24 — 2026-08-28",
   pageLabel: "1 / 1",
   showPageNumber: true,
@@ -43,8 +44,8 @@ describe("StageSlide", () => {
     expect(screen.getByText("Heading 1")).toBeInTheDocument()
   })
 
-  it("renders html layout slide in capture mode from the week label monday", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+  it("loads an HTML Page from the document id, not the displayed week label", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: true,
       text: async () => "<div>Custom Content</div>",
     } as Response)
@@ -56,13 +57,26 @@ describe("StageSlide", () => {
       htmlFile: "p03.html",
     }
 
-    render(<StageSlide page={page} context={weekContext} isCapture />)
+    render(
+      <StageSlide
+        page={page}
+        context={{
+          ...weekContext,
+          documentId: "2026-08-31",
+          weekLabel: "Label that is not an id",
+        }}
+        isCapture
+      />
+    )
 
     await waitFor(() => {
       const captureEl = screen.getByTestId("html-slide-capture")
       expect(captureEl).toHaveAttribute("data-status", "ready")
       expect(captureEl).toHaveTextContent("Custom Content")
     })
+    expect(String(fetch.mock.calls[0][0])).toContain(
+      "/weeks/2026-08-31/p03.html"
+    )
   })
 
   it("shows Hidden on hidden pages", () => {
