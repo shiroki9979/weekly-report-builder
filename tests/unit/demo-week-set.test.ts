@@ -36,8 +36,8 @@ function measuredValues(index: number): number[] {
 
 describe("Demo Week Set", () => {
   it("covers the reporting week with every production layout in order", () => {
-    expect(week.start).toBe("2026-01-05")
-    expect(week.end).toBe("2026-01-09")
+    expect(week.period!.start).toBe("2026-01-05")
+    expect(week.period!.end).toBe("2026-01-09")
     expect(week.pages.map((page) => page.layout)).toEqual([
       "two-column",
       "weekly-overview",

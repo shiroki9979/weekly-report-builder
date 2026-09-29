@@ -48,9 +48,9 @@ export function WorkshopHeader({
       </Button>
       <h1 className="text-sm font-medium">Weekly Report Builder</h1>
       <span className="text-xs text-muted-foreground">Workshop</span>
-      {week ? (
+      {week?.period ? (
         <span className="text-xs text-muted-foreground">
-          {week.start} – {week.end}
+          {week.period.start} – {week.period.end}
         </span>
       ) : null}
       <Button

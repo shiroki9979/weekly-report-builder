@@ -13,7 +13,7 @@ import {
 
 const weekContext = {
   documentId: "2026-08-24",
-  weekLabel: "2026-08-24 — 2026-08-28",
+  frameLabel: "2026-08-24 — 2026-08-28",
   pageLabel: "1 / 1",
   showPageNumber: true,
 }
@@ -63,7 +63,7 @@ describe("StageSlide", () => {
         context={{
           ...weekContext,
           documentId: "2026-08-31",
-          weekLabel: "Label that is not an id",
+          frameLabel: "Label that is not an id",
         }}
         isCapture
       />
@@ -77,6 +77,29 @@ describe("StageSlide", () => {
     expect(String(fetch.mock.calls[0][0])).toContain(
       "/weeks/2026-08-31/p03.html"
     )
+  })
+
+  it("omits the period line from the editorial frame when the deck has none", () => {
+    const page = parseWeekDocument({
+      pages: [
+        {
+          id: "p01",
+          layout: "next-actions",
+          title: "Next",
+          commitments: [
+            { title: "A", outcome: "a", checkpoint: "Mon" },
+            { title: "B", outcome: "b", checkpoint: "Tue" },
+          ],
+        },
+      ],
+    }).pages[0]
+
+    const { container } = render(
+      <StageSlide page={page} context={{ ...weekContext, frameLabel: "" }} />
+    )
+
+    expect(container.querySelector(".editorial-week")).toBeNull()
+    expect(screen.getByText("1 / 1")).toBeInTheDocument()
   })
 
   it("shows Hidden on hidden pages", () => {
@@ -245,8 +268,7 @@ describe("StageSlide", () => {
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {
     const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [{ id: "p04", layout: "future-layout", title: "Future Slide" }],
     })
 

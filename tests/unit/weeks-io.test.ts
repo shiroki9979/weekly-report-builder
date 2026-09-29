@@ -7,8 +7,7 @@ import { setPageTitle } from "@/lib/week-editor"
 describe("serializeWeekDocument", () => {
   it("round-trips a week document through JSON", () => {
     const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

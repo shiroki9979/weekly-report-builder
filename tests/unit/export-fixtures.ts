@@ -21,8 +21,7 @@ export const completePage = {
 }
 
 export const week: WeekDocument = {
-  start: "2026-08-24",
-  end: "2026-08-28",
+  period: { start: "2026-08-24", end: "2026-08-28" },
   pages: [
     completePage,
     { ...completePage, id: "p02", hidden: true },

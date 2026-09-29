@@ -10,8 +10,7 @@ import { parseWeekDocument } from "@/lib/week-document"
 
 function tableWeek() {
   return parseWeekDocument({
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
       {
         id: "p01",

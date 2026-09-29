@@ -42,7 +42,7 @@ describe("batch export", () => {
       if (fileName.endsWith("p06.png")) throw new Error("Downloads blocked")
     })
 
-    const result = await exportVisiblePages(week.start, batch, {
+    const result = await exportVisiblePages(week.period!.start, batch, {
       adapter,
       download,
     })
@@ -77,7 +77,7 @@ describe("batch export", () => {
     const adapter = fakeAdapter()
     const download = vi.fn()
     const empty = await exportVisiblePages(
-      week.start,
+      week.period!.start,
       {
         ...week,
         pages: [{ ...completePage, hidden: true }],
@@ -85,7 +85,7 @@ describe("batch export", () => {
       { adapter, download }
     )
     const skipped = await exportVisiblePages(
-      week.start,
+      week.period!.start,
       {
         ...week,
         pages: [createBlankTwoColumnPage("draft", "table")],
@@ -111,7 +111,7 @@ describe("batch export", () => {
 
   it("leaves all selected pages not attempted when setup fails before the first page", async () => {
     const adapter = fakeAdapter()
-    const result = await exportVisiblePages(week.start, week, {
+    const result = await exportVisiblePages(week.period!.start, week, {
       adapter,
       download: vi.fn(),
       beforePages: () => {
@@ -141,7 +141,7 @@ describe("batch export", () => {
     }
     const download = vi.fn()
 
-    const result = await exportVisiblePages(week.start, week, {
+    const result = await exportVisiblePages(week.period!.start, week, {
       adapter,
       download,
       signal: controller.signal,
@@ -185,7 +185,7 @@ describe("batch export", () => {
       ],
     }
 
-    const result = await exportVisiblePages(week.start, batch, {
+    const result = await exportVisiblePages(week.period!.start, batch, {
       adapter,
       download,
     })

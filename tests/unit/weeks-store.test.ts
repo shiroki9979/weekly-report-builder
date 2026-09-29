@@ -29,8 +29,7 @@ describe("weeks-store", () => {
   it("writes a week file that reloads with the same content and hide flag", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const sourceWeek = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -86,8 +85,8 @@ describe("weeks-store", () => {
         "2026-08-24",
         "2026-08-31",
       ])
-      expect(created.start).toBe("2026-08-31")
-      expect(created.end).toBe("2026-09-04")
+      expect(created.period!.start).toBe("2026-08-31")
+      expect(created.period!.end).toBe("2026-09-04")
       expect(created.pages).toHaveLength(previous.pages.length)
       expect(created.pages.every((page) => page.title === "")).toBe(true)
       expect(created.pages[1].hidden).toBe(true)
@@ -119,8 +118,7 @@ describe("weeks-store", () => {
   it("copies referenced html files into the new week directory during cloning", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const sourceWeek = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -160,8 +158,7 @@ describe("weeks-store", () => {
   it("throws an error when a referenced html file does not exist during cloning", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const sourceWeek = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -188,8 +185,7 @@ describe("weeks-store", () => {
   it("does not publish a week file when a referenced HTML path is not a file", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const sourceWeek = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",

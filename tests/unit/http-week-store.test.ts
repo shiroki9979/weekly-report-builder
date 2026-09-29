@@ -8,8 +8,7 @@ import { jsonResponse } from "./support/json-response"
 
 const monday = "2026-01-12"
 const document: WeekDocument = {
-  start: monday,
-  end: "2026-01-16",
+  period: { start: monday, end: "2026-01-16" },
   pages: [createBlankEvidenceDecisionPage("p01")],
 }
 

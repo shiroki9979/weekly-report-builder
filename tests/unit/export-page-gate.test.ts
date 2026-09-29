@@ -180,7 +180,10 @@ describe("single-page export gate", () => {
           dispose,
         }),
       }
-      const run = exportVisiblePages(week.start, week, { adapter, download })
+      const run = exportVisiblePages(week.period!.start, week, {
+        adapter,
+        download,
+      })
       await vi.advanceTimersByTimeAsync(15000)
       const result = await run
       resolveLate(new Blob(["late"]))
@@ -216,7 +219,10 @@ describe("single-page export gate", () => {
           dispose: vi.fn(),
         }),
       }
-      const run = exportVisiblePages(week.start, week, { adapter, download })
+      const run = exportVisiblePages(week.period!.start, week, {
+        adapter,
+        download,
+      })
       await vi.advanceTimersByTimeAsync(15000)
       await run
       rejectLate(new Error("Too late"))
@@ -369,7 +375,10 @@ describe("single-page export gate", () => {
       cause,
     })
     await expect(
-      exportVisiblePages(week.start, week, { adapter, download: vi.fn() })
+      exportVisiblePages(week.period!.start, week, {
+        adapter,
+        download: vi.fn(),
+      })
     ).resolves.toMatchObject({
       downloadsTriggered: 0,
       failed: { pageId: "p01", reason: "Capture stage not ready" },

@@ -13,8 +13,7 @@ vi.mock("@/lib/overflow-measurement", async (importOriginal) => ({
 }))
 
 const week: WeekDocument = {
-  start: "2026-08-24",
-  end: "2026-08-28",
+  period: { start: "2026-08-24", end: "2026-08-28" },
   pages: [completePage],
 }
 
