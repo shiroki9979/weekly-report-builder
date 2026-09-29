@@ -39,7 +39,7 @@ import {
 } from "@/lib/trend-session"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
-import { latestWeekMonday, nextMondayAfter } from "@/lib/week-clone"
+import { latestWeekMonday, nextMondayAfter } from "@/lib/weekly-series"
 import type { WeekDocument, WeekPage } from "@/lib/week-document"
 import type { WeekStore } from "@/lib/week-store"
 

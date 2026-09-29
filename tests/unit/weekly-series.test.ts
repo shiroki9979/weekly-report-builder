@@ -7,7 +7,7 @@ import {
   latestWeekMonday,
   nextMondayAfter,
   weekRangeForMonday,
-} from "@/lib/week-clone"
+} from "@/lib/weekly-series"
 import { isCalendarMonday } from "@/lib/week-id"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
 import { parseWeekDocument, type WeekDocument } from "@/lib/week-document"
@@ -21,7 +21,7 @@ function loadPreviousWeek() {
   return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
-describe("week-clone", () => {
+describe("weekly-series", () => {
   it("names the new week file for the target Monday and Friday range", () => {
     expect(weekRangeForMonday("2026-08-31")).toEqual({
       start: "2026-08-31",

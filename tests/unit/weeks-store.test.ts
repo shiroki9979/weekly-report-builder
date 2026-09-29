@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest"
 import { parseWeekDocument } from "@/lib/week-document"
 import { setPageHidden, setPageTitle } from "@/lib/week-editor"
 import {
+  createDeckFromTemplateFile,
   createWeekFromPrevious,
   listWeeksInDirectory,
   WeekAlreadyExistsError,
@@ -266,6 +267,57 @@ describe("weeks-store", () => {
       expect(() => createWeekFromPrevious(tempDir, "2026-08-31")).toThrow(
         /No previous week/
       )
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("creates a non-week deck from a template, copying its HTML files", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const template = parseWeekDocument({
+      pages: [
+        { id: "p01", layout: "html", title: "Map", htmlFile: "map.html" },
+      ],
+    })
+
+    try {
+      writeWeekFile(tempDir, "q3-roadmap", template)
+      mkdirSync(join(tempDir, "q3-roadmap"))
+      writeFileSync(join(tempDir, "q3-roadmap", "map.html"), "<p>map</p>")
+
+      const created = createDeckFromTemplateFile(
+        tempDir,
+        "q3-roadmap",
+        "q4-roadmap"
+      )
+
+      expect(created).not.toHaveProperty("period")
+      expect(created.pages[0].title).toBe("")
+      expect(readWeekFile(tempDir, "q4-roadmap")).toEqual(created)
+      expect(
+        readFileSync(join(tempDir, "q4-roadmap", "map.html"), "utf-8")
+      ).toBe("<p>map</p>")
+      expect(() =>
+        createDeckFromTemplateFile(tempDir, "q3-roadmap", "q4-roadmap")
+      ).toThrow(WeekAlreadyExistsError)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it("rejects a week that is not a Monday before creating anything", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const previous = parseWeekDocument(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+
+    try {
+      writeWeekFile(tempDir, "2026-08-24", previous)
+
+      expect(() => createWeekFromPrevious(tempDir, "2026-09-01")).toThrow(
+        "Week file name must be a Monday date: 2026-09-01"
+      )
+      expect(existsSync(join(tempDir, "2026-09-01.json"))).toBe(false)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { StageSlide } from "@/components/stage/stage-slide"
 import { createBlankTrendTargetPage } from "@/lib/page-lifecycle"
 import { assessContentReadiness } from "@/lib/export-readiness"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
+import { cloneWeekFromPrevious } from "@/lib/weekly-series"
 import {
   parseWeekDocument,
   type TrendTargetPage,
