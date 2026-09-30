@@ -7,6 +7,7 @@ import {
   isNextActionsPage,
   isTrendTargetPage,
   parseDeck,
+  type NextActionsPage,
   type Page,
 } from "@/lib/deck"
 
@@ -16,7 +17,6 @@ const week = parseDeck(
 )
 
 const CJK = /[一-鿿]/u
-const LATIN = /[A-Za-z]/
 
 function pageAt<T extends Page>(
   index: number,
@@ -75,14 +75,11 @@ describe("Demo Deck Set", () => {
       })
       expect(measuredValues(7).length).toBeGreaterThanOrEqual(2)
     })
+  })
 
-    // 兩個方向之外，Trend 也需要一頁中英混排的版面實例
-    it("uses mixed-language copy on the Missing-week example", () => {
-      const { title } = pageAt(7, isTrendTargetPage)
-
-      expect(title).toMatch(CJK)
-      expect(title).toMatch(LATIN)
-    })
+  // 公開 demo 的文案統一為英文（3dd5336）；中英混排的版面覆蓋由 e2e fixture 負責
+  it("ships English-only copy so the public demo reads consistently", () => {
+    expect(JSON.stringify(week)).not.toMatch(CJK)
   })
 
   describe("Next Actions examples", () => {
@@ -94,12 +91,15 @@ describe("Demo Deck Set", () => {
       expect(rows.commitments).toEqual(columns.commitments)
     })
 
-    it("includes longer mixed-language Rows", () => {
-      const mixedRows = pageAt(9, isNextActionsPage)
+    it("includes longer Rows than the Columns example", () => {
+      const longestOutcome = (
+        page: ReturnType<typeof pageAt<NextActionsPage>>
+      ) => Math.max(...page.commitments.map((item) => item.outcome.length))
+      const longRows = pageAt(9, isNextActionsPage)
 
-      expect(mixedRows.variant).toBe("rows")
-      expect(mixedRows.commitments.some((item) => CJK.test(item.outcome))).toBe(
-        true
+      expect(longRows.variant).toBe("rows")
+      expect(longestOutcome(longRows)).toBeGreaterThan(
+        longestOutcome(pageAt(3, isNextActionsPage))
       )
     })
   })
