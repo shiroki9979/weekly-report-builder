@@ -37,7 +37,7 @@ Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and 
 
 If `decks/` exists but has no decks, remove that empty directory and run `pnpm seed:decks`. The Workshop will not create a first deck for you.
 
-The public fictional Demo Deck Set opens in the Workshop on a fresh install. Pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows mixed-language Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
+The public fictional Demo Deck Set opens in the Workshop on a fresh install. Pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows longer Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 
