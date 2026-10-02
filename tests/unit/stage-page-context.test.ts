@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { createStagePageContext } from "@/lib/stage-page-context"
-import { parseWeekDocument } from "@/lib/week-document"
+import { parseDeck } from "@/lib/deck"
 
 function weekDocument() {
-  return parseWeekDocument({
-    start: "2026-08-24",
-    end: "2026-08-28",
+  return parseDeck({
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages: [
       {
         id: "p01",
@@ -68,10 +67,19 @@ function weekDocument() {
 }
 
 describe("createStagePageContext", () => {
-  it("builds an ISO week label from Monday through Friday", () => {
+  it("builds the frame label from the deck period", () => {
     expect(
-      createStagePageContext("2026-08-24", weekDocument(), "p01").weekLabel
+      createStagePageContext("2026-08-24", weekDocument(), "p01").frameLabel
     ).toBe("2026-08-24 — 2026-08-28")
+  })
+
+  it("leaves the frame label empty for a deck without a period", () => {
+    const deck = { ...weekDocument(), period: undefined }
+
+    expect(createStagePageContext("q4-roadmap", deck, "p01")).toMatchObject({
+      documentId: "q4-roadmap",
+      frameLabel: "",
+    })
   })
 
   it("numbers supported non-hidden pages and ignores draft or overflowing content", () => {
@@ -98,7 +106,7 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext("2026-08-24", week, "p05").pageLabel).toBe("")
   })
 
-  it("counts weekly-overview pages among supported page positions", () => {
+  it("counts overview pages among supported page positions", () => {
     const blankOutcome = {
       workstream: "",
       figure: "",
@@ -106,13 +114,12 @@ describe("createStagePageContext", () => {
       impact: "",
       status: { label: "", tone: "neutral" },
     }
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
-          layout: "weekly-overview",
+          layout: "overview",
           title: "Overview",
           lead: blankOutcome,
           supporting: [blankOutcome],
@@ -135,9 +142,8 @@ describe("createStagePageContext", () => {
   })
 
   it("counts evidence-decision and next-actions pages among supported page positions", () => {
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -195,9 +201,8 @@ describe("createStagePageContext", () => {
   })
 
   it("lets an HTML Page opt in to a page number when the week hides them", () => {
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: false,
       pages: [
         {
@@ -225,9 +230,8 @@ describe("createStagePageContext", () => {
   })
 
   it("does not overlay a page number on an HTML Page without an override, even when the week shows them", () => {
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       showPageNumbers: true,
       pages: [
         {
@@ -255,9 +259,8 @@ describe("createStagePageContext", () => {
   })
 
   it("does not show a page number on a hidden page or a two-column page", () => {
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",

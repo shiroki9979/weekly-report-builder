@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
 import type { ExportIssue } from "@/lib/export-readiness"
-import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/week-editor"
+import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/deck-editor"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 
 type EditorialPageEditorChromeProps = PageEditorProps & {
@@ -18,7 +18,7 @@ type EditorialPageEditorChromeProps = PageEditorProps & {
 
 /** Editorial Layout Family 共用 Title／notes／Hide，避免各 form 各寫一份 chrome */
 export function EditorialPageEditorChrome({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
@@ -41,8 +41,8 @@ export function EditorialPageEditorChrome({
             value={page.title}
             aria-invalid={invalidPaths.has("title") || undefined}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageTitle(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageTitle(currentDeck, pageIndex, event.target.value)
               )
             }
           />
@@ -54,14 +54,14 @@ export function EditorialPageEditorChrome({
             id="speaker-notes"
             value={page.notes ?? ""}
             onChange={(event) =>
-              onChange((currentWeek) =>
-                setPageNotes(currentWeek, pageIndex, event.target.value)
+              onChange((currentDeck) =>
+                setPageNotes(currentDeck, pageIndex, event.target.value)
               )
             }
           />
         </div>
         <PageNumberSelect
-          week={week}
+          deck={deck}
           pageIndex={pageIndex}
           disabled={readOnly}
           onChange={onChange}
@@ -71,8 +71,8 @@ export function EditorialPageEditorChrome({
             id="page-hidden"
             checked={page.hidden ?? false}
             onCheckedChange={(checked) =>
-              onChange((currentWeek) =>
-                setPageHidden(currentWeek, pageIndex, checked === true)
+              onChange((currentDeck) =>
+                setPageHidden(currentDeck, pageIndex, checked === true)
               )
             }
           />

@@ -3,24 +3,24 @@ import { describe, expect, it, vi } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
 import {
-  parseWeekDocument,
-  type HtmlWeekPage,
-  type TwoColumnWeekPage,
-  type WeeklyOverviewPage,
+  parseDeck,
+  type HtmlPage,
+  type TwoColumnPage,
+  type OverviewPage,
   type EvidenceDecisionPage,
   type NextActionsPage,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 const weekContext = {
   documentId: "2026-08-24",
-  weekLabel: "2026-08-24 — 2026-08-28",
+  frameLabel: "2026-08-24 — 2026-08-28",
   pageLabel: "1 / 1",
   showPageNumber: true,
 }
 
 describe("StageSlide", () => {
   it("renders two-column layout slide with stage context", () => {
-    const page: TwoColumnWeekPage = {
+    const page: TwoColumnPage = {
       id: "p01",
       layout: "two-column",
       title: "Slide Title",
@@ -50,7 +50,7 @@ describe("StageSlide", () => {
       text: async () => "<div>Custom Content</div>",
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "HTML Slide",
@@ -63,7 +63,7 @@ describe("StageSlide", () => {
         context={{
           ...weekContext,
           documentId: "2026-08-31",
-          weekLabel: "Label that is not an id",
+          frameLabel: "Label that is not an id",
         }}
         isCapture
       />
@@ -75,12 +75,35 @@ describe("StageSlide", () => {
       expect(captureEl).toHaveTextContent("Custom Content")
     })
     expect(String(fetch.mock.calls[0][0])).toContain(
-      "/weeks/2026-08-31/p03.html"
+      "/decks/2026-08-31/p03.html"
     )
   })
 
+  it("omits the period line from the editorial frame when the deck has none", () => {
+    const page = parseDeck({
+      pages: [
+        {
+          id: "p01",
+          layout: "next-actions",
+          title: "Next",
+          commitments: [
+            { title: "A", outcome: "a", checkpoint: "Mon" },
+            { title: "B", outcome: "b", checkpoint: "Tue" },
+          ],
+        },
+      ],
+    }).pages[0]
+
+    const { container } = render(
+      <StageSlide page={page} context={{ ...weekContext, frameLabel: "" }} />
+    )
+
+    expect(container.querySelector(".editorial-period")).toBeNull()
+    expect(screen.getByText("1 / 1")).toBeInTheDocument()
+  })
+
   it("shows Hidden on hidden pages", () => {
-    const page: TwoColumnWeekPage = {
+    const page: TwoColumnPage = {
       id: "p02",
       layout: "two-column",
       title: "Hidden slide",
@@ -107,10 +130,10 @@ describe("StageSlide", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Hidden")
   })
 
-  it("renders weekly-overview with the editorial frame context", () => {
-    const page: WeeklyOverviewPage = {
+  it("renders overview with the editorial frame context", () => {
+    const page: OverviewPage = {
       id: "p01",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "Delivery recovered, and the week closed with two durable gains.",
       lead: {
         workstream: "Delivery",
@@ -132,7 +155,7 @@ describe("StageSlide", () => {
 
     render(<StageSlide page={page} context={weekContext} />)
 
-    expect(screen.getByText("Weekly Overview")).toBeInTheDocument()
+    expect(screen.getByText("Overview")).toBeInTheDocument()
     expect(
       screen.getByRole("heading", {
         level: 1,
@@ -244,9 +267,8 @@ describe("StageSlide", () => {
   })
 
   it("warns for an unknown layout without rendering it as a two-column slide", () => {
-    const week = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [{ id: "p04", layout: "future-layout", title: "Future Slide" }],
     })
 
@@ -263,9 +285,9 @@ describe("StageSlide", () => {
   })
 
   it("hides page number on editorial layout when showPageNumber is false", () => {
-    const page: WeeklyOverviewPage = {
+    const page: OverviewPage = {
       id: "p01",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "Title",
       lead: {
         workstream: "Work",
@@ -301,7 +323,7 @@ describe("StageSlide", () => {
       text: async () => "<div>Custom Content</div>",
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "HTML Slide",
@@ -326,7 +348,7 @@ describe("StageSlide", () => {
       text: async () => "<div>Custom Content</div>",
     } as Response)
 
-    const page: HtmlWeekPage = {
+    const page: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "HTML Slide",
@@ -344,7 +366,7 @@ describe("StageSlide", () => {
   })
 
   it("does not render a page number on two-column layout", () => {
-    const page: TwoColumnWeekPage = {
+    const page: TwoColumnPage = {
       id: "p01",
       layout: "two-column",
       title: "Slide Title",

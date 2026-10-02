@@ -2,10 +2,10 @@ import {
   CARDINALITY,
   hasValidMetricFormat,
   isFiniteNonNegative,
-  isHtmlWeekPage,
-  isStructuredWeekPage,
+  isHtmlPage,
+  isStructuredPage,
   isSupportedStagePage,
-  matchWeekPage,
+  matchPage,
   type ChartPanel,
   type ChecklistPanel,
   type FlowPanel,
@@ -13,20 +13,21 @@ import {
   type NextActionsPage,
   type TrendTargetPage,
   type Outcome,
-  type StructuredWeekPage,
+  type StructuredPage,
   type TablePanel,
-  type TwoColumnWeekPage,
-  type WeekPage,
-  type WeeklyOverviewPage,
-} from "./week-document"
+  type TwoColumnPage,
+  type Page,
+  type OverviewPage,
+} from "./deck"
 import { errorMessage } from "./error-message"
 import {
   isTrendDirection,
   trendBounds,
+  trendCadenceRule,
   trendDatingError,
-  trendEndMonday,
+  trendEndDate,
 } from "./trend-target"
-import { isCalendarMonday } from "./week-id"
+import { isCalendarDate } from "./calendar-date"
 import { observationEntryPath, trendInputError } from "./trend-input"
 
 import {
@@ -203,7 +204,7 @@ function assessChecklist(panel: ChecklistPanel): ExportIssue[] {
   )
 }
 
-function assessTwoColumn(page: TwoColumnWeekPage): ExportIssue[] {
+function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -264,7 +265,7 @@ function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
   return issues
 }
 
-function assessWeeklyOverview(page: WeeklyOverviewPage): ExportIssue[] {
+function assessOverview(page: OverviewPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
   if (isBlank(page.title)) {
@@ -380,12 +381,12 @@ function assessNextActions(page: NextActionsPage): ExportIssue[] {
 function assessTrendTarget(
   page: TrendTargetPage,
   inputs: MetricInputMap,
-  reportingMonday?: string
+  asOf?: string
 ): ExportIssue[] {
   return [
     ...trendTextIssues(page),
     ...trendPendingInputIssues(page, inputs),
-    ...trendDateIssues(page, reportingMonday),
+    ...trendDateIssues(page, asOf),
     ...trendTargetIssues(page),
     ...trendFormatIssues(page),
     ...trendObservationIssues(page),
@@ -410,7 +411,7 @@ function trendPendingInputIssues(
   inputs: MetricInputMap
 ): ExportIssue[] {
   const paths: TrendInputPath[] = [
-    "startMonday",
+    "start",
     "target",
     ...page.observations.map((_, index) => observationPath(index)),
   ]
@@ -420,25 +421,30 @@ function trendPendingInputIssues(
   })
 }
 
-function trendDateIssues(
-  page: TrendTargetPage,
-  reportingMonday?: string
-): ExportIssue[] {
-  if (!page.startMonday)
-    return [missing("startMonday", "Starting Monday is required")]
+// 觀測區間不得超過 Deck 的期間終點；以週為單位時等同「不晚於報告週」。沒有期間的 Deck 沒有可比較的報告日
+function trendDateIssues(page: TrendTargetPage, asOf?: string): ExportIssue[] {
+  if (!page.start)
+    return [
+      missing(
+        "start",
+        `${trendCadenceRule(page.cadence).startLabel} is required`
+      ),
+    ]
   const datingError = trendDatingError(
-    page.startMonday,
+    page.cadence,
+    page.start,
     page.observations.length
   )
   if (datingError) return [invalid(datingError.path, datingError.message)]
-  if (!reportingMonday || !isCalendarMonday(reportingMonday))
-    return [invalid("observations", "Reporting Monday is unavailable")]
-  const end = trendEndMonday(page)
-  if (end && end > reportingMonday)
+  if (asOf === undefined) return []
+  if (!isCalendarDate(asOf))
+    return [invalid("observations", "Deck period end is not a valid date")]
+  const end = trendEndDate(page)
+  if (end && end > asOf)
     return [
       invalid(
         "observations",
-        `Observed range ends ${end}, after reporting week ${reportingMonday}`
+        `Observed range ends ${end}, after the deck period ending ${asOf}`
       ),
     ]
   return []
@@ -467,7 +473,7 @@ function trendObservationIssues(page: TrendTargetPage): ExportIssue[] {
     issues.push(
       invalid(
         "observations",
-        `Trend requires ${min} to ${max} weekly positions`
+        `Trend requires ${min} to ${max} ${trendCadenceRule(page.cadence).adjective} positions`
       )
     )
   page.observations.forEach((entry, index) => {
@@ -502,25 +508,24 @@ function trendAxisIssues(page: TrendTargetPage): ExportIssue[] {
   }
 }
 
-// Metric Input 與報告週一總是一起決定內容是否就緒，合成一個 context 傳遞
+// Metric Input 與 Deck 期間終點總是一起決定內容是否就緒，合成一個 context 傳遞
 export type ReadinessContext = {
   metricInput?: MetricInputMap
-  reportingMonday?: string
+  asOf?: string
 }
 
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
 export function assessContentReadiness(
-  page: StructuredWeekPage,
-  { metricInput = {}, reportingMonday }: ReadinessContext = {}
+  page: StructuredPage,
+  { metricInput = {}, asOf }: ReadinessContext = {}
 ): ExportIssue[] {
-  return matchWeekPage(page, {
+  return matchPage(page, {
     twoColumn: assessTwoColumn,
-    weeklyOverview: assessWeeklyOverview,
+    overview: assessOverview,
     evidenceDecision: (decision) =>
       assessEvidenceDecision(decision, metricInput),
     nextActions: assessNextActions,
-    trendTarget: (trend) =>
-      assessTrendTarget(trend, metricInput, reportingMonday),
+    trendTarget: (trend) => assessTrendTarget(trend, metricInput, asOf),
     html: () => [],
     unknown: () => [],
   })
@@ -534,15 +539,15 @@ function overflowMessage(axes: ("horizontal" | "vertical")[]): string {
 }
 
 export function assessExportEligibility(
-  page: WeekPage,
+  page: Page,
   capture?: CaptureAssessment,
   context: ReadinessContext = {}
 ): ExportAssessment {
-  if (isHtmlWeekPage(page)) {
+  if (isHtmlPage(page)) {
     return { eligible: true, issues: [] }
   }
 
-  if (!isSupportedStagePage(page) || !isStructuredWeekPage(page)) {
+  if (!isSupportedStagePage(page) || !isStructuredPage(page)) {
     return {
       eligible: false,
       issues: [
@@ -606,10 +611,8 @@ export function formatExportIssues(issues: ExportIssue[]): string {
   return issues.map(formatExportIssue).join("; ")
 }
 
-export function issuePathsFor(page: WeekPage): Set<string> {
-  return issuePaths(
-    isStructuredWeekPage(page) ? assessContentReadiness(page) : []
-  )
+export function issuePathsFor(page: Page): Set<string> {
+  return issuePaths(isStructuredPage(page) ? assessContentReadiness(page) : [])
 }
 
 export function issuePaths(issues: ExportIssue[]): Set<string> {

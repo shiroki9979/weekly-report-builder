@@ -20,14 +20,14 @@ import {
   canRemoveEntry,
   CARDINALITY,
   type EvidenceDecisionPage,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 type EvidenceDecisionEditorFormProps = PageEditorProps<EvidenceDecisionPage> & {
   metricControls: MetricEditorControls
 }
 
 export function EvidenceDecisionEditorForm({
-  week,
+  deck,
   pageIndex,
   page,
   onChange,
@@ -39,7 +39,7 @@ export function EvidenceDecisionEditorForm({
 
   return (
     <EditorialPageEditorChrome
-      week={week}
+      deck={deck}
       pageIndex={pageIndex}
       page={page}
       onChange={onChange}
@@ -54,8 +54,8 @@ export function EvidenceDecisionEditorForm({
           value={page.verdict}
           aria-invalid={invalidPaths.has("verdict") || undefined}
           onChange={(event) =>
-            onChange((currentWeek) =>
-              setDecisionVerdict(currentWeek, pageIndex, event.target.value)
+            onChange((currentDeck) =>
+              setDecisionVerdict(currentDeck, pageIndex, event.target.value)
             )
           }
         />
@@ -133,9 +133,9 @@ export function EvidenceDecisionEditorForm({
                 invalidPaths.has(`metrics[${metricIndex}].label`) || undefined
               }
               onChange={(event) =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   setDecisionMetricLabel(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     metricIndex,
                     event.target.value
@@ -180,9 +180,9 @@ export function EvidenceDecisionEditorForm({
             idPrefix={`metric-${metricIndex}`}
             format={metric}
             onChange={(patch) =>
-              onChange((currentWeek) =>
+              onChange((currentDeck) =>
                 setDecisionMetricFormat(
-                  currentWeek,
+                  currentDeck,
                   pageIndex,
                   metricIndex,
                   patch
@@ -203,8 +203,8 @@ export function EvidenceDecisionEditorForm({
             !canAddEntry(page.interpretations, CARDINALITY.interpretations)
           }
           onClick={() =>
-            onChange((currentWeek) =>
-              addDecisionInterpretation(currentWeek, pageIndex)
+            onChange((currentDeck) =>
+              addDecisionInterpretation(currentDeck, pageIndex)
             )
           }
         >
@@ -227,9 +227,9 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={interpretationIndex === 0}
               onClick={() =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   moveDecisionInterpretation(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     interpretationIndex,
                     interpretationIndex - 1
@@ -245,9 +245,9 @@ export function EvidenceDecisionEditorForm({
               size="sm"
               disabled={interpretationIndex === page.interpretations.length - 1}
               onClick={() =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   moveDecisionInterpretation(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     interpretationIndex,
                     interpretationIndex + 1
@@ -268,9 +268,9 @@ export function EvidenceDecisionEditorForm({
                 )
               }
               onClick={() =>
-                onChange((currentWeek) =>
+                onChange((currentDeck) =>
                   removeDecisionInterpretation(
-                    currentWeek,
+                    currentDeck,
                     pageIndex,
                     interpretationIndex
                   )
@@ -289,9 +289,9 @@ export function EvidenceDecisionEditorForm({
               undefined
             }
             onChange={(event) =>
-              onChange((currentWeek) =>
+              onChange((currentDeck) =>
                 setDecisionInterpretation(
-                  currentWeek,
+                  currentDeck,
                   pageIndex,
                   interpretationIndex,
                   event.target.value

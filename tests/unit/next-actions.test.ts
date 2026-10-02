@@ -9,15 +9,15 @@ import {
   setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
-import { parseWeekDocument } from "@/lib/week-document"
-import type { NextActionsPage, WeekDocument } from "@/lib/week-document"
+import { createDeckFromTemplate } from "@/lib/deck-template"
+import { parseDeck } from "@/lib/deck"
+import type { NextActionsPage, Deck } from "@/lib/deck"
 
-function weekWith(page: NextActionsPage): WeekDocument {
+function weekWith(page: NextActionsPage): Deck {
   return { start: "2026-08-24", end: "2026-08-28", pages: [page] }
 }
 
-function actions(week: WeekDocument): NextActionsPage {
+function actions(week: Deck): NextActionsPage {
   const page = week.pages[0]
   if (page.layout !== "next-actions") {
     throw new Error("expected next-actions")
@@ -28,8 +28,7 @@ function actions(week: WeekDocument): NextActionsPage {
 describe("next-actions schema", () => {
   it("reads omitted variants as Columns and rejects invalid supplied variants", () => {
     const source = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -42,17 +41,17 @@ describe("next-actions schema", () => {
         },
       ],
     }
-    expect(actions(parseWeekDocument(source)).variant).toBe("columns")
+    expect(actions(parseDeck(source)).variant).toBe("columns")
     expect(
       actions(
-        parseWeekDocument({
+        parseDeck({
           ...source,
           pages: [{ ...source.pages[0], variant: "rows" }],
         })
       ).variant
     ).toBe("rows")
     expect(() =>
-      parseWeekDocument({
+      parseDeck({
         ...source,
         pages: [{ ...source.pages[0], variant: "grid" }],
       })
@@ -60,9 +59,8 @@ describe("next-actions schema", () => {
   })
 
   it("parses a draft and strips extra fields", () => {
-    const doc = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const doc = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -110,9 +108,8 @@ describe("next-actions schema", () => {
     const commitment = { title: "", outcome: "", checkpoint: "" }
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -125,9 +122,8 @@ describe("next-actions schema", () => {
     ).toThrow(/commitments/i)
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -198,9 +194,8 @@ describe("next-actions factory and editor", () => {
 
 describe("next-actions clone and readiness", () => {
   it("keeps commitment count and clears weekly copy", () => {
-    const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const previous = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -222,7 +217,7 @@ describe("next-actions clone and readiness", () => {
         },
       ],
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
     if (page.layout !== "next-actions") {
       throw new Error("expected next-actions")
@@ -241,8 +236,8 @@ describe("next-actions clone and readiness", () => {
       ...createBlankNextActionsPage("p01"),
       title: "Next steps",
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
-    expect(actions(parseWeekDocument(cloned)).variant).toBe("rows")
+    const cloned = createDeckFromTemplate(previous)
+    expect(actions(parseDeck(cloned)).variant).toBe("rows")
   })
 
   it("lists missing commitment fields after title", () => {

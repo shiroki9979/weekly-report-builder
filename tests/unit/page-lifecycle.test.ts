@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest"
 import {
   addPageAfter,
   createBlankTwoColumnPage,
-  createBlankWeeklyOverviewPage,
+  createBlankOverviewPage,
   createBlankNextActionsPage,
   deleteSelectedPage,
   moveSelectedPage,
   nextPageId,
 } from "@/lib/page-lifecycle"
-import type { TwoColumnWeekPage, WeekDocument } from "@/lib/week-document"
+import type { TwoColumnPage, Deck } from "@/lib/deck"
 
-function htmlPage(id: string, title = id): WeekDocument["pages"][number] {
+function htmlPage(id: string, title = id): Deck["pages"][number] {
   return {
     id,
     layout: "html",
@@ -20,10 +20,9 @@ function htmlPage(id: string, title = id): WeekDocument["pages"][number] {
   }
 }
 
-function weekWith(pages: WeekDocument["pages"]): WeekDocument {
+function weekWith(pages: Deck["pages"]): Deck {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     pages,
   }
 }
@@ -100,7 +99,7 @@ describe("createBlankTwoColumnPage", () => {
 
 describe("createBlankWeeklyOverviewPage", () => {
   it("builds one empty lead and two supporting outcomes with neutral tone", () => {
-    const page = createBlankWeeklyOverviewPage("p05")
+    const page = createBlankOverviewPage("p05")
     const blankOutcome = {
       workstream: "",
       figure: "",
@@ -111,7 +110,7 @@ describe("createBlankWeeklyOverviewPage", () => {
 
     expect(page).toEqual({
       id: "p05",
-      layout: "weekly-overview",
+      layout: "overview",
       title: "",
       lead: blankOutcome,
       supporting: [blankOutcome, blankOutcome],
@@ -143,13 +142,13 @@ describe("addPageAfter", () => {
 
     const result = addPageAfter(week, "p01", added)
 
-    expect(result.week.pages.map((page) => page.id)).toEqual([
+    expect(result.deck.pages.map((page) => page.id)).toEqual([
       "p01",
       "p03",
       "p02",
     ])
     expect(result.selectedPageId).toBe("p03")
-    expect(result.week.pages[1]).toEqual(added)
+    expect(result.deck.pages[1]).toEqual(added)
   })
 })
 
@@ -169,7 +168,7 @@ describe("deleteSelectedPage", () => {
 
     const result = deleteSelectedPage(week, "p02")
 
-    expect(result.week.pages.map((page) => page.id)).toEqual(["p01", "p03"])
+    expect(result.deck.pages.map((page) => page.id)).toEqual(["p01", "p03"])
     expect(result.selectedPageId).toBe("p03")
   })
 
@@ -178,7 +177,7 @@ describe("deleteSelectedPage", () => {
 
     const result = deleteSelectedPage(week, "p02")
 
-    expect(result.week.pages.map((page) => page.id)).toEqual(["p01"])
+    expect(result.deck.pages.map((page) => page.id)).toEqual(["p01"])
     expect(result.selectedPageId).toBe("p01")
   })
 })
@@ -188,7 +187,7 @@ describe("moveSelectedPage", () => {
     const week = weekWith([htmlPage("p01"), htmlPage("p02"), htmlPage("p03")])
 
     const down = moveSelectedPage(week, "p02", "down")
-    expect(down.week.pages.map((page) => page.id)).toEqual([
+    expect(down.deck.pages.map((page) => page.id)).toEqual([
       "p01",
       "p03",
       "p02",
@@ -196,7 +195,7 @@ describe("moveSelectedPage", () => {
     expect(down.selectedPageId).toBe("p02")
 
     const up = moveSelectedPage(week, "p02", "up")
-    expect(up.week.pages.map((page) => page.id)).toEqual(["p02", "p01", "p03"])
+    expect(up.deck.pages.map((page) => page.id)).toEqual(["p02", "p01", "p03"])
     expect(up.selectedPageId).toBe("p02")
   })
 
@@ -204,11 +203,11 @@ describe("moveSelectedPage", () => {
     const week = weekWith([htmlPage("p01"), htmlPage("p02")])
 
     expect(moveSelectedPage(week, "p01", "up")).toEqual({
-      week,
+      deck: week,
       selectedPageId: "p01",
     })
     expect(moveSelectedPage(week, "p02", "down")).toEqual({
-      week,
+      deck: week,
       selectedPageId: "p02",
     })
   })
@@ -216,7 +215,7 @@ describe("moveSelectedPage", () => {
 
 describe("blank two-column pages remain drafts", () => {
   it("omits optional hidden and notes", () => {
-    const page: TwoColumnWeekPage = createBlankTwoColumnPage("p05", "table")
+    const page: TwoColumnPage = createBlankTwoColumnPage("p05", "table")
 
     expect(page.hidden).toBeUndefined()
     expect(page.notes).toBeUndefined()

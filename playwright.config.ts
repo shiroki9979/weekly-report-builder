@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url"
 import { defineConfig } from "@playwright/test"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-const e2eWeeksDir =
-  process.env.E2E_WEEKS_DIR ??
-  fs.mkdtempSync(path.join(os.tmpdir(), "wrb-e2e-weeks-"))
+const e2eDecksDir =
+  process.env.E2E_DECKS_DIR ??
+  fs.mkdtempSync(path.join(os.tmpdir(), "wrb-e2e-decks-"))
 
-process.env.E2E_WEEKS_DIR = e2eWeeksDir
+process.env.E2E_DECKS_DIR = e2eDecksDir
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -31,7 +31,7 @@ export default defineConfig({
     cwd: rootDir,
     env: {
       ...process.env,
-      WEEKS_DIR: e2eWeeksDir,
+      DECKS_DIR: e2eDecksDir,
     },
   },
   globalSetup: "./tests/e2e/global-setup.ts",

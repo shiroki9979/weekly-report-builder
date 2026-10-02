@@ -8,7 +8,7 @@ import { WorkshopToolbar } from "@/components/workshop/workshop-toolbar"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { LayoutEditorControls } from "@/hooks/use-editing-session"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 import {
   unusedComparisonMetricControls,
   unusedTrendControls,
@@ -19,10 +19,9 @@ const unusedLayoutControls: LayoutEditorControls = {
   trendTarget: unusedTrendControls,
 }
 
-function sampleWeek(showPageNumbers?: boolean): WeekDocument {
+function sampleWeek(showPageNumbers?: boolean): Deck {
   return {
-    start: "2026-08-24",
-    end: "2026-08-28",
+    period: { start: "2026-08-24", end: "2026-08-28" },
     showPageNumbers,
     pages: [
       {
@@ -33,7 +32,7 @@ function sampleWeek(showPageNumbers?: boolean): WeekDocument {
       },
       {
         id: "p02",
-        layout: "weekly-overview",
+        layout: "overview",
         title: "Overview",
         agenda: [],
       },
@@ -62,9 +61,9 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
   }: { onChange?: (show: boolean) => void; disabled?: boolean } = {}) {
     render(
       <WorkshopToolbar
-        weeks={["2026-08-24"]}
-        selectedMonday="2026-08-24"
-        onWeekChange={() => {}}
+        decks={["2026-08-24"]}
+        selectedDeckId="2026-08-24"
+        onDeckChange={() => {}}
         save={idleSave}
         create={idleCreate}
         pageNumbers={{ show: true, disabled, onChange }}
@@ -107,37 +106,37 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
 describe("PageNumberSelect", () => {
   it("displays Default (Show) when week has showPageNumbers true and page has undefined", () => {
     const week = sampleWeek(true)
-    render(<PageNumberSelect week={week} pageIndex={1} onChange={() => {}} />)
+    render(<PageNumberSelect deck={week} pageIndex={1} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Show)")).toBeInTheDocument()
   })
 
   it("displays Default (Hide) when week has showPageNumbers false and page has undefined", () => {
     const week = sampleWeek(false)
-    render(<PageNumberSelect week={week} pageIndex={1} onChange={() => {}} />)
+    render(<PageNumberSelect deck={week} pageIndex={1} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Hide)")).toBeInTheDocument()
   })
 
   it("displays Default (Hide) for an HTML Page even when the week shows page numbers", () => {
     const week = sampleWeek(true)
-    render(<PageNumberSelect week={week} pageIndex={0} onChange={() => {}} />)
+    render(<PageNumberSelect deck={week} pageIndex={0} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Hide)")).toBeInTheDocument()
   })
 
   it("changes page.showPageNumber when selected", async () => {
     const user = userEvent.setup()
-    let updatedWeek: WeekDocument | null = null
+    let updatedWeek: Deck | null = null
 
     const Harness = () => {
-      const [week, setWeek] = useState(sampleWeek(true))
+      const [week, setDeck] = useState(sampleWeek(true))
       return (
         <PageNumberSelect
-          week={week}
+          deck={week}
           pageIndex={0}
           onChange={(update) => {
-            setWeek((current) => {
+            setDeck((current) => {
               const next = update(current)
               updatedWeek = next
               return next
@@ -165,7 +164,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     const week = sampleWeek(true)
     render(
       <EditorialPageEditorChrome
-        week={week}
+        deck={week}
         pageIndex={1}
         page={week.pages[1]}
         invalidPaths={new Set()}
@@ -184,7 +183,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     const week = sampleWeek(true)
     render(
       <PageEditorForm
-        week={week}
+        deck={week}
         pageIndex={0}
         onChange={() => {}}
         layoutControls={unusedLayoutControls}
@@ -197,9 +196,8 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
   })
 
   it("does not render page number select for a two-column page", () => {
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -222,7 +220,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
 
     render(
       <PageEditorForm
-        week={week}
+        deck={week}
         pageIndex={0}
         onChange={() => {}}
         layoutControls={unusedLayoutControls}

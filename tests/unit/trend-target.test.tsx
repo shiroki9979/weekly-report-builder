@@ -4,18 +4,14 @@ import { describe, expect, it } from "vitest"
 import { StageSlide } from "@/components/stage/stage-slide"
 import { createBlankTrendTargetPage } from "@/lib/page-lifecycle"
 import { assessContentReadiness } from "@/lib/export-readiness"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
-import {
-  parseWeekDocument,
-  type TrendTargetPage,
-  type WeekDocument,
-} from "@/lib/week-document"
+import { createDeckFromTemplate } from "@/lib/deck-template"
+import { parseDeck, type TrendTargetPage, type Deck } from "@/lib/deck"
 import {
   canSaveSession,
   createEditingSession,
   deleteSessionPage,
   addSessionPage,
-  openSessionWeek,
+  openSessionDeck,
   sessionReadiness,
 } from "@/lib/editing-session"
 import {
@@ -28,7 +24,7 @@ import {
 } from "@/lib/trend-session"
 import { exportPage } from "@/lib/export-page-gate"
 import { fakeAdapter } from "./export-fixtures"
-import { exportVisiblePages } from "@/lib/week-export"
+import { exportVisiblePages } from "@/lib/deck-export"
 import { trendBounds } from "@/lib/trend-target"
 import { canChangeTrendEndpoint } from "@/lib/trend-input"
 
@@ -45,7 +41,8 @@ const complete: TrendTargetPage = {
     unitSpacing: "space",
     precision: 1,
   },
-  startMonday: "2026-07-06",
+  cadence: "week",
+  start: "2026-07-06",
   observations: [
     { state: "measured", value: 9.2 },
     { state: "measured", value: 8.8 },
@@ -58,23 +55,26 @@ const complete: TrendTargetPage = {
 }
 
 // complete 的最後一筆觀測落在此報告週
-const reportingWeek = { start: "2026-07-20", end: "2026-07-24" }
+const reportingWeek = { period: { start: "2026-07-20", end: "2026-07-24" } }
 
-function weekWith(...pages: TrendTargetPage[]): WeekDocument {
+function weekWith(...pages: TrendTargetPage[]): Deck {
   return { ...reportingWeek, pages }
 }
 
 function sessionWith(...pages: TrendTargetPage[]) {
-  return createEditingSession(weekWith(...pages))
+  return createEditingSession(weekWith(...pages), "2026-07-20")
 }
 
-function renderTrend(page: TrendTargetPage, weekLabel = reportingWeek.start) {
+function renderTrend(
+  page: TrendTargetPage,
+  frameLabel = reportingWeek.period!.start
+) {
   return render(
     <StageSlide
       page={page}
       context={{
         documentId: DOCUMENT_ID,
-        weekLabel,
+        frameLabel,
         pageLabel: "",
         showPageNumber: false,
       }}
@@ -95,7 +95,7 @@ describe("Trend & Target", () => {
     function undatedSession() {
       return sessionWith({
         ...complete,
-        startMonday: null,
+        start: null,
         observations: [{ state: "unfilled" }, { state: "unfilled" }],
       })
     }
@@ -124,17 +124,17 @@ describe("Trend & Target", () => {
     it("accepts a measured value after the starting Monday is set", () => {
       const session = writeTrendInput(
         undatedSession(),
-        { pageId: "p01", path: "startMonday" },
+        { pageId: "p01", path: "start" },
         "2026-07-06"
       )
       const next = writeTrendInput(session, value, "0")
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: "2026-07-06",
+      expect(next.deck?.pages[0]).toMatchObject({
+        start: "2026-07-06",
         observations: [{ state: "measured", value: 0 }, { state: "unfilled" }],
       })
       expect(readTrendInput(next, value)).toBe("0")
       expect(canSaveSession(next).allowed).toBe(true)
-      expect(parseWeekDocument(next.week).pages[0]).toMatchObject({
+      expect(parseDeck(next.deck).pages[0]).toMatchObject({
         observations: [{ state: "measured", value: 0 }, { state: "unfilled" }],
       })
     })
@@ -171,7 +171,9 @@ describe("Trend & Target", () => {
 
       it("are ready for export", () => {
         expect(
-          assessContentReadiness(page, { reportingMonday: reportingWeek.start })
+          assessContentReadiness(page, {
+            asOf: reportingWeek.period!.end,
+          })
         ).toEqual([])
       })
 
@@ -242,7 +244,7 @@ describe("Trend & Target", () => {
   describe("range endpoints", () => {
     const dated = {
       ...complete,
-      startMonday: "2026-12-28",
+      start: "2026-12-28",
       observations: [
         { state: "measured" as const, value: 1 },
         { state: "missing" as const },
@@ -252,8 +254,7 @@ describe("Trend & Target", () => {
 
     function sessionWithRawInput() {
       let session = createEditingSession({
-        start: "2027-01-11",
-        end: "2027-01-15",
+        period: { start: "2027-01-11", end: "2027-01-15" },
         pages: [dated],
       })
       session = writeTrendInput(
@@ -273,8 +274,8 @@ describe("Trend & Target", () => {
 
       const next = changeTrendEndpoint(session, "p01", "prepend")
 
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: "2026-12-21",
+      expect(next.deck?.pages[0]).toMatchObject({
+        start: "2026-12-21",
         observations: [
           { state: "unfilled" },
           { state: "measured", value: 1 },
@@ -296,8 +297,8 @@ describe("Trend & Target", () => {
 
       const next = changeTrendEndpoint(session, "p01", "remove-first")
 
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: "2027-01-04",
+      expect(next.deck?.pages[0]).toMatchObject({
+        start: "2027-01-04",
         observations: [{ state: "missing" }, { state: "measured", value: 3 }],
       })
       expect(
@@ -310,8 +311,8 @@ describe("Trend & Target", () => {
 
       const next = changeTrendEndpoint(session, "p01", "remove-last")
 
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: "2026-12-28",
+      expect(next.deck?.pages[0]).toMatchObject({
+        start: "2026-12-28",
         observations: [{ state: "measured", value: 1 }, { state: "missing" }],
       })
       expect(canSaveSession(next).allowed).toBe(true)
@@ -319,8 +320,7 @@ describe("Trend & Target", () => {
 
     it("refuses to shrink below two weeks", () => {
       const session = createEditingSession({
-        start: "2027-01-11",
-        end: "2027-01-15",
+        period: { start: "2027-01-11", end: "2027-01-15" },
         pages: [{ ...dated, observations: dated.observations.slice(0, 2) }],
       })
 
@@ -332,12 +332,11 @@ describe("Trend & Target", () => {
     describe("at twelve positions", () => {
       function fullSession() {
         return createEditingSession({
-          start: "2026-03-23",
-          end: "2026-03-27",
+          period: { start: "2026-03-23", end: "2026-03-27" },
           pages: [
             {
               ...complete,
-              startMonday: "2026-01-05",
+              start: "2026-01-05",
               observations: Array.from({ length: 12 }, () => ({
                 state: "unfilled" as const,
               })),
@@ -363,8 +362,8 @@ describe("Trend & Target", () => {
 
         const next = changeTrendEndpoint(trimmed, "p01", "append")
 
-        const page = next.week?.pages[0] as TrendTargetPage
-        expect(page.startMonday).toBe("2026-01-12")
+        const page = next.deck?.pages[0] as TrendTargetPage
+        expect(page.start).toBe("2026-01-12")
         expect(page.observations).toHaveLength(12)
         expect(page.observations.at(-1)).toEqual({ state: "unfilled" })
       })
@@ -375,7 +374,7 @@ describe("Trend & Target", () => {
     function sessionWithProposedMonday() {
       return writeTrendInput(
         sessionWith(complete),
-        { pageId: "p01", path: "startMonday" },
+        { pageId: "p01", path: "start" },
         "2026-07-13"
       )
     }
@@ -383,8 +382,8 @@ describe("Trend & Target", () => {
     it("holds a proposed Monday as pending input and blocks save", () => {
       const session = sessionWithProposedMonday()
 
-      expect(session.week?.pages[0]).toMatchObject({
-        startMonday: "2026-07-06",
+      expect(session.deck?.pages[0]).toMatchObject({
+        start: "2026-07-06",
       })
       expect(canSaveSession(session).allowed).toBe(false)
     })
@@ -394,7 +393,7 @@ describe("Trend & Target", () => {
 
       const next = cancelTrendRedate(session, "p01")
 
-      expect(readTrendInput(next, { pageId: "p01", path: "startMonday" })).toBe(
+      expect(readTrendInput(next, { pageId: "p01", path: "start" })).toBe(
         "2026-07-06"
       )
       expect(canSaveSession(next).allowed).toBe(true)
@@ -403,18 +402,18 @@ describe("Trend & Target", () => {
     it("refuses to confirm an invalid proposed Monday and names the reason", () => {
       const session = writeTrendInput(
         sessionWith(complete),
-        { pageId: "p01", path: "startMonday" },
+        { pageId: "p01", path: "start" },
         "2026-07-14"
       )
 
       expect(() => confirmTrendRedate(session, "p01")).toThrow(
-        "Cannot confirm proposed Monday 2026-07-14: Starting Monday must be a real calendar Monday"
+        "Cannot confirm proposed start 2026-07-14: Starting Monday must be a real calendar Monday"
       )
     })
 
     it("refuses to confirm when no Monday is proposed", () => {
       expect(() => confirmTrendRedate(sessionWith(complete), "p01")).toThrow(
-        "No proposed Monday to confirm for p01"
+        "No proposed start to confirm for p01"
       )
     })
 
@@ -423,8 +422,8 @@ describe("Trend & Target", () => {
 
       const next = confirmTrendRedate(session, "p01")
 
-      expect(next.week?.pages[0]).toMatchObject({
-        startMonday: "2026-07-13",
+      expect(next.deck?.pages[0]).toMatchObject({
+        start: "2026-07-13",
         observations: complete.observations,
       })
       expect(canSaveSession(next).allowed).toBe(true)
@@ -435,7 +434,7 @@ describe("Trend & Target", () => {
     function sessionWithClearedDating(page: TrendTargetPage = complete) {
       return writeTrendInput(
         sessionWith(page),
-        { pageId: "p01", path: "startMonday" },
+        { pageId: "p01", path: "start" },
         ""
       )
     }
@@ -443,18 +442,18 @@ describe("Trend & Target", () => {
     it("keeps the Monday and reports readiness", () => {
       const session = sessionWithClearedDating()
 
-      expect(session.week?.pages[0]).toMatchObject({
-        startMonday: "2026-07-06",
+      expect(session.deck?.pages[0]).toMatchObject({
+        start: "2026-07-06",
       })
       expect(canSaveSession(session).allowed).toBe(false)
       expect(sessionReadiness(session, "p01")).toContainEqual(
-        expect.objectContaining({ path: "startMonday" })
+        expect.objectContaining({ path: "start" })
       )
     })
 
     it("blocks Copy", async () => {
       const session = sessionWithClearedDating()
-      const snapshot = session.week!
+      const snapshot = session.deck!
 
       const copy = await exportPage(DOCUMENT_ID, snapshot, snapshot.pages[0], {
         adapter: fakeAdapter(),
@@ -463,16 +462,16 @@ describe("Trend & Target", () => {
 
       expect(copy).toMatchObject({
         kind: "blocked",
-        issues: [expect.objectContaining({ path: "startMonday" })],
+        issues: [expect.objectContaining({ path: "start" })],
       })
     })
 
     it("skips the page in batch without preparing capture", async () => {
       const session = sessionWithClearedDating()
-      const snapshot = session.week!
+      const snapshot = session.deck!
       const adapter = fakeAdapter()
 
-      const batch = await exportVisiblePages(snapshot.start, snapshot, {
+      const batch = await exportVisiblePages(snapshot.period!.start, snapshot, {
         adapter,
         metricInput: session.metricInput,
         download: () => {},
@@ -494,7 +493,7 @@ describe("Trend & Target", () => {
           ""
         )
 
-      expect(session.week?.pages[0]).toMatchObject({ startMonday: null })
+      expect(session.deck?.pages[0]).toMatchObject({ start: null })
       expect(canSaveSession(session).allowed).toBe(true)
     })
 
@@ -519,10 +518,8 @@ describe("Trend & Target", () => {
           "unfilled"
         )
 
-        expect(next.week?.pages[0]).toMatchObject({ startMonday: null })
-        expect(
-          readTrendInput(next, { pageId: "p01", path: "startMonday" })
-        ).toBe("")
+        expect(next.deck?.pages[0]).toMatchObject({ start: null })
+        expect(readTrendInput(next, { pageId: "p01", path: "start" })).toBe("")
         expect(canSaveSession(next).allowed).toBe(true)
       })
     })
@@ -531,7 +528,7 @@ describe("Trend & Target", () => {
   it("creates a blank draft with eight unfilled positions and no dating or target", () => {
     const blank = createBlankTrendTargetPage("p02")
 
-    expect(blank.startMonday).toBeNull()
+    expect(blank.start).toBeNull()
     expect(blank.target).toBeNull()
     expect(blank.observations).toEqual(
       Array.from({ length: 8 }, () => ({ state: "unfilled" }))
@@ -551,7 +548,7 @@ describe("Trend & Target", () => {
         { state: "unfilled" },
       ] as const
 
-      const week = parseWeekDocument(
+      const week = parseDeck(
         weekWith({ ...complete, observations: [...observations] })
       )
 
@@ -581,12 +578,12 @@ describe("Trend & Target", () => {
       },
       {
         field: "a starting date that is not a Monday",
-        page: { startMonday: "2026-07-07" },
-        error: /startMonday: Starting Monday must be a real calendar Monday/,
+        page: { start: "2026-07-07" },
+        error: /start: Starting Monday must be a real calendar Monday/,
       },
       {
         field: "a range that runs past supported ISO dates",
-        page: { startMonday: "9999-12-20" },
+        page: { start: "9999-12-20" },
         error: /observations: Trend range exceeds supported ISO dates/,
       },
       {
@@ -601,7 +598,7 @@ describe("Trend & Target", () => {
       },
     ])("rejects $field", ({ page, error }) => {
       expect(() =>
-        parseWeekDocument({
+        parseDeck({
           ...reportingWeek,
           pages: [{ ...complete, ...page }],
         })
@@ -611,14 +608,14 @@ describe("Trend & Target", () => {
 
   describe("reporting week", () => {
     it("is ready when the final observation falls on the reporting week", () => {
-      expect(
-        assessContentReadiness(complete, { reportingMonday: "2026-07-20" })
-      ).toEqual([])
+      expect(assessContentReadiness(complete, { asOf: "2026-07-24" })).toEqual(
+        []
+      )
     })
 
     it("reports observations that end after the reporting week", () => {
       expect(
-        assessContentReadiness(complete, { reportingMonday: "2026-07-13" })
+        assessContentReadiness(complete, { asOf: "2026-07-17" })
       ).toContainEqual(
         expect.objectContaining({
           path: "observations",
@@ -677,15 +674,14 @@ describe("Trend & Target", () => {
       observations: [...interiorMissing.observations, { state: "missing" }],
     }
     const finalMissingWeek = {
-      start: "2026-07-27",
-      end: "2026-07-31",
+      period: { start: "2026-07-27", end: "2026-07-31" },
       pages: [finalMissing],
     }
 
     it("are ready when interior", () => {
       expect(
         assessContentReadiness(interiorMissing, {
-          reportingMonday: reportingWeek.start,
+          asOf: reportingWeek.period!.end,
         })
       ).toEqual([])
     })
@@ -693,7 +689,7 @@ describe("Trend & Target", () => {
     it("are ready when final", () => {
       expect(
         assessContentReadiness(finalMissing, {
-          reportingMonday: finalMissingWeek.start,
+          asOf: finalMissingWeek.period!.end,
         })
       ).toEqual([])
     })
@@ -712,9 +708,7 @@ describe("Trend & Target", () => {
     })
 
     it("round-trip through Week JSON", () => {
-      const restored = parseWeekDocument(
-        JSON.parse(JSON.stringify(finalMissingWeek))
-      )
+      const restored = parseDeck(JSON.parse(JSON.stringify(finalMissingWeek)))
 
       expect(restored.pages[0]).toMatchObject({
         observations: finalMissing.observations,
@@ -722,11 +716,11 @@ describe("Trend & Target", () => {
     })
 
     it("carry into the next week's clone", () => {
-      const cloned = cloneWeekFromPrevious(finalMissingWeek, "2026-08-03")
+      const cloned = createDeckFromTemplate(finalMissingWeek)
 
       expect(cloned.pages[0]).toMatchObject({
         observations: finalMissing.observations,
-        startMonday: "2026-07-06",
+        start: "2026-07-06",
         measurementContext: complete.measurementContext,
         title: "",
         interpretation: "",
@@ -792,7 +786,7 @@ describe("Trend & Target", () => {
 
       const next = setTrendObservationState(session, second, "missing")
 
-      expect(next.week?.pages[0]).toMatchObject({
+      expect(next.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "missing" },
@@ -816,7 +810,7 @@ describe("Trend & Target", () => {
       const next = setTrendObservationState(session, second, "unfilled")
 
       expect(readTrendInput(next, secondValue)).toBe("")
-      expect(next.week?.pages[0]).toMatchObject({
+      expect(next.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "unfilled" },
@@ -837,7 +831,7 @@ describe("Trend & Target", () => {
 
       const next = writeTrendInput(session, secondValue, "0")
 
-      expect(next.week?.pages[0]).toMatchObject({
+      expect(next.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "measured", value: 0 },
@@ -849,7 +843,7 @@ describe("Trend & Target", () => {
     it("return a measured week to Unfilled when its value is cleared", () => {
       const next = writeTrendInput(sessionWith(complete), secondValue, "")
 
-      expect(next.week?.pages[0]).toMatchObject({
+      expect(next.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "unfilled" },
@@ -907,7 +901,9 @@ describe("Trend & Target", () => {
       },
     ])("reports $draft as not ready", ({ page, path, message }) => {
       expect(
-        assessContentReadiness(page, { reportingMonday: reportingWeek.start })
+        assessContentReadiness(page, {
+          asOf: reportingWeek.period!.end,
+        })
       ).toContainEqual(expect.objectContaining({ path, message }))
     })
 
@@ -919,7 +915,7 @@ describe("Trend & Target", () => {
       )
       const downloaded: string[] = []
 
-      const result = await exportVisiblePages(week.start, week, {
+      const result = await exportVisiblePages(week.period!.start, week, {
         adapter: fakeAdapter(),
         download: (_blob, filename) => downloaded.push(filename),
       })
@@ -935,7 +931,7 @@ describe("Trend & Target", () => {
   describe("inclusive targets at both series limits", () => {
     const twoWeeks: TrendTargetPage = {
       ...complete,
-      startMonday: "2026-08-24",
+      start: "2026-08-24",
       observations: [
         { state: "measured", value: -3 },
         { state: "measured", value: 0 },
@@ -945,7 +941,7 @@ describe("Trend & Target", () => {
     }
     const twelveZeros: TrendTargetPage = {
       ...complete,
-      startMonday: "2025-12-15",
+      start: "2025-12-15",
       observations: Array.from({ length: 12 }, () => ({
         state: "measured",
         value: 0,
@@ -954,12 +950,10 @@ describe("Trend & Target", () => {
     }
 
     it.each([
-      { series: "two signed weeks", page: twoWeeks, monday: "2026-08-31" },
-      { series: "twelve zero weeks", page: twelveZeros, monday: "2026-03-02" },
-    ])("accept $series as ready", ({ page, monday }) => {
-      expect(assessContentReadiness(page, { reportingMonday: monday })).toEqual(
-        []
-      )
+      { series: "two signed weeks", page: twoWeeks, asOf: "2026-09-04" },
+      { series: "twelve zero weeks", page: twelveZeros, asOf: "2026-03-06" },
+    ])("accept $series as ready", ({ page, asOf }) => {
+      expect(assessContentReadiness(page, { asOf })).toEqual([])
     })
 
     it("meet an at-least target equal to the latest value", () => {
@@ -983,14 +977,14 @@ describe("Trend & Target", () => {
   })
 
   it("retains dated evidence and clears weekly conclusions when cloned", () => {
-    const week = cloneWeekFromPrevious(weekWith(complete), "2026-07-27")
+    const week = createDeckFromTemplate(weekWith(complete))
 
     expect(week.pages[0]).toMatchObject({
       title: "",
       interpretation: "",
       notes: undefined,
       metric: complete.metric,
-      startMonday: "2026-07-06",
+      start: "2026-07-06",
       observations: complete.observations,
       target: 8,
       measurementContext: complete.measurementContext,
@@ -1004,7 +998,7 @@ describe("Trend & Target", () => {
       const session = writeTrendInput(sessionWith(complete), location, "1e-324")
 
       expect(readTrendInput(session, location)).toBe("1e-324")
-      expect(session.week?.pages[0]).toMatchObject({
+      expect(session.deck?.pages[0]).toMatchObject({
         observations: complete.observations,
       })
       expect(canSaveSession(session).allowed).toBe(false)
@@ -1020,7 +1014,7 @@ describe("Trend & Target", () => {
     it("commits an exponent-form zero", () => {
       const session = writeTrendInput(sessionWith(complete), location, "0e-324")
 
-      expect(session.week?.pages[0]).toMatchObject({
+      expect(session.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "measured", value: 8.8 },
@@ -1033,7 +1027,7 @@ describe("Trend & Target", () => {
     it("commits a signed value", () => {
       const session = writeTrendInput(sessionWith(complete), location, "-1.2e1")
 
-      expect(session.week?.pages[0]).toMatchObject({
+      expect(session.deck?.pages[0]).toMatchObject({
         observations: [
           { state: "measured", value: 9.2 },
           { state: "measured", value: 8.8 },
@@ -1062,7 +1056,7 @@ describe("Trend & Target", () => {
 
       it("blocks Copy without preparing capture", async () => {
         const session = sessionWithInvalidSignedInput()
-        const snapshot = session.week!
+        const snapshot = session.deck!
         const adapter = fakeAdapter()
 
         const copy = await exportPage(
@@ -1084,8 +1078,8 @@ describe("Trend & Target", () => {
         const downloads: string[] = []
 
         const batch = await exportVisiblePages(
-          reportingWeek.start,
-          weekWith(session.week!.pages[0] as TrendTargetPage, {
+          reportingWeek.period!.start,
+          weekWith(session.deck!.pages[0] as TrendTargetPage, {
             ...complete,
             id: "p02",
           }),
@@ -1105,12 +1099,12 @@ describe("Trend & Target", () => {
   })
 
   describe("an invalid starting date", () => {
-    const startMonday = { pageId: "p01", path: "startMonday" } as const
+    const startMonday = { pageId: "p01", path: "start" } as const
     const week = weekWith(complete, createBlankTrendTargetPage("p02"))
 
     function sessionWithInvalidDate() {
       return writeTrendInput(
-        createEditingSession(week),
+        createEditingSession(week, "2026-07-20"),
         startMonday,
         "2026-07-07"
       )
@@ -1120,8 +1114,8 @@ describe("Trend & Target", () => {
       const session = sessionWithInvalidDate()
 
       expect(readTrendInput(session, startMonday)).toBe("2026-07-07")
-      expect(session.week?.pages[0]).toMatchObject({
-        startMonday: "2026-07-06",
+      expect(session.deck?.pages[0]).toMatchObject({
+        start: "2026-07-06",
       })
       expect(canSaveSession(session).allowed).toBe(false)
     })
@@ -1136,7 +1130,7 @@ describe("Trend & Target", () => {
     })
 
     it("is cleared when another week opens", () => {
-      const session = openSessionWeek(sessionWithInvalidDate(), week)
+      const session = openSessionDeck(sessionWithInvalidDate(), week)
 
       expect(session.metricInput).toEqual({})
     })
@@ -1144,18 +1138,19 @@ describe("Trend & Target", () => {
 
   describe("a reporting week before the final observation", () => {
     const earlyWeek = {
-      start: "2026-07-13",
-      end: "2026-07-17",
+      period: { start: "2026-07-13", end: "2026-07-17" },
       pages: [complete],
     }
 
     it("reports readiness in the editor", () => {
-      const session = createEditingSession(earlyWeek)
+      const session = createEditingSession(earlyWeek, earlyWeek.period!.start)
 
       expect(sessionReadiness(session, "p01")).toContainEqual(
         expect.objectContaining({
           path: "observations",
-          message: expect.stringContaining("after reporting week"),
+          message: expect.stringContaining(
+            "after the deck period ending 2026-07-17"
+          ),
         })
       )
     })
@@ -1174,10 +1169,14 @@ describe("Trend & Target", () => {
     it("is skipped by batch without preparing capture", async () => {
       const adapter = fakeAdapter()
 
-      const batch = await exportVisiblePages(earlyWeek.start, earlyWeek, {
-        adapter,
-        download: () => {},
-      })
+      const batch = await exportVisiblePages(
+        earlyWeek.period!.start,
+        earlyWeek,
+        {
+          adapter,
+          download: () => {},
+        }
+      )
 
       expect(batch.skipped).toEqual([
         expect.objectContaining({ pageId: "p01" }),

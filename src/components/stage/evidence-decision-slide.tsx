@@ -4,10 +4,7 @@ import {
   formatMetricValue,
 } from "@/lib/metric-format"
 import type { StagePageContext } from "@/lib/stage-page-context"
-import type {
-  ComparisonMetric,
-  EvidenceDecisionPage,
-} from "@/lib/week-document"
+import type { ComparisonMetric, EvidenceDecisionPage } from "@/lib/deck"
 
 type EvidenceDecisionSlideProps = {
   page: EvidenceDecisionPage

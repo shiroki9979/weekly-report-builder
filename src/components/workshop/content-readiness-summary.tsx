@@ -4,10 +4,10 @@ import {
   formatExportIssue,
   type ExportIssue,
 } from "@/lib/export-readiness"
-import { isStructuredWeekPage, type WeekPage } from "@/lib/week-document"
+import { isStructuredPage, type Page } from "@/lib/deck"
 
 type ContentReadinessSummaryProps = {
-  page: WeekPage
+  page: Page
   issues?: ExportIssue[]
 }
 
@@ -15,7 +15,7 @@ export function ContentReadinessSummary({
   page,
   issues: suppliedIssues,
 }: ContentReadinessSummaryProps) {
-  if (!isStructuredWeekPage(page)) {
+  if (!isStructuredPage(page)) {
     return null
   }
 

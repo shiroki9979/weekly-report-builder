@@ -57,17 +57,19 @@ describe("html-page", () => {
   })
 
   describe("resolveHtmlUrl", () => {
-    it("resolves valid monday and html file name to /weeks/{monday}/{htmlFile}", () => {
+    it("resolves a deck id and html file name to /decks/{deckId}/{htmlFile}", () => {
       expect(resolveHtmlUrl("2026-08-24", "p03.html")).toBe(
-        "/weeks/2026-08-24/p03.html"
+        "/decks/2026-08-24/p03.html"
+      )
+      expect(resolveHtmlUrl("q4-roadmap", "p03.html")).toBe(
+        "/decks/q4-roadmap/p03.html"
       )
     })
 
-    it("rejects invalid monday format", () => {
-      expect(() => resolveHtmlUrl("invalid-date", "p03.html")).toThrow(
-        /monday/i
-      )
-      expect(() => resolveHtmlUrl("2026/08/24", "p03.html")).toThrow(/monday/i)
+    it("rejects deck ids that are not path-safe", () => {
+      for (const id of ["2026/08/24", "../x", "Q4", "a.b"]) {
+        expect(() => resolveHtmlUrl(id, "p03.html")).toThrow(/deck id/i)
+      }
     })
 
     it("rejects invalid htmlFile", () => {
@@ -188,7 +190,7 @@ describe("html-page", () => {
 
       const result = await preloadHtmlFragment("2026-08-24", "p03.html")
       expect(result).toBe("<p>Fresh</p>")
-      expect(fetchSpy).toHaveBeenCalledWith("/weeks/2026-08-24/p03.html", {
+      expect(fetchSpy).toHaveBeenCalledWith("/decks/2026-08-24/p03.html", {
         cache: "no-cache",
       })
     })

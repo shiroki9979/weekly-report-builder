@@ -9,15 +9,15 @@ import {
 } from "@/lib/evidence-decision-editor"
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/week-clone"
-import { parseWeekDocument } from "@/lib/week-document"
-import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
+import { createDeckFromTemplate } from "@/lib/deck-template"
+import { parseDeck } from "@/lib/deck"
+import type { EvidenceDecisionPage, Deck } from "@/lib/deck"
 
-function weekWith(page: EvidenceDecisionPage): WeekDocument {
+function weekWith(page: EvidenceDecisionPage): Deck {
   return { start: "2026-08-24", end: "2026-08-28", pages: [page] }
 }
 
-function decision(week: WeekDocument): EvidenceDecisionPage {
+function decision(week: Deck): EvidenceDecisionPage {
   const page = week.pages[0]
   if (page.layout !== "evidence-decision") {
     throw new Error("expected evidence-decision")
@@ -27,9 +27,8 @@ function decision(week: WeekDocument): EvidenceDecisionPage {
 
 describe("evidence-decision schema", () => {
   it("parses a draft with null metric values and strips extra fields", () => {
-    const doc = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const doc = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -86,9 +85,8 @@ describe("evidence-decision schema", () => {
     }
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -103,9 +101,8 @@ describe("evidence-decision schema", () => {
     ).toThrow(/metrics/i)
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -120,9 +117,8 @@ describe("evidence-decision schema", () => {
     ).toThrow(/metrics/i)
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -137,9 +133,8 @@ describe("evidence-decision schema", () => {
     ).toThrow(/interpretations/i)
 
     expect(() =>
-      parseWeekDocument({
-        start: "2026-08-24",
-        end: "2026-08-28",
+      parseDeck({
+        period: { start: "2026-08-24", end: "2026-08-28" },
         pages: [
           {
             id: "p01",
@@ -190,9 +185,8 @@ describe("evidence-decision factory and editor", () => {
 
 describe("evidence-decision clone and readiness", () => {
   it("keeps metric format and clears weekly values", () => {
-    const previous = parseWeekDocument({
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const previous = parseDeck({
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p01",
@@ -215,7 +209,7 @@ describe("evidence-decision clone and readiness", () => {
         },
       ],
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
     if (page.layout !== "evidence-decision") {
       throw new Error("expected evidence-decision")

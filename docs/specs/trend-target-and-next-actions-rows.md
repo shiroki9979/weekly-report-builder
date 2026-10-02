@@ -3,7 +3,7 @@
 Status: Approved for implementation. Published as [specification #42](https://github.com/shiroki9979/weekly-report-builder/issues/42) with five implementation tickets; all carry `ready-for-agent`. Testing seams and ticket dependencies were confirmed on 2026-09-28. Implementation in [PR #48](https://github.com/shiroki9979/weekly-report-builder/pull/48).
 
 Created: 2026-09-27
-Last updated: 2026-09-28
+Last updated: 2026-10-03
 
 ## Problem Statement
 
@@ -161,3 +161,13 @@ GitHub Issues is the implementation tracker. Native sub-issue and blocking relat
 ### Prototype record
 
 The selected A/D verdict and the archived four-view source are recorded in [Trend & Target layout prototype](../explanation/trend-target-layout-prototype.md). Author and export the implemented layouts through the normal Workshop.
+
+### Amendment: cadence (2026-09-29)
+
+[#54](https://github.com/shiroki9979/weekly-report-builder/issues/54) generalizes the weekly-only rules above (see [ADR-0001](../adr/0001-decouple-weekly-report-from-slide-core.md)):
+
+- A Trend page has `cadence: "week" | "month"` and a nullable `start` instead of `startMonday`. A weekly start is a real Monday; a monthly start is the first day of a month. Positions advance by one week or one calendar month in UTC. Legacy `startMonday` files load as weekly series.
+- Editor, slide, and readiness copy follow the cadence (for example, Starting month, Add later month, Latest month, Monthly target). Weekly copy is unchanged.
+- Monthly x-axis labels use month abbreviations (`Jan`), and the observed range below the chart carries the years. This deviates from #54, which asked for year/month axis labels: `YYYY-MM` labels were clipped at the chart's right edge.
+- The cadence can change only while every position is Unfilled; the start is aligned to the new cadence. Once observations are entered, the select is disabled and the editor explains that they must be cleared first. This deviates from #54, which asked for the same confirmation as re-dating the start: re-dating only shifts the dates of entered values, whereas a cadence switch would change what each entered value measures.
+- Readiness compares the final position's start with the Deck's `period.end` instead of its reporting Monday. For weekly series this is equivalent. A Deck without a period skips this check.

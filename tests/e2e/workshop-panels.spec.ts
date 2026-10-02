@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test"
 
-import { resetE2eWeeks } from "./weeks-reset"
+import { resetE2eDecks } from "./decks-reset"
 
-test.beforeEach(() => resetE2eWeeks())
+test.beforeEach(() => resetE2eDecks())
 
 test("collapses and expands speaker notes from the title row", async ({
   page,

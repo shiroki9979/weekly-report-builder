@@ -4,7 +4,7 @@ import { browserCaptureAdapter } from "@/lib/browser-capture-adapter"
 import { isHtmlLoadFailure } from "@/lib/export-page-gate"
 import { STAGE_CAPTURE_ROOT_ATTR } from "@/lib/overflow-measurement"
 import { captureStageToPng } from "@/lib/stage-capture"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 
 vi.mock("@/lib/stage-capture", () => ({
   captureStageToPng: vi.fn(
@@ -28,9 +28,8 @@ const page = {
     series: [{ name: "Platform", values: [1] }],
   },
 }
-const week: WeekDocument = {
-  start: "2026-08-24",
-  end: "2026-08-28",
+const week: Deck = {
+  period: { start: "2026-08-24", end: "2026-08-28" },
   pages: [page],
 }
 

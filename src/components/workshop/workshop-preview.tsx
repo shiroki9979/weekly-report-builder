@@ -30,11 +30,11 @@ import {
   type OverflowMeasurement,
 } from "@/lib/overflow-measurement"
 import { createStagePageContext } from "@/lib/stage-page-context"
-import type { WeekDocument, WeekPage } from "@/lib/week-document"
+import type { Deck, Page } from "@/lib/deck"
 
 type WorkshopPreviewProps = {
   documentId: string
-  week: WeekDocument | null
+  deck: Deck | null
   selectedPageIndex: number
   onSelectPage: (index: number) => void
   loadStatus: SessionLoadStatus
@@ -43,26 +43,26 @@ type WorkshopPreviewProps = {
 
 export function WorkshopPreview({
   documentId,
-  week,
+  deck,
   selectedPageIndex,
   onSelectPage,
   loadStatus,
   operationSnapshot,
 }: WorkshopPreviewProps) {
   const loading = loadStatus.kind === "loading"
-  const selectedPage = week?.pages[selectedPageIndex] ?? null
+  const selectedPage = deck?.pages[selectedPageIndex] ?? null
   const stageRef = useRef<HTMLDivElement>(null)
   const previewNotice = usePreviewMeasurementNotice(
     stageRef,
     selectedPage,
-    week
+    deck
   )
   const stage = (
     <PreviewStage
       stageRef={stageRef}
       loadStatus={loadStatus}
       documentId={documentId}
-      week={week}
+      deck={deck}
       selectedPage={selectedPage}
     />
   )
@@ -71,21 +71,21 @@ export function WorkshopPreview({
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden p-4">
       <PreviewToolbar
         operationSnapshot={operationSnapshot}
-        disabled={loading || !week}
+        disabled={loading || !deck}
       />
       {previewNotice ? (
         <p className="mb-3 text-xs text-muted-foreground" role="status">
           {previewNotice}
         </p>
       ) : null}
-      {week ? (
+      {deck ? (
         <StageWithSpeakerNotes stage={stage} notes={selectedPage?.notes} />
       ) : (
         <div className="min-h-0 flex-1">{stage}</div>
       )}
-      {week ? (
+      {deck ? (
         <PageNavigator
-          pages={week.pages}
+          pages={deck.pages}
           selectedPageIndex={selectedPageIndex}
           onSelect={onSelectPage}
           disabled={loading}
@@ -98,8 +98,8 @@ export function WorkshopPreview({
 // 預覽框依剩餘空間縮放，可能比 capture stage 擠；只提示，實際匯出仍以 capture stage 量測為準
 function usePreviewMeasurementNotice(
   stageRef: RefObject<HTMLDivElement | null>,
-  selectedPage: WeekPage | null,
-  week: WeekDocument | null
+  selectedPage: Page | null,
+  deck: Deck | null
 ): string | null {
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -127,7 +127,7 @@ function usePreviewMeasurementNotice(
     return () => {
       cancelled = true
     }
-  }, [stageRef, selectedPage, week])
+  }, [stageRef, selectedPage, deck])
 
   return notice
 }
@@ -183,14 +183,14 @@ function PreviewStage({
   stageRef,
   loadStatus,
   documentId,
-  week,
+  deck,
   selectedPage,
 }: {
   stageRef: RefObject<HTMLDivElement | null>
   loadStatus: SessionLoadStatus
   documentId: string
-  week: WeekDocument | null
-  selectedPage: WeekPage | null
+  deck: Deck | null
+  selectedPage: Page | null
 }) {
   const loading = loadStatus.kind === "loading"
   return (
@@ -199,7 +199,7 @@ function PreviewStage({
         <div className="stage-preview-fit">
           <StageFrame ref={stageRef}>
             {loading ? (
-              <div className="stage-placeholder">Loading week…</div>
+              <div className="stage-placeholder">Loading deck…</div>
             ) : null}
             {!loading && loadStatus.kind === "empty" ? (
               <div className="stage-placeholder" role="status">
@@ -211,12 +211,12 @@ function PreviewStage({
                 {loadStatus.message}
               </div>
             ) : null}
-            {!loading && selectedPage && week ? (
+            {!loading && selectedPage && deck ? (
               <StageSlide
                 page={selectedPage}
                 context={createStagePageContext(
                   documentId,
-                  week,
+                  deck,
                   selectedPage.id
                 )}
               />

@@ -1,4 +1,4 @@
-import type { FlowPanel } from "@/lib/week-document"
+import type { FlowPanel } from "@/lib/deck"
 
 type FlowPanelViewProps = {
   panel: FlowPanel

@@ -8,13 +8,13 @@ import {
   setFlowPanelTitle,
   setFlowStepCaption,
   setFlowStepLabel,
-} from "@/lib/week-editor"
-import { parseWeekDocument } from "@/lib/week-document"
+} from "@/lib/deck-editor"
+import { parseDeck } from "@/lib/deck"
 
 const fixturePath = resolve(import.meta.dirname, "../fixtures/flow-week.json")
 
 function loadFlowWeek() {
-  return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
+  return parseDeck(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
 function flowPanel(week: ReturnType<typeof loadFlowWeek>) {

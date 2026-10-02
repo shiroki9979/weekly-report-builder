@@ -14,7 +14,7 @@ import {
   UNIT_SPACINGS,
   type UnitPosition,
   type UnitSpacing,
-} from "@/lib/week-document"
+} from "@/lib/deck"
 
 type MetricFormatFieldsProps = {
   idPrefix: string

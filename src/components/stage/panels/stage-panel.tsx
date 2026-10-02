@@ -2,7 +2,7 @@ import { ChartPanelView } from "@/components/stage/panels/chart-panel"
 import { ChecklistPanelView } from "@/components/stage/panels/checklist-panel"
 import { FlowPanelView } from "@/components/stage/panels/flow-panel"
 import { TablePanelView } from "@/components/stage/panels/table-panel"
-import type { Panel } from "@/lib/week-document"
+import type { Panel } from "@/lib/deck"
 
 type StagePanelProps = {
   panel: Panel

@@ -7,10 +7,10 @@ import {
 
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 
 type WorkshopHeaderProps = {
-  week: WeekDocument | null
+  deck: Deck | null
   editorCollapsed: boolean
   onToggleEditor: () => void
 }
@@ -27,7 +27,7 @@ function useThemeToggle() {
 }
 
 export function WorkshopHeader({
-  week,
+  deck,
   editorCollapsed,
   onToggleEditor,
 }: WorkshopHeaderProps) {
@@ -48,9 +48,9 @@ export function WorkshopHeader({
       </Button>
       <h1 className="text-sm font-medium">Weekly Report Builder</h1>
       <span className="text-xs text-muted-foreground">Workshop</span>
-      {week ? (
+      {deck?.period ? (
         <span className="text-xs text-muted-foreground">
-          {week.start} – {week.end}
+          {deck.period.start} – {deck.period.end}
         </span>
       ) : null}
       <Button

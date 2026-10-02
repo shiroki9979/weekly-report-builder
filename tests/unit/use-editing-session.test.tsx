@@ -3,24 +3,23 @@ import { describe, expect, it, vi } from "vitest"
 
 import { useEditingSession } from "@/hooks/use-editing-session"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
-import type { WeekDocument } from "@/lib/week-document"
+import type { Deck } from "@/lib/deck"
 import { deferred, until } from "./support/async"
-import { InMemoryWeekStore } from "./support/in-memory-week-store"
+import { InMemoryWorkshopStore } from "./support/in-memory-deck-store"
 
 const older = "2026-01-05"
 const latest = "2026-01-12"
 const next = "2026-01-19"
 
-function week(monday: string, title = monday): WeekDocument {
+function week(monday: string, title = monday): Deck {
   return {
-    start: monday,
-    end: monday,
+    period: { start: monday, end: monday },
     pages: [{ ...createBlankEvidenceDecisionPage("p01"), title }],
   }
 }
 
 function store() {
-  return new InMemoryWeekStore(
+  return new InMemoryWorkshopStore(
     new Map([
       [older, week(older)],
       [latest, week(latest)],
@@ -35,14 +34,14 @@ async function ready(result: HookResult) {
 }
 
 async function openedWeek(result: HookResult, monday: string) {
-  await until(() => result.current.week?.start === monday)
+  await until(() => result.current.deck?.period?.start === monday)
 }
 
 // 開啟最新週後啟動一次 Save，Save 在 failSave 前保持進行中，之後以 "Disk full" 失敗
 async function renderWithPendingFailingSave() {
   const pending = deferred<void>()
   const backend = store()
-  backend.saveWeek = async () => {
+  backend.saveDeck = async () => {
     await pending.promise
     throw new Error("Disk full")
   }
@@ -50,7 +49,7 @@ async function renderWithPendingFailingSave() {
   await ready(result)
   let save!: Promise<void>
   act(() => {
-    save = result.current.save.saveWeek()
+    save = result.current.save.saveDeck()
   })
   const failSave = () =>
     act(async () => {
@@ -62,38 +61,68 @@ async function renderWithPendingFailingSave() {
 
 describe("useEditingSession", () => {
   it("reports saving without an open week", async () => {
-    const backend = new InMemoryWeekStore()
+    const backend = new InMemoryWorkshopStore()
     const { result } = renderHook(() => useEditingSession(backend))
     await until(() => result.current.loadStatus.kind === "empty")
 
-    await act(() => result.current.save.saveWeek())
+    await act(() => result.current.save.saveDeck())
 
-    expect(result.current.save.error).toBe("No week is open")
+    expect(result.current.save.error).toBe("No deck is open")
   })
 
   it("opens the latest listed week and suggests the following Monday", async () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
-    expect(result.current.selectedMonday).toBe(latest)
-    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.selectedDeckId).toBe(latest)
+    expect(result.current.deck?.period?.start).toBe(latest)
+    expect(result.current.suggestedMonday).toBe(next)
+  })
+
+  it("keeps a non-date deck id after opening so Save writes back to it", async () => {
+    const backend = new InMemoryWorkshopStore(
+      new Map([["q4-roadmap", week(latest, "Roadmap")]])
+    )
+    const saved = vi.spyOn(backend, "saveDeck")
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+
+    expect(result.current.selectedDeckId).toBe("q4-roadmap")
+    expect(result.current.suggestedMonday).toBe("")
+    await act(() => result.current.save.saveDeck())
+    expect(saved).toHaveBeenCalledWith("q4-roadmap", expect.anything())
+  })
+
+  it("opens the latest week rather than a later non-week deck", async () => {
+    const backend = new InMemoryWorkshopStore(
+      new Map([
+        [older, week(older)],
+        [latest, week(latest)],
+        ["zz-roadmap", week(older, "Roadmap")],
+      ])
+    )
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+
+    expect(result.current.selectedDeckId).toBe(latest)
+    expect(result.current.decks).toContain("zz-roadmap")
     expect(result.current.suggestedMonday).toBe(next)
   })
 
   it("shows an empty store without an open week", async () => {
-    const backend = new InMemoryWeekStore()
+    const backend = new InMemoryWorkshopStore()
 
     const { result } = renderHook(() => useEditingSession(backend))
 
     await waitFor(() =>
       expect(result.current.loadStatus).toEqual({ kind: "empty" })
     )
-    expect(result.current.week).toBeNull()
+    expect(result.current.deck).toBeNull()
   })
 
   it("shows a list failure as an error without an open week", async () => {
-    const backend = new InMemoryWeekStore()
-    backend.listWeeks = async () => {
+    const backend = new InMemoryWorkshopStore()
+    backend.listDecks = async () => {
       throw new Error("List unavailable")
     }
 
@@ -105,7 +134,7 @@ describe("useEditingSession", () => {
         message: "List unavailable",
       })
     )
-    expect(result.current.week).toBeNull()
+    expect(result.current.deck).toBeNull()
   })
 
   it("keeps exact Metric Input and selection after saving", async () => {
@@ -119,7 +148,7 @@ describe("useEditingSession", () => {
       )
     )
 
-    await act(() => result.current.save.saveWeek())
+    await act(() => result.current.save.saveDeck())
 
     expect(result.current.save.message).toBe("Saved")
     expect(
@@ -136,14 +165,14 @@ describe("useEditingSession", () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
-    await act(() => result.current.save.saveWeek())
-    backend.loadWeek = () => new Promise<WeekDocument>(() => {})
+    await act(() => result.current.save.saveDeck())
+    backend.loadDeck = () => new Promise<Deck>(() => {})
 
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
 
     expect(result.current.loadStatus).toEqual({ kind: "loading" })
     expect(result.current.save.message).toBeNull()
-    expect(result.current.week).toBeNull()
+    expect(result.current.deck).toBeNull()
   })
 
   it("clears the Saved message and Metric Input when another week opens", async () => {
@@ -156,12 +185,12 @@ describe("useEditingSession", () => {
         "1.50"
       )
     )
-    await act(() => result.current.save.saveWeek())
+    await act(() => result.current.save.saveDeck())
 
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
     await ready(result)
 
-    expect(result.current.week?.start).toBe(older)
+    expect(result.current.deck?.period?.start).toBe(older)
     expect(result.current.save.message).toBeNull()
     expect(result.current.operationSnapshot()?.metricInput).toEqual({})
   })
@@ -176,9 +205,9 @@ describe("useEditingSession", () => {
         "bad"
       )
     )
-    await act(() => result.current.save.saveWeek())
+    await act(() => result.current.save.saveDeck())
 
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
 
     expect(result.current.save.error).toBeNull()
     await ready(result)
@@ -187,8 +216,8 @@ describe("useEditingSession", () => {
   it("ignores a save finishing after a switch through A → B → A", async () => {
     const pending = deferred<void>()
     const backend = store()
-    const originalSave = backend.saveWeek.bind(backend)
-    backend.saveWeek = async (monday, document) => {
+    const originalSave = backend.saveDeck.bind(backend)
+    backend.saveDeck = async (monday, document) => {
       await pending.promise
       await originalSave(monday, document)
     }
@@ -196,11 +225,11 @@ describe("useEditingSession", () => {
     await ready(result)
     let save!: Promise<void>
     act(() => {
-      save = result.current.save.saveWeek()
+      save = result.current.save.saveDeck()
     })
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
     await openedWeek(result, older)
-    act(() => result.current.setSelectedMonday(latest))
+    act(() => result.current.selectDeck(latest))
     await openedWeek(result, latest)
 
     await act(async () => {
@@ -222,11 +251,11 @@ describe("useEditingSession", () => {
         "1.50"
       )
     )
-    await act(() => result.current.save.saveWeek())
+    await act(() => result.current.save.saveDeck())
     await act(() => result.current.create.createWeek(next))
-    expect(result.current.selectedMonday).toBe(next)
-    expect(result.current.week?.start).toBe(next)
-    expect(result.current.weeks).toContain(next)
+    expect(result.current.selectedDeckId).toBe(next)
+    expect(result.current.deck?.period?.start).toBe(next)
+    expect(result.current.decks).toContain(next)
     expect(result.current.save.message).toBeNull()
     expect(result.current.operationSnapshot()?.metricInput).toEqual({})
     expect(result.current.create.creating).toBe(false)
@@ -239,8 +268,8 @@ describe("useEditingSession", () => {
 
     await act(() => result.current.create.createWeek(latest))
 
-    expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
-    expect(result.current.week?.start).toBe(latest)
+    expect(result.current.create.error).toBe(`Deck already exists: ${latest}`)
+    expect(result.current.deck?.period?.start).toBe(latest)
     expect(result.current.create.creating).toBe(false)
   })
 
@@ -250,7 +279,7 @@ describe("useEditingSession", () => {
     await ready(result)
     await act(() => result.current.create.createWeek(latest))
 
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
 
     expect(result.current.create.error).toBeNull()
     await openedWeek(result, older)
@@ -262,8 +291,8 @@ describe("useEditingSession", () => {
     await act(() => result.current.create.createWeek(latest))
     await failSave()
 
-    expect(result.current.week?.start).toBe(latest)
-    expect(result.current.create.error).toBe(`Week already exists: ${latest}`)
+    expect(result.current.deck?.period?.start).toBe(latest)
+    expect(result.current.create.error).toBe(`Deck already exists: ${latest}`)
     expect(result.current.save.error).toBe("Disk full")
     expect(result.current.save.saving).toBe(false)
   })
@@ -274,7 +303,7 @@ describe("useEditingSession", () => {
     await act(() => result.current.create.createWeek(next))
     await failSave()
 
-    expect(result.current.week?.start).toBe(next)
+    expect(result.current.deck?.period?.start).toBe(next)
     expect(result.current.save.error).toBeNull()
     expect(result.current.save.saving).toBe(false)
   })
@@ -287,36 +316,36 @@ describe("useEditingSession", () => {
     await failSave()
 
     expect(warn).toHaveBeenCalledWith(
-      `Discarded stale failure: save week ${latest}`,
+      `Discarded stale failure: save deck ${latest}`,
       new Error("Disk full")
     )
     warn.mockRestore()
   })
 
   it("ignores a late create after switching weeks without listing weeks", async () => {
-    const pending = deferred<WeekDocument>()
+    const pending = deferred<Deck>()
     const backend = store()
     backend.createWeekFromPrevious = () => pending.promise
     const { result } = renderHook(() => useEditingSession(backend))
     await ready(result)
-    const listWeeks = backend.listWeeks.bind(backend)
+    const listDecks = backend.listDecks.bind(backend)
     let listCalls = 0
-    backend.listWeeks = () => {
+    backend.listDecks = () => {
       listCalls++
-      return listWeeks()
+      return listDecks()
     }
     let create!: Promise<void>
     act(() => {
       create = result.current.create.createWeek(next)
     })
-    act(() => result.current.setSelectedMonday(older))
+    act(() => result.current.selectDeck(older))
     await openedWeek(result, older)
 
     await act(async () => {
       pending.resolve(week(next))
       await create
     })
-    expect(result.current.selectedMonday).toBe(older)
+    expect(result.current.selectedDeckId).toBe(older)
     expect(result.current.create.error).toBeNull()
     expect(result.current.create.creating).toBe(false)
     expect(listCalls).toBe(0)

@@ -10,13 +10,13 @@ import {
   setChartSeriesColor,
   setChartSeriesName,
   setChartSeriesValue,
-} from "@/lib/week-editor"
-import { parseWeekDocument } from "@/lib/week-document"
+} from "@/lib/deck-editor"
+import { parseDeck } from "@/lib/deck"
 
 const fixturePath = resolve(import.meta.dirname, "../fixtures/chart-week.json")
 
 function loadChartWeek() {
-  return parseWeekDocument(JSON.parse(readFileSync(fixturePath, "utf-8")))
+  return parseDeck(JSON.parse(readFileSync(fixturePath, "utf-8")))
 }
 
 function chartPanel(week: ReturnType<typeof loadChartWeek>) {

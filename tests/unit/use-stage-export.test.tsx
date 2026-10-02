@@ -12,7 +12,7 @@ import {
 } from "@/lib/editing-session"
 import * as stageCapture from "@/lib/stage-capture"
 import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
-import type { EvidenceDecisionPage, WeekDocument } from "@/lib/week-document"
+import type { EvidenceDecisionPage, Deck } from "@/lib/deck"
 
 vi.mock("@/lib/stage-capture", () => ({
   captureStageToPng: vi.fn(
@@ -33,7 +33,7 @@ function ExportTestComponent({
   exportRef,
   session,
 }: {
-  week: WeekDocument
+  week: Deck
   exportRef?: {
     current: ReturnType<typeof useStageExport> | null
   }
@@ -41,7 +41,9 @@ function ExportTestComponent({
 }) {
   const exportState = useStageExport({
     operationSnapshot: () =>
-      sessionOperationSnapshot(session ?? createEditingSession(week)),
+      sessionOperationSnapshot(
+        session ?? createEditingSession(week, "2026-08-24")
+      ),
   })
 
   useEffect(() => {
@@ -79,9 +81,8 @@ describe("useStageExport", () => {
         text: async () => "<h1>Ready</h1>",
       } as Response)
 
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -135,9 +136,8 @@ describe("useStageExport", () => {
       text: async () => '<div class="banner">Rendered Content</div>',
     } as Response)
 
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -179,9 +179,8 @@ describe("useStageExport", () => {
     if (htmlFile === "offline.html") {
       vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error(reason))
     }
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [{ id: "p03", layout: "html", title: "Broken", htmlFile }],
     }
     const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
@@ -207,9 +206,8 @@ describe("useStageExport", () => {
       () => new Promise<Response>(() => undefined)
     )
 
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -250,9 +248,8 @@ describe("useStageExport", () => {
       ok: true,
       text: async () => "<p>Ready</p>",
     } as Response)
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -303,9 +300,8 @@ describe("useStageExport", () => {
           : originalQuerySelector.call(this, selector)
       }
     )
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p03",
@@ -334,9 +330,8 @@ describe("useStageExport", () => {
   })
 
   it("warns when batch export skips unsupported layouts", async () => {
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
         {
           id: "p04",
@@ -360,9 +355,8 @@ describe("useStageExport", () => {
   })
 
   it("blocks copy of a draft two-column page without capturing", async () => {
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [createBlankTwoColumnPage("p01", "table")],
     }
     const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
@@ -397,16 +391,15 @@ describe("useStageExport", () => {
       ],
       interpretations: ["The candidate finishes the same week."],
     }
-    const week: WeekDocument = {
-      start: "2026-08-24",
-      end: "2026-08-28",
+    const week: Deck = {
+      period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [page],
     }
     const exportRef: { current: ReturnType<typeof useStageExport> | null } = {
       current: null,
     }
     const session = writeMetricInput(
-      createEditingSession(week),
+      createEditingSession(week, "2026-08-24"),
       { pageId: "p01", metricIndex: 0, field: "baselineValue" },
       "abc"
     )

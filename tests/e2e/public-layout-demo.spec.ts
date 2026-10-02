@@ -2,15 +2,15 @@ import { expect, test, type Page } from "@playwright/test"
 import fs from "node:fs"
 import path from "node:path"
 import { readFile } from "node:fs/promises"
-import { seedWeeksFromDemo } from "../../scripts/seed-weeks"
-import { e2eWeeksDir } from "./weeks-reset"
+import { seedDecksFromDemo } from "../../scripts/seed-decks"
+import { e2eDecksDir } from "./decks-reset"
 
 const demoDir = path.resolve(import.meta.dirname, "../../demo")
 
 test.beforeEach(() => {
-  const weeksDir = e2eWeeksDir()
-  fs.rmSync(weeksDir, { recursive: true, force: true })
-  expect(seedWeeksFromDemo(demoDir, weeksDir)).toEqual({ status: "seeded" })
+  const decksDir = e2eDecksDir()
+  fs.rmSync(decksDir, { recursive: true, force: true })
+  expect(seedDecksFromDemo(demoDir, decksDir)).toEqual({ status: "seeded" })
 })
 
 async function selectPage(page: Page, number: number) {
@@ -98,7 +98,7 @@ test("fresh public demo opens both directions and both Next Actions compositions
   test.slow()
   await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
   await page.goto("/")
-  await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
+  await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-01-05"
   )
   for (const [number, required] of [
@@ -164,7 +164,7 @@ test("dated missing history survives next-week trim, append, save, reload, and P
     page.getByRole("button", { name: "Add later week" })
   ).toBeDisabled()
   await page.getByRole("button", { name: "Create week" }).click()
-  await expect(page.getByRole("combobox", { name: "Week" })).toContainText(
+  await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-01-12"
   )
   expect(duplicateKeyWarnings).toEqual([])

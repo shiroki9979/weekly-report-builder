@@ -5,9 +5,9 @@ import {
   isNextActionsPage,
   type Commitment,
   type NextActionsVariant,
-  type WeekDocument,
-} from "./week-document"
-import { typedPageUpdater } from "./update-week-page"
+  type Deck,
+} from "./deck"
+import { typedPageUpdater } from "./update-deck-page"
 
 const updateNextActions = typedPageUpdater(
   isNextActionsPage,
@@ -19,21 +19,21 @@ export function blankCommitment(): Commitment {
 }
 
 export function setNextActionsVariant(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   variant: NextActionsVariant
-): WeekDocument {
-  return updateNextActions(week, pageIndex, (page) => ({ ...page, variant }))
+): Deck {
+  return updateNextActions(deck, pageIndex, (page) => ({ ...page, variant }))
 }
 
 export function setCommitmentField(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   commitmentIndex: number,
   field: keyof Commitment,
   value: string
-): WeekDocument {
-  return updateNextActions(week, pageIndex, (page) => ({
+): Deck {
+  return updateNextActions(deck, pageIndex, (page) => ({
     ...page,
     commitments: page.commitments.map((commitment, index) =>
       index === commitmentIndex ? { ...commitment, [field]: value } : commitment
@@ -41,22 +41,19 @@ export function setCommitmentField(
   }))
 }
 
-export function addCommitment(
-  week: WeekDocument,
-  pageIndex: number
-): WeekDocument {
-  return updateNextActions(week, pageIndex, (page) => {
+export function addCommitment(deck: Deck, pageIndex: number): Deck {
+  return updateNextActions(deck, pageIndex, (page) => {
     assertCanAddEntry(page.commitments, CARDINALITY.commitments)
     return { ...page, commitments: [...page.commitments, blankCommitment()] }
   })
 }
 
 export function removeCommitment(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   commitmentIndex: number
-): WeekDocument {
-  return updateNextActions(week, pageIndex, (page) => {
+): Deck {
+  return updateNextActions(deck, pageIndex, (page) => {
     assertCanRemoveEntry(page.commitments, CARDINALITY.commitments)
     return {
       ...page,
@@ -68,12 +65,12 @@ export function removeCommitment(
 }
 
 export function moveCommitment(
-  week: WeekDocument,
+  deck: Deck,
   pageIndex: number,
   fromIndex: number,
   toIndex: number
-): WeekDocument {
-  return updateNextActions(week, pageIndex, (page) => {
+): Deck {
+  return updateNextActions(deck, pageIndex, (page) => {
     if (
       fromIndex < 0 ||
       toIndex < 0 ||

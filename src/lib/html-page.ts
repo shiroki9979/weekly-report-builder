@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify"
 
-import { isMondayId } from "./week-id"
+import { isDeckId } from "./deck-id"
 
 export function validateHtmlFileName(fileName: string): void {
   if (typeof fileName !== "string") {
@@ -28,14 +28,14 @@ export function validateHtmlFileName(fileName: string): void {
   }
 }
 
-export function resolveHtmlUrl(monday: string, htmlFile: string): string {
-  if (!isMondayId(monday)) {
-    throw new Error(`Invalid Monday date for HTML page: ${monday}`)
+export function resolveHtmlUrl(deckId: string, htmlFile: string): string {
+  if (!isDeckId(deckId)) {
+    throw new Error(`Invalid deck id for HTML page: ${deckId}`)
   }
 
   validateHtmlFileName(htmlFile)
 
-  return `/weeks/${monday}/${htmlFile}`
+  return `/decks/${deckId}/${htmlFile}`
 }
 
 export function sanitizeHtmlFragment(rawHtml: string): string {
@@ -91,11 +91,11 @@ export function sanitizeHtmlFragment(rawHtml: string): string {
 }
 
 export async function preloadHtmlFragment(
-  monday: string,
+  deckId: string,
   htmlFile: string,
   signal?: AbortSignal
 ): Promise<string> {
-  const url = resolveHtmlUrl(monday, htmlFile)
+  const url = resolveHtmlUrl(deckId, htmlFile)
   const requestOptions: RequestInit = signal
     ? { cache: "no-cache", signal }
     : { cache: "no-cache" }

@@ -1,6 +1,8 @@
 {
-  "start": "2026-01-05",
-  "end": "2026-01-09",
+  "period": {
+    "start": "2026-01-05",
+    "end": "2026-01-09"
+  },
   "pages": [
     {
       "id": "p01",
@@ -46,7 +48,7 @@
     },
     {
       "id": "p02",
-      "layout": "weekly-overview",
+      "layout": "overview",
       "title": "Fictional cut process held, and the pilot opened.",
       "lead": {
         "workstream": "Platform",
@@ -154,7 +156,8 @@
         "unitSpacing": "space",
         "precision": 1
       },
-      "startMonday": "2025-10-20",
+      "cadence": "week",
+      "start": "2025-10-20",
       "observations": [
         {
           "state": "measured",
@@ -221,7 +224,8 @@
         "unitSpacing": "space",
         "precision": 0
       },
-      "startMonday": "2025-11-17",
+      "cadence": "week",
+      "start": "2025-11-17",
       "observations": [
         {
           "state": "measured",
@@ -273,7 +277,8 @@
         "unitSpacing": "space",
         "precision": 1
       },
-      "startMonday": "2025-11-17",
+      "cadence": "week",
+      "start": "2025-11-17",
       "observations": [
         {
           "state": "measured",

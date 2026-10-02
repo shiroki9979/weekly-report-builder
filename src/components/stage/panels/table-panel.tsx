@@ -1,4 +1,4 @@
-import type { TablePanel } from "@/lib/week-document"
+import type { TablePanel } from "@/lib/deck"
 
 type TablePanelViewProps = {
   panel: TablePanel

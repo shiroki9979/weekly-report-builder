@@ -9,7 +9,7 @@ import {
   type TrendInputPath,
 } from "./metric-input"
 import type { MetricInputResult } from "./metric-format"
-import { trendDatingError } from "./trend-target"
+import { trendCadenceRule, trendDatingError } from "./trend-target"
 import {
   assertCanAddEntry,
   assertCanRemoveEntry,
@@ -19,18 +19,18 @@ import {
   type Cardinality,
   hasEnteredObservations,
   isTrendTargetPage,
-  type WeeklyObservation,
+  type TrendObservation,
   type TrendTargetPage,
-  type WeekDocument,
-} from "./week-document"
+  type Deck,
+} from "./deck"
 
 export type TrendInputLocation = PageInputLocation<TrendInputPath>
 
-export function startMondayInput(pageId: string): TrendInputLocation {
-  return { pageId, path: "startMonday" }
+export function trendStartInput(pageId: string): TrendInputLocation {
+  return { pageId, path: "start" }
 }
 
-// readiness 以此 path 標記整個週次位置（例如 Unfilled），與該週數值的 Metric Input path 區分
+// readiness 以此 path 標記整個觀測位置（例如 Unfilled），與該位置數值的 Metric Input path 區分
 export function observationEntryPath(index: number): string {
   return `observations[${index}]`
 }
@@ -38,7 +38,7 @@ export function observationEntryPath(index: number): string {
 export type TrendEndpointAction =
   "prepend" | "append" | "remove-first" | "remove-last"
 
-function endpointAddsWeek(action: TrendEndpointAction): boolean {
+function endpointAddsPosition(action: TrendEndpointAction): boolean {
   return action === "prepend" || action === "append"
 }
 
@@ -48,18 +48,21 @@ type EntryGuard = {
 }
 
 // 按鈕可用性與實際增減共用同一組數量規則，UI 允許的操作不會在執行時被拒
-const ADD_WEEK: EntryGuard = { allows: canAddEntry, assert: assertCanAddEntry }
-const REMOVE_WEEK: EntryGuard = {
+const ADD_POSITION: EntryGuard = {
+  allows: canAddEntry,
+  assert: assertCanAddEntry,
+}
+const REMOVE_POSITION: EntryGuard = {
   allows: canRemoveEntry,
   assert: assertCanRemoveEntry,
 }
 
 function endpointGuard(action: TrendEndpointAction): EntryGuard {
-  return endpointAddsWeek(action) ? ADD_WEEK : REMOVE_WEEK
+  return endpointAddsPosition(action) ? ADD_POSITION : REMOVE_POSITION
 }
 
 export function canChangeTrendEndpoint(
-  observations: readonly WeeklyObservation[],
+  observations: readonly TrendObservation[],
   action: TrendEndpointAction
 ): boolean {
   return endpointGuard(action).allows(
@@ -69,7 +72,7 @@ export function canChangeTrendEndpoint(
 }
 
 export function assertTrendEndpointAllowed(
-  observations: readonly WeeklyObservation[],
+  observations: readonly TrendObservation[],
   action: TrendEndpointAction
 ): void {
   endpointGuard(action).assert(observations, CARDINALITY.trendObservations)
@@ -77,13 +80,11 @@ export function assertTrendEndpointAllowed(
 
 function isTrendInputPath(path: string): path is TrendInputPath {
   return (
-    path === "target" ||
-    path === "startMonday" ||
-    observationIndex(path) !== null
+    path === "target" || path === "start" || observationIndex(path) !== null
   )
 }
 
-// null 代表該週已被移除，對應的 Metric Input 一併丟棄
+// null 代表該位置已被移除，對應的 Metric Input 一併丟棄
 const SHIFTED_INDEX: Record<
   TrendEndpointAction,
   (index: number, length: number) => number | null
@@ -138,30 +139,32 @@ export function requireTrendNumber(raw: string): number | null {
   return parsed.value
 }
 
-// 起始週一已提交且沒有待確認的改動時，端點增減與觀測值才有明確日期可掛
+// 起點已提交且沒有待確認的改動時，端點增減與觀測值才有明確日期可掛
 export function isStartSettled(
   page: TrendTargetPage,
   pendingStart: string | undefined
-): page is TrendTargetPage & { startMonday: string } {
+): page is TrendTargetPage & { start: string } {
   return (
-    page.startMonday !== null &&
-    (pendingStart === undefined || pendingStart === page.startMonday)
+    page.start !== null &&
+    (pendingStart === undefined || pendingStart === page.start)
   )
 }
 
-// 起始週一未設定時，週次沒有日期可掛；編輯中的輸入與 session 操作用同一句說明
-export const START_MONDAY_REQUIRED =
-  "Set starting Monday before entering observations"
+// 起點未設定時，觀測沒有日期可掛；編輯中的輸入與 session 操作用同一句說明
+export function trendStartRequired(page: TrendTargetPage): string {
+  const { startPhrase } = trendCadenceRule(page.cadence)
+  return `Set ${startPhrase} before entering observations`
+}
 
-// 已輸入的週次掛在已提交的起始週一上；待確認的日期與它不同時才算改日期提案，須經確認才套用
+// 已輸入的觀測掛在已提交的起點上；待確認的日期與它不同時才算改日期提案，須經確認才套用
 export function isRedateProposal(
   page: TrendTargetPage,
   pendingStart: string
 ): boolean {
   return (
     hasEnteredObservations(page.observations) &&
-    page.startMonday !== null &&
-    pendingStart !== page.startMonday
+    page.start !== null &&
+    pendingStart !== page.start
   )
 }
 
@@ -172,20 +175,21 @@ export function trendInputError(
 ): string | null {
   const raw = readInputText(inputs, { pageId: page.id, path })
   if (raw === undefined) return null
-  if (path === "startMonday") return startMondayInputError(page, raw)
-  if (path !== "target" && raw.trim() && !page.startMonday)
-    return START_MONDAY_REQUIRED
+  if (path === "start") return startInputError(page, raw)
+  if (path !== "target" && raw.trim() && !page.start)
+    return trendStartRequired(page)
   const parsed = parseTrendNumber(raw)
   return parsed.status === "invalid" ? parsed.message : null
 }
 
-function startMondayInputError(
-  page: TrendTargetPage,
-  raw: string
-): string | null {
+function startInputError(page: TrendTargetPage, raw: string): string | null {
   const entered = hasEnteredObservations(page.observations)
   if (raw === "" && !entered) return null
-  const datingError = trendDatingError(raw, page.observations.length)
+  const datingError = trendDatingError(
+    page.cadence,
+    raw,
+    page.observations.length
+  )
   if (datingError) return datingError.message
   if (isRedateProposal(page, raw))
     return "Re-dating entered observations requires confirmation"
@@ -202,11 +206,11 @@ export function hasInvalidTrendInput(
   )
 }
 
-export function weekHasInvalidTrendInputs(
-  week: WeekDocument,
+export function deckHasInvalidTrendInputs(
+  deck: Deck,
   inputs: MetricInputMap
 ): boolean {
-  return week.pages.some(
+  return deck.pages.some(
     (page) => isTrendTargetPage(page) && hasInvalidTrendInput(page, inputs)
   )
 }

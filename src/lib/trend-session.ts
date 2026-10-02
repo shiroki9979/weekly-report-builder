@@ -1,6 +1,6 @@
 import {
   findSessionPage,
-  requireWeek,
+  requireDeck,
   type EditingSession,
 } from "./editing-session"
 import type { ExportIssue } from "./export-readiness"
@@ -18,24 +18,26 @@ import {
   isStartSettled,
   remapTrendObservationInput,
   requireTrendNumber,
-  START_MONDAY_REQUIRED,
-  startMondayInput,
   trendInputError,
+  trendStartInput,
+  trendStartRequired,
   type TrendEndpointAction,
   type TrendInputLocation,
 } from "./trend-input"
 import {
-  observationMonday,
+  alignTrendStart,
+  observationDate,
   trendDatingError,
   trendRangeEnd,
 } from "./trend-target"
 import {
   hasEnteredObservations,
   isTrendTargetPage,
+  type TrendCadence,
   type UnmeasuredState,
-  type WeeklyObservation,
+  type TrendObservation,
   type TrendTargetPage,
-} from "./week-document"
+} from "./deck"
 
 export type ObservationLocation = { pageId: string; index: number }
 
@@ -47,6 +49,7 @@ export type TrendEditorControls = {
     state: UnmeasuredState
   ) => void
   changeEndpoint: (pageId: string, action: TrendEndpointAction) => void
+  setCadence: (pageId: string, cadence: TrendCadence) => void
   confirmRedate: (pageId: string) => void
   cancelRedate: (pageId: string) => void
   readiness: (pageId: string) => ExportIssue[]
@@ -70,8 +73,8 @@ export function writeTrendInput(
   raw: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, location.pageId)
-  if (observationIndex(location.path) !== null && !page.startMonday)
-    throw new Error(START_MONDAY_REQUIRED)
+  if (observationIndex(location.path) !== null && !page.start)
+    throw new Error(trendStartRequired(page))
   const metricInput = writeInputText(session.metricInput, location, raw)
   if (trendInputError(page, metricInput, location.path))
     return { ...session, metricInput }
@@ -87,7 +90,7 @@ export function setTrendObservationState(
   const { page, pageIndex } = requireTrend(session, location.pageId)
   if (!page.observations[location.index])
     throw new Error(`Unknown Trend observation: ${location.index}`)
-  if (!page.startMonday) throw new Error(START_MONDAY_REQUIRED)
+  if (!page.start) throw new Error(trendStartRequired(page))
   const edit = releaseClearedStart({
     page: {
       ...page,
@@ -107,33 +110,56 @@ export function changeTrendEndpoint(
   action: TrendEndpointAction
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
-  const startMonday = requireSettledStart(session.metricInput, page)
+  const start = requireSettledStart(session.metricInput, page)
   assertTrendEndpointAllowed(page.observations, action)
   const inputs = remapTrendObservationInput(session.metricInput, pageId, {
     action,
     length: page.observations.length,
   })
   return replaceTrend(session, pageIndex, {
-    page: ENDPOINT_MOVES[action](page, startMonday),
-    metricInput: clearInputText(inputs, startMondayInput(pageId)),
+    page: ENDPOINT_MOVES[action](page, start),
+    metricInput: clearInputText(inputs, trendStartInput(pageId)),
   })
 }
+
+// 已輸入的觀測掛在目前 cadence 的日期上；切換會改變每個值代表的期間，所以只在尚未輸入時允許
+export function setTrendCadence(
+  session: EditingSession,
+  pageId: string,
+  cadence: TrendCadence
+): EditingSession {
+  const { page, pageIndex } = requireTrend(session, pageId)
+  if (cadence === page.cadence) return session
+  if (hasEnteredObservations(page.observations))
+    throw new Error(TREND_CADENCE_LOCKED)
+  return replaceTrend(session, pageIndex, {
+    page: { ...page, cadence, start: alignTrendStart(cadence, page.start) },
+    metricInput: clearInputText(session.metricInput, trendStartInput(pageId)),
+  })
+}
+
+export const TREND_CADENCE_LOCKED =
+  "Clear entered observations before changing the cadence"
 
 export function confirmTrendRedate(
   session: EditingSession,
   pageId: string
 ): EditingSession {
   const { page, pageIndex } = requireTrend(session, pageId)
-  const proposed = readInputText(session.metricInput, startMondayInput(pageId))
-  if (!proposed) throw new Error(`No proposed Monday to confirm for ${pageId}`)
-  const datingError = trendDatingError(proposed, page.observations.length)
+  const proposed = readInputText(session.metricInput, trendStartInput(pageId))
+  if (!proposed) throw new Error(`No proposed start to confirm for ${pageId}`)
+  const datingError = trendDatingError(
+    page.cadence,
+    proposed,
+    page.observations.length
+  )
   if (datingError)
     throw new Error(
-      `Cannot confirm proposed Monday ${proposed}: ${datingError.message}`
+      `Cannot confirm proposed start ${proposed}: ${datingError.message}`
     )
   return replaceTrend(session, pageIndex, {
-    page: { ...page, startMonday: proposed },
-    metricInput: clearInputText(session.metricInput, startMondayInput(pageId)),
+    page: { ...page, start: proposed },
+    metricInput: clearInputText(session.metricInput, trendStartInput(pageId)),
   })
 }
 
@@ -144,7 +170,7 @@ export function cancelTrendRedate(
   requireTrend(session, pageId)
   return {
     ...session,
-    metricInput: clearInputText(session.metricInput, startMondayInput(pageId)),
+    metricInput: clearInputText(session.metricInput, trendStartInput(pageId)),
   }
 }
 
@@ -159,16 +185,16 @@ function replaceTrend(
   pageIndex: number,
   { page, metricInput }: TrendEdit
 ): EditingSession {
-  const week = requireWeek(session)
-  const pages = week.pages.with(pageIndex, page)
-  return { ...session, week: { ...week, pages }, metricInput }
+  const deck = requireDeck(session)
+  const pages = deck.pages.with(pageIndex, page)
+  return { ...session, deck: { ...deck, pages }, metricInput }
 }
 
 function committedTrendText(
   page: TrendTargetPage,
   path: TrendInputPath
 ): string {
-  if (path === "startMonday") return page.startMonday ?? ""
+  if (path === "start") return page.start ?? ""
   if (path === "target") return page.target?.toString() ?? ""
   const { observation } = observationAt(page, path)
   return observation.state === "measured" ? String(observation.value) : ""
@@ -187,8 +213,8 @@ function applyTrendInput(
   path: TrendInputPath,
   raw: string
 ): TrendEdit {
-  if (path === "startMonday")
-    return { ...edit, page: { ...edit.page, startMonday: raw || null } }
+  if (path === "start")
+    return { ...edit, page: { ...edit.page, start: raw || null } }
   if (path === "target")
     return {
       ...edit,
@@ -206,7 +232,7 @@ function applyObservationValue(
   if (observation.state === "missing")
     throw new Error(`Missing Trend observation is not editable: ${path}`)
   const value = requireTrendNumber(raw)
-  const next: WeeklyObservation =
+  const next: TrendObservation =
     value === null ? { state: "unfilled" } : { state: "measured", value }
   return releaseClearedStart({
     page: { ...page, observations: page.observations.with(index, next) },
@@ -214,15 +240,15 @@ function applyObservationValue(
   })
 }
 
-// 清空日期時若仍有已輸入週次，日期須留在 JSON；等最後一筆也清掉才真正解除日期
+// 清空日期時若仍有已輸入觀測，日期須留在 JSON；等最後一筆也清掉才真正解除日期
 function releaseClearedStart({ page, metricInput }: TrendEdit): TrendEdit {
   const cleared =
-    readInputText(metricInput, startMondayInput(page.id)) === "" &&
+    readInputText(metricInput, trendStartInput(page.id)) === "" &&
     !hasEnteredObservations(page.observations)
   if (!cleared) return { page, metricInput }
   return {
-    page: { ...page, startMonday: null },
-    metricInput: clearInputText(metricInput, startMondayInput(page.id)),
+    page: { ...page, start: null },
+    metricInput: clearInputText(metricInput, trendStartInput(page.id)),
   }
 }
 
@@ -230,32 +256,32 @@ function requireSettledStart(
   inputs: MetricInputMap,
   page: TrendTargetPage
 ): string {
-  const pending = readInputText(inputs, startMondayInput(page.id))
+  const pending = readInputText(inputs, trendStartInput(page.id))
   if (!isStartSettled(page, pending))
-    throw new Error("Set a valid starting Monday before changing the range")
-  return page.startMonday
+    throw new Error("Set a valid start before changing the range")
+  return page.start
 }
 
 const ENDPOINT_MOVES: Record<
   TrendEndpointAction,
-  (page: TrendTargetPage, startMonday: string) => TrendTargetPage
+  (page: TrendTargetPage, start: string) => TrendTargetPage
 > = {
-  prepend: (page, startMonday) => ({
+  prepend: (page, start) => ({
     ...page,
-    startMonday: observationMonday(startMonday, -1),
+    start: observationDate(page.cadence, start, -1),
     observations: [{ state: "unfilled" }, ...page.observations],
   }),
-  append: (page, startMonday) => {
-    // 新末週超出 ISO 日期範圍時直接拋錯，不新增週次
-    trendRangeEnd(startMonday, page.observations.length + 1)
+  append: (page, start) => {
+    // 新末期超出 ISO 日期範圍時直接拋錯，不新增觀測
+    trendRangeEnd(page.cadence, start, page.observations.length + 1)
     return {
       ...page,
       observations: [...page.observations, { state: "unfilled" }],
     }
   },
-  "remove-first": (page, startMonday) => ({
+  "remove-first": (page, start) => ({
     ...page,
-    startMonday: observationMonday(startMonday, 1),
+    start: observationDate(page.cadence, start, 1),
     observations: page.observations.slice(1),
   }),
   "remove-last": (page) => ({

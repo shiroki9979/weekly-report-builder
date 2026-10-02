@@ -5,7 +5,7 @@ import { render } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import type { TrendTargetPage } from "@/lib/week-document"
+import type { TrendTargetPage } from "@/lib/deck"
 
 // 投影片 SVG 以字面色碼繪製（html-to-image 不帶 var()），須與 stage token 保持一致
 function cssToken(stylesheet: string, token: string): string {
@@ -29,7 +29,8 @@ const page: TrendTargetPage = {
     unitSpacing: "space",
     precision: 1,
   },
-  startMonday: "2026-07-06",
+  cadence: "week",
+  start: "2026-07-06",
   observations: [
     { state: "measured", value: 9.2 },
     { state: "missing" },
@@ -64,7 +65,7 @@ describe("Trend & Target SVG ink", () => {
           page={page}
           context={{
             documentId: "2026-07-20",
-            weekLabel: "2026-07-20",
+            frameLabel: "2026-07-20",
             pageLabel: "",
             showPageNumber: false,
           }}

@@ -1,11 +1,11 @@
 import { parseMetricInput } from "./metric-format"
-import { isEvidenceDecisionPage, type WeekDocument } from "./week-document"
+import { isEvidenceDecisionPage, type Deck } from "./deck"
 
 export type MetricValueField = "baselineValue" | "candidateValue"
 
 export type MetricInputPath = `metrics[${number}].${MetricValueField}`
 export type ObservationInputPath = `observations[${number}].value`
-export type TrendInputPath = "startMonday" | "target" | ObservationInputPath
+export type TrendInputPath = "start" | "target" | ObservationInputPath
 
 export type InputPath = MetricInputPath | TrendInputPath
 
@@ -130,11 +130,11 @@ export function invalidMetricInputMessage(
   return parsed.status === "invalid" ? parsed.message : null
 }
 
-export function weekHasInvalidMetricInputs(
-  week: WeekDocument,
+export function deckHasInvalidMetricInputs(
+  deck: Deck,
   inputsByPage: MetricInputMap
 ): boolean {
-  return week.pages.some(
+  return deck.pages.some(
     (page) =>
       isEvidenceDecisionPage(page) &&
       page.metrics.some((_, index) =>
@@ -166,7 +166,7 @@ function inputSlots(
   return slots
 }
 
-// Move／Remove 只改 week JSON 索引；Metric Input 必須跟著搬，否則非法輸入會留在舊 path
+// Move／Remove 只改 Deck JSON 索引；Metric Input 必須跟著搬，否則非法輸入會留在舊 path
 function remapPageInputs(
   inputsByPage: MetricInputMap,
   pageId: string,

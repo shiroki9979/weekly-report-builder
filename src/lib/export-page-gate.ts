@@ -10,12 +10,12 @@ import {
   type ReadinessContext,
 } from "./export-readiness"
 import {
-  isHtmlWeekPage,
-  isStructuredWeekPage,
+  isHtmlPage,
+  isStructuredPage,
   isSupportedStagePage,
-  type WeekDocument,
-  type WeekPage,
-} from "./week-document"
+  type Deck,
+  type Page,
+} from "./deck"
 
 export type CaptureSession = {
   measure: () => Promise<CaptureAssessment>
@@ -30,8 +30,8 @@ export type PreparedCapture = CaptureSession | HtmlLoadFailure
 export type CaptureAdapter = {
   prepare: (
     documentId: string,
-    week: WeekDocument,
-    page: WeekPage,
+    deck: Deck,
+    page: Page,
     signal?: AbortSignal
   ) => Promise<PreparedCapture>
 }
@@ -47,7 +47,7 @@ export type PageGateResult =
   | { kind: "blocked"; issues: ExportIssue[] }
   | { kind: "failed"; cause: unknown }
 
-// 同一頁的 preflight 與量測後判定須用同一份 Metric Input 與報告週一，在入口組好一次
+// 同一頁的 preflight 與量測後判定須用同一份 Metric Input 與期間終點，在入口組好一次
 type GateDeps = ExportPageDeps & { readiness: ReadinessContext }
 
 type PhaseLimit = { phase: string; timeoutMs: number }
@@ -70,8 +70,8 @@ export function isHtmlLoadFailure(
 
 export async function exportPage(
   documentId: string,
-  week: WeekDocument,
-  page: WeekPage,
+  deck: Deck,
+  page: Page,
   deps: ExportPageDeps
 ): Promise<PageGateResult> {
   if (deps.signal?.aborted) {
@@ -79,7 +79,10 @@ export async function exportPage(
   }
   const gateDeps: GateDeps = {
     ...deps,
-    readiness: { metricInput: deps.metricInput, reportingMonday: week.start },
+    readiness: {
+      metricInput: deps.metricInput,
+      asOf: deck.period?.end,
+    },
   }
   const readinessIssues = preflightIssues(page, gateDeps.readiness)
   if (readinessIssues.length > 0) {
@@ -87,7 +90,7 @@ export async function exportPage(
   }
 
   try {
-    const prepared = await prepareSession(documentId, week, page, gateDeps)
+    const prepared = await prepareSession(documentId, deck, page, gateDeps)
     if (isHtmlLoadFailure(prepared)) {
       return {
         kind: "blocked",
@@ -101,13 +104,13 @@ export async function exportPage(
 }
 
 function preflightIssues(
-  page: WeekPage,
+  page: Page,
   readiness: ReadinessContext
 ): ExportIssue[] {
   if (!isSupportedStagePage(page)) {
     return assessExportEligibility(page).issues
   }
-  if (isStructuredWeekPage(page)) {
+  if (isStructuredPage(page)) {
     return assessContentReadiness(page, readiness)
   }
   return []
@@ -115,11 +118,11 @@ function preflightIssues(
 
 async function prepareSession(
   documentId: string,
-  week: WeekDocument,
-  page: WeekPage,
+  deck: Deck,
+  page: Page,
   deps: GateDeps
 ): Promise<PreparedCapture> {
-  const pending = deps.adapter.prepare(documentId, week, page, deps.signal)
+  const pending = deps.adapter.prepare(documentId, deck, page, deps.signal)
   let accepted = false
   try {
     const prepared = await runPhase(
@@ -136,7 +139,7 @@ async function prepareSession(
 
 function disposeLateSession(
   pending: Promise<PreparedCapture>,
-  page: WeekPage
+  page: Page
 ): void {
   // 逾時或中止已回報為操作失敗；遲到的 session 需清理且不得進入後續頁面。
   // 遲到的錯誤不再影響結果，但仍留下紀錄供除錯。
@@ -151,7 +154,7 @@ function disposeLateSession(
 
 async function captureFromSession(
   session: CaptureSession,
-  page: WeekPage,
+  page: Page,
   deps: GateDeps
 ): Promise<PageGateResult> {
   try {
@@ -167,10 +170,10 @@ async function captureFromSession(
 
 async function measurementIssues(
   session: CaptureSession,
-  page: WeekPage,
+  page: Page,
   deps: GateDeps
 ): Promise<ExportIssue[]> {
-  if (isHtmlWeekPage(page)) {
+  if (isHtmlPage(page)) {
     return []
   }
 
