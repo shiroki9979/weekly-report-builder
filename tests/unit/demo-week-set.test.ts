@@ -76,11 +76,10 @@ describe("Demo Week Set", () => {
       expect(measuredValues(7).length).toBeGreaterThanOrEqual(2)
     })
 
-    // 兩個方向之外，Trend 也需要一頁中英混排的版面實例
-    it("uses mixed-language copy on the Missing-week example", () => {
+    it("uses English copy on the Missing-week example", () => {
       const { title } = pageAt(7, isTrendTargetPage)
 
-      expect(title).toMatch(CJK)
+      expect(title).not.toMatch(CJK)
       expect(title).toMatch(LATIN)
     })
   })
@@ -94,13 +93,14 @@ describe("Demo Week Set", () => {
       expect(rows.commitments).toEqual(columns.commitments)
     })
 
-    it("includes longer mixed-language Rows", () => {
-      const mixedRows = pageAt(9, isNextActionsPage)
+    it("uses English outcomes in the additional Rows example", () => {
+      const rows = pageAt(9, isNextActionsPage)
 
-      expect(mixedRows.variant).toBe("rows")
-      expect(mixedRows.commitments.some((item) => CJK.test(item.outcome))).toBe(
-        true
-      )
+      expect(rows.variant).toBe("rows")
+      for (const { outcome } of rows.commitments) {
+        expect(outcome).not.toMatch(CJK)
+        expect(outcome).toMatch(LATIN)
+      }
     })
   })
 
