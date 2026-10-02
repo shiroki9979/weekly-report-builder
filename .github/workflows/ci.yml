@@ -54,23 +54,23 @@ jobs:
       - name: Playwright
         run: pnpm test:e2e
 
-      - name: Build fails when weeks store is missing
+      - name: Build fails when decks store is missing
         run: |
-          restore_weeks() {
-            if [ -d weeks.ci-absent ]; then
-              mv weeks.ci-absent weeks
+          restore_decks() {
+            if [ -d decks.ci-absent ]; then
+              mv decks.ci-absent decks
             fi
           }
-          trap restore_weeks EXIT
-          mv weeks weeks.ci-absent
+          trap restore_decks EXIT
+          mv decks decks.ci-absent
           set +e
           output=$(pnpm build 2>&1)
           status=$?
           set -e
-          restore_weeks
+          restore_decks
           printf '%s\n' "$output"
           test "$status" -ne 0
-          printf '%s\n' "$output" | grep -q "pnpm seed:weeks"
+          printf '%s\n' "$output" | grep -q "pnpm seed:decks"
 
       - name: Build
         run: pnpm build
