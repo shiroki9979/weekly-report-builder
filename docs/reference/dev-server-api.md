@@ -3,7 +3,7 @@
 # 開發伺服器 API
 
 建立日期：2026-08-31  
-最後更新：2026-09-29
+最後更新：2026-10-03
 
 ---
 
@@ -67,8 +67,10 @@
 
 ## 客戶端封裝
 
-`src/lib/decks-client.ts` — `fetchDeckIds`、`fetchDeck`、`putDeck`、`createWeekFromPrevious`
+- `src/lib/decks-client.ts` — `fetchDeckIds`、`fetchDeck`、`putDeck`
+- `src/lib/weekly-series-client.ts` — `createWeekFromPrevious`（週報流程的建新週）
+- `src/lib/deck-store.ts` — `httpWorkshopStore` 把兩者組成 Workshop 使用的 `WorkshopStore`（`DeckStore` 加上 `WeeklySeriesStore`）
 
 ## 相關文件
 
-- [週次 JSON 格式](deck-json-format.md)
+- [Deck JSON 格式](deck-json-format.md)
