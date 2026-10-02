@@ -16,6 +16,7 @@ import {
   createWeekFromPrevious,
   DeckAlreadyExistsError,
 } from "./server/decks-store"
+import { isPathInside } from "./server/path-containment"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const decksDir = path.resolve(
@@ -145,7 +146,7 @@ function sendNotFound(res: ServerResponse): void {
 
 function serveDeckJson(fileName: string, res: ServerResponse): boolean {
   const filePath = path.resolve(decksDir, fileName)
-  if (!filePath.startsWith(decksDir) || !fs.existsSync(filePath)) {
+  if (!isPathInside(decksDir, filePath) || !fs.existsSync(filePath)) {
     return false
   }
 
@@ -169,7 +170,7 @@ function serveDeckHtml(
   const deckDir = path.resolve(decksDir, deckId)
   const filePath = path.resolve(deckDir, htmlFile)
   if (
-    !filePath.startsWith(deckDir) ||
+    !isPathInside(deckDir, filePath) ||
     !fs.existsSync(filePath) ||
     !fs.statSync(filePath).isFile()
   ) {
@@ -212,7 +213,7 @@ function decksStaticPlugin(): Plugin {
       // 監聽 Deck 目錄中的 HTML 檔案變更，使外部編輯器存檔時能立即觸發瀏覽器完整重新載入更新預覽
       server.watcher.add(path.resolve(decksDir, "**/*.html"))
       server.watcher.on("change", (file) => {
-        if (file.startsWith(decksDir) && file.endsWith(".html")) {
+        if (isPathInside(decksDir, file) && file.endsWith(".html")) {
           server.ws.send({ type: "full-reload" })
         }
       })
