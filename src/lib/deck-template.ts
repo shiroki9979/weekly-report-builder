@@ -70,7 +70,7 @@ function clearOutcome(outcome: Outcome): Outcome {
 function clearPage(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchPage<Page>(page, {
-    // HTML Page 的頁碼須逐頁開啟、不吃週層級預設；沿用上週選擇才不會每週重開
+    // HTML Page 的頁碼須逐頁開啟、不吃 Deck 層級預設；沿用範本的選擇，新 Deck 才不必逐頁重開
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",

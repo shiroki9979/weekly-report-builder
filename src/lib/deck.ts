@@ -326,7 +326,7 @@ export function isSupportedStagePage(page: Page): boolean {
   })
 }
 
-// 經 matchWeekPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
+// 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
 function hasPageNumberSlot(page: Page): boolean {
   return matchPage(page, {
     html: () => true,
@@ -983,11 +983,12 @@ function parseTrendDating(
   value: Record<string, unknown>,
   field: string
 ): Pick<TrendTargetPage, "cadence" | "start"> {
+  rejectMixedFormats(
+    value,
+    { legacy: ["startMonday"], current: ["cadence", "start"] },
+    `${field} uses either startMonday or cadence/start, not both`
+  )
   if (value.startMonday !== undefined) {
-    if (value.start !== undefined || value.cadence !== undefined)
-      throw new Error(
-        `Invalid deck: ${field} uses either startMonday or cadence/start, not both`
-      )
     return {
       cadence: "week",
       start: parseTrendStart(value.startMonday, `${field}.startMonday`),
@@ -999,6 +1000,18 @@ function parseTrendDating(
     cadence: value.cadence,
     start: parseTrendStart(value.start, `${field}.start`),
   }
+}
+
+type FieldFormats = { legacy: string[]; current: string[] }
+
+// 舊欄位只為了讀取既有檔案；與新欄位並存時無法判斷以哪個為準，直接拒絕而非擇一
+function rejectMixedFormats(
+  value: Record<string, unknown>,
+  { legacy, current }: FieldFormats,
+  message: string
+): void {
+  const has = (keys: string[]) => keys.some((key) => value[key] !== undefined)
+  if (has(legacy) && has(current)) throw new Error(`Invalid deck: ${message}`)
 }
 
 function parseTrendStart(value: unknown, field: string): string | null {
@@ -1101,7 +1114,7 @@ type PageParser = (
   field: string
 ) => Page
 
-// parser 面對的是未驗證 JSON，無法走 matchWeekPage；以 layout 表格分派，新增版面只改這裡
+// parser 面對的是未驗證 JSON，無法走 matchPage；以 layout 表格分派，新增版面只改這裡
 const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
@@ -1188,13 +1201,12 @@ export function parseDeck(value: unknown): Deck {
 
 // 舊格式把期間放在頂層 start／end；讀入時轉成 period，存檔後只留新格式
 function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
-  const hasLegacy = value.start !== undefined || value.end !== undefined
+  rejectMixedFormats(
+    value,
+    { legacy: ["start", "end"], current: ["period"] },
+    "use either period or top-level start/end, not both"
+  )
   if (value.period !== undefined) {
-    if (hasLegacy) {
-      throw new Error(
-        "Invalid deck: use either period or top-level start/end, not both"
-      )
-    }
     if (!isRecord(value.period)) {
       throw new Error("Invalid deck: period must be an object")
     }
@@ -1203,7 +1215,7 @@ function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
       end: readNonEmptyString(value.period.end, "period.end"),
     }
   }
-  if (!hasLegacy) return undefined
+  if (value.start === undefined && value.end === undefined) return undefined
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),

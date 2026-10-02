@@ -196,7 +196,7 @@ export function WorkshopShell({ deckStore }: { deckStore: WorkshopStore }) {
       <ResizablePanelGroup
         orientation="horizontal"
         className="min-h-0 flex-1"
-        id="weekly-workshop-panels"
+        id="workshop-panels"
       >
         <ResizablePanel
           id="editor"
