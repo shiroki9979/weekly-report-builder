@@ -5,7 +5,7 @@ import { useEditingSession } from "@/hooks/use-editing-session"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import type { Deck } from "@/lib/deck"
 import { deferred, until } from "./support/async"
-import { InMemoryDeckStore } from "./support/in-memory-deck-store"
+import { InMemoryWorkshopStore } from "./support/in-memory-deck-store"
 
 const older = "2026-01-05"
 const latest = "2026-01-12"
@@ -19,7 +19,7 @@ function week(monday: string, title = monday): Deck {
 }
 
 function store() {
-  return new InMemoryDeckStore(
+  return new InMemoryWorkshopStore(
     new Map([
       [older, week(older)],
       [latest, week(latest)],
@@ -61,7 +61,7 @@ async function renderWithPendingFailingSave() {
 
 describe("useEditingSession", () => {
   it("reports saving without an open week", async () => {
-    const backend = new InMemoryDeckStore()
+    const backend = new InMemoryWorkshopStore()
     const { result } = renderHook(() => useEditingSession(backend))
     await until(() => result.current.loadStatus.kind === "empty")
 
@@ -80,7 +80,7 @@ describe("useEditingSession", () => {
   })
 
   it("keeps a non-date deck id after opening so Save writes back to it", async () => {
-    const backend = new InMemoryDeckStore(
+    const backend = new InMemoryWorkshopStore(
       new Map([["q4-roadmap", week(latest, "Roadmap")]])
     )
     const saved = vi.spyOn(backend, "saveDeck")
@@ -94,7 +94,7 @@ describe("useEditingSession", () => {
   })
 
   it("opens the latest week rather than a later non-week deck", async () => {
-    const backend = new InMemoryDeckStore(
+    const backend = new InMemoryWorkshopStore(
       new Map([
         [older, week(older)],
         [latest, week(latest)],
@@ -110,7 +110,7 @@ describe("useEditingSession", () => {
   })
 
   it("shows an empty store without an open week", async () => {
-    const backend = new InMemoryDeckStore()
+    const backend = new InMemoryWorkshopStore()
 
     const { result } = renderHook(() => useEditingSession(backend))
 
@@ -121,7 +121,7 @@ describe("useEditingSession", () => {
   })
 
   it("shows a list failure as an error without an open week", async () => {
-    const backend = new InMemoryDeckStore()
+    const backend = new InMemoryWorkshopStore()
     backend.listDecks = async () => {
       throw new Error("List unavailable")
     }

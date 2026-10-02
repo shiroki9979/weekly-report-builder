@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { StageSlide } from "@/components/stage/stage-slide"
 import { createBlankTrendTargetPage } from "@/lib/page-lifecycle"
 import { assessContentReadiness } from "@/lib/export-readiness"
-import { cloneWeekFromPrevious } from "@/lib/weekly-series"
+import { createDeckFromTemplate } from "@/lib/deck-template"
 import { parseDeck, type TrendTargetPage, type Deck } from "@/lib/deck"
 import {
   canSaveSession,
@@ -716,7 +716,7 @@ describe("Trend & Target", () => {
     })
 
     it("carry into the next week's clone", () => {
-      const cloned = cloneWeekFromPrevious(finalMissingWeek, "2026-08-03")
+      const cloned = createDeckFromTemplate(finalMissingWeek)
 
       expect(cloned.pages[0]).toMatchObject({
         observations: finalMissing.observations,
@@ -977,7 +977,7 @@ describe("Trend & Target", () => {
   })
 
   it("retains dated evidence and clears weekly conclusions when cloned", () => {
-    const week = cloneWeekFromPrevious(weekWith(complete), "2026-07-27")
+    const week = createDeckFromTemplate(weekWith(complete))
 
     expect(week.pages[0]).toMatchObject({
       title: "",

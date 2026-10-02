@@ -9,7 +9,7 @@ import {
   setNextActionsVariant,
 } from "@/lib/next-actions-editor"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/weekly-series"
+import { createDeckFromTemplate } from "@/lib/deck-template"
 import { parseDeck } from "@/lib/deck"
 import type { NextActionsPage, Deck } from "@/lib/deck"
 
@@ -217,7 +217,7 @@ describe("next-actions clone and readiness", () => {
         },
       ],
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
     if (page.layout !== "next-actions") {
       throw new Error("expected next-actions")
@@ -236,7 +236,7 @@ describe("next-actions clone and readiness", () => {
       ...createBlankNextActionsPage("p01"),
       title: "Next steps",
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const cloned = createDeckFromTemplate(previous)
     expect(actions(parseDeck(cloned)).variant).toBe("rows")
   })
 

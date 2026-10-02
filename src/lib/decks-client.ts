@@ -48,28 +48,3 @@ export async function putDeck(deckId: string, deck: Deck): Promise<void> {
     )
   }
 }
-
-export async function createWeekFromPrevious(monday: string): Promise<Deck> {
-  const response = await fetch(`/api/decks/${monday}`, {
-    method: "POST",
-  })
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to create week file: ${monday}.json (${response.status})`
-    )
-  }
-
-  const json: unknown = await response.json()
-  if (
-    typeof json !== "object" ||
-    json === null ||
-    !("deck" in json) ||
-    typeof json.deck !== "object" ||
-    json.deck === null
-  ) {
-    throw new Error("Invalid create week response")
-  }
-
-  return parseDeck(json.deck)
-}
