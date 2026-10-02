@@ -281,11 +281,10 @@ describe("decks-store", () => {
       mkdirSync(join(tempDir, "q3-roadmap"))
       writeFileSync(join(tempDir, "q3-roadmap", "map.html"), "<p>map</p>")
 
-      const created = createDeckFromTemplateFile(
-        tempDir,
-        "q3-roadmap",
-        "q4-roadmap"
-      )
+      const created = createDeckFromTemplateFile(tempDir, {
+        templateId: "q3-roadmap",
+        deckId: "q4-roadmap",
+      })
 
       expect(created).not.toHaveProperty("period")
       expect(created.pages[0].title).toBe("")
@@ -294,7 +293,10 @@ describe("decks-store", () => {
         readFileSync(join(tempDir, "q4-roadmap", "map.html"), "utf-8")
       ).toBe("<p>map</p>")
       expect(() =>
-        createDeckFromTemplateFile(tempDir, "q3-roadmap", "q4-roadmap")
+        createDeckFromTemplateFile(tempDir, {
+          templateId: "q3-roadmap",
+          deckId: "q4-roadmap",
+        })
       ).toThrow(DeckAlreadyExistsError)
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
@@ -314,6 +316,25 @@ describe("decks-store", () => {
         "Week file name must be a Monday date: 2026-09-01"
       )
       expect(existsSync(join(tempDir, "2026-09-01.json"))).toBe(false)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  // dev server 對既有檔案一律回 409；目標不是週一也一樣，作者才知道是撞名而不是日期錯
+  it("reports an existing non-Monday target as already existing", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
+    const previous = parseDeck(
+      JSON.parse(readFileSync(cloneFixturePath, "utf-8"))
+    )
+
+    try {
+      writeDeckFile(tempDir, "2026-08-24", previous)
+      writeDeckFile(tempDir, "2026-09-01", previous)
+
+      expect(() => createWeekFromPrevious(tempDir, "2026-09-01")).toThrow(
+        DeckAlreadyExistsError
+      )
     } finally {
       rmSync(tempDir, { recursive: true, force: true })
     }

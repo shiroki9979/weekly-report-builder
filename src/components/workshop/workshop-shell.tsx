@@ -27,7 +27,7 @@ import {
   type LayoutEditorControls,
 } from "@/hooks/use-editing-session"
 import type { Deck, Page } from "@/lib/deck"
-import type { DeckStore } from "@/lib/deck-store"
+import type { WorkshopStore } from "@/lib/deck-store"
 import type { SessionLoadStatus } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setDeckShowPageNumbers } from "@/lib/deck-editor"
@@ -174,7 +174,7 @@ function EditorSidebar({
 }
 
 /** shadcn 工坊殼：左編輯、右 16:9 預覽 */
-export function WorkshopShell({ deckStore }: { deckStore: DeckStore }) {
+export function WorkshopShell({ deckStore }: { deckStore: WorkshopStore }) {
   const session = useEditingSession(deckStore)
   const { deck, loadStatus, selectedPageIndex, setSelectedPageIndex } = session
   const editorPanel = useCollapsiblePanel()

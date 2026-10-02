@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import type { Deck } from "@/lib/deck"
-import { httpDeckStore } from "@/lib/deck-store"
+import { httpWorkshopStore } from "@/lib/deck-store"
 
 import { jsonResponse } from "./support/json-response"
 
@@ -12,10 +12,10 @@ const document: Deck = {
   pages: [createBlankEvidenceDecisionPage("p01")],
 }
 
-describe("HTTP Week store", () => {
+describe("HTTP Workshop store", () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it("uses all four week routes and parses list, load, and create responses", async () => {
+  it("uses all four deck routes and parses list, load, and create responses", async () => {
     const fetch = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
@@ -29,10 +29,12 @@ describe("HTTP Week store", () => {
         throw new Error(`Unexpected request: ${url}`)
       })
 
-    expect(await httpDeckStore.listDecks()).toEqual([monday])
-    expect(await httpDeckStore.loadDeck(monday)).toEqual(document)
-    await httpDeckStore.saveDeck(monday, document)
-    expect(await httpDeckStore.createWeekFromPrevious(monday)).toEqual(document)
+    expect(await httpWorkshopStore.listDecks()).toEqual([monday])
+    expect(await httpWorkshopStore.loadDeck(monday)).toEqual(document)
+    await httpWorkshopStore.saveDeck(monday, document)
+    expect(await httpWorkshopStore.createWeekFromPrevious(monday)).toEqual(
+      document
+    )
     expect(
       fetch.mock.calls.map(([input, init]) => [
         String(input),

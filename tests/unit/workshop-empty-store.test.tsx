@@ -5,8 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { EMPTY_STORE_MESSAGE } from "@/components/workshop/empty-store-message"
 import { WorkshopShell } from "@/components/workshop/workshop-shell"
 import type { Deck } from "@/lib/deck"
-import type { DeckStore } from "@/lib/deck-store"
-import { InMemoryDeckStore } from "./support/in-memory-deck-store"
+import type { WorkshopStore } from "@/lib/deck-store"
+import { InMemoryWorkshopStore } from "./support/in-memory-deck-store"
 import { stubWorkshopDom } from "./support/workshop-dom"
 
 const LATEST_MONDAY = "2026-01-12"
@@ -35,7 +35,7 @@ function weekDocument(monday: string, title: string): Deck {
   }
 }
 
-function renderWorkshop(deckStore: DeckStore) {
+function renderWorkshop(deckStore: WorkshopStore) {
   return render(
     <ThemeProvider defaultTheme="light">
       <WorkshopShell deckStore={deckStore} />
@@ -57,7 +57,7 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("explains the empty weeks directory and does not offer first-week creation", async () => {
-    renderWorkshop(new InMemoryDeckStore())
+    renderWorkshop(new InMemoryWorkshopStore())
 
     await waitFor(() => {
       expect(screen.getAllByText(EMPTY_STORE_MESSAGE).length).toBeGreaterThan(0)
@@ -70,7 +70,7 @@ describe("Workshop empty store vs list failure", () => {
   })
 
   it("keeps list failures in the error alert instead of the empty store", async () => {
-    const store = new InMemoryDeckStore()
+    const store = new InMemoryWorkshopStore()
     store.listDecks = async () => {
       throw new Error("Failed to list deck files (503)")
     }
@@ -87,7 +87,7 @@ describe("Workshop empty store vs list failure", () => {
 
   it("opens the latest listed week without a Create week empty-state", async () => {
     renderWorkshop(
-      new InMemoryDeckStore(
+      new InMemoryWorkshopStore(
         new Map([
           [LATEST_MONDAY, weekDocument(LATEST_MONDAY, "Harbor Grid latest")],
         ])

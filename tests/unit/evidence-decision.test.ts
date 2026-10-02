@@ -9,7 +9,7 @@ import {
 } from "@/lib/evidence-decision-editor"
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
-import { cloneWeekFromPrevious } from "@/lib/weekly-series"
+import { createDeckFromTemplate } from "@/lib/deck-template"
 import { parseDeck } from "@/lib/deck"
 import type { EvidenceDecisionPage, Deck } from "@/lib/deck"
 
@@ -209,7 +209,7 @@ describe("evidence-decision clone and readiness", () => {
         },
       ],
     })
-    const cloned = cloneWeekFromPrevious(previous, "2026-08-31")
+    const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
     if (page.layout !== "evidence-decision") {
       throw new Error("expected evidence-decision")

@@ -40,12 +40,16 @@ import {
 } from "@/lib/trend-session"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
-import { latestWeekMonday, nextMondayAfter } from "@/lib/weekly-series"
+import {
+  defaultDeckId,
+  latestWeekMonday,
+  nextMondayAfter,
+} from "@/lib/weekly-series"
 import type { Deck, Page } from "@/lib/deck"
-import type { DeckStore } from "@/lib/deck-store"
+import type { WorkshopStore } from "@/lib/deck-store"
 
 // 需經 Editing Session 才能安全改動的版型專屬操作（Metric Input、metric 增刪移、Trend 端點與改日期）；
-// 鍵名對應 matchWeekPage 的版型，PageEditorForm 依版型分派給各自的編輯器
+// 鍵名對應 matchPage 的版型，PageEditorForm 依版型分派給各自的編輯器
 export type LayoutEditorControls = {
   evidenceDecision: MetricEditorControls
   trendTarget: TrendEditorControls
@@ -76,7 +80,7 @@ export type EditingSessionResult = {
   create: {
     creating: boolean
     error: string | null
-    createWeek: (deckId: string) => Promise<void>
+    createWeek: (monday: string) => Promise<void>
   }
 }
 
@@ -86,7 +90,7 @@ type SessionUpdate = (
 
 type SessionRef = { readonly current: EditingSession }
 
-export function useEditingSession(store: DeckStore): EditingSessionResult {
+export function useEditingSession(store: WorkshopStore): EditingSessionResult {
   const [session, setSession] = useState(createEditingSession)
   const sessionRef = useRef(session)
   const update = useCallback<SessionUpdate>((change) => {
@@ -192,7 +196,7 @@ function sessionView(
 type Sequence = { current: number }
 
 type DeckLifecycle = {
-  store: DeckStore
+  store: WorkshopStore
   update: SessionUpdate
   openedDecks: Sequence
   saves: Sequence
@@ -200,7 +204,7 @@ type DeckLifecycle = {
 }
 
 function useDeckLifecycle(
-  store: DeckStore,
+  store: WorkshopStore,
   sessionRef: SessionRef,
   update: SessionUpdate
 ) {
@@ -287,8 +291,7 @@ async function openInitialDeck(
     description: "list decks",
     resolved: (decks) => {
       update((current) => setSessionDecks(current, decks))
-      // 沒有週次時仍開啟最後一份 Deck，避免只有非週報 Deck 的 store 停在空白
-      const initial = latestWeekMonday(decks) ?? decks.at(-1)
+      const initial = defaultDeckId(decks)
       if (initial) void openDeck(lifecycle, initial)
     },
     rejected: (cause) =>
