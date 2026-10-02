@@ -17,6 +17,7 @@ const week = parseDeck(
 )
 
 const CJK = /[一-鿿]/u
+const LATIN = /[A-Za-z]/
 
 function pageAt<T extends Page>(
   index: number,
@@ -75,6 +76,13 @@ describe("Demo Deck Set", () => {
       })
       expect(measuredValues(7).length).toBeGreaterThanOrEqual(2)
     })
+
+    it("uses English copy on the Missing-week example", () => {
+      const { title } = pageAt(7, isTrendTargetPage)
+
+      expect(title).not.toMatch(CJK)
+      expect(title).toMatch(LATIN)
+    })
   })
 
   // 公開 demo 的文案統一為英文（3dd5336）；中英混排的版面覆蓋由 e2e fixture 負責
@@ -101,6 +109,16 @@ describe("Demo Deck Set", () => {
       expect(longestOutcome(longRows)).toBeGreaterThan(
         longestOutcome(pageAt(3, isNextActionsPage))
       )
+    })
+
+    it("uses English outcomes in the additional Rows example", () => {
+      const rows = pageAt(9, isNextActionsPage)
+
+      expect(rows.variant).toBe("rows")
+      for (const { outcome } of rows.commitments) {
+        expect(outcome).not.toMatch(CJK)
+        expect(outcome).toMatch(LATIN)
+      }
     })
   })
 
