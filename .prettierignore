@@ -3,6 +3,8 @@ coverage/
 .pnpm-store/
 dist/
 dist-ssr/
+decks/**/*.html
+# Pre-rename location; seed:decks migrates it to decks/.
 weeks/**/*.html
 **/*.mdc
 pnpm-lock.yaml
