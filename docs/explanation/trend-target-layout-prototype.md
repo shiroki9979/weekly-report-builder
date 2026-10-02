@@ -2,11 +2,11 @@
 
 Created: 2026-09-28
 
-Last updated: 2026-09-28
+Last updated: 2026-10-03
 
 The four-view comparison prototype is preserved at [commit `bed7803`](https://github.com/shiroki9979/weekly-report-builder/tree/bed7803/src/components/stage/prototype) on the remote `prototype/trend-target-actions-rows` branch. It compared A, a full-width Trend chart with a summary below; B, a chart with a side summary; C, Next Actions Columns; and D, Next Actions Rows. The approved production choices were **A and D**. The experimental route, fixtures, controls, and script were removed after the source was verified on the remote branch. The supported path is the normal Workshop using the public fictional [Demo Week Set](../../demo/2026-01-05.json).
 
-The full-width chart gives a single metric, all dated observations, the target, and the latest-week conclusion separate readable space. Rows keep each Commitment's action, intended outcome, and checkpoint together. The demo retains the old Columns composition on `p04` and presents identical Commitments as Rows on `p09`, allowing a direct comparison. `p06`–`p08` cover an at-most target with exact comparison (English), an at-least target with negative and zero measurements (Chinese), and a missing last week (mixed-language). `p10` covers longer mixed-language actions.
+The full-width chart gives a single metric, all dated observations, the target, and the latest-week conclusion separate readable space. Rows keep each Commitment's action, intended outcome, and checkpoint together. The demo retains the old Columns composition on `p04` and presents identical Commitments as Rows on `p09`, allowing a direct comparison. `p06`–`p08` cover an at-most target with exact comparison, an at-least target with negative and zero measurements, and a missing last week. `p10` covers longer Rows actions. The demo copy is English-only; mixed-language layout coverage lives in the e2e fixtures.
 
 ## Verification and reading observations
 

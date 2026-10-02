@@ -1,12 +1,34 @@
 # Demo weeks bootstrap
 
 建立日期：2026-09-12
-最後更新：2026-09-28
+最後更新：2026-10-03
 狀態：approved
 
 本文件記錄 `weeks/` 私有化與 demo 初始資料的 Grill 共識，並作為後續實作與驗收的 source of truth。
 
 內容範圍註記：以下五頁是初次 bootstrap 的驗收基線。[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47) 將公開 Demo Week Set 擴為十頁，新增 Trend & Target 與 Next Actions Rows；既有只在 `weeks/` 缺失時 seed 的契約不變。
+
+### Amendment：Deck 改名與遷移（2026-10-03）
+
+[#55](https://github.com/shiroki9979/weekly-report-builder/issues/55)（[ADR-0001](../adr/0001-decouple-weekly-report-from-slide-core.md)）推翻本文〈Out of Scope〉的「改名 runtime `weeks/`、公開 `/weeks/...` URL 或既有讀寫 API」。下文保留定案當時的名稱；現行名稱與契約以本節為準。
+
+| 本文名稱                               | 現行名稱                               |
+| -------------------------------------- | -------------------------------------- |
+| `weeks/`                               | `decks/`                               |
+| `/weeks/...`、`/api/weeks`             | `/decks/...`、`/api/decks`             |
+| `WEEKS_DIR`                            | `DECKS_DIR`                            |
+| `pnpm seed:weeks`                      | `pnpm seed:decks`                      |
+| `seedWeeksFromDemo(demoDir, weeksDir)` | `seedDecksFromDemo(demoDir, decksDir)` |
+| Demo Week Set                          | Demo Deck Set                          |
+| Week Document                          | Deck                                   |
+
+遷移契約（`postinstall` 與 `pnpm seed:decks` 共用，`migrateLegacyStore` 先於 seed 執行）：
+
+- `weeks/` 是目錄且 `decks/` 不存在：整個改名為 `decks/`，內容不變，之後不再 seed。
+- `weeks/` 與 `decks/` 都存在：以非零 exit code 失敗並說明兩者並存，不合併、不覆寫任何一方。
+- `weeks` 是一般檔案或 symlink：以非零 exit code 失敗。
+- `weeks/` 不存在：沿用本文的 seed 契約，只是 target 改為 `decks/`。
+- `.gitignore` 同時忽略 `/decks/` 與 `/weeks/`，尚未遷移的 checkout 也不會誤提交作者資料。
 
 ---
 

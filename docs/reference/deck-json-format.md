@@ -1,7 +1,7 @@
 # Deck JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-09-29
+最後更新：2026-10-03
 
 ---
 
@@ -23,7 +23,7 @@ decks/<id>/<htmlFile>
 | ----------------- | --------- | ---- | ---------------------------------------------------------------------------------------------- |
 | `period`          | `object`  | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
 | `pages`           | `Page[]`  | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean` | 否   | Editorial 的全週頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼        |
+| `showPageNumbers` | `boolean` | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -38,14 +38,14 @@ decks/<id>/<htmlFile>
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位             | 型別      | 必填 | 說明                                                                                                              |
-| ---------------- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------- |
-| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                   |
-| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`               |
-| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                          |
-| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                        |
-| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                     |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承全週設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 忽略此欄 |
+| 欄位             | 型別      | 必填 | 說明                                                                                                                    |
+| ---------------- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                         |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`                     |
+| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                |
+| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                              |
+| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                           |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 忽略此欄 |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
@@ -62,13 +62,13 @@ Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍
 
 16:9 全幅 HTML 逃生口頁面，整頁佔滿，不渲染三點與 panel。
 
-| 欄位       | 型別     | 必填 | 說明                                                                                |
-| ---------- | -------- | ---- | ----------------------------------------------------------------------------------- |
-| `htmlFile` | `string` | 是   | 相對該週目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
+| 欄位       | 型別     | 必填 | 說明                                                                                    |
+| ---------- | -------- | ---- | --------------------------------------------------------------------------------------- |
+| `htmlFile` | `string` | 是   | 相對該 Deck 目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
 
 ### `layout: "overview"`
 
-結論先行的週次總覽。Eyebrow 由 renderer 固定為 `Overview`，不寫入 JSON。
+結論先行的總覽。Eyebrow 由 renderer 固定為 `Overview`，不寫入 JSON。
 
 | 欄位         | 型別        | 必填 | 說明                       |
 | ------------ | ----------- | ---- | -------------------------- |
@@ -162,9 +162,9 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 
 每個觀測位置是 `{ "state": "measured", "value": <finite number> }`、`{ "state": "missing" }` 或 `{ "state": "unfilled" }`。只有 `measured` 能有 `value`；允許負數與零。Parser 拒絕無效日期、列舉值、非有限數字及非量測狀態中隱藏的數值。
 
-公開虛構示例在 [`demo/2026-01-05.json`](../../demo/2026-01-05.json)：`p06` 為 12 週 at-most 與精確比較、`p07` 為含負數和零的 at-least、`p08` 為末週 Missing。`p04` 未設 variant，對照 `p09` 的相同 Commitments、Rows 版面；`p10` 展示中英混合文字。
+公開虛構示例在 [`demo/2026-01-05.json`](../../demo/2026-01-05.json)：`p06` 為 12 週 at-most 與精確比較、`p07` 為含負數和零的 at-least、`p08` 為末週 Missing。`p04` 未設 variant，對照 `p09` 的相同 Commitments、Rows 版面；`p10` 為較長的 Rows 文字。
 
-可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點（最後一個週期的起點）不晚於 Deck 的 `period.end`；沒有 `period` 時略過這項比較，且通過 Stage fit。`missing` 保留週次位置並切斷折線；最後一週為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪週次。
+可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點（最後一個週期的起點）不晚於 Deck 的 `period.end`；沒有 `period` 時略過這項比較，且通過 Stage fit。`missing` 保留觀測位置並切斷折線；最後一個位置為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪觀測位置。
 
 ### SlideItem
 
@@ -233,4 +233,4 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 ## 相關文件
 
 - [開發伺服器 API](dev-server-api.md)
-- [編輯並儲存週次](../how-to/edit-and-save-a-deck.md)
+- [編輯並儲存 Deck](../how-to/edit-and-save-a-deck.md)
