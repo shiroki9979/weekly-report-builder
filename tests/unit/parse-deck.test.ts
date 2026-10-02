@@ -35,7 +35,7 @@ function twoColumnWeekWithPanel(panel: Record<string, unknown>) {
   }
 }
 
-describe("parseWeekDocument", () => {
+describe("parseDeck", () => {
   describe("period", () => {
     const pages = twoColumnWeekWithPanel({
       kind: "checklist",

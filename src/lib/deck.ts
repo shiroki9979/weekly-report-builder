@@ -1200,10 +1200,13 @@ export function parseDeck(value: unknown): Deck {
 }
 
 // 舊格式把期間放在頂層 start／end；讀入時轉成 period，存檔後只留新格式
+// 改名前的頂層期間欄位；只為讀取舊檔保留
+const LEGACY_PERIOD_FIELDS = ["start", "end"]
+
 function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
   rejectMixedFormats(
     value,
-    { legacy: ["start", "end"], current: ["period"] },
+    { legacy: LEGACY_PERIOD_FIELDS, current: ["period"] },
     "use either period or top-level start/end, not both"
   )
   if (value.period !== undefined) {
@@ -1215,7 +1218,8 @@ function parsePeriod(value: Record<string, unknown>): DeckPeriod | undefined {
       end: readNonEmptyString(value.period.end, "period.end"),
     }
   }
-  if (value.start === undefined && value.end === undefined) return undefined
+  if (LEGACY_PERIOD_FIELDS.every((key) => value[key] === undefined))
+    return undefined
   return {
     start: readNonEmptyString(value.start, "start"),
     end: readNonEmptyString(value.end, "end"),

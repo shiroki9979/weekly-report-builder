@@ -86,7 +86,7 @@ export function createDeckFromTemplateFile(
 
 // 週報流程：週次規則交給 weekly-series，這裡只負責檔案
 export function createWeekFromPrevious(decksDir: string, monday: string): Deck {
-  // 先回報撞名再檢查週次規則，與改名前的 409 行為一致
+  // 先回報撞名再檢查週次規則：目標已存在時，作者要知道的是撞名而不是日期格式
   assertDeckAbsent(decksDir, monday)
   const { templateId, period } = planWeekFromPrevious(
     listDecksInDirectory(decksDir),

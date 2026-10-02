@@ -4,7 +4,7 @@ import { serializeDeck } from "@/lib/decks-io"
 import { parseDeck } from "@/lib/deck"
 import { setPageTitle } from "@/lib/deck-editor"
 
-describe("serializeWeekDocument", () => {
+describe("serializeDeck", () => {
   it("round-trips a week document through JSON", () => {
     const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },

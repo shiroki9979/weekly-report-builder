@@ -32,7 +32,7 @@
 
 typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week 草稿 module」，因與 Draft Page 撞名而改名；Editing Session 與 Metric Input 的定義見 [CONTEXT.md](../../CONTEXT.md)。
 
-- **審查時相關 module（歷史快照）**：`src/components/workshop/workshop-shell.tsx`（`WorkshopShellBody`）、已刪除的 `metric-draft-context.tsx`、`metric-draft-buffer.ts`、`use-week-editor.ts`、`use-week-save.ts`、`use-week-create.ts`，以及 `evidence-decision-editor-form.tsx`。當時 `metricBuffer` 參數另穿過 export 與 editor chrome；現由 `src/lib/editing-session.ts`、`src/hooks/use-editing-session.ts` 及 `src/lib/week-store.ts` 負責編輯狀態與週次存取，Export hook 只接收 snapshot 來源。
+- **審查時相關 module（歷史快照）**：`src/components/workshop/workshop-shell.tsx`（`WorkshopShellBody`）、已刪除的 `metric-draft-context.tsx`、`metric-draft-buffer.ts`、`use-week-editor.ts`、`use-week-save.ts`、`use-week-create.ts`，以及 `evidence-decision-editor-form.tsx`。當時 `metricBuffer` 參數另穿過 export 與 editor chrome；現由 `src/lib/editing-session.ts`、`src/hooks/use-editing-session.ts` 及 `src/lib/deck-store.ts` 負責編輯狀態與 Deck 存取，Export hook 只接收 snapshot 來源。
 - **問題**：編輯中的 Week Document 分住兩個倉：`useWeekEditor` 的 `week` 與 `MetricDraftProvider` 的 buffer。兩倉的不變條件由呼叫端手動維持：shell 負責切週清空、lifecycle 後 `pruneMetricDrafts`、Save 前 `weekHasInvalidMetricDrafts`；Evidence-backed Decision 表單負責 Move／Remove 時 remap。存檔與建週的狀態又分在 `useWeekSave`、`useWeekCreate` 與 shell 的 `draftSaveError`，切週時沒有人重設。
 - **做法**：Editing Session 同時持有 typed Week Document、Metric Input、選取的 Page ID 與載入／存檔／建週狀態。編輯、lifecycle、切週、Save 都穿過它，清理、重新對應與重設成為 implementation 細節；對外提供已套 Metric Input 的 readiness 與 Copy／batch 使用的唯讀 operation snapshot。
 - **證據**：
@@ -135,7 +135,7 @@ Copy 與 batch export 共用同一條單頁流程。
   - 實際紀錄：Evidence-backed Decision（`0773cfb`）改了 17 個 src 檔，Weekly Overview（`104bec3`）改了 13 個。
   - `blankCommitment` 由 `next-actions-editor.ts` 出口給 `week-clone.ts` 與 `page-lifecycle.ts`，`blankMetric`、`blankOutcome` 同理，editor module 兼當 schema module。
   - Panel kind 的 dispatch 有 9 處、分在 8 個檔案；「Two-column 支援 table、chart、flow、checklist，不支援 fields」寫在 6 處。`export-readiness.ts` 的 panel switch 不窮舉：新 kind 若加進 `SUPPORTED_TWO_COLUMN_PANEL_KINDS` 卻漏改 switch，內容檢查會被靜默跳過。
-  - 曾有兩套 layout 判斷標準：`matchWeekPage` 看結構 guard，`isPageNumberVisible` 看原始字串；現已改為 `hasPageNumberSlot` 透過 `matchWeekPage` 分派，兩者不再分歧。
+  - 曾有兩套 layout 判斷標準：`matchWeekPage` 看結構 guard，`isPageNumberVisible` 看原始字串；現已改為 `hasPageNumberSlot` 透過 `matchPage` 分派，兩者不再分歧。
   - 空 table 是 parse error，空 chart、flow、checklist 卻是 Draft Page。
 - **收益**：locality，新版面集中在一個 module；分派點全受編譯器檢查；editor 不再兼 schema 出口；實作 spec-only 的 `fields` panel 時只動一處。
 - **既有決定**：與規格〈Module design〉按關注點切分（Readiness Module 隱藏各 layout 的 completeness 規則）衝突；只有確定還要新增 Structured Layout 時才值得重開。panel matcher 那一步不衝突。

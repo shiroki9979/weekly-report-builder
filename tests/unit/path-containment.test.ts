@@ -16,6 +16,12 @@ describe("isPathInside", () => {
     )
   })
 
+  it("accepts a name that merely starts with two dots", () => {
+    expect(isPathInside(decksDir, path.join(decksDir, "..notes.html"))).toBe(
+      true
+    )
+  })
+
   it("rejects the directory itself and paths that climb out", () => {
     expect(isPathInside(decksDir, decksDir)).toBe(false)
     expect(isPathInside(decksDir, path.resolve(decksDir, "../secret"))).toBe(
