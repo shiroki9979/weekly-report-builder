@@ -152,8 +152,8 @@ export function isStartSettled(
 
 // 起點未設定時，觀測沒有日期可掛；編輯中的輸入與 session 操作用同一句說明
 export function trendStartRequired(page: TrendTargetPage): string {
-  const { startLabel } = trendCadenceRule(page.cadence)
-  return `Set ${startLabel[0].toLowerCase()}${startLabel.slice(1)} before entering observations`
+  const { startPhrase } = trendCadenceRule(page.cadence)
+  return `Set ${startPhrase} before entering observations`
 }
 
 // 已輸入的觀測掛在已提交的起點上；待確認的日期與它不同時才算改日期提案，須經確認才套用
