@@ -48,7 +48,7 @@ export type EditingSession = {
   readonly createError: string | null
 }
 
-// 快照在執行期深度凍結；匯出流程沿用 WeekDocument 型別，誤寫會直接拋錯而不會改到快照
+// 快照在執行期深度凍結；匯出流程沿用 Deck 型別，誤寫會直接拋錯而不會改到快照
 export type SessionOperationSnapshot = Readonly<{
   deckId: string
   deck: Deck
@@ -370,7 +370,7 @@ export function writeMetricInput(
   const { deck, pageIndex } = requireMetric(session, location)
   const parsed = parseMetricInput(raw)
   const metricInput = writeMetricInputText(session.metricInput, location, raw)
-  const nextWeek =
+  const nextDeck =
     parsed.status === "invalid"
       ? deck
       : setDecisionMetricValue(
@@ -380,7 +380,7 @@ export function writeMetricInput(
           field,
           parsed.status === "empty" ? null : parsed.value
         )
-  return { ...session, deck: nextWeek, metricInput }
+  return { ...session, deck: nextDeck, metricInput }
 }
 
 export function moveSessionMetric(
