@@ -8,7 +8,6 @@ import { createBlankTrendTargetPage } from "@/lib/page-lifecycle"
 import {
   readTrendInput,
   setTrendCadence,
-  TREND_CADENCE_LOCKED,
   writeTrendInput,
 } from "@/lib/trend-session"
 import {
@@ -186,7 +185,7 @@ describe("Trend & Target cadence", () => {
     it("refuses once observations are entered", () => {
       expect(() =>
         setTrendCadence(sessionWith(monthly), "p01", "week")
-      ).toThrow(TREND_CADENCE_LOCKED)
+      ).toThrow("Clear entered observations before changing the cadence")
     })
 
     it("asks for the starting month before observations", () => {

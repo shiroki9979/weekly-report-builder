@@ -473,7 +473,7 @@ function trendObservationIssues(page: TrendTargetPage): ExportIssue[] {
     issues.push(
       invalid(
         "observations",
-        `Trend requires ${min} to ${max} ${trendCadenceRule(page.cadence).adjective.toLowerCase()} positions`
+        `Trend requires ${min} to ${max} ${trendCadenceRule(page.cadence).adjective} positions`
       )
     )
   page.observations.forEach((entry, index) => {

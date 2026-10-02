@@ -423,8 +423,8 @@ function TrendLegend({
         ) : null}
       </div>
       <p className="editorial-trend-range">
-        Observed {trendCadenceRule(page.cadence).noun}s: {page.start ?? "—"} –{" "}
-        {trendEndDate(page) ?? "—"}
+        Observed {trendCadenceRule(page.cadence).pluralNoun}:{" "}
+        {page.start ?? "—"} – {trendEndDate(page) ?? "—"}
       </p>
     </>
   )
@@ -481,7 +481,7 @@ function TrendSummary({ page }: { page: TrendTargetPage }) {
         <p className="editorial-trend-status">{latestStatus(page)}</p>
       </div>
       <div>
-        <p className="editorial-trend-label">{rule.adjective} target</p>
+        <p className="editorial-trend-label">{rule.titleAdjective} target</p>
         <p className="editorial-trend-value">
           {formatTrendTarget(page) ?? "—"}
         </p>

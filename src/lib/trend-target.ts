@@ -2,9 +2,13 @@ import type { TrendCadence, TrendTargetPage, UnmeasuredState } from "./deck"
 import { errorMessage } from "./error-message"
 import { withUnit } from "./unit-format"
 import {
+  addCalendarDays,
+  daysUntilMonday,
+  formatCalendarDate,
   isCalendarMonday,
   isFirstOfMonth,
   isIsoDateText,
+  parseCalendarDate,
 } from "./calendar-date"
 
 const DAYS_PER_WEEK = 7
@@ -29,13 +33,20 @@ const MONTH_ABBREVIATIONS = [
 ]
 
 type TrendCadenceRule = {
-  // 名詞與形容詞用於編輯器與投影片文案，例如 Add later week、Monthly target
+  // 文案依句中位置分小寫、首字大寫與複數，呼叫端直接取用，不各自改寫大小寫或補 s
   noun: string
+  pluralNoun: string
+  titleNoun: string
   adjective: string
+  titleAdjective: string
   startLabel: string
+  startPhrase: string
   startHint: string
+  startPrompt: string
   isPeriodStart: (value: string) => boolean
   advance: (date: Date, periods: number) => void
+  // 切換 cadence 時把既有起點移到新週期的起點
+  alignStart: (date: Date) => void
   axisLabel: (date: string) => string
 }
 
@@ -43,12 +54,18 @@ type TrendCadenceRule = {
 const TREND_CADENCE_RULES: Record<TrendCadence, TrendCadenceRule> = {
   week: {
     noun: "week",
-    adjective: "Weekly",
+    pluralNoun: "weeks",
+    titleNoun: "Week",
+    adjective: "weekly",
+    titleAdjective: "Weekly",
     startLabel: "Starting Monday",
+    startPhrase: "starting Monday",
     startHint: "Starting Monday must be a real calendar Monday",
+    startPrompt: "Set a Monday before entering values.",
     isPeriodStart: isCalendarMonday,
-    advance: (date, periods) =>
-      date.setUTCDate(date.getUTCDate() + DAYS_PER_WEEK * periods),
+    advance: (date, periods) => addCalendarDays(date, DAYS_PER_WEEK * periods),
+    // 當天或之後的第一個週一，不會把起點往前移到已過去的週
+    alignStart: (date) => addCalendarDays(date, daysUntilMonday(date)),
     // 軸上空間只夠放月／日，年份由下方的觀測範圍交代
     axisLabel: (date) => {
       const [, month, day] = date.split("-")
@@ -57,14 +74,21 @@ const TREND_CADENCE_RULES: Record<TrendCadence, TrendCadenceRule> = {
   },
   month: {
     noun: "month",
-    adjective: "Monthly",
+    pluralNoun: "months",
+    titleNoun: "Month",
+    adjective: "monthly",
+    titleAdjective: "Monthly",
     startLabel: "Starting month",
+    startPhrase: "starting month",
     startHint: "Starting month must be the first day of a calendar month",
+    startPrompt: "Set the first day of a month before entering values.",
     isPeriodStart: isFirstOfMonth,
     // 起點固定是 1 日，逐月前進不會遇到月底進位
     advance: (date, periods) => date.setUTCMonth(date.getUTCMonth() + periods),
+    alignStart: (date) => date.setUTCDate(1),
     // YYYY-MM 在圖框右緣會被裁切；只放月份縮寫，年份由下方的觀測範圍交代
-    axisLabel: (date) => MONTH_ABBREVIATIONS[Number(date.slice(5, 7)) - 1],
+    axisLabel: (date) =>
+      MONTH_ABBREVIATIONS[parseCalendarDate(date).getUTCMonth()],
   },
 }
 
@@ -83,9 +107,9 @@ export function observationDate(
   start: string,
   index: number
 ): string {
-  const date = new Date(`${start}T00:00:00Z`)
+  const date = parseCalendarDate(start)
   trendCadenceRule(cadence).advance(date, index)
-  const value = date.toISOString().slice(0, 10)
+  const value = formatCalendarDate(date)
   // 超出四位數年份時 toISOString 會改用 ±YYYYYY 格式，不再是合法的 ISO 日期
   if (!isIsoDateText(value))
     throw new Error("Trend range exceeds supported ISO dates")
@@ -138,16 +162,15 @@ export function trendEndDate(page: TrendTargetPage): string | null {
     : null
 }
 
-// 切換 cadence 時把起點對齊新週期：週 → 該月 1 日；月 → 當天或之後的第一個週一
+// 切換 cadence 時把起點對齊新週期；對齊後超出 ISO 日期範圍就視為未設定
 export function alignTrendStart(
   cadence: TrendCadence,
   start: string | null
 ): string | null {
   if (start === null) return null
-  if (cadence === "month") return `${start.slice(0, 7)}-01`
-  const date = new Date(`${start}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() + ((8 - date.getUTCDay()) % 7))
-  const value = date.toISOString().slice(0, 10)
+  const date = parseCalendarDate(start)
+  trendCadenceRule(cadence).alignStart(date)
+  const value = formatCalendarDate(date)
   return isIsoDateText(value) ? value : null
 }
 

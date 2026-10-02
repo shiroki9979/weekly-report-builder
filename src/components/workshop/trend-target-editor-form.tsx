@@ -132,14 +132,16 @@ function TrendCadenceControl({
         <SelectTrigger id="trend-cadence" aria-describedby="trend-cadence-hint">
           <SelectValue>
             {(value: string | null) =>
-              isTrendCadence(value) ? trendCadenceRule(value).adjective : value
+              isTrendCadence(value)
+                ? trendCadenceRule(value).titleAdjective
+                : value
             }
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {TREND_CADENCES.map((cadence) => (
             <SelectItem key={cadence} value={cadence}>
-              {trendCadenceRule(cadence).adjective}
+              {trendCadenceRule(cadence).titleAdjective}
             </SelectItem>
           ))}
         </SelectContent>
@@ -176,10 +178,8 @@ function TrendDateRangeControls({
         }
       />
       <p className="text-xs text-muted-foreground">
-        {page.cadence === "week"
-          ? "Set a Monday before entering values."
-          : "Set the first day of a month before entering values."}{" "}
-        Changing the date of entered {rule.noun}s requires confirmation.
+        {rule.startPrompt} Changing the date of entered {rule.pluralNoun}{" "}
+        requires confirmation.
       </p>
       {dateProposal && page.start && (
         <div
@@ -188,10 +188,11 @@ function TrendDateRangeControls({
           aria-label="Review date change"
         >
           <p>
-            Current observed {rule.noun}s: {proposedRange(page, page.start)}
+            Current observed {rule.pluralNoun}:{" "}
+            {proposedRange(page, page.start)}
           </p>
           <p>
-            Proposed observed {rule.noun}s: {dateProposal}
+            Proposed observed {rule.pluralNoun}: {dateProposal}
           </p>
           <div className="flex gap-2">
             <Button
@@ -227,7 +228,7 @@ function TrendObservationControls({
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-sm font-medium">
-        {rule.adjective} observations
+        {rule.titleAdjective} observations
       </legend>
       <div className="flex flex-wrap gap-2">
         {ENDPOINT_BUTTONS.map(({ action, label }) => (
@@ -246,7 +247,7 @@ function TrendObservationControls({
       </div>
       {page.observations.map((entry, index) => {
         const path = observationPath(index)
-        const position = `${rule.noun[0].toUpperCase()}${rule.noun.slice(1)} ${index + 1}`
+        const position = `${rule.titleNoun} ${index + 1}`
         const label = start
           ? `${position} · ${observationDate(page.cadence, start, index)}`
           : position
