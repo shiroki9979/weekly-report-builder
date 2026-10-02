@@ -2,7 +2,7 @@
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const ISO_DATE_LENGTH = "YYYY-MM-DD".length
 const MONDAY = 1
-const DAYS_PER_WEEK = 7
+export const DAYS_PER_WEEK = 7
 
 // 只檢查字面格式；超出四位數年份時 toISOString 會改用 ±YYYYYY，藉此判斷日期運算是否越界
 export function isIsoDateText(value: string): boolean {

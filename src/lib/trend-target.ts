@@ -3,6 +3,7 @@ import { errorMessage } from "./error-message"
 import { withUnit } from "./unit-format"
 import {
   addCalendarDays,
+  DAYS_PER_WEEK,
   daysUntilMonday,
   formatCalendarDate,
   isCalendarMonday,
@@ -11,7 +12,6 @@ import {
   parseCalendarDate,
 } from "./calendar-date"
 
-const DAYS_PER_WEEK = 7
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
 const AXIS_PADDING_RATIO = 0.1
 // 所有值相同時沒有自然範圍，至少撐開 1 個單位才畫得出刻度

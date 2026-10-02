@@ -3,20 +3,22 @@
 import type { DeckPeriod } from "./deck"
 import {
   addCalendarDays,
+  DAYS_PER_WEEK,
+  daysUntilMonday,
   formatCalendarDate,
   isCalendarMonday,
   parseCalendarDate,
 } from "./calendar-date"
 
 const MONDAY_TO_FRIDAY_DAYS = 4
-const DAYS_PER_WEEK = 7
 
 function parseMonday(value: string): Date {
-  if (!isCalendarMonday(value)) {
-    throw new Error(`Invalid date: ${value}`)
+  const date = parseCalendarDate(value)
+  if (daysUntilMonday(date) !== 0) {
+    throw new Error(`Not a Monday: ${value}`)
   }
 
-  return parseCalendarDate(value)
+  return date
 }
 
 export function weekRangeForMonday(monday: string): DeckPeriod {
@@ -35,8 +37,8 @@ export function latestWeekMonday(decks: string[]): string | null {
   return decks.filter(isCalendarMonday).at(-1) ?? null
 }
 
-// 有週次時開啟最新一週，維持改名前「打開就是本週週報」的行為；
-// 非週報 Deck 的 id 依字串排序會排在日期之後，直接取最後一份會跳過週報。沒有週次時才退回最後一份 Deck
+// 週報作者開啟 Workshop 多半是要編最新一週；非週報 Deck 的 id 依字串排序會排在日期之後，
+// 直接取最後一份會跳過週報。沒有週次時才退回最後一份 Deck
 export function defaultDeckId(deckIds: string[]): string | undefined {
   return latestWeekMonday(deckIds) ?? deckIds.at(-1)
 }
