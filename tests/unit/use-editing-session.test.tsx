@@ -60,6 +60,53 @@ async function renderWithPendingFailingSave() {
 }
 
 describe("useEditingSession", () => {
+  describe("deck url", () => {
+    it("opens the deck named in the url instead of the latest", async () => {
+      window.history.replaceState(null, "", `/?deck=${older}`)
+      const { result } = renderHook(() => useEditingSession(store()))
+
+      await openedWeek(result, older)
+    })
+
+    it("writes the default deck into the url without adding history", async () => {
+      const before = window.history.length
+      const { result } = renderHook(() => useEditingSession(store()))
+      await ready(result)
+
+      expect(window.location.search).toBe(`?deck=${latest}`)
+      expect(window.history.length).toBe(before)
+    })
+
+    it("pushes the selected deck into the url", async () => {
+      const { result } = renderHook(() => useEditingSession(store()))
+      await ready(result)
+
+      act(() => result.current.selectDeck(older))
+      await openedWeek(result, older)
+
+      expect(window.location.search).toBe(`?deck=${older}`)
+    })
+
+    it("reports a load error for an unknown deck in the url", async () => {
+      window.history.replaceState(null, "", "/?deck=missing")
+      const { result } = renderHook(() => useEditingSession(store()))
+
+      await until(() => result.current.loadStatus.kind === "error")
+    })
+
+    it("opens the previous deck on popstate", async () => {
+      const { result } = renderHook(() => useEditingSession(store()))
+      await ready(result)
+
+      window.history.replaceState(null, "", `/?deck=${older}`)
+      act(() => {
+        window.dispatchEvent(new PopStateEvent("popstate"))
+      })
+
+      await openedWeek(result, older)
+    })
+  })
+
   it("reports saving without an open week", async () => {
     const backend = new InMemoryWorkshopStore()
     const { result } = renderHook(() => useEditingSession(backend))

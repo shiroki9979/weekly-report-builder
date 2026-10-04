@@ -38,6 +38,7 @@ import {
   writeTrendInput,
   type TrendEditorControls,
 } from "@/lib/trend-session"
+import { readDeckIdFromUrl, withDeckId } from "@/lib/deck-url"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import {
@@ -98,7 +99,12 @@ export function useEditingSession(store: WorkshopStore): EditingSessionResult {
     sessionRef.current = next
     setSession(next)
   }, [])
-  const lifecycle = useDeckLifecycle(store, sessionRef, update)
+  const lifecycle = useDeckLifecycle(
+    store,
+    sessionRef,
+    update,
+    session.selectedDeckId
+  )
   const view = sessionView(session)
 
   // 指令直接寫在 hook 內：update 會讀 ref，交給一般函式組裝會被 React Compiler 視為 render 期間存取 ref
@@ -206,7 +212,8 @@ type DeckLifecycle = {
 function useDeckLifecycle(
   store: WorkshopStore,
   sessionRef: SessionRef,
-  update: SessionUpdate
+  update: SessionUpdate,
+  selectedDeckId: string
 ) {
   const openedDecks = useRef(0)
   const saves = useRef(0)
@@ -234,7 +241,35 @@ function useDeckLifecycle(
     (monday: string) => createAndOpenWeek(lifecycle, monday),
     [lifecycle]
   )
+  useDeckUrlSync(sessionRef, selectDeck, selectedDeckId)
   return { selectDeck, saveDeck, createWeek }
+}
+
+// Deck 選擇與網址雙向同步：選擇變動寫入網址（首次用 replace，避免多一筆無意義的歷史），上一頁／下一頁則回頭開啟對應 Deck
+function useDeckUrlSync(
+  sessionRef: SessionRef,
+  selectDeck: (deckId: string) => void,
+  selectedDeckId: string
+): void {
+  useEffect(() => {
+    if (!selectedDeckId) return
+    const current = readDeckIdFromUrl(window.location.search)
+    if (current === selectedDeckId) return
+    const url = withDeckId(new URL(window.location.href), selectedDeckId)
+    const write = current === null ? "replaceState" : "pushState"
+    window.history[write](null, "", url)
+  }, [selectedDeckId])
+
+  useEffect(() => {
+    const onPopState = () => {
+      const deckId =
+        readDeckIdFromUrl(window.location.search) ??
+        defaultDeckId(sessionRef.current.decks)
+      if (deckId) selectDeck(deckId)
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [sessionRef, selectDeck])
 }
 
 // 遞增自己的序號並記下相關序號；之後任一序號變動，代表結果已過期、不得寫回 Session
@@ -291,7 +326,9 @@ async function openInitialDeck(
     description: "list decks",
     resolved: (decks) => {
       update((current) => setSessionDecks(current, decks))
-      const initial = defaultDeckId(decks)
+      // 網址指定的 Deck 直接開啟；不存在時由載入失敗訊息明確呈現，而非靜默改開其他週
+      const initial =
+        readDeckIdFromUrl(window.location.search) ?? defaultDeckId(decks)
       if (initial) void openDeck(lifecycle, initial)
     },
     rejected: (cause) =>

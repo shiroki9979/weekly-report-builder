@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 目前選擇的 Deck 反映在網址 `?deck=<id>`：載入時開啟網址指定的 Deck（不存在時顯示載入錯誤，格式不合法視為未指定），切換或建立 Deck 會寫入網址，上一頁／下一頁會回到先前的 Deck。
+
 ### Changed
 
 - 文件 id 改為 Deck ID（小寫英數與連字號），不再限定週一日期；儲存、路由與 HTML Page 路徑只做這項路徑安全檢查。建新週與開啟時的預設週次只看週一日期 id（[#51](https://github.com/shiroki9979/weekly-report-builder/issues/51)）。
