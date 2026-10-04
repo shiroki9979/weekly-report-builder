@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 用語與儲存改為 Deck：`weeks/` → `decks/`（`seed:decks` 會在 `decks/` 不存在時自動搬移舊目錄，兩者並存時停止並請作者處理）、`/api/weeks` → `/api/decks`、`WEEKS_DIR` → `DECKS_DIR`、`seed:weeks` → `seed:decks`。Weekly Overview 改名為 Overview（layout id `overview`，舊 id 仍可讀取）。Workshop 的 Week 選單改稱 Deck；週報專屬的 New week 流程保留；它的入口仍在 Editing Session hook（建新週的進行中與錯誤狀態屬於 Session），Workshop 的 store 由 `deck-store.ts` 組合 `DeckStore` 與 `WeeklySeriesStore`（[#55](https://github.com/shiroki9979/weekly-report-builder/issues/55)）。
 - Stage 改由呼叫端明確傳入文件 id，HTML Page 不再從投影片上顯示的週次文字反推資源路徑；為週報與 slide 核心解耦的第一步（[ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)、[#50](https://github.com/shiroki9979/weekly-report-builder/issues/50)）。
 
+### Fixed
+
+- Two-column 外框內距改與 Editorial Frame 相同（上 4.4%、左右 5%、下 3.2%），主標下方間距由 2.4% 加大到 4.6%：主標不再緊貼內文，底部也不會留下比 Editorial 頁多一倍的空白，兩種版型混排時邊界一致。
+
 ### Security
 
 - dev server 與 store 檢查檔案是否位於 `decks/` 內時改比對相對路徑，`decks-evil/` 這類同名前綴的兄弟目錄不再被視為內部路徑；路徑安全不再只靠 Deck ID 格式。

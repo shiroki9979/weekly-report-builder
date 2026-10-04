@@ -52,19 +52,21 @@
   padding: 1.5rem;
 }
 
+/* 外框與 Editorial Frame 相同，兩種版型混排時翻頁的上下左右邊界不跳動 */
 .stage-slide {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 4.6% 5% 6.4%;
+  padding: 4.4% 5% 3.2%;
 }
 
+/* 主標到內文的距離對齊 Editorial 標題到本文（分隔線上下 1.8% + 2.8%），明顯大於項目間距，層次才分得開 */
 .stage-slide h1 {
   font-size: clamp(18px, 3.6cqw, 52px);
   font-weight: 700;
   color: var(--blue);
   letter-spacing: 0.01em;
-  margin: 0 0 2.4%;
+  margin: 0 0 4.6%;
   line-height: 1.15;
 }
 
