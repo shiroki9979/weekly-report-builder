@@ -85,13 +85,12 @@
   gap: 1.45em;
 }
 
-/* 採懸掛縮排（hanging indent）：小標與內文起始邊對齊主標題（5% 格線），圓點懸掛於左側間距 */
+/* 圓點對齊主標的起始邊（5% 格線），整個項目留在標題範圍內，不懸掛到左側內距 */
 .stage-item {
   display: grid;
   grid-template-columns: 0.55em 1fr;
   gap: 0.65em;
   align-items: start;
-  margin-left: -1.2em;
 }
 
 .stage-dot {

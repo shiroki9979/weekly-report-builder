@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Two-column 外框內距改與 Editorial Frame 相同（上 4.4%、左右 5%、下 3.2%），主標下方間距由 2.4% 加大到 4.6%：主標不再緊貼內文，底部也不會留下比 Editorial 頁多一倍的空白，兩種版型混排時邊界一致。
+- Two-column 項目不再懸掛縮排：圓點改從主標的起始邊開始，三個項目都留在標題範圍內，不再凸出到左側內距（取代 [#29](https://github.com/shiroki9979/weekly-report-builder/issues/29) 的懸掛縮排）。
 
 ### Security
 
