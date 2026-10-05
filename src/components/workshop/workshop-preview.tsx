@@ -253,7 +253,8 @@ function StageWithSpeakerNotes({
         collapsible
         collapsedSize="2.75rem"
         defaultSize="12rem"
-        minSize="2.75rem"
+        // 展開下限需高於收合高度，縮放時的百分比捨入誤差才會被吸附回收合尺寸。
+        minSize="6rem"
         groupResizeBehavior="preserve-pixel-size"
         onResize={notesPanel.syncCollapsed}
       >
