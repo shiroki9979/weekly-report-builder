@@ -236,10 +236,29 @@ function StageWithSpeakerNotes({
   notes: string | undefined
 }) {
   const notesPanel = useCollapsiblePanel()
+  const [notesLayout, setNotesLayout] = useState<{
+    position: "bottom" | "right"
+    defaultSize: string
+  }>({ position: "bottom", defaultSize: "12rem" })
+  const onRight = notesLayout.position === "right"
+
+  const togglePosition = () => {
+    const position = onRight ? "bottom" : "right"
+    setNotesLayout({
+      position,
+      defaultSize: notesPanel.collapsed
+        ? "2.75rem"
+        : position === "right"
+          ? "20rem"
+          : "12rem",
+    })
+  }
 
   return (
     <ResizablePanelGroup
-      orientation="vertical"
+      // 換方向時重新套用尺寸，避免沿用另一軸的比例而意外展開已收合的面板。
+      key={notesLayout.position}
+      orientation={onRight ? "horizontal" : "vertical"}
       className="h-auto min-h-0 flex-1"
       id="preview-speaker-notes"
     >
@@ -252,9 +271,9 @@ function StageWithSpeakerNotes({
         panelRef={notesPanel.panelRef}
         collapsible
         collapsedSize="2.75rem"
-        defaultSize="12rem"
+        defaultSize={notesLayout.defaultSize}
         // 展開下限需高於收合高度，縮放時的百分比捨入誤差才會被吸附回收合尺寸。
-        minSize="6rem"
+        minSize={onRight ? "12rem" : "6rem"}
         groupResizeBehavior="preserve-pixel-size"
         onResize={notesPanel.syncCollapsed}
       >
@@ -262,6 +281,8 @@ function StageWithSpeakerNotes({
           notes={notes}
           expanded={!notesPanel.collapsed}
           onToggle={notesPanel.toggle}
+          position={notesLayout.position}
+          onTogglePosition={togglePosition}
         />
       </ResizablePanel>
     </ResizablePanelGroup>

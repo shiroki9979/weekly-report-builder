@@ -54,6 +54,46 @@ describe("SpeakerNotesCue", () => {
   })
 
   describe("when a panel owner controls expansion", () => {
+    it("requests a position change without toggling expansion", async () => {
+      const user = userEvent.setup()
+      const onToggle = vi.fn()
+      const onTogglePosition = vi.fn()
+      const { rerender } = render(
+        <SpeakerNotesCue
+          notes="Cue body"
+          expanded={false}
+          onToggle={onToggle}
+          position="bottom"
+          onTogglePosition={onTogglePosition}
+        />
+      )
+
+      await user.click(
+        screen.getByRole("button", { name: "Move notes to right" })
+      )
+
+      expect(onTogglePosition).toHaveBeenCalledOnce()
+      expect(onToggle).not.toHaveBeenCalled()
+
+      rerender(
+        <SpeakerNotesCue
+          notes="Cue body"
+          expanded={false}
+          onToggle={onToggle}
+          position="right"
+          onTogglePosition={onTogglePosition}
+        />
+      )
+
+      expect(
+        screen.getByRole("button", { name: "Move notes below slide" })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Speaker notes" })
+      ).toHaveAttribute("aria-expanded", "false")
+      expect(screen.queryByText("Cue body")).not.toBeInTheDocument()
+    })
+
     it("only requests a toggle when clicked", async () => {
       const user = userEvent.setup()
       const onToggle = vi.fn()
