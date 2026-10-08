@@ -31,7 +31,12 @@ export function EditorialFrame({
       <div className="editorial-body">{children}</div>
       {context.showPageNumber && context.pageLabel ? (
         <footer className="editorial-page-number">{context.pageLabel}</footer>
-      ) : null}
+      ) : (
+        // 隱藏頁碼時保留同高的空列，本文不往下撐滿，貼進簡報範本時底部仍有留白
+        <footer className="editorial-page-number" aria-hidden="true">
+          {" "}
+        </footer>
+      )}
     </article>
   )
 }
