@@ -118,7 +118,9 @@ export function useEditingSession(store: WorkshopStore): EditingSessionResult {
     selectDeck: lifecycle.selectDeck,
     setSelectedPageIndex: (index) => {
       const page = view.deck?.pages[index]
-      if (page) update((current) => selectSessionPage(current, page.id))
+      if (!page) return
+      update((current) => selectSessionPage(current, page.id))
+      pushPageNumber(index + 1)
     },
     operationSnapshot: () => sessionOperationSnapshot(sessionRef.current),
     editContent: (change) =>
@@ -304,8 +306,8 @@ function useDeckUrlSync(
   }, [sessionRef, restoreLocation])
 }
 
-// 切換 Deck 才新增歷史（首次用 replace，避免多一筆無意義的歷史）；換頁只改寫目前這筆，
-// 方向鍵翻頁不會塞滿上一頁，回到先前的 Deck 時仍停在離開時的頁碼
+// 切換 Deck 新增歷史（首次用 replace，避免多一筆無意義的歷史）；同一 Deck 內只改寫目前這筆：
+// 載入補頁碼、超出範圍改寫與增刪移頁都不是翻頁，不該讓上一頁停在原地
 function writeDeckLocation({ deckId, pageNumber }: DeckLocation): void {
   const url = new URL(window.location.href)
   const currentDeckId = readDeckIdFromUrl(url.search)
@@ -319,6 +321,13 @@ function writeDeckLocation({ deckId, pageNumber }: DeckLocation): void {
   if (pageNumber === null) return
   if (readPageNumberFromUrl(url.search) === pageNumber) return
   window.history.replaceState(null, "", withPageNumber(url, pageNumber))
+}
+
+// 使用者翻頁才新增歷史，讓上一頁能逐頁往回；先寫入網址，同步 effect 看到相符就不再改寫
+function pushPageNumber(pageNumber: number): void {
+  const url = new URL(window.location.href)
+  if (readPageNumberFromUrl(url.search) === pageNumber) return
+  window.history.pushState(null, "", withPageNumber(url, pageNumber))
 }
 
 // 頁碼未指定或超出範圍時維持目前選擇，由網址同步改寫回實際頁碼

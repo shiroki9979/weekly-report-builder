@@ -150,14 +150,46 @@ describe("useEditingSession", () => {
       expect(window.location.search).toBe(`?deck=${latest}&page=1`)
     })
 
-    it("writes the selected page into the url without adding history", async () => {
+    it("pushes each selected page into the url history", async () => {
       const { result } = renderHook(() => useEditingSession(multiPageStore()))
       await ready(result)
       const before = window.history.length
 
+      act(() => result.current.setSelectedPageIndex(1))
       act(() => result.current.setSelectedPageIndex(2))
 
       expect(window.location.search).toBe(`?deck=${latest}&page=3`)
+      expect(window.history.length).toBe(before + 2)
+    })
+
+    it("does not add history when reselecting the current page", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+      const before = window.history.length
+
+      act(() => result.current.setSelectedPageIndex(0))
+
+      expect(window.history.length).toBe(before)
+    })
+
+    it("rewrites a page beyond the deck without adding history", async () => {
+      window.history.replaceState(null, "", `/?deck=${latest}&page=9`)
+      const before = window.history.length
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+
+      expect(window.location.search).toBe(`?deck=${latest}&page=1`)
+      expect(window.history.length).toBe(before)
+    })
+
+    it("follows a moved page without adding history", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+      const before = window.history.length
+
+      act(() => result.current.movePage("p01", "down"))
+
+      expect(window.location.search).toBe(`?deck=${latest}&page=2`)
       expect(window.history.length).toBe(before)
     })
 
