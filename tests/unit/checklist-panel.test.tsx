@@ -22,9 +22,7 @@ describe("ChecklistPanelView", () => {
 
     const items = screen.getAllByTestId("checklist-item")
     expect(items).toHaveLength(3)
-    expect(items[0]).toHaveTextContent(
-      "Scale diagnostics pass before rollout"
-    )
+    expect(items[0]).toHaveTextContent("Scale diagnostics pass before rollout")
     expect(items[0]).not.toHaveClass("checked")
     expect(items[1]).toHaveClass("checked")
     expect(items[2]).not.toHaveClass("checked")
