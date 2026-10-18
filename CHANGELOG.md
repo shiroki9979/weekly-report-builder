@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 目前選擇的 Deck 反映在網址 `?deck=<id>`：載入時開啟網址指定的 Deck（不存在時顯示載入錯誤，格式不合法視為未指定），切換或建立 Deck 會寫入網址，上一頁／下一頁會回到先前的 Deck。
+- 目前頁碼反映在網址 `?page=<n>`（從 1 起算）：載入時開啟網址指定的頁（超出範圍或格式不合法時開第一頁並改寫網址），換頁只改寫目前這筆歷史、不新增，切換 Deck 從第一頁開始；上一頁／下一頁回到先前的 Deck 時停在離開時的頁碼。
 
 ### Changed
 

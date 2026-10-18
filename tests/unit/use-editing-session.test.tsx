@@ -27,6 +27,25 @@ function store() {
   )
 }
 
+function multiPageWeek(monday: string): Deck {
+  return {
+    period: { start: monday, end: monday },
+    pages: ["p01", "p02", "p03"].map((id) => ({
+      ...createBlankEvidenceDecisionPage(id),
+      title: `${monday} ${id}`,
+    })),
+  }
+}
+
+function multiPageStore() {
+  return new InMemoryWorkshopStore(
+    new Map([
+      [older, multiPageWeek(older)],
+      [latest, multiPageWeek(latest)],
+    ])
+  )
+}
+
 type HookResult = { current: ReturnType<typeof useEditingSession> }
 
 async function ready(result: HookResult) {
@@ -35,6 +54,14 @@ async function ready(result: HookResult) {
 
 async function openedWeek(result: HookResult, monday: string) {
   await until(() => result.current.deck?.period?.start === monday)
+}
+
+// 模擬上一頁／下一頁：瀏覽器先換成目標網址，再發出 popstate
+function popTo(url: string) {
+  window.history.replaceState(null, "", url)
+  act(() => {
+    window.dispatchEvent(new PopStateEvent("popstate"))
+  })
 }
 
 // 開啟最新週後啟動一次 Save，Save 在 failSave 前保持進行中，之後以 "Disk full" 失敗
@@ -73,7 +100,7 @@ describe("useEditingSession", () => {
       const { result } = renderHook(() => useEditingSession(store()))
       await ready(result)
 
-      expect(window.location.search).toBe(`?deck=${latest}`)
+      expect(window.location.search).toBe(`?deck=${latest}&page=1`)
       expect(window.history.length).toBe(before)
     })
 
@@ -84,7 +111,7 @@ describe("useEditingSession", () => {
       act(() => result.current.selectDeck(older))
       await openedWeek(result, older)
 
-      expect(window.location.search).toBe(`?deck=${older}`)
+      expect(window.location.search).toBe(`?deck=${older}&page=1`)
     })
 
     it("reports a load error for an unknown deck in the url", async () => {
@@ -98,12 +125,82 @@ describe("useEditingSession", () => {
       const { result } = renderHook(() => useEditingSession(store()))
       await ready(result)
 
-      window.history.replaceState(null, "", `/?deck=${older}`)
-      act(() => {
-        window.dispatchEvent(new PopStateEvent("popstate"))
-      })
+      popTo(`/?deck=${older}`)
 
       await openedWeek(result, older)
+    })
+  })
+
+  describe("page url", () => {
+    it("opens the page named in the url", async () => {
+      window.history.replaceState(null, "", `/?deck=${latest}&page=2`)
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+
+      expect(result.current.selectedPageIndex).toBe(1)
+      expect(window.location.search).toBe(`?deck=${latest}&page=2`)
+    })
+
+    it("falls back to the first page for a page beyond the deck", async () => {
+      window.history.replaceState(null, "", `/?deck=${latest}&page=9`)
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+
+      expect(result.current.selectedPageIndex).toBe(0)
+      expect(window.location.search).toBe(`?deck=${latest}&page=1`)
+    })
+
+    it("writes the selected page into the url without adding history", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+      const before = window.history.length
+
+      act(() => result.current.setSelectedPageIndex(2))
+
+      expect(window.location.search).toBe(`?deck=${latest}&page=3`)
+      expect(window.history.length).toBe(before)
+    })
+
+    it("starts a newly selected deck on its first page", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+      act(() => result.current.setSelectedPageIndex(2))
+
+      act(() => result.current.selectDeck(older))
+      await openedWeek(result, older)
+
+      expect(result.current.selectedPageIndex).toBe(0)
+      expect(window.location.search).toBe(`?deck=${older}&page=1`)
+    })
+
+    it("restores the deck and page of a previous entry on popstate", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+
+      popTo(`/?deck=${older}&page=3`)
+      await openedWeek(result, older)
+
+      expect(result.current.selectedPageIndex).toBe(2)
+    })
+
+    it("selects the page of a popped entry within the same deck", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+
+      popTo(`/?deck=${latest}&page=2`)
+
+      expect(result.current.selectedPageIndex).toBe(1)
+    })
+
+    it("rewrites a popped page beyond the same deck to the current page", async () => {
+      const { result } = renderHook(() => useEditingSession(multiPageStore()))
+      await ready(result)
+      act(() => result.current.setSelectedPageIndex(1))
+
+      popTo(`/?deck=${latest}&page=9`)
+
+      expect(result.current.selectedPageIndex).toBe(1)
+      expect(window.location.search).toBe(`?deck=${latest}&page=2`)
     })
   })
 

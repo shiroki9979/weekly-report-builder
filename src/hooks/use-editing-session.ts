@@ -38,7 +38,12 @@ import {
   writeTrendInput,
   type TrendEditorControls,
 } from "@/lib/trend-session"
-import { readDeckIdFromUrl, withDeckId } from "@/lib/deck-url"
+import {
+  readDeckIdFromUrl,
+  readPageNumberFromUrl,
+  withDeckId,
+  withPageNumber,
+} from "@/lib/deck-url"
 import { errorMessage } from "@/lib/error-message"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import {
@@ -99,13 +104,13 @@ export function useEditingSession(store: WorkshopStore): EditingSessionResult {
     sessionRef.current = next
     setSession(next)
   }, [])
+  const view = sessionView(session)
   const lifecycle = useDeckLifecycle(
     store,
     sessionRef,
     update,
-    session.selectedDeckId
+    sessionLocation(session)
   )
-  const view = sessionView(session)
 
   // 指令直接寫在 hook 內：update 會讀 ref，交給一般函式組裝會被 React Compiler 視為 render 期間存取 ref
   return {
@@ -199,7 +204,22 @@ function sessionView(
   }
 }
 
+// 頁碼對應 Workshop 導覽列的計數（含 Hidden Page），不是 Stage 上的 Page Position
+function sessionLocation(session: EditingSession): DeckLocation {
+  const { selectedDeckId, deck, selectedPageIndex } = sessionView(session)
+  return {
+    deckId: selectedDeckId,
+    pageNumber: deck ? selectedPageIndex + 1 : null,
+  }
+}
+
 type Sequence = { current: number }
+
+// pageNumber 從 1 起算；Deck 尚未載入完成時為 null，代表頁碼未知
+type DeckLocation = {
+  deckId: string
+  pageNumber: number | null
+}
 
 type DeckLifecycle = {
   store: WorkshopStore
@@ -213,7 +233,7 @@ function useDeckLifecycle(
   store: WorkshopStore,
   sessionRef: SessionRef,
   update: SessionUpdate,
-  selectedDeckId: string
+  location: DeckLocation
 ) {
   const openedDecks = useRef(0)
   const saves = useRef(0)
@@ -241,35 +261,74 @@ function useDeckLifecycle(
     (monday: string) => createAndOpenWeek(lifecycle, monday),
     [lifecycle]
   )
-  useDeckUrlSync(sessionRef, selectDeck, selectedDeckId)
+  const restoreLocation = useCallback(
+    ({ deckId, pageNumber }: DeckLocation) => {
+      if (deckId !== sessionRef.current.selectedDeckId) {
+        void openDeck(lifecycle, deckId, pageNumber)
+        return
+      }
+      update((current) => selectPageNumber(current, pageNumber))
+      // 頁碼超出範圍時 Session 不變、同步 effect 不會重跑，需直接改寫回實際頁碼
+      writeDeckLocation(sessionLocation(sessionRef.current))
+    },
+    [lifecycle, sessionRef, update]
+  )
+  useDeckUrlSync(sessionRef, restoreLocation, location)
   return { selectDeck, saveDeck, createWeek }
 }
 
-// Deck 選擇與網址雙向同步：選擇變動寫入網址（首次用 replace，避免多一筆無意義的歷史），上一頁／下一頁則回頭開啟對應 Deck
+// 網址是 Deck 與頁碼的可分享狀態，也承載瀏覽器歷史：選擇變動要寫回，上一頁／下一頁要還原
 function useDeckUrlSync(
   sessionRef: SessionRef,
-  selectDeck: (deckId: string) => void,
-  selectedDeckId: string
+  restoreLocation: (location: DeckLocation) => void,
+  { deckId, pageNumber }: DeckLocation
 ): void {
   useEffect(() => {
-    if (!selectedDeckId) return
-    const current = readDeckIdFromUrl(window.location.search)
-    if (current === selectedDeckId) return
-    const url = withDeckId(new URL(window.location.href), selectedDeckId)
-    const write = current === null ? "replaceState" : "pushState"
-    window.history[write](null, "", url)
-  }, [selectedDeckId])
+    if (deckId) writeDeckLocation({ deckId, pageNumber })
+  }, [deckId, pageNumber])
 
   useEffect(() => {
     const onPopState = () => {
-      const deckId =
-        readDeckIdFromUrl(window.location.search) ??
-        defaultDeckId(sessionRef.current.decks)
-      if (deckId) selectDeck(deckId)
+      const search = window.location.search
+      const target =
+        readDeckIdFromUrl(search) ?? defaultDeckId(sessionRef.current.decks)
+      if (target) {
+        restoreLocation({
+          deckId: target,
+          pageNumber: readPageNumberFromUrl(search),
+        })
+      }
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
-  }, [sessionRef, selectDeck])
+  }, [sessionRef, restoreLocation])
+}
+
+// 切換 Deck 才新增歷史（首次用 replace，避免多一筆無意義的歷史）；換頁只改寫目前這筆，
+// 方向鍵翻頁不會塞滿上一頁，回到先前的 Deck 時仍停在離開時的頁碼
+function writeDeckLocation({ deckId, pageNumber }: DeckLocation): void {
+  const url = new URL(window.location.href)
+  const currentDeckId = readDeckIdFromUrl(url.search)
+  if (currentDeckId !== deckId) {
+    // 新 Deck 尚未載入時移除舊頁碼，避免殘留上一個 Deck 的頁碼
+    const next = withPageNumber(withDeckId(url, deckId), pageNumber)
+    const write = currentDeckId === null ? "replaceState" : "pushState"
+    window.history[write](null, "", next)
+    return
+  }
+  if (pageNumber === null) return
+  if (readPageNumberFromUrl(url.search) === pageNumber) return
+  window.history.replaceState(null, "", withPageNumber(url, pageNumber))
+}
+
+// 頁碼未指定或超出範圍時維持目前選擇，由網址同步改寫回實際頁碼
+function selectPageNumber(
+  session: EditingSession,
+  pageNumber: number | null
+): EditingSession {
+  const page =
+    pageNumber === null ? undefined : session.deck?.pages[pageNumber - 1]
+  return page ? selectSessionPage(session, page.id) : session
 }
 
 // 遞增自己的序號並記下相關序號；之後任一序號變動，代表結果已過期、不得寫回 Session
@@ -327,9 +386,11 @@ async function openInitialDeck(
     resolved: (decks) => {
       update((current) => setSessionDecks(current, decks))
       // 網址指定的 Deck 直接開啟；不存在時由載入失敗訊息明確呈現，而非靜默改開其他週
-      const initial =
-        readDeckIdFromUrl(window.location.search) ?? defaultDeckId(decks)
-      if (initial) void openDeck(lifecycle, initial)
+      const search = window.location.search
+      const initial = readDeckIdFromUrl(search) ?? defaultDeckId(decks)
+      if (initial) {
+        void openDeck(lifecycle, initial, readPageNumberFromUrl(search))
+      }
     },
     rejected: (cause) =>
       update((current) =>
@@ -343,14 +404,18 @@ async function openInitialDeck(
 
 async function openDeck(
   lifecycle: DeckLifecycle,
-  deckId: string
+  deckId: string,
+  pageNumber: number | null = null
 ): Promise<void> {
   const { store, update } = lifecycle
   const isLatest = claimLatest(lifecycle.openedDecks)
   update((current) => beginSessionOpen(current, deckId))
   await whenLatest(isLatest, () => store.loadDeck(deckId), {
     description: `load deck ${deckId}`,
-    resolved: (deck) => update((current) => finishSessionOpen(current, deck)),
+    resolved: (deck) =>
+      update((current) =>
+        selectPageNumber(finishSessionOpen(current, deck), pageNumber)
+      ),
     rejected: (cause) =>
       update((current) =>
         failSessionOpen(
