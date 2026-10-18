@@ -34,11 +34,11 @@ test("adds a page, saves it, and reloads the same draft", async ({ page }) => {
   await page.getByRole("button", { name: "Save" }).click()
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
 
+  // 網址帶著 Deck 與頁碼，重新整理後直接回到剛存的草稿頁
   await page.reload()
-  await selectFitTableWeek(page)
+  await expect(page.getByRole("heading", { name: "Saved draft" })).toBeVisible()
+  await expect(page).toHaveURL(/\?deck=2026-08-24&page=2$/)
   await unlockEditor(page)
-  await page.getByRole("combobox", { name: "Page", exact: true }).click()
-  await page.getByRole("option", { name: "Saved draft" }).click()
   await expect(
     page.getByRole("textbox", { name: "Title", exact: true })
   ).toHaveValue("Saved draft")
