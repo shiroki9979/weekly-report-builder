@@ -1,9 +1,9 @@
-import { validateHtmlFileName } from "./html-page"
+import { validateHtmlFileName } from "./html-page.ts"
 import {
   isTrendCadence,
   isTrendDirection,
   trendDatingError,
-} from "./trend-target"
+} from "./trend-target.ts"
 
 export type SlideItem = {
   heading: string

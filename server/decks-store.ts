@@ -1,17 +1,17 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import { createDeckFromTemplate } from "../src/lib/deck-template"
+import { createDeckFromTemplate } from "../src/lib/deck-template.ts"
 import {
   isHtmlPage,
   parseDeck,
   type DeckPeriod,
   type Deck,
-} from "../src/lib/deck"
-import { isDeckId } from "../src/lib/deck-id"
-import { planWeekFromPrevious } from "../src/lib/weekly-series"
-import { listDeckIds, serializeDeck } from "../src/lib/decks-io"
-import { isPathInside } from "./path-containment"
+} from "../src/lib/deck.ts"
+import { isDeckId } from "../src/lib/deck-id.ts"
+import { planWeekFromPrevious } from "../src/lib/weekly-series.ts"
+import { listDeckIds, serializeDeck } from "../src/lib/decks-io.ts"
+import { isPathInside } from "./path-containment.ts"
 
 // dev server 依型別而非訊息字串對應 409，避免改文案就改變 HTTP 語意
 export class DeckAlreadyExistsError extends Error {

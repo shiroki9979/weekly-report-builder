@@ -1,6 +1,6 @@
 // 週報流程：週次以週一日期當 Deck ID、期間固定週一到週五、新週以最新一週為範本。
 // 通用的清空與建立規則在 deck-template，這裡只放週次專屬的日期規則
-import type { DeckPeriod } from "./deck"
+import type { DeckPeriod } from "./deck.ts"
 import {
   addCalendarDays,
   DAYS_PER_WEEK,
@@ -8,7 +8,7 @@ import {
   formatCalendarDate,
   isCalendarMonday,
   parseCalendarDate,
-} from "./calendar-date"
+} from "./calendar-date.ts"
 
 const MONDAY_TO_FRIDAY_DAYS = 4
 

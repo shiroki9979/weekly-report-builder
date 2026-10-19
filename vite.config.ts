@@ -7,16 +7,16 @@ import type { IncomingMessage, ServerResponse } from "node:http"
 import type { Plugin, Connect } from "vite"
 import { defineConfig } from "vite"
 
-import { parseDeck } from "./src/lib/deck"
-import { validateHtmlFileName } from "./src/lib/html-page"
-import { DECK_ID_SOURCE, isDeckId } from "./src/lib/deck-id"
+import { parseDeck } from "./src/lib/deck.ts"
+import { validateHtmlFileName } from "./src/lib/html-page.ts"
+import { DECK_ID_SOURCE, isDeckId } from "./src/lib/deck-id.ts"
 import {
   listDecksInDirectory,
   writeDeckFile,
   createWeekFromPrevious,
   DeckAlreadyExistsError,
-} from "./server/decks-store"
-import { isPathInside } from "./server/path-containment"
+} from "./server/decks-store.ts"
+import { isPathInside } from "./server/path-containment.ts"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const decksDir = path.resolve(

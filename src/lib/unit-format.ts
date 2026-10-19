@@ -1,4 +1,4 @@
-import type { MetricFormat } from "./metric-format"
+import type { MetricFormat } from "./metric-format.ts"
 
 type UnitFormat = Pick<MetricFormat, "unit" | "unitPosition" | "unitSpacing">
 

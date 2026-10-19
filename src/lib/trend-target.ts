@@ -1,6 +1,6 @@
-import type { TrendCadence, TrendTargetPage, UnmeasuredState } from "./deck"
-import { errorMessage } from "./error-message"
-import { withUnit } from "./unit-format"
+import type { TrendCadence, TrendTargetPage, UnmeasuredState } from "./deck.ts"
+import { errorMessage } from "./error-message.ts"
+import { withUnit } from "./unit-format.ts"
 import {
   addCalendarDays,
   DAYS_PER_WEEK,
@@ -10,7 +10,7 @@ import {
   isFirstOfMonth,
   isIsoDateText,
   parseCalendarDate,
-} from "./calendar-date"
+} from "./calendar-date.ts"
 
 // 上下各留 10% 空白，避免端點與目標線貼齊圖框
 const AXIS_PADDING_RATIO = 0.1

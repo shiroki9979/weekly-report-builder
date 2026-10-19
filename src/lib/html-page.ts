@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify"
 
-import { isDeckId } from "./deck-id"
+import { isDeckId } from "./deck-id.ts"
 
 export function validateHtmlFileName(fileName: string): void {
   if (typeof fileName !== "string") {

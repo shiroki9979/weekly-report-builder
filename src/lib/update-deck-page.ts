@@ -1,4 +1,4 @@
-import type { Deck, Page } from "./deck"
+import type { Deck, Page } from "./deck.ts"
 
 type PageUpdater<T extends Page> = (page: T) => T
 

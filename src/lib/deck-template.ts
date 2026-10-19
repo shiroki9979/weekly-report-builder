@@ -6,8 +6,8 @@ import {
   type Panel,
   type Deck,
   type Page,
-} from "./deck"
-import { blankCommitment } from "./next-actions-editor"
+} from "./deck.ts"
+import { blankCommitment } from "./next-actions-editor.ts"
 
 function clearPanel(panel: Panel): Panel {
   switch (panel.kind) {

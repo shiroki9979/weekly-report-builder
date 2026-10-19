@@ -6,8 +6,8 @@ import {
   type Commitment,
   type NextActionsVariant,
   type Deck,
-} from "./deck"
-import { typedPageUpdater } from "./update-deck-page"
+} from "./deck.ts"
+import { typedPageUpdater } from "./update-deck-page.ts"
 
 const updateNextActions = typedPageUpdater(
   isNextActionsPage,

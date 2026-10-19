@@ -1,5 +1,5 @@
-import type { Deck } from "./deck"
-import { DECK_ID_SOURCE } from "./deck-id"
+import type { Deck } from "./deck.ts"
+import { DECK_ID_SOURCE } from "./deck-id.ts"
 
 const DECK_FILE_NAME = new RegExp(`^(${DECK_ID_SOURCE})\\.json$`)
 
