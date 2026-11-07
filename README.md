@@ -1,7 +1,7 @@
 # weekly-report-builder
 
 Created: 2026-08-31
-Last updated: 2026-11-07
+Last updated: 2026-11-08
 
 Personal slide workshop: edit a deck in a form, preview slides at 16:9, export PNGs, and paste them into the team’s shared deck. The weekly report is the built-in workflow; other decks work the same way ([ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)). Solo use only.
 
@@ -38,7 +38,7 @@ Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and 
 
 If `decks/` exists but has no decks, remove that empty directory and run `pnpm seed:decks`. The Workshop will not create a first deck for you.
 
-The public fictional Demo Deck Set opens in the Workshop on a fresh install. Select **harbor-forecast** to see the Observatory Cover, Overview, Side-by-side Comparison, Full-width Panel table with a reference column, and Closing. In **2026-01-05**, pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows longer Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
+The public fictional Demo Deck Set opens in the Workshop on a fresh install. It ships one Deck per Deck Theme, and each Deck shows every layout: **2026-01-05** is the `default` weekly report (twelve pages, including Trend & Target in both target directions with a missing final week, Next Actions in Columns and in Rows, a chart and a checklist panel), and **harbor-forecast** is the Observatory pilot review (ten pages, including a Full-width Panel table with a reference column, a flow panel, and an HTML Page that follows the theme through colour roles). See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 

@@ -33,6 +33,17 @@ const titledCoverAndClosing = parseDeck({
   ],
 })
 
+// 規格列出的 Editorial Frame 版型；Cover、HTML Page 與 Two-column 不帶 Boundary Note
+const EDITORIAL_FRAME_LAYOUTS = [
+  "overview",
+  "evidence-decision",
+  "next-actions",
+  "trend-target",
+  "closing",
+  "side-by-side",
+  "full-width-panel",
+]
+
 function structured(page: Page) {
   if (!isStructuredPage(page)) throw new Error("Expected Structured Page")
   return page
@@ -75,14 +86,8 @@ describe("Cover and Closing contracts", () => {
       })),
     })
 
-    const editorial = [
-      "overview",
-      "evidence-decision",
-      "next-actions",
-      "trend-target",
-    ]
     for (const page of deck.pages) {
-      if (editorial.includes(page.layout))
+      if (EDITORIAL_FRAME_LAYOUTS.includes(page.layout))
         expect(page).toHaveProperty("boundary", "Fictional sample only.")
       else expect(page).not.toHaveProperty("boundary")
     }
@@ -238,7 +243,11 @@ describe("Cover and Closing contracts", () => {
 
     const reused = createDeckFromTemplate({
       ...demo,
-      pages: demo.pages.map((page) => ({ ...page, boundary: "Old caveat" })),
+      pages: demo.pages.map((page) =>
+        EDITORIAL_FRAME_LAYOUTS.includes(page.layout)
+          ? { ...page, boundary: "Old caveat" }
+          : page
+      ),
     })
 
     expect(reused.pages.every((page) => page.boundary === undefined)).toBe(true)

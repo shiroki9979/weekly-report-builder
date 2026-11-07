@@ -52,7 +52,7 @@ async function fitsPreview(page: Page, width: number, height: number) {
 
 // 同頁 Trend 文字的 clamp 下限；圖表若被剩餘高度等比壓縮，軸字會先低於此值
 const MIN_TREND_TEXT_PX = 9
-const TREND_DEMO_PAGES = new Set<number>([6, 7, 8])
+const TREND_DEMO_PAGES = new Set<number>([5, 6])
 
 async function expectReadableFullWidthChart(page: Page) {
   const chart = page
@@ -94,7 +94,7 @@ async function expectChartSettledAtFullWidth(page: Page) {
 test("fresh public demo opens both directions and both Next Actions compositions", async ({
   page,
 }) => {
-  // 六頁都做真實 PNG 擷取，完整旅程會超過一般 e2e 的 45 秒上限。
+  // 四頁都做真實 PNG 擷取，完整旅程會超過一般 e2e 的 45 秒上限。
   test.slow()
   await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
   await page.goto("/?deck=2026-01-05")
@@ -102,12 +102,10 @@ test("fresh public demo opens both directions and both Next Actions compositions
     "2026-01-05"
   )
   for (const [number, required] of [
-    [4, "Next Actions"],
-    [6, "Exact: 8.04 s > 8 s"],
-    [7, "Target met"],
-    [8, "No data"],
-    [9, "Action & intended outcome"],
-    [10, "schema review"],
+    [5, "Exact: 8.04 s > 8 s"],
+    [6, "No data"],
+    [10, "Next Actions"],
+    [11, "Action & intended outcome"],
   ] as const) {
     await selectPage(page, number)
     const stage = page.getByTestId("stage-frame")
@@ -139,7 +137,7 @@ test("fresh public demo opens both directions and both Next Actions compositions
       bytes
     )
   }
-  await selectPage(page, 8)
+  await selectPage(page, 6)
   await expect(
     page.getByTestId("stage-frame").getByText("Latest week · 2026-01-05")
   ).toBeVisible()
@@ -159,7 +157,7 @@ test("dated missing history survives next-week trim, append, save, reload, and P
   })
   await page.goto("/?deck=2026-01-05")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
-  await selectPage(page, 6)
+  await selectPage(page, 5)
   await expect(
     page.getByRole("button", { name: "Add later week" })
   ).toBeDisabled()
@@ -170,11 +168,11 @@ test("dated missing history survives next-week trim, append, save, reload, and P
   expect(duplicateKeyWarnings).toEqual([])
   await page.getByRole("combobox", { name: "Page", exact: true }).click()
   await expect(
-    page.getByRole("option", { name: "p06", exact: true })
+    page.getByRole("option", { name: "p05", exact: true })
   ).toBeVisible()
   await page.keyboard.press("Escape")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
-  await selectPage(page, 6)
+  await selectPage(page, 5)
   await expect(
     page.getByRole("textbox", { name: "Title", exact: true })
   ).toHaveValue("")
@@ -207,16 +205,16 @@ test("dated missing history survives next-week trim, append, save, reload, and P
   await page.getByRole("button", { name: "Save" }).click()
   await expect(page.getByText("Saved", { exact: true })).toBeVisible()
   await page.reload()
-  await selectPage(page, 6)
+  await selectPage(page, 5)
   await expect(stage.getByText("Exact: 8.02 s > 8 s")).toBeVisible()
   const download = page.waitForEvent("download", {
-    predicate: (item) => item.suggestedFilename() === "2026-01-12-p06.png",
+    predicate: (item) => item.suggestedFilename() === "2026-01-12-p05.png",
   })
   await page.getByRole("button", { name: "Download PNGs" }).click()
   const bytes = await readFile(await (await download).path())
   expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
   expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([2560, 1440])
-  fs.writeFileSync(test.info().outputPath("next-week-p06.png"), bytes)
+  fs.writeFileSync(test.info().outputPath("next-week-p05.png"), bytes)
 })
 
 test("blocks a Trend page whose text leaves no room for the full-width chart", async ({
@@ -224,7 +222,7 @@ test("blocks a Trend page whose text leaves no room for the full-width chart", a
 }) => {
   await page.goto("/?deck=2026-01-05")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
-  await selectPage(page, 6)
+  await selectPage(page, 5)
   await page
     .getByRole("textbox", { name: "Interpretation" })
     .fill("The latest sample is still above the inclusive ceiling. ".repeat(12))

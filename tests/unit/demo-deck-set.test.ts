@@ -1,171 +1,213 @@
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { serializeDeck } from "@/lib/decks-io"
 import { assessExportEligibility } from "@/lib/export-readiness"
+import { ADDABLE_PANEL_KINDS } from "@/lib/page-lifecycle"
 
 import {
+  DECK_THEMES,
   isHtmlPage,
   isNextActionsPage,
   isTrendTargetPage,
   parseDeck,
+  type Deck,
   type NextActionsPage,
   type Page,
+  type SlideLayout,
+  type TrendTargetPage,
 } from "@/lib/deck"
 
 const demoDir = resolve(import.meta.dirname, "../../demo")
-const week = parseDeck(
-  JSON.parse(readFileSync(resolve(demoDir, "2026-01-05.json"), "utf8"))
-)
+
+type DemoDeck = { id: string; raw: unknown; deck: Deck }
+
+const demoDecks: DemoDeck[] = readdirSync(demoDir)
+  .filter((name) => name.endsWith(".json"))
+  .sort()
+  .map((name) => {
+    const raw = JSON.parse(readFileSync(resolve(demoDir, name), "utf8"))
+    return { id: name.replace(/\.json$/, ""), raw, deck: parseDeck(raw) }
+  })
+
+const week = demoDecks.find((entry) => entry.id === "2026-01-05")!.deck
+const harbor = demoDecks.find((entry) => entry.id === "harbor-forecast")!.deck
+
+// Record 讓新增 layout 時型別檢查強制把它加進示範涵蓋
+const EVERY_LAYOUT: Record<SlideLayout, true> = {
+  cover: true,
+  overview: true,
+  "evidence-decision": true,
+  "side-by-side": true,
+  "trend-target": true,
+  "two-column": true,
+  "full-width-panel": true,
+  html: true,
+  "next-actions": true,
+  closing: true,
+}
+const ALL_LAYOUTS = Object.keys(EVERY_LAYOUT).sort()
 
 const CJK = /[一-鿿]/u
 const LATIN = /[A-Za-z]/
 
-function pageAt<T extends Page>(
-  index: number,
+function pagesOf<T extends Page>(
+  deck: Deck,
   hasLayout: (page: Page) => page is T
-): T {
-  const page = week.pages[index]
-  if (!page || !hasLayout(page))
-    throw new Error(`Unexpected demo layout at page ${index + 1}`)
-  return page
+): T[] {
+  return deck.pages.filter(hasLayout)
 }
 
-function measuredValues(index: number): number[] {
-  return pageAt(index, isTrendTargetPage).observations.flatMap((entry) =>
+function measuredValues(page: TrendTargetPage): number[] {
+  return page.observations.flatMap((entry) =>
     entry.state === "measured" ? [entry.value] : []
   )
 }
 
 describe("Demo Deck Set", () => {
-  it("saves the Harbor Deck without reordering any field", () => {
-    const raw = JSON.parse(
-      readFileSync(resolve(demoDir, "harbor-forecast.json"), "utf8")
-    )
+  it("ships exactly one Deck per Deck Theme", () => {
+    const themes = demoDecks.map((entry) => entry.deck.theme ?? "default")
 
-    const saved = JSON.parse(serializeDeck(parseDeck(raw)))
-
-    expect(JSON.stringify(saved)).toBe(JSON.stringify(raw))
+    expect(themes.sort()).toEqual([...DECK_THEMES].sort())
   })
 
-  it("ships a complete fictional Observatory Deck with all four new layouts", () => {
-    const harbor = parseDeck(
-      JSON.parse(readFileSync(resolve(demoDir, "harbor-forecast.json"), "utf8"))
-    )
-
-    expect(harbor.theme).toBe("observatory")
-    expect(harbor.title).toBe("Harbor Forecast · Pilot review")
-    expect(harbor.pages.map((page) => page.layout)).toEqual([
-      "cover",
-      "overview",
-      "side-by-side",
-      "full-width-panel",
-      "closing",
-    ])
-    for (const page of harbor.pages) {
-      expect(assessExportEligibility(page, { status: "fit" })).toEqual({
-        eligible: true,
-        issues: [],
+  it("shows every layout in every Deck", () => {
+    for (const { id, deck } of demoDecks) {
+      const layouts = [...new Set(deck.pages.map((page) => page.layout))]
+      expect({ id, layouts: layouts.sort() }).toEqual({
+        id,
+        layouts: ALL_LAYOUTS,
       })
     }
-    expect(JSON.stringify(harbor)).not.toMatch(CJK)
   })
 
-  it("covers the reporting week with its original layouts in order", () => {
-    expect(week.period!.start).toBe("2026-01-05")
-    expect(week.period!.end).toBe("2026-01-09")
-    expect(week.pages.map((page) => page.layout)).toEqual([
-      "two-column",
-      "overview",
-      "evidence-decision",
-      "next-actions",
-      "html",
-      "trend-target",
-      "trend-target",
-      "trend-target",
-      "next-actions",
-      "next-actions",
-    ])
+  it("shows every addable panel kind at least once across the set", () => {
+    const kinds = demoDecks.flatMap(({ deck }) =>
+      deck.pages.flatMap((page) =>
+        "panel" in page && page.panel && typeof page.panel === "object"
+          ? [(page.panel as { kind: string }).kind]
+          : []
+      )
+    )
+
+    expect([...new Set(kinds)].sort()).toEqual([...ADDABLE_PANEL_KINDS].sort())
+  })
+
+  it("saves every Deck without reordering any field", () => {
+    for (const { raw, deck } of demoDecks) {
+      const saved = JSON.parse(serializeDeck(deck))
+
+      expect(JSON.stringify(saved)).toBe(JSON.stringify(raw))
+    }
+  })
+
+  it("ships every page export-eligible once it fits", () => {
+    for (const { deck } of demoDecks) {
+      for (const page of deck.pages) {
+        expect(assessExportEligibility(page, { status: "fit" })).toEqual({
+          eligible: true,
+          issues: [],
+        })
+      }
+    }
+  })
+
+  // 公開 demo 的文案統一為英文（3dd5336）；中英混排的版面覆蓋由 e2e fixture 負責
+  it("ships English-only copy so the public demo reads consistently", () => {
+    for (const { deck } of demoDecks) {
+      expect(JSON.stringify(deck)).not.toMatch(CJK)
+    }
+  })
+
+  it("ships the HTML file every HTML Page references", () => {
+    for (const { id, deck } of demoDecks) {
+      for (const page of pagesOf(deck, isHtmlPage)) {
+        const htmlPath = resolve(demoDir, id, page.htmlFile)
+
+        expect(existsSync(htmlPath)).toBe(true)
+        expect(readFileSync(htmlPath, "utf8").trim().length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  describe("Weekly Series seed", () => {
+    it("keeps the Monday-to-Friday Deck Period and the default theme", () => {
+      expect(week.theme).toBeUndefined()
+      expect(week.period).toEqual({ start: "2026-01-05", end: "2026-01-09" })
+    })
+
+    it("opens on a Cover and ends on a Closing", () => {
+      expect(week.pages.at(0)?.layout).toBe("cover")
+      expect(week.pages.at(-1)?.layout).toBe("closing")
+    })
   })
 
   describe("Trend & Target examples", () => {
     it("ends the at-most example just above its target", () => {
-      const lower = pageAt(5, isTrendTargetPage)
+      const lower = pagesOf(week, isTrendTargetPage).find(
+        (page) => page.direction === "at-most"
+      )
 
-      expect(lower.direction).toBe("at-most")
-      expect(lower.observations.at(-1)).toEqual({
+      expect(lower?.observations.at(-1)).toEqual({
         state: "measured",
         value: 8.04,
       })
     })
 
     it("includes negative and zero values in the at-least example", () => {
-      expect(pageAt(6, isTrendTargetPage).direction).toBe("at-least")
-      expect(measuredValues(6).some((value) => value < 0)).toBe(true)
-      expect(measuredValues(6)).toContain(0)
+      const upper = pagesOf(week, isTrendTargetPage).find(
+        (page) => page.direction === "at-least"
+      )!
+
+      expect(measuredValues(upper).some((value) => value < 0)).toBe(true)
+      expect(measuredValues(upper)).toContain(0)
     })
 
     it("ends one example with a Missing week after two measurements", () => {
-      expect(pageAt(7, isTrendTargetPage).observations.at(-1)).toEqual({
-        state: "missing",
-      })
-      expect(measuredValues(7).length).toBeGreaterThanOrEqual(2)
+      const endsMissing = pagesOf(week, isTrendTargetPage).find(
+        (page) => page.observations.at(-1)?.state === "missing"
+      )!
+
+      expect(measuredValues(endsMissing).length).toBeGreaterThanOrEqual(2)
+      expect(endsMissing.title).toMatch(LATIN)
     })
-
-    it("uses English copy on the Missing-week example", () => {
-      const { title } = pageAt(7, isTrendTargetPage)
-
-      expect(title).not.toMatch(CJK)
-      expect(title).toMatch(LATIN)
-    })
-  })
-
-  // 公開 demo 的文案統一為英文（3dd5336）；中英混排的版面覆蓋由 e2e fixture 負責
-  it("ships English-only copy so the public demo reads consistently", () => {
-    expect(JSON.stringify(week)).not.toMatch(CJK)
   })
 
   describe("Next Actions examples", () => {
-    it("shows the Columns Commitments again as Rows", () => {
-      const columns = pageAt(3, isNextActionsPage)
-      const rows = pageAt(8, isNextActionsPage)
+    const longestOutcome = (page: NextActionsPage) =>
+      Math.max(...page.commitments.map((item) => item.outcome.length))
 
-      expect(rows.variant).toBe("rows")
-      expect(rows.commitments).toEqual(columns.commitments)
+    it("shows both the Columns and the Rows composition", () => {
+      const variants = pagesOf(week, isNextActionsPage).map(
+        (page) => page.variant ?? "columns"
+      )
+
+      expect(variants.sort()).toEqual(["columns", "rows"])
     })
 
     it("includes longer Rows than the Columns example", () => {
-      const longestOutcome = (
-        page: ReturnType<typeof pageAt<NextActionsPage>>
-      ) => Math.max(...page.commitments.map((item) => item.outcome.length))
-      const longRows = pageAt(9, isNextActionsPage)
+      const pages = pagesOf(week, isNextActionsPage)
+      const columns = pages.find((page) => page.variant !== "rows")!
+      const rows = pages.find((page) => page.variant === "rows")!
 
-      expect(longRows.variant).toBe("rows")
-      expect(longestOutcome(longRows)).toBeGreaterThan(
-        longestOutcome(pageAt(3, isNextActionsPage))
-      )
-    })
-
-    it("uses English outcomes in the additional Rows example", () => {
-      const rows = pageAt(9, isNextActionsPage)
-
-      expect(rows.variant).toBe("rows")
-      for (const { outcome } of rows.commitments) {
-        expect(outcome).not.toMatch(CJK)
-        expect(outcome).toMatch(LATIN)
-      }
+      expect(longestOutcome(rows)).toBeGreaterThan(longestOutcome(columns))
     })
   })
 
-  it("ships the HTML file its HTML Page references", () => {
-    const htmlPath = resolve(
-      demoDir,
-      "2026-01-05",
-      pageAt(4, isHtmlPage).htmlFile
-    )
+  describe("Observatory pilot review", () => {
+    it("keeps the Harbor Deck Title and theme", () => {
+      expect(harbor.theme).toBe("observatory")
+      expect(harbor.title).toBe("Harbor Forecast · Pilot review")
+    })
 
-    expect(existsSync(htmlPath)).toBe(true)
-    expect(readFileSync(htmlPath, "utf8").trim().length).toBeGreaterThan(0)
+    it("ends its Trend inside the Deck Period and above the target", () => {
+      const [trend] = pagesOf(harbor, isTrendTargetPage)
+
+      expect(trend.direction).toBe("at-most")
+      expect(trend.target).not.toBeNull()
+      expect(trend.observations.at(-1)).toMatchObject({ state: "measured" })
+      expect(measuredValues(trend).at(-1)!).toBeGreaterThan(trend.target!)
+    })
   })
 })

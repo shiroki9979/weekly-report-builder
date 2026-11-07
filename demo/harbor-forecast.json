@@ -52,6 +52,37 @@
       "boundary": "Fictional pilot measurements from one ten-page sample on one machine."
     },
     {
+      "id": "decision",
+      "layout": "evidence-decision",
+      "title": "Adopt cached renders for repeat exports",
+      "verdict": "Cache rendered pages. The sample shows the saving is real and no page failed; the open large-image case limits where the pilot runs, not whether caching works.",
+      "metrics": [
+        {
+          "label": "Mean export duration",
+          "baselineValue": 12,
+          "candidateValue": 8,
+          "unit": "s",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 0
+        },
+        {
+          "label": "Pages re-rendered after a one-page edit",
+          "baselineValue": 10,
+          "candidateValue": 1,
+          "unit": "pages",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 0
+        }
+      ],
+      "interpretations": [
+        "Repeat exports of an unchanged ten-page deck take two thirds of the baseline time.",
+        "Only the edited page goes through capture again; the other nine reuse their PNG."
+      ],
+      "boundary": "Fictional pilot: 20 runs of one ten-page deck on one machine."
+    },
+    {
       "id": "comparison",
       "layout": "side-by-side",
       "title": "Cache rendered pages; keep per-page capture as the fallback",
@@ -79,6 +110,97 @@
         "cost": "Every layout needs an invalidation rule to prevent stale PNGs."
       },
       "boundary": "Timings average 20 runs on a fictional ten-page deck; large images remain unverified."
+    },
+    {
+      "id": "trend",
+      "layout": "trend-target",
+      "title": "Export time fell for eight weeks and sits just above target",
+      "metric": {
+        "label": "Mean export duration",
+        "unit": "s",
+        "unitPosition": "after",
+        "unitSpacing": "space",
+        "precision": 1
+      },
+      "cadence": "week",
+      "start": "2025-11-17",
+      "observations": [
+        {
+          "state": "measured",
+          "value": 12.4
+        },
+        {
+          "state": "measured",
+          "value": 12.1
+        },
+        {
+          "state": "measured",
+          "value": 11.6
+        },
+        {
+          "state": "measured",
+          "value": 10.4
+        },
+        {
+          "state": "measured",
+          "value": 9.5
+        },
+        {
+          "state": "measured",
+          "value": 8.9
+        },
+        {
+          "state": "measured",
+          "value": 8.4
+        },
+        {
+          "state": "measured",
+          "value": 8.2
+        }
+      ],
+      "target": 8,
+      "direction": "at-most",
+      "interpretation": "Cached renders brought the fictional sample from 12.4 s to 8.2 s. The latest week is still 0.2 s above the 8 s ceiling, so the pilot stays with the platform team.",
+      "measurementContext": "Fictional pilot: mean of 20 scripted exports of the same ten-page deck each Monday; seconds per export."
+    },
+    {
+      "id": "pipeline",
+      "layout": "two-column",
+      "title": "Where the cache sits in the export path",
+      "items": [
+        {
+          "heading": "Render once per page",
+          "body": "Each page renders on the capture host exactly as before; caching changes nothing about how a page looks."
+        },
+        {
+          "heading": "Check the cache before capture",
+          "body": "A page whose content and layout have not changed reuses the previous PNG instead of recapturing."
+        },
+        {
+          "heading": "Capture only what changed",
+          "body": "Edited pages, hidden toggles, and failed loads always go through a fresh capture."
+        }
+      ],
+      "panel": {
+        "kind": "flow",
+        "title": "Export path (fictional)",
+        "steps": [
+          {
+            "label": "Render",
+            "caption": "Page on the capture host",
+            "variant": "ok"
+          },
+          {
+            "label": "Cache check",
+            "caption": "Unchanged since the last run?"
+          },
+          {
+            "label": "Capture",
+            "caption": "PNG for changed pages only",
+            "variant": "ok"
+          }
+        ]
+      }
     },
     {
       "id": "checks",
@@ -129,6 +251,37 @@
         ]
       },
       "boundary": "One fictional deck on one machine; the numbers are illustrative."
+    },
+    {
+      "id": "timeline",
+      "layout": "html",
+      "title": "Pilot timeline · kickoff to review",
+      "htmlFile": "timeline.html",
+      "notes": "A hand-written HTML Page. It only references Stage colour roles and the --blue aliases, so it follows the Deck Theme."
+    },
+    {
+      "id": "actions",
+      "layout": "next-actions",
+      "title": "Close the large-image case, then decide on rollout",
+      "variant": "columns",
+      "commitments": [
+        {
+          "title": "Run the large-image export case",
+          "outcome": "The one untested path either passes or produces a reproducible failure to fix.",
+          "checkpoint": "Result recorded in the checks table by Thursday."
+        },
+        {
+          "title": "Repeat the 20-run timing",
+          "outcome": "The 8 s figure is confirmed on the same deck after the invalidation rule lands.",
+          "checkpoint": "Timing re-run posted on Friday."
+        },
+        {
+          "title": "Write the invalidation rule for HTML Pages",
+          "outcome": "Edited HTML fragments never serve a stale PNG from the cache.",
+          "checkpoint": "Rule reviewed by the platform team before the rollout decision."
+        }
+      ],
+      "boundary": "Fictional commitments for the demo narrative."
     },
     {
       "id": "closing",

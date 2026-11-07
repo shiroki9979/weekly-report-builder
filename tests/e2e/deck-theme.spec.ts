@@ -6,6 +6,8 @@ import {
   parseDeck,
   isTwoColumnPage,
   isOverviewPage,
+  isNextActionsPage,
+  isTrendTargetPage,
   type Deck,
   type DeckTheme,
 } from "../../src/lib/deck"
@@ -70,15 +72,20 @@ const table = parseDeck(
   )
 ).pages[0]
 
+// 示範週的頁序會隨 Demo Deck Set 演進，fixture 依版型而非位置挑頁
+function demoPage<T>(pick: (page: Deck["pages"][number]) => page is T): T {
+  const found = demo.pages.find(pick)
+  if (!found) throw new Error("Demo fixture page is missing")
+  return structuredClone(found)
+}
+
 function themeFixture(theme: DeckTheme): Deck {
-  const chart = structuredClone(demo.pages[0])
-  if (!isTwoColumnPage(chart) || chart.panel.kind !== "chart")
-    throw new Error("Chart fixture is missing")
+  const chart = demoPage(isTwoColumnPage)
+  if (chart.panel.kind !== "chart") throw new Error("Chart fixture is missing")
   chart.panel.series[0].color = undefined
   chart.panel.series[1].color = undefined
   chart.panel.series[2].color = "#a14188"
-  const overview = structuredClone(demo.pages[1])
-  if (!isOverviewPage(overview)) throw new Error("Overview fixture is missing")
+  const overview = demoPage(isOverviewPage)
   overview.supporting[0].status = { label: "Watch", tone: "caution" }
   return {
     ...demo,
@@ -87,8 +94,8 @@ function themeFixture(theme: DeckTheme): Deck {
     pages: [
       overview,
       demo.pages[2],
-      demo.pages[3],
-      demo.pages[5],
+      demoPage(isNextActionsPage),
+      demoPage(isTrendTargetPage),
       chart,
       table,
     ].map((entry, index) => ({ ...entry, id: `p${index + 1}` })),

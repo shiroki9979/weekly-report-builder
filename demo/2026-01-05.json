@@ -6,45 +6,11 @@
   "pages": [
     {
       "id": "p01",
-      "layout": "two-column",
-      "title": "Harbor Grid · fictional demo · 5–9 Jan 2026",
-      "items": [
-        {
-          "heading": "Platform: one changelog gate",
-          "body": "Harbor Grid ops locked staging and production to a shared promote checklist, so reviewers no longer compare mismatched cut notes."
-        },
-        {
-          "heading": "Forecast: three-site pilot is live",
-          "body": "A fictional day-ahead board now shows confidence bands for North, Central, and South. The numbers exist only for this public demo."
-        },
-        {
-          "heading": "Ops: quiet on-call week",
-          "body": "No Sev-1 in the sample narrative. Time went to documentation and a dry-run cutover instead of incident spend."
-        }
-      ],
-      "panel": {
-        "kind": "chart",
-        "title": "Commits this week (demo)",
-        "categories": ["05", "06", "07", "08", "09"],
-        "series": [
-          {
-            "name": "Platform",
-            "color": "#2e75b6",
-            "values": [4, 6, 3, 5, 2]
-          },
-          {
-            "name": "Forecast",
-            "color": "#7eb0d6",
-            "values": [1, 2, 8, 4, 1]
-          },
-          {
-            "name": "Ops",
-            "color": "#c5d9ed",
-            "values": [2, 1, 1, 2, 3]
-          }
-        ]
-      },
-      "notes": "Open on the fictional Harbor Grid week. The chart is demo volume only."
+      "layout": "cover",
+      "title": "Harbor Grid weekly · 5–9 Jan 2026",
+      "subtitle": "Fictional platform, forecast, and ops notes for one week: one promote gate, a three-site pilot, and a quiet on-call.",
+      "byline": "Harbor Grid platform team (fictional)",
+      "notes": "Open on the fictional Harbor Grid week. Every figure in this Deck is demo content."
     },
     {
       "id": "p02",
@@ -117,36 +83,36 @@
     },
     {
       "id": "p04",
-      "layout": "next-actions",
-      "title": "Expand the fictional pilot and rehearse the cut.",
-      "commitments": [
+      "layout": "side-by-side",
+      "title": "Keep one changelog gate instead of per-channel notes",
+      "columns": [
         {
-          "title": "Add a fourth sample site",
-          "outcome": "The day-ahead window stays comparable across four fictional sites.",
-          "checkpoint": "Fourth site visible on the board before Friday."
+          "label": "Single changelog gate",
+          "points": [
+            "One checklist read before every promote",
+            "Review wait fell from 1.8 to 0.5 days in the sample",
+            "Staging and production notes cannot drift apart"
+          ]
         },
         {
-          "title": "Dry-run the changelog gate",
-          "outcome": "The promote checklist is rehearsed on a throwaway alias.",
-          "checkpoint": "Alias dry-run signed off by Thursday."
-        },
-        {
-          "title": "File the quiet-week ops note",
-          "outcome": "The next on-call handoff includes the dry-run link.",
-          "checkpoint": "Note posted in the ops channel by Wednesday."
+          "label": "Per-channel notes",
+          "points": [
+            "Each channel edits its own cut notes",
+            "Reviewers compare two documents before promote",
+            "Matches how the team worked before the pilot"
+          ]
         }
       ],
-      "notes": "Close on next week's Harbor Grid work, not on how to seed the repo."
+      "chosen": 0,
+      "tradeoff": {
+        "why": "Reviewers kept finding mismatched staging and production notes; one list removes the comparison step.",
+        "cost": "Every channel waits for the shared checklist instead of promoting on its own notes."
+      },
+      "notes": "The same decision as p03, framed as the two options the team weighed.",
+      "boundary": "Fictional sample of one promote cycle; the review wait is a demo figure."
     },
     {
       "id": "p05",
-      "layout": "html",
-      "title": "Fictional forecast · sample throughput",
-      "htmlFile": "p05.html",
-      "notes": "Full-bleed HTML for the three fictional sites on the forecast board."
-    },
-    {
-      "id": "p06",
       "layout": "trend-target",
       "title": "Fictional export time improved; the target remains unmet.",
       "metric": {
@@ -214,9 +180,9 @@
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
     },
     {
-      "id": "p07",
+      "id": "p06",
       "layout": "trend-target",
-      "title": "Fictional pilot: net completed checks turned positive.",
+      "title": "Fictional pilot: net completed checks turned positive; no reading for the final week.",
       "metric": {
         "label": "Net completed checks",
         "unit": "checks",
@@ -256,72 +222,102 @@
           "value": 3
         },
         {
-          "state": "measured",
-          "value": 4
+          "state": "missing"
         }
       ],
       "target": 0,
       "direction": "at-least",
-      "interpretation": "Zero meets the inclusive lower bound; the latest fictional week finished four checks above target.",
-      "measurementContext": "Fictional pilot: completed checks minus reopened checks, calculated each Monday from simulated records.",
+      "interpretation": "Zero meets the inclusive lower bound and the series climbed to three checks above target. No sample was collected on the final Monday; the prior week cannot stand in for it.",
+      "measurementContext": "Fictional pilot: completed checks minus reopened checks, calculated each Monday from simulated records; the job did not run on 2026-01-05.",
       "notes": "Fictional public demo: replace all figures and source details before presenting real results."
+    },
+    {
+      "id": "p07",
+      "layout": "two-column",
+      "title": "Harbor Grid · fictional demo · 5–9 Jan 2026",
+      "items": [
+        {
+          "heading": "Platform: one changelog gate",
+          "body": "Harbor Grid ops locked staging and production to a shared promote checklist, so reviewers no longer compare mismatched cut notes."
+        },
+        {
+          "heading": "Forecast: three-site pilot is live",
+          "body": "A fictional day-ahead board now shows confidence bands for North, Central, and South. The numbers exist only for this public demo."
+        },
+        {
+          "heading": "Ops: quiet on-call week",
+          "body": "No Sev-1 in the sample narrative. Time went to documentation and a dry-run cutover instead of incident spend."
+        }
+      ],
+      "panel": {
+        "kind": "chart",
+        "title": "Commits this week (demo)",
+        "categories": ["05", "06", "07", "08", "09"],
+        "series": [
+          {
+            "name": "Platform",
+            "color": "#2e75b6",
+            "values": [4, 6, 3, 5, 2]
+          },
+          {
+            "name": "Forecast",
+            "color": "#7eb0d6",
+            "values": [1, 2, 8, 4, 1]
+          },
+          {
+            "name": "Ops",
+            "color": "#c5d9ed",
+            "values": [2, 1, 1, 2, 3]
+          }
+        ]
+      },
+      "notes": "The Two-column layout with a chart panel. The chart is demo volume only."
     },
     {
       "id": "p08",
-      "layout": "trend-target",
-      "title": "Fictional nightly import duration: no reading for the final week.",
-      "metric": {
-        "label": "Nightly import duration",
-        "unit": "s",
-        "unitPosition": "after",
-        "unitSpacing": "space",
-        "precision": 1
+      "layout": "full-width-panel",
+      "title": "Cut rehearsal checklist before the next promote",
+      "panel": {
+        "kind": "checklist",
+        "title": "",
+        "items": [
+          {
+            "label": "Throwaway alias created for the dry-run",
+            "checked": true
+          },
+          {
+            "label": "Promote checklist read aloud by two reviewers",
+            "checked": true
+          },
+          {
+            "label": "Rollback step rehearsed on the alias",
+            "checked": true
+          },
+          {
+            "label": "Fourth sample site added to the forecast board",
+            "checked": false
+          },
+          {
+            "label": "Dry-run link attached to the on-call handoff",
+            "checked": false
+          }
+        ]
       },
-      "cadence": "week",
-      "start": "2025-11-17",
-      "observations": [
-        {
-          "state": "measured",
-          "value": 9.6
-        },
-        {
-          "state": "measured",
-          "value": 9.1
-        },
-        {
-          "state": "missing"
-        },
-        {
-          "state": "measured",
-          "value": 8.7
-        },
-        {
-          "state": "measured",
-          "value": 8.5
-        },
-        {
-          "state": "measured",
-          "value": 8.3
-        },
-        {
-          "state": "measured",
-          "value": 8.1
-        },
-        {
-          "state": "missing"
-        }
-      ],
-      "target": 8,
-      "direction": "at-most",
-      "interpretation": "No sample was collected on the final Monday; the prior week's 8.1 s reading cannot represent this week.",
-      "measurementContext": "Fictional Harbor Grid nightly import: mean of 100 scripted imports each Monday; the import job did not run on 2026-01-05.",
-      "notes": "Fictional public demo: replace all figures and source details before presenting real results."
+      "notes": "A Full-width Panel with a checklist; the two open items become next week's commitments.",
+      "boundary": "Fictional rehearsal items; the checked state follows the demo narrative only."
     },
     {
       "id": "p09",
+      "layout": "html",
+      "title": "Fictional forecast · sample throughput",
+      "htmlFile": "p09.html",
+      "notes": "Full-bleed HTML for the three fictional sites on the forecast board. Its colours are hard-coded, so it stays blue under any Deck Theme."
+    },
+    {
+      "id": "p10",
       "layout": "next-actions",
-      "variant": "rows",
-      "title": "Fictional pilot actions · same commitments in Rows.",
+      "title": "Expand the fictional pilot and rehearse the cut.",
+      "variant": "columns",
       "commitments": [
         {
           "title": "Add a fourth sample site",
@@ -339,13 +335,13 @@
           "checkpoint": "Note posted in the ops channel by Wednesday."
         }
       ],
-      "notes": "Compare with p04 Columns: the same ordered fictional commitments, no re-entry."
+      "notes": "Next Actions in the Columns composition; compare with p11 Rows."
     },
     {
-      "id": "p10",
+      "id": "p11",
       "layout": "next-actions",
-      "variant": "rows",
       "title": "Fictional project: confirm delivery and validation next week.",
+      "variant": "rows",
       "commitments": [
         {
           "title": "Review site data ingestion",
@@ -363,7 +359,29 @@
           "checkpoint": "Have Ops review and record feedback before Friday's handoff."
         }
       ],
-      "notes": "Fictional English content for Rows fit and reading review."
+      "notes": "Next Actions in the Rows composition with longer outcomes than p10."
+    },
+    {
+      "id": "p12",
+      "layout": "closing",
+      "title": "Rehearse the cut, then widen the pilot",
+      "eyebrow": "Next week",
+      "takeaways": [
+        {
+          "ref": "p10",
+          "text": "Add the fourth sample site before Friday"
+        },
+        {
+          "ref": "p08",
+          "text": "Finish the two open rehearsal items"
+        },
+        {
+          "ref": "p05",
+          "text": "Bring mean export duration under the 8 s ceiling"
+        }
+      ],
+      "closingLine": "Harbor Grid platform team · platform@example.invalid · fictional demo content",
+      "notes": "Close on next week's Harbor Grid work; the refs point back at the pages that carry each item."
     }
   ]
 }

@@ -3,7 +3,7 @@
 Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07, seams and ticket breakdown confirmed 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with a prefactor ticket [#62](https://github.com/shiroki9979/weekly-report-builder/issues/62) and four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
 
 Created: 2026-11-07
-Last updated: 2026-11-07 (second review folded in)
+Last updated: 2026-11-08 (Demo Deck Set coverage, #64)
 
 Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [GLOSSARY.md](../../GLOSSARY.md).
 
@@ -199,7 +199,7 @@ No change to the Export gate contract. The capture library embeds the `@font-fac
 
 ### Demo Deck Set
 
-The Demo Deck Set gains a fictional `observatory` deck (the prototype's "Harbor Forecast pilot review" copy, Deck Title set) with Cover, Overview, Side-by-side Comparison, Full-width Panel (table), and Closing. Seeding behaviour is unchanged.
+The Demo Deck Set ships one Deck per Deck Theme, and each Deck shows every Structured Layout and an HTML Page (#64). `2026-01-05` stays the Weekly Series seed under `default` with twelve pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, two Trend & Target pages (at-most; at-least ending in a Missing week), Two-column (chart), Full-width Panel (checklist), HTML Page, Next Actions in Columns and in Rows, and Closing. `harbor-forecast` is the fictional `observatory` pilot review (Deck Title set) with ten pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, Trend & Target, Two-column (flow), Full-width Panel (table), an HTML Page that only references colour roles and the `--blue*` aliases, Next Actions, and Closing. Together the two Decks show table, chart, flow, and checklist panels once each. Seeding behaviour is unchanged.
 
 ## Testing Decisions
 
