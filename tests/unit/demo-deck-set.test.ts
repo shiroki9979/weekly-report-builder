@@ -1,35 +1,27 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { serializeDeck } from "@/lib/decks-io"
 import { assessExportEligibility } from "@/lib/export-readiness"
 import { ADDABLE_PANEL_KINDS } from "@/lib/page-lifecycle"
+import { trendEndDate } from "@/lib/trend-target"
 
 import {
   DECK_THEMES,
+  isFullWidthPanelPage,
   isHtmlPage,
   isNextActionsPage,
   isTrendTargetPage,
-  parseDeck,
-  type Deck,
+  isTwoColumnPage,
   type NextActionsPage,
-  type Page,
   type SlideLayout,
   type TrendTargetPage,
 } from "@/lib/deck"
+import { readDemoDecks } from "../demo-decks"
 
 const demoDir = resolve(import.meta.dirname, "../../demo")
-
-type DemoDeck = { id: string; raw: unknown; deck: Deck }
-
-const demoDecks: DemoDeck[] = readdirSync(demoDir)
-  .filter((name) => name.endsWith(".json"))
-  .sort()
-  .map((name) => {
-    const raw = JSON.parse(readFileSync(resolve(demoDir, name), "utf8"))
-    return { id: name.replace(/\.json$/, ""), raw, deck: parseDeck(raw) }
-  })
+const demoDecks = readDemoDecks(demoDir)
 
 const week = demoDecks.find((entry) => entry.id === "2026-01-05")!.deck
 const harbor = demoDecks.find((entry) => entry.id === "harbor-forecast")!.deck
@@ -51,13 +43,6 @@ const ALL_LAYOUTS = Object.keys(EVERY_LAYOUT).sort()
 
 const CJK = /[一-鿿]/u
 const LATIN = /[A-Za-z]/
-
-function pagesOf<T extends Page>(
-  deck: Deck,
-  hasLayout: (page: Page) => page is T
-): T[] {
-  return deck.pages.filter(hasLayout)
-}
 
 function measuredValues(page: TrendTargetPage): number[] {
   return page.observations.flatMap((entry) =>
@@ -85,8 +70,8 @@ describe("Demo Deck Set", () => {
   it("shows every addable panel kind at least once across the set", () => {
     const kinds = demoDecks.flatMap(({ deck }) =>
       deck.pages.flatMap((page) =>
-        "panel" in page && page.panel && typeof page.panel === "object"
-          ? [(page.panel as { kind: string }).kind]
+        isTwoColumnPage(page) || isFullWidthPanelPage(page)
+          ? [page.panel.kind]
           : []
       )
     )
@@ -122,7 +107,7 @@ describe("Demo Deck Set", () => {
 
   it("ships the HTML file every HTML Page references", () => {
     for (const { id, deck } of demoDecks) {
-      for (const page of pagesOf(deck, isHtmlPage)) {
+      for (const page of deck.pages.filter(isHtmlPage)) {
         const htmlPath = resolve(demoDir, id, page.htmlFile)
 
         expect(existsSync(htmlPath)).toBe(true)
@@ -145,9 +130,9 @@ describe("Demo Deck Set", () => {
 
   describe("Trend & Target examples", () => {
     it("ends the at-most example just above its target", () => {
-      const lower = pagesOf(week, isTrendTargetPage).find(
-        (page) => page.direction === "at-most"
-      )
+      const lower = week.pages
+        .filter(isTrendTargetPage)
+        .find((page) => page.direction === "at-most")
 
       expect(lower?.observations.at(-1)).toEqual({
         state: "measured",
@@ -156,18 +141,18 @@ describe("Demo Deck Set", () => {
     })
 
     it("includes negative and zero values in the at-least example", () => {
-      const upper = pagesOf(week, isTrendTargetPage).find(
-        (page) => page.direction === "at-least"
-      )!
+      const upper = week.pages
+        .filter(isTrendTargetPage)
+        .find((page) => page.direction === "at-least")!
 
       expect(measuredValues(upper).some((value) => value < 0)).toBe(true)
       expect(measuredValues(upper)).toContain(0)
     })
 
     it("ends one example with a Missing week after two measurements", () => {
-      const endsMissing = pagesOf(week, isTrendTargetPage).find(
-        (page) => page.observations.at(-1)?.state === "missing"
-      )!
+      const endsMissing = week.pages
+        .filter(isTrendTargetPage)
+        .find((page) => page.observations.at(-1)?.state === "missing")!
 
       expect(measuredValues(endsMissing).length).toBeGreaterThanOrEqual(2)
       expect(endsMissing.title).toMatch(LATIN)
@@ -179,15 +164,15 @@ describe("Demo Deck Set", () => {
       Math.max(...page.commitments.map((item) => item.outcome.length))
 
     it("shows both the Columns and the Rows composition", () => {
-      const variants = pagesOf(week, isNextActionsPage).map(
-        (page) => page.variant ?? "columns"
-      )
+      const variants = week.pages
+        .filter(isNextActionsPage)
+        .map((page) => page.variant)
 
       expect(variants.sort()).toEqual(["columns", "rows"])
     })
 
     it("includes longer Rows than the Columns example", () => {
-      const pages = pagesOf(week, isNextActionsPage)
+      const pages = week.pages.filter(isNextActionsPage)
       const columns = pages.find((page) => page.variant !== "rows")!
       const rows = pages.find((page) => page.variant === "rows")!
 
@@ -201,11 +186,11 @@ describe("Demo Deck Set", () => {
       expect(harbor.title).toBe("Harbor Forecast · Pilot review")
     })
 
-    it("ends its Trend inside the Deck Period and above the target", () => {
-      const [trend] = pagesOf(harbor, isTrendTargetPage)
+    it("ends its Trend on the Deck Period's Monday, still above the target", () => {
+      const [trend] = harbor.pages.filter(isTrendTargetPage)
 
+      expect(trendEndDate(trend)).toBe(harbor.period?.start)
       expect(trend.direction).toBe("at-most")
-      expect(trend.target).not.toBeNull()
       expect(trend.observations.at(-1)).toMatchObject({ state: "measured" })
       expect(measuredValues(trend).at(-1)!).toBeGreaterThan(trend.target!)
     })

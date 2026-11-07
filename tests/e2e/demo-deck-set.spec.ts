@@ -1,21 +1,14 @@
 import { expect, test, type Download } from "@playwright/test"
-import { readdirSync, readFileSync, rmSync } from "node:fs"
+import { readFileSync, rmSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { parseDeck } from "../../src/lib/deck"
 import { seedDecksFromDemo } from "../../scripts/seed-decks"
+import { readDemoDecks } from "../demo-decks"
 import { e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize } from "./stage-capture"
 
 const demoDir = resolve(import.meta.dirname, "../../demo")
-
-const demoDecks = readdirSync(demoDir)
-  .filter((name) => name.endsWith(".json"))
-  .sort()
-  .map((name) => ({
-    id: name.replace(/\.json$/, ""),
-    deck: parseDeck(JSON.parse(readFileSync(resolve(demoDir, name), "utf8"))),
-  }))
+const demoDecks = readDemoDecks(demoDir)
 
 test.beforeEach(() => {
   rmSync(e2eDecksDir(), { recursive: true, force: true })

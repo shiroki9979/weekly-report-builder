@@ -6,9 +6,11 @@ import {
   parseDeck,
   isTwoColumnPage,
   isOverviewPage,
+  isEvidenceDecisionPage,
   isNextActionsPage,
   isTrendTargetPage,
   type Deck,
+  type Page,
   type DeckTheme,
 } from "../../src/lib/deck"
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
@@ -73,7 +75,7 @@ const table = parseDeck(
 ).pages[0]
 
 // 示範週的頁序會隨 Demo Deck Set 演進，fixture 依版型而非位置挑頁
-function demoPage<T>(pick: (page: Deck["pages"][number]) => page is T): T {
+function demoPage<T extends Page>(pick: (page: Page) => page is T): T {
   const found = demo.pages.find(pick)
   if (!found) throw new Error("Demo fixture page is missing")
   return structuredClone(found)
@@ -93,7 +95,7 @@ function themeFixture(theme: DeckTheme): Deck {
     title: "Harbor Forecast pilot review",
     pages: [
       overview,
-      demo.pages[2],
+      demoPage(isEvidenceDecisionPage),
       demoPage(isNextActionsPage),
       demoPage(isTrendTargetPage),
       chart,

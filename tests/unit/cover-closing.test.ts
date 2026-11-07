@@ -33,7 +33,8 @@ const titledCoverAndClosing = parseDeck({
   ],
 })
 
-// 規格列出的 Editorial Frame 版型；Cover、HTML Page 與 Two-column 不帶 Boundary Note
+// 規格（docs/specs/deck-theme-and-observatory-layouts.md Boundary Note 段落）列出的 Editorial Frame 版型；
+// 刻意不用 isEditorialFramePage，避免斷言與受測實作同構
 const EDITORIAL_FRAME_LAYOUTS = [
   "overview",
   "evidence-decision",

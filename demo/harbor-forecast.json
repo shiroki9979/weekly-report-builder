@@ -67,9 +67,9 @@
           "precision": 0
         },
         {
-          "label": "Pages re-rendered after a one-page edit",
-          "baselineValue": 10,
-          "candidateValue": 1,
+          "label": "Failed pages",
+          "baselineValue": 0,
+          "candidateValue": 0,
           "unit": "pages",
           "unitPosition": "after",
           "unitSpacing": "space",
@@ -78,7 +78,7 @@
       ],
       "interpretations": [
         "Repeat exports of an unchanged ten-page deck take two thirds of the baseline time.",
-        "Only the edited page goes through capture again; the other nine reuse their PNG."
+        "No page failed in either path across the 20 runs; caching did not cost reliability."
       ],
       "boundary": "Fictional pilot: 20 runs of one ten-page deck on one machine."
     },
