@@ -554,8 +554,15 @@
   overflow-wrap: anywhere;
 }
 
-/* Boundary Note 佔用本文空間時保留內容最小高度，避免內部重疊逃過 Stage 溢出檢查。 */
-.editorial-page:has(> .editorial-boundary) > .editorial-body {
+/* 溢出量測只檢查內容是否超出 Stage；本文若縮到內容高度以下，內容會蓋住
+   Boundary Note 或頁尾卻仍判定為 fit。保留內容最小高度，讓過長內容把頁尾推出
+   Stage 而被擋下。不會自行縮放的版型即使沒有 Boundary Note 也需要這層保護。 */
+.editorial-page:has(> .editorial-boundary) > .editorial-body,
+.editorial-body:has(
+  > .editorial-comparison,
+  > .editorial-closing,
+  > .editorial-full-width-panel
+) {
   min-height: min-content;
 }
 
