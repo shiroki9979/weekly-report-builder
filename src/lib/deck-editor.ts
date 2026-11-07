@@ -1,3 +1,4 @@
+import { moveEntry } from "@/lib/move-entry"
 import { typedPageUpdater, updateDeckPage } from "@/lib/update-deck-page"
 import {
   assertCanRemoveEntry,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/deck"
 import type {
   FlowStepVariant,
-  Panel,
+  EditablePanel,
   Deck,
   DeckTheme,
   FullWidthPanelPage,
@@ -28,7 +29,6 @@ const updateEditorialPage = typedPageUpdater(
   "an Editorial Frame page"
 )
 
-type EditablePanel = Exclude<Panel, { kind: "fields" }>
 type PanelOfKind<K extends EditablePanel["kind"]> = Extract<
   EditablePanel,
   { kind: K }
@@ -60,17 +60,6 @@ const updateTablePanel = panelUpdater("table")
 const updateChartPanel = panelUpdater("chart")
 const updateFlowPanel = panelUpdater("flow")
 const updateChecklistPanel = panelUpdater("checklist")
-
-function moveItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
-  if (fromIndex === toIndex) {
-    return items
-  }
-
-  const next = [...items]
-  const [item] = next.splice(fromIndex, 1)
-  next.splice(toIndex, 0, item)
-  return next
-}
 
 // 選填文字只剩空白時視同未填，避免畫出空的頁尾或分隔線；保留原輸入讓打字中的尾端空白不被吃掉
 function absentWhenBlank(text: string): string | undefined {
@@ -508,7 +497,7 @@ export function moveFlowStep(
 ): Deck {
   return updateFlowPanel(deck, pageIndex, (panel) => ({
     ...panel,
-    steps: moveItems(panel.steps, fromIndex, toIndex),
+    steps: moveEntry(panel.steps, { from: fromIndex, to: toIndex }),
   }))
 }
 

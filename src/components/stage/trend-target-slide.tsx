@@ -63,38 +63,47 @@ const SVG_INK_ROLES = {
   paper: "--paper",
 } as const
 
-type SvgInk = Record<keyof typeof SVG_INK_ROLES, string>
+type SvgInkRole = keyof typeof SVG_INK_ROLES
+type SvgInk = Record<SvgInkRole, string>
+
+const SVG_INK_KEYS = Object.keys(SVG_INK_ROLES) as SvgInkRole[]
+
+// 量到 DOM 之前先引用 CSS 變數，預覽仍正確上色；擷取前會換成字面色碼
+const FALLBACK_INK = Object.fromEntries(
+  SVG_INK_KEYS.map((key) => [key, `var(${SVG_INK_ROLES[key]})`])
+) as SvgInk
 
 function useTrendSvgStyles(
-  ref: RefObject<HTMLDivElement | null>,
+  ref: RefObject<HTMLElement | null>,
   theme: DeckTheme
-) {
-  const [ink, setInk] = useState<SvgInk>({
-    line: "var(--line)",
-    mute: "var(--mute)",
-    accent: "var(--accent)",
-    warnInk: "var(--warn-ink)",
-    paper: "var(--paper)",
-  })
+): SvgStyles {
+  const [ink, setInk] = useState<SvgInk>(FALLBACK_INK)
   useLayoutEffect(() => {
-    const resolveInk = () => {
-      if (!ref.current) return
-      const computed = getComputedStyle(ref.current)
-      setInk((current) => {
-        const next = { ...current }
-        for (const key of Object.keys(SVG_INK_ROLES) as (keyof SvgInk)[]) {
-          next[key] =
-            computed.getPropertyValue(SVG_INK_ROLES[key]).trim() || current[key]
-        }
-        return Object.keys(next).every(
-          (key) => next[key as keyof SvgInk] === current[key as keyof SvgInk]
-        )
-          ? current
-          : next
-      })
-    }
-    resolveInk()
+    if (!ref.current) return
+    const resolved = readInk(ref.current)
+    setInk((current) => {
+      const next = { ...current, ...resolved }
+      return sameInk(next, current) ? current : next
+    })
   }, [ref, theme])
+  return svgStyles(ink)
+}
+
+function readInk(element: Element): Partial<SvgInk> {
+  const computed = getComputedStyle(element)
+  return Object.fromEntries(
+    SVG_INK_KEYS.flatMap((key) => {
+      const value = computed.getPropertyValue(SVG_INK_ROLES[key]).trim()
+      return value ? [[key, value]] : []
+    })
+  )
+}
+
+function sameInk(left: SvgInk, right: SvgInk): boolean {
+  return SVG_INK_KEYS.every((key) => left[key] === right[key])
+}
+
+function svgStyles(ink: SvgInk) {
   return {
     grid: { stroke: ink.line },
     axis: { fill: ink.mute, fontSize: AXIS_FONT_SIZE },
@@ -105,7 +114,7 @@ function useTrendSvgStyles(
   }
 }
 
-type SvgStyles = ReturnType<typeof useTrendSvgStyles>
+type SvgStyles = ReturnType<typeof svgStyles>
 
 function latestStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
@@ -417,15 +426,14 @@ function TrendPlot({
   page,
   bounds,
   targetLabel,
-  theme,
+  styles,
 }: {
   page: TrendTargetPage
-  theme: DeckTheme
   bounds: [number, number]
   targetLabel: string
+  styles: SvgStyles
 }) {
   const { ref, height, minHeightPx } = useFittedChartHeight()
-  const styles = useTrendSvgStyles(ref, theme)
   const geometry = chartGeometry(page, bounds, height)
   return (
     <div
@@ -492,6 +500,9 @@ function TrendChart({
   page: TrendTargetPage
   theme: DeckTheme
 }) {
+  // 角色色票從 figure 讀取：它與繪圖框同在 Stage 根節點的主題範圍內
+  const figureRef = useRef<HTMLElement>(null)
+  const styles = useTrendSvgStyles(figureRef, theme)
   let bounds: [number, number]
   try {
     bounds = trendBounds(page)
@@ -502,7 +513,7 @@ function TrendChart({
   const axisOffset = axisOffsetFor(bounds)
   const targetLabel = formatTrendTarget(page) ?? TARGET_NOT_SET
   return (
-    <figure className="editorial-trend-chart">
+    <figure ref={figureRef} className="editorial-trend-chart">
       <figcaption>
         {metricCaption(page)}
         {axisOffset !== 0 ? (
@@ -515,7 +526,7 @@ function TrendChart({
         page={page}
         bounds={bounds}
         targetLabel={targetLabel}
-        theme={theme}
+        styles={styles}
       />
       <TrendLegend page={page} targetLabel={targetLabel} />
     </figure>

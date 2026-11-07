@@ -13,7 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import type { DeckTheme } from "@/lib/deck"
+import { DECK_THEMES, isDeckTheme, type DeckTheme } from "@/lib/deck"
+
+const DECK_THEME_LABELS: Record<DeckTheme, string> = {
+  default: "Default",
+  observatory: "Observatory",
+}
 
 type DeckPickerProps = {
   decks: string[]
@@ -151,18 +156,18 @@ function DeckAppearanceFields({
         value={appearance.theme}
         disabled={appearance.disabled}
         onValueChange={(theme) => {
-          if (theme === "default" || theme === "observatory")
-            appearance.onThemeChange(theme)
+          if (isDeckTheme(theme)) appearance.onThemeChange(theme)
         }}
       >
         <SelectTrigger id="deck-theme" className="w-full">
-          <SelectValue>
-            {appearance.theme === "observatory" ? "Observatory" : "Default"}
-          </SelectValue>
+          <SelectValue>{DECK_THEME_LABELS[appearance.theme]}</SelectValue>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">Default</SelectItem>
-          <SelectItem value="observatory">Observatory</SelectItem>
+          {DECK_THEMES.map((theme) => (
+            <SelectItem key={theme} value={theme}>
+              {DECK_THEME_LABELS[theme]}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       <Label htmlFor="deck-title">Deck Title</Label>

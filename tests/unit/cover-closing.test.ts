@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { parseDeck, isStructuredPage } from "@/lib/deck"
+import { parseDeck, isStructuredPage, type Page } from "@/lib/deck"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -10,108 +10,138 @@ import { createStagePageContext } from "@/lib/stage-page-context"
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
 
+function readDemoWeek(): { pages: Page[] } {
+  return JSON.parse(
+    readFileSync(
+      resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+      "utf8"
+    )
+  )
+}
+
+const closing = {
+  id: "last",
+  layout: "closing",
+  title: "Continue the pilot",
+  takeaways: [],
+}
+
+const titledCoverAndClosing = parseDeck({
+  pages: [
+    { id: "first", layout: "cover", title: "Harbor", showPageNumber: true },
+    { id: "last", layout: "closing", title: "Continue", takeaways: [] },
+  ],
+})
+
+function structured(page: Page) {
+  if (!isStructuredPage(page)) throw new Error("Expected Structured Page")
+  return page
+}
+
 describe("Cover and Closing contracts", () => {
-  it("normalizes a title-only Cover and drops Boundary Note", () => {
+  it("normalizes a title-only Cover and drops unknown fields", () => {
     const deck = parseDeck({
       pages: [
-        {
-          id: "cover",
-          layout: "cover",
-          title: "Harbor pilot",
-          boundary: "Not supported",
-          extra: "discard",
-        },
+        { id: "cover", layout: "cover", title: "Harbor pilot", extra: "x" },
       ],
     })
+
     expect(deck.pages[0]).toMatchObject({
       layout: "cover",
       title: "Harbor pilot",
       subtitle: "",
       byline: "",
     })
-    expect(deck.pages[0]).not.toHaveProperty("boundary")
     expect(deck.pages[0]).not.toHaveProperty("extra")
   })
-  it("accepts Boundary Note only on Editorial Frame pages and validates Closing takeaways", () => {
-    const demo = JSON.parse(
-      readFileSync(
-        resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
-        "utf8"
-      )
-    )
+
+  it("drops a Boundary Note from a Cover", () => {
     const deck = parseDeck({
-      pages: demo.pages.map((page: object) => ({
+      pages: [
+        { id: "cover", layout: "cover", title: "Pilot", boundary: "Scope" },
+      ],
+    })
+
+    expect(deck.pages[0]).not.toHaveProperty("boundary")
+  })
+
+  it("keeps a Boundary Note only on Editorial Frame layouts", () => {
+    const demo = readDemoWeek()
+
+    const deck = parseDeck({
+      pages: demo.pages.map((page) => ({
         ...page,
         boundary: "Fictional sample only.",
       })),
     })
+
+    const editorial = [
+      "overview",
+      "evidence-decision",
+      "next-actions",
+      "trend-target",
+    ]
     for (const page of deck.pages) {
-      if (
-        [
-          "overview",
-          "evidence-decision",
-          "next-actions",
-          "trend-target",
-        ].includes(page.layout)
-      )
+      if (editorial.includes(page.layout))
         expect(page).toHaveProperty("boundary", "Fictional sample only.")
       else expect(page).not.toHaveProperty("boundary")
     }
-    const closing = {
-      id: "last",
-      layout: "closing",
-      title: "Continue the pilot",
-      takeaways: [],
-      boundary: "Scope",
-    }
-    expect(parseDeck({ pages: [closing] }).pages[0]).toMatchObject({
+  })
+
+  it("fills omitted Closing text and keeps its Boundary Note", () => {
+    const deck = parseDeck({ pages: [{ ...closing, boundary: "Scope" }] })
+
+    expect(deck.pages[0]).toMatchObject({
       eyebrow: "",
       closingLine: "",
       takeaways: [],
       boundary: "Scope",
     })
-    expect(() =>
-      parseDeck({
-        pages: [
-          {
-            ...closing,
-            takeaways: Array.from({ length: 5 }, () => ({ text: "Point" })),
-          },
-        ],
-      })
-    ).toThrow(/0 to 4 entries/)
+  })
+
+  it("rejects more than four Closing takeaways", () => {
+    const takeaways = Array.from({ length: 5 }, () => ({ text: "Point" }))
+
+    expect(() => parseDeck({ pages: [{ ...closing, takeaways }] })).toThrow(
+      /0 to 4 entries/
+    )
+  })
+
+  it("rejects a takeaway whose text is not a string", () => {
     expect(() =>
       parseDeck({ pages: [{ ...closing, takeaways: [{ text: 1 }] }] })
     ).toThrow(/takeaways\[0\].text/)
   })
-  it("counts Cover without drawing its number and assesses only required content", () => {
-    const deck = parseDeck({
-      pages: [
-        { id: "first", layout: "cover", title: "Harbor", showPageNumber: true },
-        {
-          id: "last",
-          layout: "closing",
-          title: "Continue",
-          takeaways: [],
-          boundary: "",
-        },
-      ],
-    })
-    expect(createStagePageContext("pilot", deck, "first")).toMatchObject({
+
+  it("counts Cover in the Page Position without drawing its number", () => {
+    const cover = createStagePageContext(
+      "pilot",
+      titledCoverAndClosing,
+      "first"
+    )
+    const last = createStagePageContext("pilot", titledCoverAndClosing, "last")
+
+    expect(cover).toMatchObject({
       position: { index: 1, total: 2 },
       showPageNumber: false,
     })
-    expect(createStagePageContext("pilot", deck, "last")).toMatchObject({
+    expect(last).toMatchObject({
       position: { index: 2, total: 2 },
       showPageNumber: true,
     })
-    for (const page of deck.pages) {
-      expect(isStructuredPage(page)).toBe(true)
-      if (!isStructuredPage(page)) throw new Error("Expected Structured Page")
+  })
+
+  it("treats a titled Cover or Closing as content-complete", () => {
+    for (const page of titledCoverAndClosing.pages.map(structured)) {
       expect(assessContentReadiness(page)).toEqual([])
       expect(assessExportEligibility(page, { status: "fit" }).eligible).toBe(
         true
       )
+    }
+  })
+
+  it("requires a visible title on Cover and Closing", () => {
+    for (const page of titledCoverAndClosing.pages.map(structured)) {
       expect(assessContentReadiness({ ...page, title: " " })).toEqual([
         {
           code: "missing-content",
@@ -120,16 +150,13 @@ describe("Cover and Closing contracts", () => {
         },
       ])
     }
+  })
+
+  it("requires text on every Closing takeaway", () => {
     const last = parseDeck({
-      pages: [
-        {
-          id: "last",
-          layout: "closing",
-          title: "Continue",
-          takeaways: [{ ref: "02", text: " " }],
-        },
-      ],
+      pages: [{ ...closing, takeaways: [{ ref: "02", text: " " }] }],
     }).pages[0]
+
     expect(assessExportEligibility(last, { status: "fit" }).issues).toEqual([
       {
         code: "missing-content",
@@ -138,10 +165,11 @@ describe("Cover and Closing contracts", () => {
       },
     ])
   })
-  it("creates valid drafts and retains only stable Cover and Closing copy in templates", () => {
-    const blanks = ["cover", "closing"] as const
-    for (const layout of blanks) {
+
+  it("creates schema-valid Cover and Closing drafts that still need a title", () => {
+    for (const layout of ["cover", "closing"] as const) {
       const blank = createBlankAddablePage("new", layout, "table")
+
       expect(parseDeck({ pages: [blank] }).pages[0]).toMatchObject(blank)
       expect(assessExportEligibility(blank, { status: "fit" }).issues).toEqual([
         {
@@ -151,6 +179,9 @@ describe("Cover and Closing contracts", () => {
         },
       ])
     }
+  })
+
+  it("keeps only stable Cover and Closing copy in a Deck Template", () => {
     const deck = parseDeck({
       pages: [
         {
@@ -173,7 +204,9 @@ describe("Cover and Closing contracts", () => {
         },
       ],
     })
+
     const template = createDeckFromTemplate(deck)
+
     expect(template.pages[0]).toMatchObject({
       title: "",
       subtitle: "",
@@ -187,18 +220,16 @@ describe("Cover and Closing contracts", () => {
     })
     expect(template.pages[1].boundary).toBeUndefined()
     expect(template.pages.every((page) => page.notes === undefined)).toBe(true)
-    const demo = parseDeck(
-      JSON.parse(
-        readFileSync(
-          resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
-          "utf8"
-        )
-      )
-    )
+  })
+
+  it("clears every Boundary Note when reusing a Deck Template", () => {
+    const demo = parseDeck(readDemoWeek())
+
     const reused = createDeckFromTemplate({
       ...demo,
       pages: demo.pages.map((page) => ({ ...page, boundary: "Old caveat" })),
     })
+
     expect(reused.pages.every((page) => page.boundary === undefined)).toBe(true)
   })
 })

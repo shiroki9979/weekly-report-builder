@@ -78,6 +78,9 @@ export type FieldsPanel = {
 export type Panel =
   TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
+// fields panel 只存在於舊 Two-column 檔案，編輯器與新頁面只產生其餘四種
+export type EditablePanel = Exclude<Panel, FieldsPanel>
+
 export type SlideLayout =
   | "two-column"
   | "html"
@@ -242,12 +245,15 @@ export type ClosingPage = EditorialPageChrome & {
 
 export type ComparisonColumn = { label: string; points: string[] }
 
+// Side-by-side Comparison 固定兩欄；欄位位置同時用於編輯定位與 chosen 標記
+export type ComparisonColumnIndex = 0 | 1
+
 export type SideBySidePage = EditorialPageChrome & {
   id: string
   layout: "side-by-side"
   title: string
   columns: [ComparisonColumn, ComparisonColumn]
-  chosen?: 0 | 1
+  chosen?: ComparisonColumnIndex
   tradeoff?: { why: string; cost?: string }
 }
 
@@ -255,7 +261,7 @@ export type FullWidthPanelPage = EditorialPageChrome & {
   id: string
   layout: "full-width-panel"
   title: string
-  panel: Exclude<Panel, FieldsPanel>
+  panel: EditablePanel
 }
 
 export type UnknownPage = PageChrome & {
@@ -295,7 +301,14 @@ export type DeckPeriod = {
   end: string
 }
 
-export type DeckTheme = "default" | "observatory"
+// 型別、parser 與 Workshop 選單共用這份清單；新增主題只需改這裡與對應樣式表
+export const DECK_THEMES = ["default", "observatory"] as const
+
+export type DeckTheme = (typeof DECK_THEMES)[number]
+
+export function isDeckTheme(value: unknown): value is DeckTheme {
+  return (DECK_THEMES as readonly unknown[]).includes(value)
+}
 
 export type Deck = {
   theme?: DeckTheme
@@ -471,13 +484,13 @@ export type Cardinality = {
 // 數量規則的單一來源。版面規則由 parser、reducer 與表單共用；panel 規則只約束編輯，
 // chart／flow／checklist 的 parser 容許空陣列，交由 readiness 標成 Draft Page
 export const CARDINALITY = {
-  comparisonColumns: {
+  sideBySideColumns: {
     min: 2,
     max: 2,
     owner: "Side-by-side Comparison",
     noun: "column",
   },
-  comparisonPoints: {
+  sideBySidePoints: {
     min: 1,
     max: 4,
     owner: "Comparison column",
@@ -603,6 +616,11 @@ function parseSlideItem(value: unknown, index: number): SlideItem {
     heading: readString(value.heading, `items[${index}].heading`),
     body: readString(value.body, `items[${index}].body`),
   }
+}
+
+// 選填文字欄位省略時以空字串表示草稿，編輯器與 renderer 不必再分辨 undefined
+function readOptionalString(value: unknown, field: string): string {
+  return value === undefined ? "" : readString(value, field)
 }
 
 function readArray(value: unknown, field: string): unknown[] {
@@ -1215,14 +1233,8 @@ function parseCoverPage(
   field: string
 ): CoverPage {
   return withChrome(chrome, "cover", {
-    subtitle:
-      value.subtitle === undefined
-        ? ""
-        : readString(value.subtitle, `${field}.subtitle`),
-    byline:
-      value.byline === undefined
-        ? ""
-        : readString(value.byline, `${field}.byline`),
+    subtitle: readOptionalString(value.subtitle, `${field}.subtitle`),
+    byline: readOptionalString(value.byline, `${field}.byline`),
   })
 }
 
@@ -1232,10 +1244,7 @@ function parseClosingPage(
   field: string
 ): ClosingPage {
   return withChrome(chrome, "closing", {
-    eyebrow:
-      value.eyebrow === undefined
-        ? ""
-        : readString(value.eyebrow, `${field}.eyebrow`),
+    eyebrow: readOptionalString(value.eyebrow, `${field}.eyebrow`),
     takeaways: readEntries(
       value.takeaways,
       `${field}.takeaways`,
@@ -1250,10 +1259,7 @@ function parseClosingPage(
         text: readString(takeaway.text, `${path}.text`),
       }
     }),
-    closingLine:
-      value.closingLine === undefined
-        ? ""
-        : readString(value.closingLine, `${field}.closingLine`),
+    closingLine: readOptionalString(value.closingLine, `${field}.closingLine`),
   })
 }
 
@@ -1267,7 +1273,7 @@ function parseComparisonColumn(
     points: readEntries(
       column.points,
       `${field}.points`,
-      CARDINALITY.comparisonPoints
+      CARDINALITY.sideBySidePoints
     ).map((point, index) => readString(point, `${field}.points[${index}]`)),
   }
 }
@@ -1280,7 +1286,7 @@ function parseSideBySidePage(
   const columns = readEntries(
     value.columns,
     `${field}.columns`,
-    CARDINALITY.comparisonColumns
+    CARDINALITY.sideBySideColumns
   )
   const chosen = value.chosen
   if (chosen !== undefined && chosen !== 0 && chosen !== 1)
@@ -1400,8 +1406,10 @@ export function parseDeck(value: unknown): Deck {
 
   const period = parsePeriod(value)
   const theme = value.theme
-  if (theme !== undefined && theme !== "default" && theme !== "observatory") {
-    throw new Error("Invalid deck: theme must be default or observatory")
+  if (theme !== undefined && !isDeckTheme(theme)) {
+    throw new Error(
+      `Invalid deck: theme must be one of ${DECK_THEMES.join(", ")}`
+    )
   }
   const title =
     value.title === undefined

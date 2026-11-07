@@ -7,6 +7,7 @@ import {
   type NextActionsVariant,
   type Deck,
 } from "./deck.ts"
+import { moveEntry } from "./move-entry.ts"
 import { typedPageUpdater } from "./update-deck-page.ts"
 
 const updateNextActions = typedPageUpdater(
@@ -71,17 +72,12 @@ export function moveCommitment(
   toIndex: number
 ): Deck {
   return updateNextActions(deck, pageIndex, (page) => {
-    if (
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= page.commitments.length ||
-      toIndex >= page.commitments.length
-    ) {
-      return page
+    return {
+      ...page,
+      commitments: moveEntry(page.commitments, {
+        from: fromIndex,
+        to: toIndex,
+      }),
     }
-    const commitments = [...page.commitments]
-    const [entry] = commitments.splice(fromIndex, 1)
-    commitments.splice(toIndex, 0, entry)
-    return { ...page, commitments }
   })
 }

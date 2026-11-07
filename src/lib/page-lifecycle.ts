@@ -9,6 +9,7 @@ import type {
   TablePanel,
   TwoColumnPage,
   Deck,
+  EditablePanel,
   Page,
   OverviewPage,
   EvidenceDecisionPage,
@@ -50,7 +51,7 @@ function blankItems(): TwoColumnPage["items"] {
   }))
 }
 
-function blankPanel(kind: AddablePanelKind): FullWidthPanelPage["panel"] {
+function blankPanel(kind: AddablePanelKind): EditablePanel {
   switch (kind) {
     case "table":
       return {

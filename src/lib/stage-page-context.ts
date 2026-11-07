@@ -76,7 +76,7 @@ function hasPageNumberSlot(page: Page): boolean {
 
 /**
  * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
- * 疊加 overlay 會改變既有輸出，所以不繼承週層級預設、須逐頁開啟。
+ * 疊加 overlay 會改變既有輸出，所以不繼承 Deck 層級預設、須逐頁開啟。
  */
 export function defaultPageNumberVisibility(
   deck: Deck | null,

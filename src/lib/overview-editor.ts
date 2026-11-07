@@ -7,6 +7,7 @@ import {
   type Outcome,
   type Deck,
 } from "./deck"
+import { moveEntry } from "./move-entry"
 import { typedPageUpdater } from "./update-deck-page"
 
 type OutcomeTextField = "workstream" | "figure" | "result" | "impact"
@@ -145,20 +146,10 @@ export function moveSupportingOutcome(
   toIndex: number
 ): Deck {
   return updateOverview(deck, pageIndex, (page) => {
-    if (
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= page.supporting.length ||
-      toIndex >= page.supporting.length
-    ) {
-      return page
+    return {
+      ...page,
+      supporting: moveEntry(page.supporting, { from: fromIndex, to: toIndex }),
     }
-
-    const supporting = [...page.supporting]
-    const [entry] = supporting.splice(fromIndex, 1)
-    supporting.splice(toIndex, 0, entry)
-
-    return { ...page, supporting }
   })
 }
 

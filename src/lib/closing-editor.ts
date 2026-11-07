@@ -6,6 +6,7 @@ import {
   type ClosingPage,
   type Deck,
 } from "./deck.ts"
+import { moveEntry } from "./move-entry.ts"
 import { typedPageUpdater } from "./update-deck-page.ts"
 
 const updateClosing = typedPageUpdater(isClosingPage, "a Closing page")
@@ -45,17 +46,7 @@ export function moveTakeaway(
   move: { from: number; to: number }
 ): Deck {
   return updateClosing(deck, pageIndex, (page) => {
-    if (
-      move.from < 0 ||
-      move.to < 0 ||
-      move.from >= page.takeaways.length ||
-      move.to >= page.takeaways.length
-    )
-      return page
-    const takeaways = [...page.takeaways]
-    const [entry] = takeaways.splice(move.from, 1)
-    takeaways.splice(move.to, 0, entry)
-    return { ...page, takeaways }
+    return { ...page, takeaways: moveEntry(page.takeaways, move) }
   })
 }
 

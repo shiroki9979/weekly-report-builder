@@ -4,9 +4,11 @@ import {
   CARDINALITY,
   isSideBySidePage,
   type ComparisonColumn,
+  type ComparisonColumnIndex,
   type Deck,
   type SideBySidePage,
 } from "./deck.ts"
+import { moveEntry } from "./move-entry.ts"
 import { typedPageUpdater } from "./update-deck-page.ts"
 
 const updateComparison = typedPageUpdater(
@@ -17,7 +19,7 @@ const updateComparison = typedPageUpdater(
 export function setComparisonColumn(
   deck: Deck,
   pageIndex: number,
-  update: { column: 0 | 1; label: string }
+  update: { column: ComparisonColumnIndex; label: string }
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     return replaceColumn(page, update.column, {
@@ -30,11 +32,11 @@ export function setComparisonColumn(
 export function addComparisonPoint(
   deck: Deck,
   pageIndex: number,
-  column: 0 | 1
+  column: ComparisonColumnIndex
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     const current = page.columns[column]
-    assertCanAddEntry(current.points, CARDINALITY.comparisonPoints)
+    assertCanAddEntry(current.points, CARDINALITY.sideBySidePoints)
     return replaceColumn(page, column, {
       ...current,
       points: [...current.points, ""],
@@ -45,7 +47,7 @@ export function addComparisonPoint(
 export function setComparisonPoint(
   deck: Deck,
   pageIndex: number,
-  update: { column: 0 | 1; point: number; text: string }
+  update: { column: ComparisonColumnIndex; point: number; text: string }
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     const current = page.columns[update.column]
@@ -59,20 +61,11 @@ export function setComparisonPoint(
 export function moveComparisonPoint(
   deck: Deck,
   pageIndex: number,
-  move: { column: 0 | 1; from: number; to: number }
+  move: { column: ComparisonColumnIndex; from: number; to: number }
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     const current = page.columns[move.column]
-    if (
-      move.from < 0 ||
-      move.to < 0 ||
-      move.from >= current.points.length ||
-      move.to >= current.points.length
-    )
-      return page
-    const points = [...current.points]
-    const [entry] = points.splice(move.from, 1)
-    points.splice(move.to, 0, entry)
+    const points = moveEntry(current.points, move)
     return replaceColumn(page, move.column, { ...current, points })
   })
 }
@@ -80,11 +73,11 @@ export function moveComparisonPoint(
 export function removeComparisonPoint(
   deck: Deck,
   pageIndex: number,
-  location: { column: 0 | 1; point: number }
+  location: { column: ComparisonColumnIndex; point: number }
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     const current = page.columns[location.column]
-    assertCanRemoveEntry(current.points, CARDINALITY.comparisonPoints)
+    assertCanRemoveEntry(current.points, CARDINALITY.sideBySidePoints)
     const points = current.points.filter((_, index) => index !== location.point)
     return replaceColumn(page, location.column, { ...current, points })
   })
@@ -93,7 +86,7 @@ export function removeComparisonPoint(
 export function setComparisonChosen(
   deck: Deck,
   pageIndex: number,
-  chosen: 0 | 1 | undefined
+  chosen: ComparisonColumnIndex | undefined
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => ({ ...page, chosen }))
 }
@@ -108,7 +101,7 @@ export function setComparisonTradeoff(
 
 function replaceColumn(
   page: SideBySidePage,
-  index: 0 | 1,
+  index: ComparisonColumnIndex,
   column: ComparisonColumn
 ): SideBySidePage {
   const columns: SideBySidePage["columns"] = [...page.columns]

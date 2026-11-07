@@ -18,11 +18,11 @@
   --blue-deep: var(--accent-deep);
   --blue-soft: var(--accent-soft);
   --blue-wash: var(--accent-wash);
-  --chart-1: #2e75b6;
+  --chart-1: var(--accent);
   --chart-2: #7eb0d6;
-  --chart-3: #c5d9ed;
-  --chart-4: #1f5a8f;
-  --chart-5: #5c5c5c;
+  --chart-3: var(--accent-soft);
+  --chart-4: var(--accent-deep);
+  --chart-5: var(--mute);
   --ink: #2d2d2d;
   --mute: #5c5c5c;
   --line: #d0d7de;
@@ -348,7 +348,7 @@
   pointer-events: none;
 }
 
-/* 列索引僅為 Observatory 的 Full-width Panel 呈現，不參與資料欄索引。 */
+/* 列索引預設隱藏，由主題樣式表決定是否呈現；它不參與資料欄索引。 */
 .stage-table-row-index {
   display: none;
 }

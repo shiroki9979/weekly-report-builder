@@ -121,6 +121,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
+  margin-top: auto;
   border-top: 1px solid var(--ink);
 }
 
@@ -146,10 +147,6 @@
 .stage-root[data-theme="observatory"] .editorial-cover-content {
   justify-content: flex-start;
   padding-top: 8.59375cqw;
-}
-
-.stage-root[data-theme="observatory"] .editorial-cover-meta {
-  margin-top: auto;
 }
 
 .stage-root[data-theme="observatory"] .editorial-comparison-label,

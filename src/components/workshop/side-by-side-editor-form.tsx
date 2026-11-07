@@ -9,6 +9,7 @@ import {
   canAddEntry,
   canRemoveEntry,
   CARDINALITY,
+  type ComparisonColumnIndex,
   type SideBySidePage,
 } from "@/lib/deck"
 import { issuePathsFor } from "@/lib/export-readiness"
@@ -23,7 +24,10 @@ import {
 } from "@/lib/side-by-side-editor"
 
 type EditorProps = PageEditorProps<SideBySidePage>
-type ColumnProps = EditorProps & { column: 0 | 1; invalidPaths: Set<string> }
+type ColumnProps = EditorProps & {
+  column: ComparisonColumnIndex
+  invalidPaths: Set<string>
+}
 
 export function SideBySideEditorForm(props: EditorProps) {
   const invalidPaths = issuePathsFor(props.page)
@@ -93,7 +97,7 @@ function ComparisonColumnEditor(props: ColumnProps) {
         type="button"
         variant="outline"
         size="sm"
-        disabled={!canAddEntry(current.points, CARDINALITY.comparisonPoints)}
+        disabled={!canAddEntry(current.points, CARDINALITY.sideBySidePoints)}
         onClick={() =>
           onChange((deck) => addComparisonPoint(deck, pageIndex, column))
         }
@@ -175,7 +179,7 @@ function ComparisonPointEditor({
           type="button"
           variant="outline"
           size="sm"
-          disabled={!canRemoveEntry(points, CARDINALITY.comparisonPoints)}
+          disabled={!canRemoveEntry(points, CARDINALITY.sideBySidePoints)}
           onClick={() =>
             onChange((deck) =>
               removeComparisonPoint(deck, pageIndex, { column, point })
