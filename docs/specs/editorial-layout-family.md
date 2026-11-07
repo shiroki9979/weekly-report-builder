@@ -506,7 +506,6 @@ Playwright 的引入只服務真實 browser layout 與 Workshop flow；純 domai
 - How-To：新增 Add/Delete/Reorder、Editorial Layout 編輯與 export blocker 排除步驟。
 - `docs/how-to/hide-pages-from-export.md`：說明 Hidden label、Copy 與 Page Position。
 - README：prototype 退場後改為 production Editorial Layout 入口。
-- `CHANGELOG.md`：各 slice 記入 Added／Changed／Fixed。
 
 ## Acceptance Criteria
 
