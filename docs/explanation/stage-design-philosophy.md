@@ -14,7 +14,7 @@
 
 哲學的對象是投影片，不是海報或藝術品。投影片必須在沒有講者時也能被讀懂（見 [好的 Slide](slide-design-research.md) 的雙情境原則），所以文字不是裝飾，資訊密度也不以「少」為美；這裡追求的是每一個元素都有可說明的作用，並以一致的手法安放。
 
-領域名詞依 [CONTEXT.md](../../CONTEXT.md)：Deck Theme、Structured Layout、Layout Variant、Stage Element、Editorial Frame、Boundary Note、Tradeoff Callout。
+領域名詞依 [GLOSSARY.md](../../GLOSSARY.md)：Deck Theme、Structured Layout、Layout Variant、Stage Element、Editorial Frame、Boundary Note、Tradeoff Callout。
 
 ## 宣言
 

@@ -5,7 +5,7 @@ Status: Approved for implementation (grill consensus 2026-11-07, prototype verdi
 Created: 2026-11-07
 Last updated: 2026-11-07 (second review folded in)
 
-Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [CONTEXT.md](../../CONTEXT.md).
+Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [GLOSSARY.md](../../GLOSSARY.md).
 
 ## Problem Statement
 
@@ -258,7 +258,7 @@ Specification issue #57 references this document. Prefactor ticket #62 and imple
 - A Deck with `theme: "observatory"` renders every Structured Layout and HTML Pages referencing `--blue*` in the new palette and fonts; PNG output embeds the Latin fonts.
 - The four new layouts can be added, edited, saved, reloaded, cloned through a Deck Template, previewed, copied, and batch-exported with the shared Export gate; Draft, Overflowing, Hidden, and Page Position behaviour matches existing layouts.
 - The fictional demo deck opens on a fresh install and exports all pages.
-- CONTEXT.md terms match the implemented behaviour; the Deck JSON reference documents `theme`, `title`, `boundary`, `referenceColumn`, and the four layouts.
+- GLOSSARY.md terms match the implemented behaviour; the Deck JSON reference documents `theme`, `title`, `boundary`, `referenceColumn`, and the four layouts.
 
 ## Further Notes
 

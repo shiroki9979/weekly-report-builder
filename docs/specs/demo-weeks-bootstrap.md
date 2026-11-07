@@ -163,7 +163,7 @@ Workshop 先列出可用週次再載入最新 Week Document，不再依賴固定
 - `docs/tutorials/first-weekly-report.md` 使用自動選取的 demo week，不依賴固定 `2026-08-24`。
 - `docs/how-to/create-new-week.md` 移除手動複製既有真實週報的過時指引。
 - `docs/explanation/workshop-architecture.md` 區分 tracked `demo/` 與 ignored runtime `weeks/`。
-- 這項 repository bootstrap policy 不建立 ADR；Demo Week Set 不是產品領域術語，因此不加入 `CONTEXT.md`。
+- 這項 repository bootstrap policy 不建立 ADR；Demo Week Set 不是產品領域術語，因此不加入 `GLOSSARY.md`。
 
 ## Testing Decisions
 

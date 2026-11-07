@@ -40,7 +40,7 @@ Grill 共識（2026-09-09～2026-09-10）。本文件是實作 Weekly Overview�
 
 ## Domain language
 
-Canonical terms and definitions live in [`CONTEXT.md`](../../CONTEXT.md). Implementations、tests 與文件必須使用 `Structured Layout`、`Editorial Layout Family`、`Outcome`、`Status Signal`、`Comparison Metric`、`Commitment`、`Draft Page`、`Content-complete Page`、`Overflowing Page`、`Page ID` 與 `Page Position`。
+Canonical terms and definitions live in [`GLOSSARY.md`](../../GLOSSARY.md). Implementations、tests 與文件必須使用 `Structured Layout`、`Editorial Layout Family`、`Outcome`、`Status Signal`、`Comparison Metric`、`Commitment`、`Draft Page`、`Content-complete Page`、`Overflowing Page`、`Page ID` 與 `Page Position`。
 
 ## User Stories
 

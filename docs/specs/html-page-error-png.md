@@ -40,7 +40,7 @@ Historical tests that locked this inventory before implementation:
 
 ## Domain language
 
-Use [CONTEXT.md](../../CONTEXT.md): HTML Page, HTML Load Failure, Export Readiness, and Overflowing Page. HTML Load Failure is not overflow. A warning PNG describes the old output behavior, not a successful HTML Page export under the confirmed policy.
+Use [GLOSSARY.md](../../GLOSSARY.md): HTML Page, HTML Load Failure, Export Readiness, and Overflowing Page. HTML Load Failure is not overflow. A warning PNG describes the old output behavior, not a successful HTML Page export under the confirmed policy.
 
 ## Confirmed scope
 

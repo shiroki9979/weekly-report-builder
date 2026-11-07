@@ -9,7 +9,7 @@
 
 > **命名對照（2026-10-03）**：[ADR-0001](../adr/0001-decouple-weekly-report-from-slide-core.md) 在 [PR #56](https://github.com/shiroki9979/weekly-report-builder/pull/56) 把 Week 用語改為 Deck。各候選的「問題」與「證據」是審查時的快照，保留當時名稱；「相關 module」與〈考慮過但判定保留〉已改為現行名稱。對照：`week-document.ts` → `deck.ts`（Week Document → Deck）、`week-editor.ts` → `deck-editor.ts`、`weekly-overview-editor.ts` → `overview-editor.ts`、`update-week-page.ts` → `update-deck-page.ts`、`week-clone.ts` → `deck-template.ts`（通用）與 `weekly-series.ts`（週報流程）、`week-export.ts` → `deck-export.ts`、`weeks-client.ts` → `decks-client.ts` 與 `weekly-series-client.ts`、`week-store.ts`（`WeekStore`）→ `deck-store.ts`（`DeckStore`、`WorkshopStore`）、`server/weeks-store.ts` → `server/decks-store.ts`、`week-id.ts` → `deck-id.ts` 與 `calendar-date.ts`、`matchWeekPage` → `matchPage`、`/api/weeks` → `/api/decks`、`seedWeeksFromDemo` → `seedDecksFromDemo`。
 
-用語：module、interface、implementation、seam、adapter、depth、leverage、locality 沿用 agent 的 `codebase-design` 詞彙。**Deep** module 是小 interface 後面藏大量行為；**shallow** module 的 interface 幾乎和 implementation 一樣複雜。領域名詞依 [CONTEXT.md](../../CONTEXT.md)。
+用語：module、interface、implementation、seam、adapter、depth、leverage、locality 沿用 agent 的 `codebase-design` 詞彙。**Deep** module 是小 interface 後面藏大量行為；**shallow** module 的 interface 幾乎和 implementation 一樣複雜。領域名詞依 [GLOSSARY.md](../../GLOSSARY.md)。
 
 強度分三級：Strong（證據充分，建議做）、Worth exploring（值得討論）、Speculative（視未來需求）。依賴類別決定測試方式：in-process 直接測新 interface；ports & adapters 以 in-memory adapter 取代遠端；mock 以 fake adapter 取代第三方或瀏覽器能力。標「靜態推論」的證據只讀程式推得，未在瀏覽器驗證。
 
@@ -30,7 +30,7 @@
 
 ## 1. Editing Session module
 
-typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week 草稿 module」，因與 Draft Page 撞名而改名；Editing Session 與 Metric Input 的定義見 [CONTEXT.md](../../CONTEXT.md)。
+typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week 草稿 module」，因與 Draft Page 撞名而改名；Editing Session 與 Metric Input 的定義見 [GLOSSARY.md](../../GLOSSARY.md)。
 
 - **審查時相關 module（歷史快照）**：`src/components/workshop/workshop-shell.tsx`（`WorkshopShellBody`）、已刪除的 `metric-draft-context.tsx`、`metric-draft-buffer.ts`、`use-week-editor.ts`、`use-week-save.ts`、`use-week-create.ts`，以及 `evidence-decision-editor-form.tsx`。當時 `metricBuffer` 參數另穿過 export 與 editor chrome；現由 `src/lib/editing-session.ts`、`src/hooks/use-editing-session.ts` 及 `src/lib/deck-store.ts` 負責編輯狀態與 Deck 存取，Export hook 只接收 snapshot 來源。
 - **問題**：編輯中的 Week Document 分住兩個倉：`useWeekEditor` 的 `week` 與 `MetricDraftProvider` 的 buffer。兩倉的不變條件由呼叫端手動維持：shell 負責切週清空、lifecycle 後 `pruneMetricDrafts`、Save 前 `weekHasInvalidMetricDrafts`；Evidence-backed Decision 表單負責 Move／Remove 時 remap。存檔與建週的狀態又分在 `useWeekSave`、`useWeekCreate` 與 shell 的 `draftSaveError`，切週時沒有人重設。
@@ -82,7 +82,7 @@ Copy 與 batch export 共用同一條單頁流程。
 收掉約 60 個 `(week, pageIndex, …)` mutation 函式。
 
 - **相關 module**：`src/lib/deck-editor.ts`、`src/lib/overview-editor.ts`、`src/lib/evidence-decision-editor.ts`、`src/lib/next-actions-editor.ts`、`src/lib/update-deck-page.ts`、`src/components/workshop/page-editor-props.ts`、`src/components/workshop/page-editor-form.tsx` 與各 `*-editor-form.tsx`、`src/lib/editing-session.ts`（`editSessionContent`）。
-- **問題**：約 60 個 mutation 函式都吃 `(week, pageIndex, …)` 並回傳整份 Week Document，每個 input 都寫 `onChange(setX(week, pageIndex, …))`。CONTEXT.md 要求以 Page ID 定址、避免 "Page index"；lifecycle 與 Metric Input 都用 Page ID，唯獨內容編輯用陣列位置：表單以 `pageIndex` 組出整份 Week Document 的 updater，再交給 Editing Session 的一般編輯入口。
+- **問題**：約 60 個 mutation 函式都吃 `(week, pageIndex, …)` 並回傳整份 Week Document，每個 input 都寫 `onChange(setX(week, pageIndex, …))`。GLOSSARY.md 要求以 Page ID 定址、避免 "Page index"；lifecycle 與 Metric Input 都用 Page ID，唯獨內容編輯用陣列位置：表單以 `pageIndex` 組出整份 Week Document 的 updater，再交給 Editing Session 的一般編輯入口。
 - **做法**：表單只拿到自己那一頁、該頁的 readiness 與一個以 Page ID 為範圍的更新入口，week 層級的寫回只在編輯 module 發生一次。維持不變條件的操作留下，一行 spread 的 setter 併入各版面自己的更新。
 - **Deletion test**：刪 `setChartPanelTitle`、`setFlowStepLabel`，複雜度直接消失，屬 shallow pass-through；刪 `addChartCategory`、`removeTableColumn`，series 對齊與 emphasis 重排會散回表單，值得留下。
 - **證據**：
@@ -105,7 +105,7 @@ Copy 與 batch export 共用同一條單頁流程。
   - `pageLabel` 一個欄位有三種意思：`"1 / 3"`、`"Hidden"`、`""`。
   - HTML Page 的 Monday 取自 Week Label，匯出檔名與 Save URL 卻用 `selectedMonday`，parser 也不檢查 `start` 是否等於檔名的週一；手改 JSON 讓兩者不一致時，HTML Page 會到錯的資料夾抓檔（靜態推論）。
   - Week Label 有兩種寫法：Stage 用 em dash（`—`），標題列用 en dash（`–`）。
-  - `PageNavigator` 顯示陣列位置（`selectedPageIndex + 1 / pages.length`），和 Stage 上的 Page Position 是不同數字；CONTEXT.md 的 Page Position 明列 _Avoid_: Array index。
+  - `PageNavigator` 顯示陣列位置（`selectedPageIndex + 1 / pages.length`），和 Stage 上的 Page Position 是不同數字；GLOSSARY.md 的 Page Position 明列 _Avoid_: Array index。
   - 頁碼功能 `4ddbe1d`（#30）一次改了 22 個檔案，之後又有 `c819ed5`、`e5a6d2b`、`8fca8e8` 三次修補；`StageSlide`（HTML Page）與 `EditorialFrame` 各自決定畫不畫頁碼。
   - `stage-slide.test.tsx` 手造 `pageLabel: "Hidden"`，和 `stage-page-context.ts` 各自寫死同一個字串，改一邊，另一邊的測試不會失敗。
 - **收益**：字串哨兵退場；HTML Page 的路徑不再取自顯示字串；locality，頁碼規則集中一處；renderer 不再各自判斷；測試斷言事實而非顯示字串。
@@ -169,4 +169,4 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
 
 - [工坊架構](workshop-architecture.md)
 - [Editorial Layout Family production adoption](../specs/editorial-layout-family.md)
-- [CONTEXT.md](../../CONTEXT.md)
+- [GLOSSARY.md](../../GLOSSARY.md)

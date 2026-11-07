@@ -52,7 +52,7 @@
 
 ## 從資訊關係選 layout
 
-本專案已將 Structured Layout 定義為服務反覆出現的溝通職能，並有 Weekly Overview、Evidence-backed Decision、Next Actions 與 Two-column Layout。[領域定義](../../CONTEXT.md)
+本專案已將 Structured Layout 定義為服務反覆出現的溝通職能，並有 Weekly Overview、Evidence-backed Decision、Next Actions 與 Two-column Layout。[領域定義](../../GLOSSARY.md)
 
 **專業指引**：ONS 建議依資料中最重要的關係選擇圖表，例如比較、時間、分布與組成，並優先使用受眾熟悉的形式。[ONS：Choosing a chart type](https://service-manual.ons.gov.uk/data-visualisation/chart-types/choosing-a-chart-type)
 
@@ -105,7 +105,7 @@
 | 文字越少越好，講者會說的就全部刪掉               | **研究實證**具有條件：Mayer 與 Moreno 指出，沒有動畫時，同時提供口語和文字可能優於只有口語，不能把 redundancy 原則延伸成一律刪字。[原文，2003，Type 4](https://www.researchgate.net/profile/Richard-Mayer-4/publication/253772914_Nine_Ways_to_Reduce_Cognitive_Load_in_Multimedia_Learning/links/57799b9908aeb9427e2c00b4/Nine-Ways-to-Reduce-Cognitive-Load-in-Multimedia-Learning.pdf) 本專案保留獨立閱讀所需資訊。 |
 | 每頁一定要放圖，或所有項目都不准使用清單         | 本專案不設此規則；圖應解釋關係或提供證據，有順序的承諾可使用清單。資料、引言與文字結論也能構成有用頁面。                                                                                                                                                                                                                                                                                                               |
 | 一頁一個重點等於只能出現一項資料                 | 本專案將「重點」解讀為一個溝通目的；支持同一結論的比較、數個 Outcome 或有序 Commitments 可以共存。                                                                                                                                                                                                                                                                                                                     |
-| 沒溢出、可以匯出，就代表內容品質合格             | Export Readiness 檢查內容與可捕捉條件；受眾是否理解、比較是否公平、兩種情境是否成立，需另行驗證。[現有定義](../../CONTEXT.md)                                                                                                                                                                                                                                                                                          |
+| 沒溢出、可以匯出，就代表內容品質合格             | Export Readiness 檢查內容與可捕捉條件；受眾是否理解、比較是否公平、兩種情境是否成立，需另行驗證。[現有定義](../../GLOSSARY.md)                                                                                                                                                                                                                                                                                         |
 
 ## 虛構週報：同一訊息的兩種呈現
 
