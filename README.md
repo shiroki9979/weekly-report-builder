@@ -1,7 +1,7 @@
 # weekly-report-builder
 
 Created: 2026-08-31
-Last updated: 2026-09-29
+Last updated: 2026-11-07
 
 Personal slide workshop: edit a deck in a form, preview slides at 16:9, export PNGs, and paste them into the team’s shared deck. The weekly report is the built-in workflow; other decks work the same way ([ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)). Solo use only.
 
@@ -10,7 +10,8 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 ## Status
 
 - **Workshop**: edit a deck, preview at 16:9, export PNGs or copy one page to the clipboard.
-- **Structured Layouts**: Two-column, Overview, Evidence-backed Decision, Next Actions (Rows or Columns), and Trend & Target (weekly or monthly), plus HTML Pages.
+- **Structured Layouts**: Cover, Closing, Side-by-side Comparison, Full-width Panel, Two-column, Overview, Evidence-backed Decision, Next Actions (Rows or Columns), and Trend & Target (weekly or monthly), plus HTML Pages.
+- **Deck Theme**: Default preserves the team-template appearance; Observatory adds semantic colour roles, self-hosted Latin fonts, and the Editorial Frame footer with Deck Title. Theme and title are edited once per Deck.
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
@@ -37,14 +38,14 @@ Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and 
 
 If `decks/` exists but has no decks, remove that empty directory and run `pnpm seed:decks`. The Workshop will not create a first deck for you.
 
-The public fictional Demo Deck Set opens in the Workshop on a fresh install. Pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows longer Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
+The public fictional Demo Deck Set opens in the Workshop on a fresh install. Select **harbor-forecast** to see the Observatory Cover, Overview, Side-by-side Comparison, Full-width Panel table with a reference column, and Closing. In **2026-01-05**, pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows longer Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 
-| Area                                                | Stack                                                                                                       |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                                                                      |
-| 16:9 preview stage                                  | `src/styles/stage.css` tokens, plus `editorial-layouts.css` for Editorial Layouts — no shadcn on the canvas |
+| Area                                                | Stack                                                                                                                     |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                                                                                    |
+| 16:9 preview stage                                  | `src/styles/stage.css` roles, `editorial-layouts.css` compositions, and `observatory-theme.css` — no shadcn on the canvas |
 
 ## Language
 
@@ -53,7 +54,7 @@ Workshop UI and in-app strings are **English**. Slide copy in `decks/*.json` is 
 ## Workflow
 
 1. Open a deck. For the weekly report, create the new week from the latest one (`decks/YYYY-MM-DD.json`); it keeps the previous structure with cleared copy.
-2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Structured Layout pages include Overview, Evidence-backed Decision, Next Actions, and Trend & Target — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
+2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Full-width Panel gives one of the same panel kinds the whole body. Other Structured Layouts include Cover, Closing, Side-by-side Comparison, Overview, Evidence-backed Decision, Next Actions, and Trend & Target — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
 3. Hide pages you will not paste into the team deck. Draft and Overflowing Pages cannot be copied or batch-exported until they are Content-complete and fit the 1280 × 720 capture Stage.
 4. Review each page both as a spoken slide and as a standalone image: check the conclusion, dated evidence, status, source, and action checkpoints. Export ready pages as PNG or copy the current page to the clipboard.
 

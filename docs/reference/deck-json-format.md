@@ -50,20 +50,20 @@ Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任�
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位             | 型別      | 必填 | 說明                                                                                                                                          |
-| ---------------- | --------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                                               |
-| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"`、`"trend-target"`、`"cover"`、`"closing"` 或 `"side-by-side"` |
-| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                      |
-| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                    |
-| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                 |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄            |
+| 欄位             | 型別      | 必填 | 說明                                                                                                                                                                |
+| ---------------- | --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                                                                     |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"`、`"trend-target"`、`"cover"`、`"closing"`、`"side-by-side"` 或 `"full-width-panel"` |
+| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                                            |
+| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                                          |
+| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                                       |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄                                  |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### Boundary Note
 
-`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing 與 Side-by-side Comparison。Parser 在 Cover、HTML Page 與 Two-column 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
+`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover、HTML Page 與 Two-column 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
 
 空白或省略 Boundary Note 不影響 Content-complete；內容過長導致 Stage 溢出時仍阻擋 Copy，batch 略過該頁。Deck Template 與 Weekly Series 會清除此欄位；既有版型的其他保留規則不變。
 
@@ -103,6 +103,17 @@ Parser 拒絕超過四筆 takeaways；未填文字仍可儲存為草稿。Deck T
 省略 chosen 與 tradeoff 仍是有效的開放比較。Parser 拒絕欄數、點數或 chosen 超出範圍；空白文案仍可儲存為草稿。支援 Boundary Note、Hidden Page 與 Page Position；兩欄等寬，Observatory 為每欄的點加上呈現用序號。
 
 Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點數；chosen、tradeoff、Boundary Note 與 notes 清除。
+
+### `layout: "full-width-panel"`
+
+| 欄位    | 型別     | 必填 | 說明                                                     |
+| ------- | -------- | ---- | -------------------------------------------------------- |
+| `title` | `string` | 是   | 頁面結論；Content-complete 時不可空白                    |
+| `panel` | `Panel`  | 是   | `table`、`flow`、`checklist` 或 `chart`；不接受 `fields` |
+
+共用 Editorial Frame 與選填 Boundary Note。Panel 的 `title` 可為空字串，空白時不渲染 panel 標題；其他內容完整性規則與 Two-column 的同類 panel 相同，不需要三個 narrative items。
+
+`observatory` 的 Full-width Panel 表格在資料欄之前顯示 `01`、`02`… 列索引。這是呈現用索引，不寫入 `columns`／`rows`，不改變 `referenceColumn`，也不出現在 `default` 或 Two-column 表格。Deck Template 沿用既有 panel 結構保留規則，清空頁面標題、Boundary Note 與 authored copy。
 
 ### `layout: "two-column"`
 
@@ -230,7 +241,7 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 
 ## Panel（discriminated union）
 
-以 `kind` 區分。
+以 `kind` 區分。以下 `title` 欄位仍是字串；Two-column 要求非空標題才可匯出，Full-width Panel 允許空字串。
 
 ### `kind: "table"`
 
@@ -241,6 +252,9 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 | `rows`    | `{ cells: string[]; emphasis?: number[] }[]` | 是，至少 1 列 |
 
 - `emphasis`：以欄位 index 標記粗體 cell
+- `referenceColumn?: number`：選填的零起算資料欄索引，須為整數且落在 `columns` 範圍內；無效值拒絕整份 Deck。適用於 Two-column 與 Full-width Panel。
+- 參照欄靠右、不換行並使用 accent 色；`observatory` 使用 mono 字型。參照欄不是內容完整性條件。
+- 表格編輯器可選 None 或欄名。刪除被參照的欄時清除設定；刪除它之前的欄時索引減一。Deck Template 保留參照欄設定與欄數，但沿用既有規則清空欄名與儲存格文案。
 
 ### `kind: "chart"`
 

@@ -19,6 +19,8 @@ import {
   type StructuredPage,
   type TablePanel,
   type TwoColumnPage,
+  type FullWidthPanelPage,
+  type Panel,
   type Page,
   type OverviewPage,
 } from "./deck"
@@ -269,24 +271,29 @@ function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
     issues.push(missing("panel.title", "Panel title is required"))
   }
 
-  switch (page.panel.kind) {
-    case "table":
-      issues.push(...assessTable(page.panel))
-      break
-    case "chart":
-      issues.push(...assessChart(page.panel))
-      break
-    case "flow":
-      issues.push(...assessFlow(page.panel))
-      break
-    case "checklist":
-      issues.push(...assessChecklist(page.panel))
-      break
-    case "fields":
-      break
-  }
+  return [...issues, ...assessPanelContent(page.panel)]
+}
 
-  return issues
+function assessFullWidthPanel(page: FullWidthPanelPage): ExportIssue[] {
+  return [
+    ...(isBlank(page.title) ? [missing("title", "Title is required")] : []),
+    ...assessPanelContent(page.panel),
+  ]
+}
+
+function assessPanelContent(panel: Panel): ExportIssue[] {
+  switch (panel.kind) {
+    case "table":
+      return assessTable(panel)
+    case "chart":
+      return assessChart(panel)
+    case "flow":
+      return assessFlow(panel)
+    case "checklist":
+      return assessChecklist(panel)
+    case "fields":
+      return []
+  }
 }
 
 function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
@@ -566,6 +573,7 @@ export function assessContentReadiness(
     cover: assessCover,
     closing: assessClosing,
     sideBySide: assessSideBySide,
+    fullWidthPanel: assessFullWidthPanel,
     twoColumn: assessTwoColumn,
     overview: assessOverview,
     evidenceDecision: (decision) =>

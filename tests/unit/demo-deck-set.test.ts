@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
+import { assessExportEligibility } from "@/lib/export-readiness"
+
 import {
   isHtmlPage,
   isNextActionsPage,
@@ -36,7 +38,30 @@ function measuredValues(index: number): number[] {
 }
 
 describe("Demo Deck Set", () => {
-  it("covers the reporting week with every production layout in order", () => {
+  it("ships a complete fictional Observatory Deck with all four new layouts", () => {
+    const harbor = parseDeck(
+      JSON.parse(readFileSync(resolve(demoDir, "harbor-forecast.json"), "utf8"))
+    )
+
+    expect(harbor.theme).toBe("observatory")
+    expect(harbor.title).toBe("Harbor Forecast · Pilot review")
+    expect(harbor.pages.map((page) => page.layout)).toEqual([
+      "cover",
+      "overview",
+      "side-by-side",
+      "full-width-panel",
+      "closing",
+    ])
+    for (const page of harbor.pages) {
+      expect(assessExportEligibility(page, { status: "fit" })).toEqual({
+        eligible: true,
+        issues: [],
+      })
+    }
+    expect(JSON.stringify(harbor)).not.toMatch(CJK)
+  })
+
+  it("covers the reporting week with its original layouts in order", () => {
     expect(week.period!.start).toBe("2026-01-05")
     expect(week.period!.end).toBe("2026-01-09")
     expect(week.pages.map((page) => page.layout)).toEqual([

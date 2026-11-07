@@ -6,6 +6,7 @@ import type { Panel } from "@/lib/deck"
 
 type StagePanelProps = {
   panel: Panel
+  fullWidth?: boolean
 }
 
 function UnsupportedPanel({ kind }: { kind: string }) {
@@ -16,16 +17,23 @@ function UnsupportedPanel({ kind }: { kind: string }) {
   )
 }
 
-export function StagePanel({ panel }: StagePanelProps) {
+export function StagePanel({ panel, fullWidth = false }: StagePanelProps) {
+  const showTitle = !fullWidth || panel.title.trim() !== ""
   switch (panel.kind) {
     case "table":
-      return <TablePanelView panel={panel} />
+      return (
+        <TablePanelView
+          panel={panel}
+          rowIndices={fullWidth}
+          showTitle={showTitle}
+        />
+      )
     case "chart":
-      return <ChartPanelView panel={panel} />
+      return <ChartPanelView panel={panel} showTitle={showTitle} />
     case "flow":
-      return <FlowPanelView panel={panel} />
+      return <FlowPanelView panel={panel} showTitle={showTitle} />
     case "checklist":
-      return <ChecklistPanelView panel={panel} />
+      return <ChecklistPanelView panel={panel} showTitle={showTitle} />
     case "fields":
       return <UnsupportedPanel kind={panel.kind} />
     default:

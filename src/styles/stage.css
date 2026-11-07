@@ -347,3 +347,15 @@
   color: var(--mute);
   pointer-events: none;
 }
+
+/* 列索引僅為 Observatory 的 Full-width Panel 呈現，不參與資料欄索引。 */
+.stage-table-row-index {
+  display: none;
+}
+
+.stage-panel th.stage-table-reference,
+.stage-panel td.stage-table-reference {
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}

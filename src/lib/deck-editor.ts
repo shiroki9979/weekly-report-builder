@@ -3,11 +3,19 @@ import {
   assertCanRemoveEntry,
   CARDINALITY,
   isFlowStepVariant,
+  isFullWidthPanelPage,
   isHtmlPage,
   isEditorialFramePage,
   isTwoColumnPage,
 } from "@/lib/deck"
-import type { FlowStepVariant, Panel, Deck, DeckTheme } from "@/lib/deck"
+import type {
+  FlowStepVariant,
+  Panel,
+  Deck,
+  DeckTheme,
+  FullWidthPanelPage,
+  TwoColumnPage,
+} from "@/lib/deck"
 
 const updateTwoColumnPage = typedPageUpdater(
   isTwoColumnPage,
@@ -20,16 +28,26 @@ const updateEditorialPage = typedPageUpdater(
   "an Editorial Frame page"
 )
 
-type PanelOfKind<K extends Panel["kind"]> = Extract<Panel, { kind: K }>
+type EditablePanel = Exclude<Panel, { kind: "fields" }>
+type PanelOfKind<K extends EditablePanel["kind"]> = Extract<
+  EditablePanel,
+  { kind: K }
+>
 
-// 各 panel 編輯函式共用同一個 two-column 與 panel kind 防衛，不再各寫一份 require*Panel
-function panelUpdater<K extends Panel["kind"]>(kind: K) {
+const updatePanelPage = typedPageUpdater(
+  (page): page is TwoColumnPage | FullWidthPanelPage =>
+    isTwoColumnPage(page) || isFullWidthPanelPage(page),
+  "a page with an editable panel"
+)
+
+// 兩個持有 panel 的版型共用更新規則，避免相同表單產生不同資料行為。
+function panelUpdater<K extends EditablePanel["kind"]>(kind: K) {
   return (
     deck: Deck,
     pageIndex: number,
     updater: (panel: PanelOfKind<K>) => PanelOfKind<K>
   ): Deck =>
-    updateTwoColumnPage(deck, pageIndex, (page) => {
+    updatePanelPage(deck, pageIndex, (page) => {
       if (page.panel.kind !== kind) {
         throw new Error(`Page ${page.id} does not have a ${kind} panel`)
       }
@@ -191,6 +209,17 @@ export function setTablePanelColumn(
   }))
 }
 
+export function setTableReferenceColumn(
+  deck: Deck,
+  pageIndex: number,
+  referenceColumn: number | undefined
+): Deck {
+  return updateTablePanel(deck, pageIndex, (panel) => ({
+    ...panel,
+    referenceColumn,
+  }))
+}
+
 export function addTableRow(deck: Deck, pageIndex: number): Deck {
   return updateTablePanel(deck, pageIndex, (panel) => ({
     ...panel,
@@ -232,6 +261,13 @@ export function removeTableColumn(
     return {
       ...panel,
       columns: panel.columns.filter((_, index) => index !== columnIndex),
+      referenceColumn:
+        panel.referenceColumn === undefined ||
+        panel.referenceColumn === columnIndex
+          ? undefined
+          : panel.referenceColumn > columnIndex
+            ? panel.referenceColumn - 1
+            : panel.referenceColumn,
       rows: panel.rows.map((row) => ({
         ...row,
         cells: row.cells.filter((_, index) => index !== columnIndex),

@@ -3,14 +3,18 @@ import type { ChartPanel } from "@/lib/deck"
 
 type ChartPanelViewProps = {
   panel: ChartPanel
+  showTitle?: boolean
 }
 
-export function ChartPanelView({ panel }: ChartPanelViewProps) {
+export function ChartPanelView({
+  panel,
+  showTitle = true,
+}: ChartPanelViewProps) {
   const stacks = buildStackedBarSegments(panel)
 
   return (
     <aside className="stage-panel">
-      <h4>{panel.title}</h4>
+      {showTitle ? <h4>{panel.title}</h4> : null}
       <div className="stage-chart-legend">
         {panel.series.map((series, seriesIndex) => (
           <span key={`${series.name}-${seriesIndex}`}>

@@ -17,6 +17,9 @@ function clearPanel(panel: Panel): Panel {
         kind: "table",
         title: "",
         columns: panel.columns.map(() => ""),
+        ...(panel.referenceColumn === undefined
+          ? {}
+          : { referenceColumn: panel.referenceColumn }),
         rows: panel.rows.map((row) => ({
           cells: row.cells.map(() => ""),
           emphasis: row.emphasis,
@@ -78,6 +81,13 @@ function clearPage(page: Page): Page {
 function clearPageContent(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchPage<Page>(page, {
+    fullWidthPanel: (fullWidth) => ({
+      ...fullWidth,
+      title: "",
+      panel: clearPanel(fullWidth.panel),
+      boundary: undefined,
+      notes: undefined,
+    }),
     sideBySide: (comparison) => ({
       ...comparison,
       title: "",

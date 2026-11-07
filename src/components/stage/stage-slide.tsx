@@ -1,3 +1,4 @@
+import { FullWidthPanelSlide } from "@/components/stage/full-width-panel-slide"
 import { SideBySideSlide } from "./side-by-side-slide"
 import { CoverSlide } from "./cover-slide"
 import { ClosingSlide } from "./closing-slide"
@@ -32,6 +33,9 @@ export function StageSlide({
         </p>
       ) : null}
       {matchPage(page, {
+        fullWidthPanel: (fullWidth) => (
+          <FullWidthPanelSlide page={fullWidth} context={context} />
+        ),
         sideBySide: (comparison) => (
           <SideBySideSlide page={comparison} context={context} />
         ),

@@ -63,6 +63,7 @@ function hasPageNumberSlot(page: Page): boolean {
     cover: () => false,
     closing: () => true,
     sideBySide: () => true,
+    fullWidthPanel: () => true,
     html: () => true,
     overview: () => true,
     evidenceDecision: () => true,

@@ -17,7 +17,7 @@ import {
   isAddablePanelKind,
   nextPageId,
   type AddableLayout,
-  type AddableTwoColumnPanelKind,
+  type AddablePanelKind,
   type PageMoveDirection,
 } from "@/lib/page-lifecycle"
 import type { Deck, Page } from "@/lib/deck"
@@ -36,13 +36,14 @@ const LAYOUT_LABELS: Record<AddableLayout, string> = {
   closing: "Closing",
   "side-by-side": "Side-by-side Comparison",
   "two-column": "Two-column",
+  "full-width-panel": "Full-width Panel",
   overview: "Overview",
   "evidence-decision": "Evidence-backed Decision",
   "next-actions": "Next Actions",
   "trend-target": "Trend & Target",
 }
 
-const PANEL_LABELS: Record<AddableTwoColumnPanelKind, string> = {
+const PANEL_LABELS: Record<AddablePanelKind, string> = {
   table: "Table",
   chart: "Chart",
   flow: "Flow",
@@ -58,7 +59,7 @@ export function PageLifecycleControls({
   disabled,
 }: PageLifecycleControlsProps) {
   const [layout, setLayout] = useState<AddableLayout>("two-column")
-  const [panelKind, setPanelKind] = useState<AddableTwoColumnPanelKind>("table")
+  const [panelKind, setPanelKind] = useState<AddablePanelKind>("table")
   const [deleteOpen, setDeleteOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -111,7 +112,7 @@ export function PageLifecycleControls({
             disabled={disabled}
           >
             <SelectTrigger id="add-page-layout" className="min-w-36">
-              <SelectValue />
+              <SelectValue>{LAYOUT_LABELS[layout]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {ADDABLE_LAYOUTS.map((option) => (
@@ -121,7 +122,7 @@ export function PageLifecycleControls({
               ))}
             </SelectContent>
           </Select>
-          {layout === "two-column" ? (
+          {layout === "two-column" || layout === "full-width-panel" ? (
             <Select
               value={panelKind}
               onValueChange={(value) => {
@@ -136,7 +137,7 @@ export function PageLifecycleControls({
                 aria-label="Panel"
                 className="min-w-36"
               >
-                <SelectValue />
+                <SelectValue>{PANEL_LABELS[panelKind]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ADDABLE_PANEL_KINDS.map((kind) => (

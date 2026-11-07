@@ -178,3 +178,24 @@
   font-family: var(--mono);
   font-size: 0.9375cqw;
 }
+
+.stage-root[data-theme="observatory"] .stage-panel th,
+.stage-root[data-theme="observatory"] .stage-table-reference {
+  font-family: var(--mono);
+}
+
+.stage-root[data-theme="observatory"]
+  .editorial-full-width-panel
+  .stage-table-row-index {
+  display: table-cell;
+  width: 2.96875cqw;
+  padding-right: 0.78125cqw;
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+  font-weight: 400;
+  color: var(--mute);
+}
+
+.stage-root[data-theme="observatory"] .editorial-full-width-panel th {
+  font-weight: 400;
+}

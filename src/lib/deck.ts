@@ -20,6 +20,7 @@ export type TablePanel = {
   title: string
   columns: string[]
   rows: TablePanelRow[]
+  referenceColumn?: number
 }
 
 export type ChartSeries = {
@@ -87,6 +88,7 @@ export type SlideLayout =
   | "cover"
   | "closing"
   | "side-by-side"
+  | "full-width-panel"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
 export type PageChrome = {
@@ -249,6 +251,13 @@ export type SideBySidePage = EditorialPageChrome & {
   tradeoff?: { why: string; cost?: string }
 }
 
+export type FullWidthPanelPage = EditorialPageChrome & {
+  id: string
+  layout: "full-width-panel"
+  title: string
+  panel: Exclude<Panel, FieldsPanel>
+}
+
 export type UnknownPage = PageChrome & {
   id: string
   layout: string
@@ -265,6 +274,7 @@ export type StructuredPage =
   | CoverPage
   | ClosingPage
   | SideBySidePage
+  | FullWidthPanelPage
 
 export type Page =
   | TwoColumnPage
@@ -276,6 +286,7 @@ export type Page =
   | CoverPage
   | ClosingPage
   | SideBySidePage
+  | FullWidthPanelPage
   | UnknownPage
 
 // 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
@@ -351,6 +362,10 @@ export function isSideBySidePage(page: Page): page is SideBySidePage {
   return page.layout === "side-by-side" && "columns" in page
 }
 
+export function isFullWidthPanelPage(page: Page): page is FullWidthPanelPage {
+  return page.layout === "full-width-panel" && "panel" in page
+}
+
 export type EditorialFramePage =
   | OverviewPage
   | EvidenceDecisionPage
@@ -358,6 +373,7 @@ export type EditorialFramePage =
   | TrendTargetPage
   | ClosingPage
   | SideBySidePage
+  | FullWidthPanelPage
 
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
@@ -366,7 +382,8 @@ export function isEditorialFramePage(page: Page): page is EditorialFramePage {
     isNextActionsPage(page) ||
     isTrendTargetPage(page) ||
     isClosingPage(page) ||
-    isSideBySidePage(page)
+    isSideBySidePage(page) ||
+    isFullWidthPanelPage(page)
   )
 }
 
@@ -393,6 +410,7 @@ export function isSupportedStagePage(page: Page): boolean {
     cover: () => true,
     closing: () => true,
     sideBySide: () => true,
+    fullWidthPanel: () => true,
     twoColumn: (twoColumn) =>
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
@@ -409,6 +427,7 @@ type PageMatchers<T> = {
   cover: (page: CoverPage) => T
   closing: (page: ClosingPage) => T
   sideBySide: (page: SideBySidePage) => T
+  fullWidthPanel: (page: FullWidthPanelPage) => T
   unknown: (page: Page) => T
 }
 
@@ -435,6 +454,7 @@ export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {
   if (isCoverPage(page)) return matchers.cover(page)
   if (isClosingPage(page)) return matchers.closing(page)
   if (isSideBySidePage(page)) return matchers.sideBySide(page)
+  if (isFullWidthPanelPage(page)) return matchers.fullWidthPanel(page)
   return matchers.unknown(page)
 }
 
@@ -621,10 +641,22 @@ function readRecord(value: unknown, field: string): Record<string, unknown> {
 function parseTablePanel(value: Record<string, unknown>): TablePanel {
   const columns = readNonEmptyArray(value.columns, "panel.columns")
   const rows = readNonEmptyArray(value.rows, "panel.rows")
+  const referenceColumn = value.referenceColumn
+  if (
+    referenceColumn !== undefined &&
+    (typeof referenceColumn !== "number" ||
+      !Number.isInteger(referenceColumn) ||
+      referenceColumn < 0 ||
+      referenceColumn >= columns.length)
+  )
+    throw new Error(
+      "Invalid deck: panel.referenceColumn must index an existing data column"
+    )
 
   return {
     kind: "table",
     title: readString(value.title, "panel.title"),
+    ...(referenceColumn === undefined ? {} : { referenceColumn }),
     columns: columns.map((column, index) =>
       readString(column, `panel.columns[${index}]`)
     ),
@@ -1165,6 +1197,18 @@ function parseTwoColumnPage(
   })
 }
 
+function parseFullWidthPanelPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome
+): FullWidthPanelPage {
+  const panel = parsePanel(value.panel)
+  if (panel.kind === "fields")
+    throw new Error(
+      "Invalid deck: Full-width Panel does not support fields panels"
+    )
+  return withChrome(chrome, "full-width-panel", { panel })
+}
+
 function parseCoverPage(
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
@@ -1275,6 +1319,7 @@ const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
   cover: parseCoverPage,
   closing: parseClosingPage,
   "side-by-side": parseSideBySidePage,
+  "full-width-panel": parseFullWidthPanelPage,
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
   overview: parseOverviewPage,

@@ -750,3 +750,42 @@
 .editorial-tradeoff dd {
   margin: 0;
 }
+
+.editorial-full-width-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: min-content;
+}
+
+.editorial-full-width-panel > .stage-panel {
+  flex: 1;
+  min-height: min-content;
+  padding: 0;
+  border: 0;
+}
+
+.editorial-full-width-panel .stage-panel th {
+  padding: 0 1.25cqw 0.78125cqw 0;
+  border-bottom-color: var(--ink);
+  font-size: 0.859375cqw;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.editorial-full-width-panel .stage-panel td {
+  padding: 1.015625cqw 1.25cqw 1.015625cqw 0;
+  color: var(--ink);
+  vertical-align: top;
+  font-size: 1.25cqw;
+  line-height: 1.45;
+}
+
+.editorial-full-width-panel .stage-table-row-index + td {
+  font-weight: 700;
+}
+
+.editorial-full-width-panel .stage-panel .stage-table-reference {
+  padding-right: 0;
+  color: var(--accent);
+}
