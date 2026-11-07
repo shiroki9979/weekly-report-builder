@@ -50,16 +50,45 @@ Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任�
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
 
-| 欄位             | 型別      | 必填 | 說明                                                                                                                    |
-| ---------------- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
-| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                         |
-| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"` 或 `"trend-target"`                     |
-| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                |
-| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                              |
-| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                           |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 忽略此欄 |
+| 欄位             | 型別      | 必填 | 說明                                                                                                                               |
+| ---------------- | --------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                                    |
+| `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"`、`"trend-target"`、`"cover"` 或 `"closing"`        |
+| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                           |
+| `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                         |
+| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                      |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄 |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
+
+### Boundary Note
+
+`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Overview、Evidence-backed Decision、Next Actions、Trend & Target 與 Closing。Parser 在 Cover、HTML Page 與 Two-column 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
+
+空白或省略 Boundary Note 不影響 Content-complete；內容過長導致 Stage 溢出時仍阻擋 Copy，batch 略過該頁。Deck Template 與 Weekly Series 會清除此欄位；既有版型的其他保留規則不變。
+
+### `layout: "cover"`
+
+Deck 開場頁；只有共用 `title` 是 Content-complete 必填內容。
+
+| 欄位       | 型別     | 必填 | 說明                           |
+| ---------- | -------- | ---- | ------------------------------ |
+| `subtitle` | `string` | 否   | 副標；省略時解析為空字串       |
+| `byline`   | `string` | 否   | 講者或團隊；省略時解析為空字串 |
+
+Deck 有期間時顯示 Frame Label。Cover 計入 Page Position，但不顯示頁碼，也不接受 `showPageNumber` 的顯示覆寫；後續頁因此可顯示 `2 / N`。Deck Template 保留 byline，清空 title 與 subtitle。
+
+### `layout: "closing"`
+
+Deck 收尾頁；共用 `title` 為必要內容，takeaways 可為空陣列。
+
+| 欄位          | 型別                               | 必填 | 說明                                                     |
+| ------------- | ---------------------------------- | ---- | -------------------------------------------------------- |
+| `eyebrow`     | `string`                           | 否   | 空白或省略時呈現 `Closing`                               |
+| `takeaways`   | `{ ref?: string; text: string }[]` | 是   | 0–4 筆；每筆 text 都須非空白才能匯出，ref 為自由文字參照 |
+| `closingLine` | `string`                           | 否   | 聯絡或下一步說明，緊接 takeaways 呈現，不固定在頁底      |
+
+Parser 拒絕超過四筆 takeaways；未填文字仍可儲存為草稿。Deck Template 保留 closingLine，清空 title、eyebrow 與 takeaways，並清除 Boundary Note。
 
 ### `layout: "two-column"`
 

@@ -4,6 +4,7 @@ import {
   CARDINALITY,
   isFlowStepVariant,
   isHtmlPage,
+  isEditorialFramePage,
   isTwoColumnPage,
 } from "@/lib/deck"
 import type { FlowStepVariant, Panel, Deck, DeckTheme } from "@/lib/deck"
@@ -14,6 +15,10 @@ const updateTwoColumnPage = typedPageUpdater(
 )
 
 const updateHtmlPage = typedPageUpdater(isHtmlPage, "an HTML page")
+const updateEditorialPage = typedPageUpdater(
+  isEditorialFramePage,
+  "an Editorial Frame page"
+)
 
 type PanelOfKind<K extends Panel["kind"]> = Extract<Panel, { kind: K }>
 
@@ -77,6 +82,17 @@ export function setPageItem(
     items: page.items.map((item, index) =>
       index === itemIndex ? { ...item, [field]: value } : item
     ),
+  }))
+}
+
+export function setPageBoundary(
+  deck: Deck,
+  pageIndex: number,
+  boundary: string
+): Deck {
+  return updateEditorialPage(deck, pageIndex, (page) => ({
+    ...page,
+    boundary: boundary === "" ? undefined : boundary,
   }))
 }
 

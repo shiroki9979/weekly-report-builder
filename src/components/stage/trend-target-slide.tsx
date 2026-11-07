@@ -562,6 +562,7 @@ export function TrendTargetSlide({ page, context }: Props) {
       eyebrow="Trend & Target"
       headline={page.title}
       context={context}
+      boundary={page.boundary}
     >
       <div className="editorial-trend">
         <TrendChart page={page} theme={context.theme} />

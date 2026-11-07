@@ -9,6 +9,7 @@ type EditorialFrameProps = {
   eyebrow: string
   headline: string
   context: StagePageContext
+  boundary?: string
   children: ReactNode
 }
 
@@ -17,6 +18,7 @@ export function EditorialFrame({
   eyebrow,
   headline,
   context,
+  boundary,
   children,
 }: EditorialFrameProps) {
   const position = context.showPageNumber ? context.position : null
@@ -43,6 +45,7 @@ export function EditorialFrame({
       </header>
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
+      {boundary ? <p className="editorial-boundary">{boundary}</p> : null}
       <footer
         className="editorial-page-number"
         aria-hidden={!context.deckTitle && !position ? true : undefined}

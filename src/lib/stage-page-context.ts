@@ -60,6 +60,8 @@ export function formatPagePosition(
 // 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
 function hasPageNumberSlot(page: Page): boolean {
   return matchPage(page, {
+    cover: () => false,
+    closing: () => true,
     html: () => true,
     overview: () => true,
     evidenceDecision: () => true,

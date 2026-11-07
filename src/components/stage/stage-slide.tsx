@@ -1,3 +1,5 @@
+import { CoverSlide } from "./cover-slide"
+import { ClosingSlide } from "./closing-slide"
 import { EvidenceDecisionSlide } from "@/components/stage/evidence-decision-slide"
 import { HtmlSlide } from "@/components/stage/html-slide"
 import { NextActionsSlide } from "@/components/stage/next-actions-slide"
@@ -29,6 +31,8 @@ export function StageSlide({
         </p>
       ) : null}
       {matchPage(page, {
+        cover: (cover) => <CoverSlide page={cover} context={context} />,
+        closing: (closing) => <ClosingSlide page={closing} context={context} />,
         html: (htmlPage) => (
           <HtmlSlide
             page={htmlPage}

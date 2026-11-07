@@ -1,27 +1,35 @@
 # Author Editorial Layouts
 
 建立日期：2026-09-10  
-最後更新：2026-09-28
+最後更新：2026-11-07
 
 ---
 
-在 Workshop 新增、編輯與匯出 Overview、Evidence-backed Decision、Next Actions 與 Trend & Target。這些 Structured Layout 共用 Editorial Frame（eyebrow、headline、Frame Label、Page Position），並走與 Two-column 相同的 Save／Copy／batch 規則。首次安裝可從公開的虛構 Demo Deck Set 直接查看示例。
+在 Workshop 新增、編輯與匯出 Cover、Closing、Overview、Evidence-backed Decision、Next Actions 與 Trend & Target。Closing 與既有 Editorial 版型共用 Editorial Frame（eyebrow、headline、Frame Label、Boundary Note、Deck Title 與 Page Position）；Cover 提供開場構圖，並走與 Two-column 相同的 Save／Copy／batch 規則。首次安裝可從公開的虛構 Demo Deck Set 直接查看示例。
 
 ## 新增
 
 1. 解鎖 **Edit**
-2. 在 **Add page** 選擇 **Overview**、**Evidence-backed Decision**、**Next Actions** 或 **Trend & Target**
+2. 在 **Add page** 選擇 **Cover**、**Closing**、**Overview**、**Evidence-backed Decision**、**Next Actions** 或 **Trend & Target**
 3. 點 **Add page**
 
 新頁插在目前選取頁之後。內容為空白 Draft Page，可 Save，但填完前不能 Copy 或進入批次匯出。
 
 ## 編輯
 
+- **Cover**：填入開場 Title，可選填 Subtitle 與 Byline。Deck 有期間時會顯示 Frame Label。Cover 計入 Page Position，但永遠不顯示頁碼；只有標題也可完成內容。建立 Deck Template 時保留 Byline，清空 Title 與 Subtitle。
+- **Closing**：填入 Title，可加 0–4 個 Takeaway；每筆文字必填，Reference 可留空。使用 Add takeaway／Move up／Move down／Remove 維護順序。Eyebrow 預設顯示 Closing，可改為其他職能標籤；Closing line 緊接 Takeaways 顯示聯絡或下一步，不貼齊頁底。建立 Deck Template 時保留 Closing line，清空其他 Closing 內容。
 - **Overview**：一個 Lead Outcome 與 1–3 個 Supporting Outcomes。Supporting 可 Add／Move／Remove／Make lead。
 - **Evidence-backed Decision**：Verdict、1–2 個 Comparison Metric、1–2 則 interpretation。Metric 數值可留空（`null`）；非法非空輸入會擋 Save／Copy，batch 略過該頁。
 - **Next Actions**：2–4 個 Commitment。新增頁預設 Rows；既有未記錄 variant 的頁面維持 Columns。使用 **Composition** 在 Rows／Columns 間切換，內容與順序不變。畫面上的 01／02… 編號隨順序派生，不寫進 JSON。
 
 右側 16:9 預覽即時同步。Canonical overflow 以 1280 × 720 capture Stage 為準。
+
+## Boundary Note
+
+Closing、Overview、Evidence-backed Decision、Next Actions 與 Trend & Target 的共用編輯區有 **Boundary Note**，可填寫這頁結論成立的範圍、驗證方式或限制。內容出現在正文下方、頁尾上方；空白不影響內容完整性。以一行為目標，較長文字會換行，超出 1280 × 720 Stage 時會阻擋匯出，不會裁切或縮字。
+
+Cover、HTML Page 與 Two-column 沒有此欄位。建立 Deck Template 或下一週時，Boundary Note 一律清空，避免沿用過期條件。
 
 ## 匯出
 

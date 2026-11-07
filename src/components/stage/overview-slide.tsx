@@ -29,7 +29,12 @@ function OutcomeBlock({
 
 export function OverviewSlide({ page, context }: OverviewSlideProps) {
   return (
-    <EditorialFrame eyebrow="Overview" headline={page.title} context={context}>
+    <EditorialFrame
+      eyebrow="Overview"
+      headline={page.title}
+      context={context}
+      boundary={page.boundary}
+    >
       <div className="editorial-overview">
         <OutcomeBlock outcome={page.lead} lead />
         <div className="editorial-supporting">

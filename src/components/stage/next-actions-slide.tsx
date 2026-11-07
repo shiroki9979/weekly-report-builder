@@ -24,6 +24,7 @@ export function NextActionsSlide({ page, context }: NextActionsSlideProps) {
       eyebrow="Next Actions"
       headline={page.title}
       context={context}
+      boundary={page.boundary}
     >
       {rows && (
         <div className="editorial-action-row-headings" aria-hidden="true">

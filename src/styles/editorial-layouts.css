@@ -542,3 +542,109 @@
   color: var(--warn-ink);
   font-weight: 700;
 }
+
+.editorial-boundary {
+  flex: none;
+  margin: 1.4cqw 0 0;
+  padding-top: 1.2cqw;
+  border-top: 1px solid var(--line);
+  color: var(--mute);
+  font-size: 1.05cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Boundary Note 佔用本文空間時保留內容最小高度，避免內部重疊逃過 Stage 溢出檢查。 */
+.editorial-page:has(> .editorial-boundary) > .editorial-body {
+  min-height: min-content;
+}
+
+.editorial-cover-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min-content;
+}
+
+.editorial-cover-title {
+  margin: 0;
+  max-width: 80cqw;
+  font-size: 4.0625cqw;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--accent-deep);
+  overflow-wrap: anywhere;
+}
+
+.editorial-cover-subtitle {
+  margin: 1.5625cqw 0 0;
+  max-width: 67.1875cqw;
+  color: var(--mute);
+  font-size: 1.5625cqw;
+  line-height: 1.45;
+}
+
+.editorial-cover-meta {
+  display: flex;
+  gap: 3.125cqw;
+  margin: 4.375cqw 0 0;
+  font-size: 1.25cqw;
+  line-height: 1.4;
+}
+
+.editorial-cover-meta dt {
+  display: none;
+}
+
+.editorial-cover-meta dd {
+  margin: 0;
+}
+
+.editorial-closing {
+  flex: none;
+}
+
+.editorial-takeaways {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 3.125cqw;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.editorial-takeaways li {
+  display: grid;
+  grid-template-columns: 6.25cqw minmax(0, 1fr);
+  gap: 1.25cqw;
+  padding: 1.25cqw 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.484375cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.editorial-takeaways p {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+
+.editorial-takeaway-ref {
+  grid-column: 1;
+  grid-row: 1;
+  padding-top: 0.3125cqw;
+  color: var(--accent);
+  font-size: 1.09375cqw;
+}
+
+.editorial-closing-line {
+  margin: 2.1875cqw 0 0;
+  padding-top: 1.25cqw;
+  border-top: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 1.09375cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}

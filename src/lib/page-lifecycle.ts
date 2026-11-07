@@ -1,4 +1,6 @@
 import type {
+  CoverPage,
+  ClosingPage,
   ChartPanel,
   ChecklistPanel,
   FlowPanel,
@@ -179,17 +181,36 @@ export function createBlankTrendTargetPage(id: string): TrendTargetPage {
   }
 }
 
+export function createBlankCoverPage(id: string): CoverPage {
+  return { id, layout: "cover", title: "", subtitle: "", byline: "" }
+}
+
+export function createBlankClosingPage(id: string): ClosingPage {
+  return {
+    id,
+    layout: "closing",
+    title: "",
+    eyebrow: "",
+    takeaways: [],
+    closingLine: "",
+  }
+}
+
 export type AddableLayout =
   | "two-column"
   | "overview"
   | "evidence-decision"
   | "next-actions"
   | "trend-target"
+  | "cover"
+  | "closing"
 
 const BLANK_PAGE_FACTORIES: Record<
   AddableLayout,
   (id: string, panelKind: AddableTwoColumnPanelKind) => Page
 > = {
+  cover: createBlankCoverPage,
+  closing: createBlankClosingPage,
   "two-column": createBlankTwoColumnPage,
   overview: createBlankOverviewPage,
   "evidence-decision": createBlankEvidenceDecisionPage,

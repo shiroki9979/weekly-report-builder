@@ -3,6 +3,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { CoverEditorForm } from "@/components/workshop/cover-editor-form"
+import { ClosingEditorForm } from "@/components/workshop/closing-editor-form"
 import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
@@ -61,6 +63,8 @@ export function PageEditorForm({
   const editor = { deck, pageIndex, onChange, readOnly }
 
   return matchPage(page, {
+    cover: (cover) => <CoverEditorForm {...editor} page={cover} />,
+    closing: (closing) => <ClosingEditorForm {...editor} page={closing} />,
     html: (htmlPage) => <HtmlPageEditorForm {...editor} page={htmlPage} />,
     overview: (overview) => <OverviewEditorForm {...editor} page={overview} />,
     evidenceDecision: (decision) => (

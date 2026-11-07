@@ -32,6 +32,8 @@ type PageLifecycleControlsProps = {
 }
 
 const LAYOUT_LABELS: Record<AddableLayout, string> = {
+  cover: "Cover",
+  closing: "Closing",
   "two-column": "Two-column",
   overview: "Overview",
   "evidence-decision": "Evidence-backed Decision",

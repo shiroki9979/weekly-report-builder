@@ -7,6 +7,8 @@ import {
   isSupportedStagePage,
   matchPage,
   type ChartPanel,
+  type CoverPage,
+  type ClosingPage,
   type ChecklistPanel,
   type FlowPanel,
   type EvidenceDecisionPage,
@@ -202,6 +204,23 @@ function assessChecklist(panel: ChecklistPanel): ExportIssue[] {
       ? [missing(`panel.items[${index}].label`, "Checklist item is required")]
       : []
   )
+}
+
+function assessCover(page: CoverPage): ExportIssue[] {
+  return isBlank(page.title) ? [missing("title", "Title is required")] : []
+}
+
+function assessClosing(page: ClosingPage): ExportIssue[] {
+  const issues = isBlank(page.title)
+    ? [missing("title", "Title is required")]
+    : []
+  page.takeaways.forEach((takeaway, index) => {
+    if (isBlank(takeaway.text))
+      issues.push(
+        missing(`takeaways[${index}].text`, "Takeaway text is required")
+      )
+  })
+  return issues
 }
 
 function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
@@ -520,6 +539,8 @@ export function assessContentReadiness(
   { metricInput = {}, asOf }: ReadinessContext = {}
 ): ExportIssue[] {
   return matchPage(page, {
+    cover: assessCover,
+    closing: assessClosing,
     twoColumn: assessTwoColumn,
     overview: assessOverview,
     evidenceDecision: (decision) =>

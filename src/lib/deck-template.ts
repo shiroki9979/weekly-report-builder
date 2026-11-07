@@ -78,6 +78,15 @@ function clearPage(page: Page): Page {
 function clearPageContent(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchPage<Page>(page, {
+    cover: (cover) => ({ ...cover, title: "", subtitle: "", notes: undefined }),
+    closing: (closing) => ({
+      ...closing,
+      title: "",
+      eyebrow: "",
+      takeaways: [],
+      boundary: undefined,
+      notes: undefined,
+    }),
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
@@ -120,6 +129,7 @@ function clearPageContent(page: Page): Page {
     }),
     trendTarget: (trend) => ({
       ...trend,
+      boundary: undefined,
       title: "",
       interpretation: "",
       notes: undefined,

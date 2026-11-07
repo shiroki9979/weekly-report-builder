@@ -84,6 +84,8 @@ export type SlideLayout =
   | "evidence-decision"
   | "next-actions"
   | "trend-target"
+  | "cover"
+  | "closing"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
 export type PageChrome = {
@@ -122,7 +124,9 @@ export type Outcome = {
   status: StatusSignal
 }
 
-export type OverviewPage = PageChrome & {
+export type EditorialPageChrome = PageChrome & { boundary?: string }
+
+export type OverviewPage = EditorialPageChrome & {
   id: string
   layout: "overview"
   title: string
@@ -168,7 +172,7 @@ export type ComparisonMetric = {
   precision: MetricPrecision
 }
 
-export type EvidenceDecisionPage = PageChrome & {
+export type EvidenceDecisionPage = EditorialPageChrome & {
   id: string
   layout: "evidence-decision"
   title: string
@@ -183,7 +187,7 @@ export type Commitment = {
   checkpoint: string
 }
 
-export type NextActionsPage = PageChrome & {
+export type NextActionsPage = EditorialPageChrome & {
   id: string
   layout: "next-actions"
   variant?: NextActionsVariant
@@ -198,7 +202,7 @@ export type TrendObservation =
 
 export type TrendCadence = "week" | "month"
 
-export type TrendTargetPage = PageChrome & {
+export type TrendTargetPage = EditorialPageChrome & {
   id: string
   layout: "trend-target"
   title: string
@@ -216,6 +220,23 @@ export type TrendTargetPage = PageChrome & {
   measurementContext: string
 }
 
+export type CoverPage = PageChrome & {
+  id: string
+  layout: "cover"
+  title: string
+  subtitle: string
+  byline: string
+}
+
+export type ClosingPage = EditorialPageChrome & {
+  id: string
+  layout: "closing"
+  title: string
+  eyebrow: string
+  takeaways: { ref?: string; text: string }[]
+  closingLine: string
+}
+
 export type UnknownPage = PageChrome & {
   id: string
   layout: string
@@ -229,6 +250,8 @@ export type StructuredPage =
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
+  | CoverPage
+  | ClosingPage
 
 export type Page =
   | TwoColumnPage
@@ -237,6 +260,8 @@ export type Page =
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
+  | CoverPage
+  | ClosingPage
   | UnknownPage
 
 // 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
@@ -300,13 +325,34 @@ export function hasEnteredObservations(
   return observations.some((entry) => entry.state !== "unfilled")
 }
 
-export function isStructuredPage(page: Page): page is StructuredPage {
+export function isCoverPage(page: Page): page is CoverPage {
+  return page.layout === "cover" && "subtitle" in page && "byline" in page
+}
+
+export function isClosingPage(page: Page): page is ClosingPage {
+  return page.layout === "closing" && "takeaways" in page
+}
+
+export type EditorialFramePage =
+  | OverviewPage
+  | EvidenceDecisionPage
+  | NextActionsPage
+  | TrendTargetPage
+  | ClosingPage
+
+export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
-    isTwoColumnPage(page) ||
     isOverviewPage(page) ||
     isEvidenceDecisionPage(page) ||
     isNextActionsPage(page) ||
-    isTrendTargetPage(page)
+    isTrendTargetPage(page) ||
+    isClosingPage(page)
+  )
+}
+
+export function isStructuredPage(page: Page): page is StructuredPage {
+  return (
+    isTwoColumnPage(page) || isCoverPage(page) || isEditorialFramePage(page)
   )
 }
 
@@ -324,6 +370,8 @@ export function isSupportedStagePage(page: Page): boolean {
     evidenceDecision: () => true,
     nextActions: () => true,
     trendTarget: () => true,
+    cover: () => true,
+    closing: () => true,
     twoColumn: (twoColumn) =>
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
@@ -337,6 +385,8 @@ type PageMatchers<T> = {
   evidenceDecision: (page: EvidenceDecisionPage) => T
   nextActions: (page: NextActionsPage) => T
   trendTarget: (page: TrendTargetPage) => T
+  cover: (page: CoverPage) => T
+  closing: (page: ClosingPage) => T
   unknown: (page: Page) => T
 }
 
@@ -360,6 +410,8 @@ export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {
   if (isTrendTargetPage(page)) {
     return matchers.trendTarget(page)
   }
+  if (isCoverPage(page)) return matchers.cover(page)
+  if (isClosingPage(page)) return matchers.closing(page)
   return matchers.unknown(page)
 }
 
@@ -376,6 +428,7 @@ export type Cardinality = {
 // 數量規則的單一來源。版面規則由 parser、reducer 與表單共用；panel 規則只約束編輯，
 // chart／flow／checklist 的 parser 容許空陣列，交由 readiness 標成 Draft Page
 export const CARDINALITY = {
+  takeaways: { min: 0, max: 4, owner: "Closing", noun: "takeaway" },
   supportingOutcomes: {
     min: 1,
     max: 3,
@@ -1077,6 +1130,54 @@ function parseTwoColumnPage(
   })
 }
 
+function parseCoverPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): CoverPage {
+  return withChrome(chrome, "cover", {
+    subtitle:
+      value.subtitle === undefined
+        ? ""
+        : readString(value.subtitle, `${field}.subtitle`),
+    byline:
+      value.byline === undefined
+        ? ""
+        : readString(value.byline, `${field}.byline`),
+  })
+}
+
+function parseClosingPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): ClosingPage {
+  return withChrome(chrome, "closing", {
+    eyebrow:
+      value.eyebrow === undefined
+        ? ""
+        : readString(value.eyebrow, `${field}.eyebrow`),
+    takeaways: readEntries(
+      value.takeaways,
+      `${field}.takeaways`,
+      CARDINALITY.takeaways
+    ).map((entry, index) => {
+      const path = `${field}.takeaways[${index}]`
+      const takeaway = readRecord(entry, path)
+      return {
+        ...(takeaway.ref === undefined
+          ? {}
+          : { ref: readString(takeaway.ref, `${path}.ref`) }),
+        text: readString(takeaway.text, `${path}.text`),
+      }
+    }),
+    closingLine:
+      value.closingLine === undefined
+        ? ""
+        : readString(value.closingLine, `${field}.closingLine`),
+  })
+}
+
 type PageParser = (
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
@@ -1085,6 +1186,8 @@ type PageParser = (
 
 // parser 面對的是未驗證 JSON，無法走 matchPage；以 layout 表格分派，新增版面只改這裡
 const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
+  cover: parseCoverPage,
+  closing: parseClosingPage,
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
   overview: parseOverviewPage,
@@ -1132,7 +1235,11 @@ function parsePage(value: unknown, index: number): Page {
     return { ...page, ...withChrome(chrome, layout, {}) }
   }
 
-  return PAGE_PARSERS[layout](page, chrome, field)
+  const parsed = PAGE_PARSERS[layout](page, chrome, field)
+  if (isEditorialFramePage(parsed) && page.boundary !== undefined) {
+    parsed.boundary = readString(page.boundary, `${field}.boundary`)
+  }
+  return parsed
 }
 
 export function parseDeck(value: unknown): Deck {
