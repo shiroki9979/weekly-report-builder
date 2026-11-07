@@ -301,7 +301,7 @@ export type DeckPeriod = {
   end: string
 }
 
-// 型別、parser 與 Workshop 選單共用這份清單；新增主題只需改這裡與對應樣式表
+// 型別、parser 與 Workshop 選單共用這份清單；新增主題時由型別檢查提示補上選單標籤與樣式表
 export const DECK_THEMES = ["default", "observatory"] as const
 
 export type DeckTheme = (typeof DECK_THEMES)[number]
@@ -1375,7 +1375,9 @@ function parsePage(value: unknown, index: number): Page {
 
   const parsed = PAGE_PARSERS[layout](page, chrome, field)
   if (isEditorialFramePage(parsed) && page.boundary !== undefined) {
-    parsed.boundary = readString(page.boundary, `${field}.boundary`)
+    const boundary = readString(page.boundary, `${field}.boundary`)
+    // 只有空白的 Boundary Note 會畫出沒有文字的分隔線，與省略同義
+    if (boundary.trim() !== "") parsed.boundary = boundary
   }
   return parsed
 }

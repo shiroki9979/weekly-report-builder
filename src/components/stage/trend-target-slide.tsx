@@ -16,7 +16,7 @@ import {
   trendEndDate,
   UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import type { DeckTheme, TrendTargetPage, TrendObservation } from "@/lib/deck"
+import type { TrendTargetPage, TrendObservation } from "@/lib/deck"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
@@ -73,11 +73,12 @@ const FALLBACK_INK = Object.fromEntries(
   SVG_INK_KEYS.map((key) => [key, `var(${SVG_INK_ROLES[key]})`])
 ) as SvgInk
 
-function useTrendSvgStyles(
-  ref: RefObject<HTMLElement | null>,
-  theme: DeckTheme
-): SvgStyles {
+// 每次 render 後重讀：主題切換與繪圖框重新掛載都會改變可讀到的角色，
+// sameInk 讓色碼未變時不觸發再次 render
+function useTrendSvgStyles(ref: RefObject<HTMLElement | null>): SvgStyles {
   const [ink, setInk] = useState<SvgInk>(FALLBACK_INK)
+  // 主題只存在於祖先節點的 data-theme，沒有可列入的依賴值；sameInk 保證不會無限更新
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (!ref.current) return
     const resolved = readInk(ref.current)
@@ -85,7 +86,7 @@ function useTrendSvgStyles(
       const next = { ...current, ...resolved }
       return sameInk(next, current) ? current : next
     })
-  }, [ref, theme])
+  })
   return svgStyles(ink)
 }
 
@@ -426,14 +427,13 @@ function TrendPlot({
   page,
   bounds,
   targetLabel,
-  styles,
 }: {
   page: TrendTargetPage
   bounds: [number, number]
   targetLabel: string
-  styles: SvgStyles
 }) {
   const { ref, height, minHeightPx } = useFittedChartHeight()
+  const styles = useTrendSvgStyles(ref)
   const geometry = chartGeometry(page, bounds, height)
   return (
     <div
@@ -493,16 +493,7 @@ function axisOffsetNote(offset: number): string {
   return ` · Y-axis offset ${sign}${offset.toExponential()}`
 }
 
-function TrendChart({
-  page,
-  theme,
-}: {
-  page: TrendTargetPage
-  theme: DeckTheme
-}) {
-  // 角色色票從 figure 讀取：它與繪圖框同在 Stage 根節點的主題範圍內
-  const figureRef = useRef<HTMLElement>(null)
-  const styles = useTrendSvgStyles(figureRef, theme)
+function TrendChart({ page }: { page: TrendTargetPage }) {
   let bounds: [number, number]
   try {
     bounds = trendBounds(page)
@@ -513,7 +504,7 @@ function TrendChart({
   const axisOffset = axisOffsetFor(bounds)
   const targetLabel = formatTrendTarget(page) ?? TARGET_NOT_SET
   return (
-    <figure ref={figureRef} className="editorial-trend-chart">
+    <figure className="editorial-trend-chart">
       <figcaption>
         {metricCaption(page)}
         {axisOffset !== 0 ? (
@@ -522,12 +513,7 @@ function TrendChart({
           </span>
         ) : null}
       </figcaption>
-      <TrendPlot
-        page={page}
-        bounds={bounds}
-        targetLabel={targetLabel}
-        styles={styles}
-      />
+      <TrendPlot page={page} bounds={bounds} targetLabel={targetLabel} />
       <TrendLegend page={page} targetLabel={targetLabel} />
     </figure>
   )
@@ -576,7 +562,7 @@ export function TrendTargetSlide({ page, context }: Props) {
       boundary={page.boundary}
     >
       <div className="editorial-trend">
-        <TrendChart page={page} theme={context.theme} />
+        <TrendChart page={page} />
         <TrendSummary page={page} />
         {comparison ? (
           <p className="editorial-trend-exact">{comparison}</p>

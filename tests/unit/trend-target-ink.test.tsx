@@ -66,4 +66,32 @@ describe("Trend & Target theme ink", () => {
       "#5a6e7e"
     )
   })
+
+  it("resolves capture-safe ink once a chart recovers from an unrepresentable axis", () => {
+    style.textContent =
+      "div { --line: #d0d7de; --mute: #5c5c5c; --accent: #2e75b6; --warn-ink: #8a5508; --paper: #ffffff; }"
+    document.head.append(style)
+    const slide = (trend: TrendTargetPage) => (
+      <StageSlide
+        page={trend}
+        context={createStagePageContext("harbor", { pages: [trend] }, trend.id)}
+      />
+    )
+    const unrepresentable: TrendTargetPage = {
+      ...page,
+      observations: [
+        { state: "measured", value: -Number.MAX_VALUE },
+        { state: "measured", value: Number.MAX_VALUE },
+      ],
+    }
+    const { rerender } = render(slide(unrepresentable))
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Trend axis cannot represent these values"
+    )
+
+    rerender(slide(page))
+
+    const chart = screen.getByRole("img")
+    expect(chart.querySelector("path")).toHaveAttribute("stroke", "#2e75b6")
+  })
 })

@@ -8,7 +8,7 @@ import {
   type Deck,
   type SideBySidePage,
 } from "./deck.ts"
-import { moveEntry } from "./move-entry.ts"
+import { moveEntry, type EntryMove } from "./move-entry.ts"
 import { typedPageUpdater } from "./update-deck-page.ts"
 
 const updateComparison = typedPageUpdater(
@@ -61,7 +61,7 @@ export function setComparisonPoint(
 export function moveComparisonPoint(
   deck: Deck,
   pageIndex: number,
-  move: { column: ComparisonColumnIndex; from: number; to: number }
+  move: EntryMove & { column: ComparisonColumnIndex }
 ): Deck {
   return updateComparison(deck, pageIndex, (page) => {
     const current = page.columns[move.column]

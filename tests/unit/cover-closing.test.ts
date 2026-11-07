@@ -39,7 +39,7 @@ function structured(page: Page) {
 }
 
 describe("Cover and Closing contracts", () => {
-  it("normalizes a title-only Cover and drops unknown fields", () => {
+  it("normalizes a title-only Cover to its declared fields", () => {
     const deck = parseDeck({
       pages: [
         { id: "cover", layout: "cover", title: "Harbor pilot", extra: "x" },
@@ -88,15 +88,26 @@ describe("Cover and Closing contracts", () => {
     }
   })
 
-  it("fills omitted Closing text and keeps its Boundary Note", () => {
-    const deck = parseDeck({ pages: [{ ...closing, boundary: "Scope" }] })
+  it("fills omitted Closing text with empty strings", () => {
+    const deck = parseDeck({ pages: [closing] })
 
     expect(deck.pages[0]).toMatchObject({
       eyebrow: "",
       closingLine: "",
       takeaways: [],
-      boundary: "Scope",
     })
+  })
+
+  it("keeps a Boundary Note on a Closing page", () => {
+    const deck = parseDeck({ pages: [{ ...closing, boundary: "Scope" }] })
+
+    expect(deck.pages[0]).toHaveProperty("boundary", "Scope")
+  })
+
+  it("reads a whitespace-only Boundary Note as absent", () => {
+    const deck = parseDeck({ pages: [{ ...closing, boundary: "  " }] })
+
+    expect(deck.pages[0]).not.toHaveProperty("boundary")
   })
 
   it("rejects more than four Closing takeaways", () => {

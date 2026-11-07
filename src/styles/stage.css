@@ -19,6 +19,7 @@
   --blue-soft: var(--accent-soft);
   --blue-wash: var(--accent-wash);
   --chart-1: var(--accent);
+  /* 第二系列需要介於 accent 與 accent-soft 之間的明度，沒有對應的語意角色 */
   --chart-2: #7eb0d6;
   --chart-3: var(--accent-soft);
   --chart-4: var(--accent-deep);

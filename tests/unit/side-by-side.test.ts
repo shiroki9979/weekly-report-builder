@@ -21,7 +21,7 @@ const comparison = {
 }
 
 describe("Side-by-side Comparison", () => {
-  it("normalizes declared fields while retaining chosen, tradeoff and Boundary Note", () => {
+  it("normalizes a fully specified comparison to its declared fields", () => {
     const deck = parseDeck({
       pages: [
         {
