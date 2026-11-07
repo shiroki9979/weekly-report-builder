@@ -3,7 +3,7 @@
 Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07, seams and ticket breakdown confirmed 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with a prefactor ticket [#62](https://github.com/shiroki9979/weekly-report-builder/issues/62) and four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
 
 Created: 2026-11-07
-Last updated: 2026-11-07
+Last updated: 2026-11-07 (second review folded in)
 
 Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [CONTEXT.md](../../CONTEXT.md).
 
@@ -43,7 +43,7 @@ Existing Structured Layouts only read theme tokens; their compositions do not ch
 13. As a deck author, I want pages without a Deck Title or with page numbers hidden to keep the same body height, so that content does not shift between pages.
 14. As a deck reader, I want the `observatory` header to show the page index beside the eyebrow when page numbers are on, so that cross-references such as "see 07" are easy to follow.
 15. As a deck author, I want an optional Boundary Note on any Editorial Frame page, so that the scope or verification of a page's claim is visible without a speaker.
-16. As a deck author, I want the Boundary Note to never affect export readiness, so that an optional caveat does not block Copy or batch export.
+16. As a deck author, I want the Boundary Note excluded from Content-complete but still subject to the overflow check, so that an optional caveat never blocks export by being absent, and an overlong one is split rather than clipped.
 17. As a deck author, I want the Boundary Note cleared when creating from a Deck Template, so that last week's caveat is not reused unread.
 
 ### Cover
@@ -109,8 +109,9 @@ Both are kept by the Deck Template operation and by the Weekly Series flow. Save
 
 ### Theme tokens and styles
 
-- The Stage stylesheet defines role tokens on the Stage root for `default`: `--paper`, `--ink`, `--mute`, `--line`, `--accent`, `--accent-deep`, `--accent-soft`, `--accent-wash`, `--ok`, `--ok-ink`, `--ok-wash`, `--warn`, `--warn-ink`. `--blue`, `--blue-deep`, `--blue-soft`, `--blue-wash` become aliases of the accent roles. Values for `default` are today's values.
-- A separate theme stylesheet overrides the roles under the Stage root carrying `data-theme="observatory"` with the prototype palette (ink `#20384b`, mute `#5a6e7e`, line `#d6dee4`, accent `#287b78`, accent-deep `#1f5f5c`, accent-soft `#b9d9d6`, accent-wash `#e7f2f1`, ok-ink `#1f7a52`, warn-ink `#8a5508`; `ok`, `ok-wash`, `warn` chosen to keep 4.5:1 for text roles). It declares `@font-face` for self-hosted Instrument Sans (400/700) and IBM Plex Mono (400/700); the OFL licence files live beside the font assets. Family stacks are `"Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif` and `--mono: "IBM Plex Mono", "Noto Sans TC", monospace`.
+- The Stage stylesheet defines role tokens on the Stage root for `default`: `--paper`, `--ink`, `--mute`, `--line`, `--accent`, `--accent-deep`, `--accent-soft`, `--accent-wash`, `--ok`, `--ok-ink`, `--ok-wash`, `--warn`, `--warn-ink`. `--blue`, `--blue-deep`, `--blue-soft`, `--blue-wash` become aliases of the accent roles. Five chart series roles `--chart-1` … `--chart-5` carry today's default series colours. Values for `default` are today's values.
+- Chart series colours: a series without an explicit `color` takes the theme's chart role for its index (cycling); an explicit `series.color` is kept verbatim in every theme. The stack computation stops embedding hex values for defaults and resolves them through the theme roles.
+- A separate theme stylesheet overrides the roles under the Stage root carrying `data-theme="observatory"` with the prototype palette (ink `#20384b`, mute `#5a6e7e`, line `#d6dee4`, accent `#287b78`, accent-deep `#1f5f5c`, accent-soft `#b9d9d6`, accent-wash `#e7f2f1`, ok-ink `#1f7a52`, warn-ink `#8a5508`; `ok`, `ok-wash`, `warn` chosen to keep 4.5:1 for text roles) and five chart series roles built from accent, accent-deep, accent-soft, ink, and mute so stacked bars stay distinguishable without colour alone (names remain in the legend). It declares `@font-face` for self-hosted Instrument Sans (400/700) and IBM Plex Mono (400/700); the OFL licence files live beside the font assets. Family stacks are `"Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif` and `--mono: "IBM Plex Mono", "Noto Sans TC", monospace`.
 - The Stage root receives `data-theme` from the Stage context in preview and in the capture adapter, never from display strings.
 - Frame decorations specific to `observatory` (the `§ nn` index, the tick ruler, mono eyebrow and footer, the Overview lead block as a hairline frame with an accent top rule) are CSS on existing frame classes. No layout component branches on the theme.
 - Class names are composed with the project's `cn()` helper or whole conditional strings; the Tailwind Prettier plugin strips leading spaces inside `className` template literals (prototype finding).
@@ -120,7 +121,7 @@ Both are kept by the Deck Template operation and by the Weekly Series flow. Save
 - Header: eyebrow (fixed per layout, overridable where a layout declares `eyebrow`), Frame Label when the Deck has a period, headline from `title`.
 - In `observatory`, the header prefixes the eyebrow with the zero-padded Page Position index (`§ 07`) when the page number is visible; hidden page numbers hide the index as well.
 - Body: layout content.
-- Boundary Note: optional one-line slot between body and footer, separated by a hairline, rendered from page field `boundary`. Any Editorial Frame layout may carry it: Overview, Evidence-backed Decision, Next Actions, Trend & Target, Closing, Side-by-side Comparison, Full-width Panel. Cover, HTML Page and Two-column do not.
+- Boundary Note: optional slot between body and footer, separated by a hairline, rendered from page field `boundary`. It is written for one line but wraps when longer; it is never clamped or truncated, so a long note shrinks the body and the shared overflow gate blocks export when the page no longer fits. Any Editorial Frame layout may carry it: Overview, Evidence-backed Decision, Next Actions, Trend & Target, Closing, Side-by-side Comparison, Full-width Panel. Cover, HTML Page and Two-column do not.
 - Footer: Deck Title on the left (omitted when the Deck has none), page label on the right. The footer keeps its height when either side is empty so the body does not shift between pages. The page label is `n / N` as today; `observatory` renders it zero-padded.
 - Cover never renders the footer page label and ignores `showPageNumber`; it still counts in Page Position.
 
@@ -165,13 +166,15 @@ Content-complete: `title`, both `label`s, and at least one non-empty point per c
 
 Panel `title` may be empty and is then not rendered. Completeness reuses the Two-column panel rules; the three narrative items do not exist.
 
+In `observatory`, a Full-width Panel table shows a presentation-only row index (`01`, `02`, …) before the first data column. The index is rendering, not data: it is not part of `columns` or `rows`, it does not shift `referenceColumn`, and it is not shown in `default` or on Two-column tables, whose composition is unchanged.
+
 **Table reference column** (shared by Two-column and Full-width Panel tables)
 
 | Field             | Type     | Rule                                                                                                               |
 | ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
 | `referenceColumn` | `number` | Optional on the table panel. Zero-based index into `columns`; a non-integer or out-of-range value rejects the Deck |
 
-The reference column holds cross-references such as page numbers. It is rendered right-aligned, non-wrapping, in the accent colour, and in the mono face under `observatory`; it is not a completeness rule. The table panel editor offers a select (`None` or a column name); removing a column clears a `referenceColumn` that pointed at it and shifts a later one. Deck Template keeps it as panel structure, like `columns`.
+The reference column holds cross-references such as page numbers. It is rendered right-aligned, non-wrapping, in the accent colour, and in the mono face under `observatory`; it is not a completeness rule. The index always counts data columns only. The table panel editor offers a select (`None` or a column name); removing a column clears a `referenceColumn` that pointed at it and shifts a later one. Deck Template keeps it as panel structure, like `columns`.
 
 All four layouts are supported pages for Page Position and batch export. Parser policy is unchanged: declared fields normalised, extra fields dropped, cardinality violations reject the Deck.
 
@@ -205,7 +208,7 @@ A good test exercises a seam a caller actually uses and asserts observable behav
 ### Seams (confirmed with the author)
 
 1. Deck parsing and the Deck Template operation: `theme`, Deck Title, each new layout's cardinalities, `boundary` acceptance only on Editorial Frame layouts, `referenceColumn` bounds, retention and clearing rules. Prior art: the parse-deck, cardinality, and deck-template unit tests.
-2. Content readiness and export eligibility: the Content-complete rules above, including optional slots never blocking. Prior art: the export-readiness and content-readiness-summary unit tests.
+2. Content readiness and export eligibility: the Content-complete rules above, including optional slots never blocking completeness, and an overlong Boundary Note blocked by the overflow gate. Prior art: the export-readiness and content-readiness-summary unit tests.
 3. Stage context Module: typed facts including theme and Deck Title; Cover counted in Page Position with no page label. Prior art: the editorial-frame and page-lifecycle unit tests, rewritten away from string sentinels in the prefactor.
 4. Editor modules for each new layout: add, move, remove within limits; chosen toggle; reference column select and its removal adjustment. Prior art: the overview-editor, next-actions, and chart/flow/checklist editor unit tests.
 5. Browser: Playwright fixtures per new layout at min and max content, English, Chinese, and mixed, at 1280 × 720 in both themes, with overflow blocking; Overview and Trend & Target fixtures under `observatory`; a capture test for font embedding. Prior art: the existing per-layout e2e specs, the overflow detector harness, and the export-operation spec.
@@ -222,7 +225,7 @@ Candidate 4 from the architecture-deepening review; no author-visible change.
 
 ### 1. Deck Theme foundation
 
-`theme` and Deck Title in the Deck model, parser, save, template and Weekly Series; role tokens and `--blue*` aliases; the `observatory` stylesheet with self-hosted fonts; theme through the Stage context; toolbar theme select and Deck Title input; Editorial Frame footer with Deck Title and `observatory` frame decorations; existing layouts verified in both themes; font-embedding capture test; Deck JSON reference and Workshop architecture updated.
+`theme` and Deck Title in the Deck model, parser, save, template and Weekly Series; role tokens and `--blue*` aliases; the `observatory` stylesheet with self-hosted fonts; theme through the Stage context; toolbar theme select and Deck Title input; Editorial Frame footer with Deck Title and `observatory` frame decorations; existing layouts including Two-column chart and table verified in both themes; chart series roles; font-embedding capture test; Deck JSON reference and Workshop architecture updated.
 
 ### 2. Boundary Note, Cover, Closing
 
@@ -260,5 +263,5 @@ Specification issue #57 references this document. Prefactor ticket #62 and imple
 ## Further Notes
 
 - The prototype that settled the visual direction lives on the throwaway branch named in the prototype record; its stylesheet for variant B is the starting point for the `observatory` stylesheet, rewritten from fixed pixels to the Stage's container units.
-- Two review findings after the first publication were folded in: the reference column contract and the scoping of template clearing to the new layouts.
+- Review findings after the first publication were folded in: the reference column contract, the scoping of template clearing to the new layouts, chart series colours following the theme, the Boundary Note's overflow rule, and the presentation-only row index.
 - Appendix labels (`B1`) and a dark Cover are the most likely follow-ups; both should start as Layout Variants, not new layouts.
