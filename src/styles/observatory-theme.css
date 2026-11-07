@@ -151,3 +151,30 @@
 .stage-root[data-theme="observatory"] .editorial-cover-meta {
   margin-top: auto;
 }
+
+.stage-root[data-theme="observatory"] .editorial-comparison-label,
+.stage-root[data-theme="observatory"] .editorial-tradeoff dt {
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-label h2 {
+  font-weight: inherit;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-points li {
+  display: grid;
+  grid-template-columns: 2.1875cqw minmax(0, 1fr);
+  gap: 0.78125cqw;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-index {
+  display: block;
+  padding-top: 0.46875cqw;
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+}

@@ -78,6 +78,18 @@ function clearPage(page: Page): Page {
 function clearPageContent(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchPage<Page>(page, {
+    sideBySide: (comparison) => ({
+      ...comparison,
+      title: "",
+      columns: [
+        { label: "", points: comparison.columns[0].points.map(() => "") },
+        { label: "", points: comparison.columns[1].points.map(() => "") },
+      ],
+      chosen: undefined,
+      tradeoff: undefined,
+      boundary: undefined,
+      notes: undefined,
+    }),
     cover: (cover) => ({ ...cover, title: "", subtitle: "", notes: undefined }),
     closing: (closing) => ({
       ...closing,

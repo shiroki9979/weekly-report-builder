@@ -86,6 +86,7 @@ export type SlideLayout =
   | "trend-target"
   | "cover"
   | "closing"
+  | "side-by-side"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
 export type PageChrome = {
@@ -237,6 +238,17 @@ export type ClosingPage = EditorialPageChrome & {
   closingLine: string
 }
 
+export type ComparisonColumn = { label: string; points: string[] }
+
+export type SideBySidePage = EditorialPageChrome & {
+  id: string
+  layout: "side-by-side"
+  title: string
+  columns: [ComparisonColumn, ComparisonColumn]
+  chosen?: 0 | 1
+  tradeoff?: { why: string; cost?: string }
+}
+
 export type UnknownPage = PageChrome & {
   id: string
   layout: string
@@ -252,6 +264,7 @@ export type StructuredPage =
   | TrendTargetPage
   | CoverPage
   | ClosingPage
+  | SideBySidePage
 
 export type Page =
   | TwoColumnPage
@@ -262,6 +275,7 @@ export type Page =
   | TrendTargetPage
   | CoverPage
   | ClosingPage
+  | SideBySidePage
   | UnknownPage
 
 // 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
@@ -333,12 +347,17 @@ export function isClosingPage(page: Page): page is ClosingPage {
   return page.layout === "closing" && "takeaways" in page
 }
 
+export function isSideBySidePage(page: Page): page is SideBySidePage {
+  return page.layout === "side-by-side" && "columns" in page
+}
+
 export type EditorialFramePage =
   | OverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
   | ClosingPage
+  | SideBySidePage
 
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
@@ -346,7 +365,8 @@ export function isEditorialFramePage(page: Page): page is EditorialFramePage {
     isEvidenceDecisionPage(page) ||
     isNextActionsPage(page) ||
     isTrendTargetPage(page) ||
-    isClosingPage(page)
+    isClosingPage(page) ||
+    isSideBySidePage(page)
   )
 }
 
@@ -372,6 +392,7 @@ export function isSupportedStagePage(page: Page): boolean {
     trendTarget: () => true,
     cover: () => true,
     closing: () => true,
+    sideBySide: () => true,
     twoColumn: (twoColumn) =>
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
@@ -387,6 +408,7 @@ type PageMatchers<T> = {
   trendTarget: (page: TrendTargetPage) => T
   cover: (page: CoverPage) => T
   closing: (page: ClosingPage) => T
+  sideBySide: (page: SideBySidePage) => T
   unknown: (page: Page) => T
 }
 
@@ -412,6 +434,7 @@ export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {
   }
   if (isCoverPage(page)) return matchers.cover(page)
   if (isClosingPage(page)) return matchers.closing(page)
+  if (isSideBySidePage(page)) return matchers.sideBySide(page)
   return matchers.unknown(page)
 }
 
@@ -428,6 +451,18 @@ export type Cardinality = {
 // 數量規則的單一來源。版面規則由 parser、reducer 與表單共用；panel 規則只約束編輯，
 // chart／flow／checklist 的 parser 容許空陣列，交由 readiness 標成 Draft Page
 export const CARDINALITY = {
+  comparisonColumns: {
+    min: 2,
+    max: 2,
+    owner: "Side-by-side Comparison",
+    noun: "column",
+  },
+  comparisonPoints: {
+    min: 1,
+    max: 4,
+    owner: "Comparison column",
+    noun: "point",
+  },
   takeaways: { min: 0, max: 4, owner: "Closing", noun: "takeaway" },
   supportingOutcomes: {
     min: 1,
@@ -1178,6 +1213,57 @@ function parseClosingPage(
   })
 }
 
+function parseComparisonColumn(
+  value: unknown,
+  field: string
+): ComparisonColumn {
+  const column = readRecord(value, field)
+  return {
+    label: readString(column.label, `${field}.label`),
+    points: readEntries(
+      column.points,
+      `${field}.points`,
+      CARDINALITY.comparisonPoints
+    ).map((point, index) => readString(point, `${field}.points[${index}]`)),
+  }
+}
+
+function parseSideBySidePage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): SideBySidePage {
+  const columns = readEntries(
+    value.columns,
+    `${field}.columns`,
+    CARDINALITY.comparisonColumns
+  )
+  const chosen = value.chosen
+  if (chosen !== undefined && chosen !== 0 && chosen !== 1)
+    throw new Error(`Invalid ${field}.chosen: expected 0 or 1`)
+  const tradeoff =
+    value.tradeoff === undefined
+      ? undefined
+      : readRecord(value.tradeoff, `${field}.tradeoff`)
+  return withChrome(chrome, "side-by-side", {
+    columns: [
+      parseComparisonColumn(columns[0], `${field}.columns[0]`),
+      parseComparisonColumn(columns[1], `${field}.columns[1]`),
+    ],
+    ...(chosen === undefined ? {} : { chosen }),
+    ...(tradeoff === undefined
+      ? {}
+      : {
+          tradeoff: {
+            why: readString(tradeoff.why, `${field}.tradeoff.why`),
+            ...(tradeoff.cost === undefined
+              ? {}
+              : { cost: readString(tradeoff.cost, `${field}.tradeoff.cost`) }),
+          },
+        }),
+  })
+}
+
 type PageParser = (
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
@@ -1188,6 +1274,7 @@ type PageParser = (
 const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
   cover: parseCoverPage,
   closing: parseClosingPage,
+  "side-by-side": parseSideBySidePage,
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
   overview: parseOverviewPage,

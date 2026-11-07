@@ -1,6 +1,7 @@
 import type {
   CoverPage,
   ClosingPage,
+  SideBySidePage,
   ChartPanel,
   ChecklistPanel,
   FlowPanel,
@@ -196,6 +197,18 @@ export function createBlankClosingPage(id: string): ClosingPage {
   }
 }
 
+export function createBlankSideBySidePage(id: string): SideBySidePage {
+  return {
+    id,
+    layout: "side-by-side",
+    title: "",
+    columns: [
+      { label: "", points: [""] },
+      { label: "", points: [""] },
+    ],
+  }
+}
+
 export type AddableLayout =
   | "two-column"
   | "overview"
@@ -204,6 +217,7 @@ export type AddableLayout =
   | "trend-target"
   | "cover"
   | "closing"
+  | "side-by-side"
 
 const BLANK_PAGE_FACTORIES: Record<
   AddableLayout,
@@ -211,6 +225,7 @@ const BLANK_PAGE_FACTORIES: Record<
 > = {
   cover: createBlankCoverPage,
   closing: createBlankClosingPage,
+  "side-by-side": createBlankSideBySidePage,
   "two-column": createBlankTwoColumnPage,
   overview: createBlankOverviewPage,
   "evidence-decision": createBlankEvidenceDecisionPage,

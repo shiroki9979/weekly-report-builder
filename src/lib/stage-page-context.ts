@@ -62,6 +62,7 @@ function hasPageNumberSlot(page: Page): boolean {
   return matchPage(page, {
     cover: () => false,
     closing: () => true,
+    sideBySide: () => true,
     html: () => true,
     overview: () => true,
     evidenceDecision: () => true,

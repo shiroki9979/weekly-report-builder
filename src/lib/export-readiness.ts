@@ -9,6 +9,7 @@ import {
   type ChartPanel,
   type CoverPage,
   type ClosingPage,
+  type SideBySidePage,
   type ChecklistPanel,
   type FlowPanel,
   type EvidenceDecisionPage,
@@ -220,6 +221,29 @@ function assessClosing(page: ClosingPage): ExportIssue[] {
         missing(`takeaways[${index}].text`, "Takeaway text is required")
       )
   })
+  return issues
+}
+
+function assessSideBySide(page: SideBySidePage): ExportIssue[] {
+  const issues = isBlank(page.title)
+    ? [missing("title", "Title is required")]
+    : []
+  page.columns.forEach((column, columnIndex) => {
+    const path = `columns[${columnIndex}]`
+    if (isBlank(column.label))
+      issues.push(missing(`${path}.label`, "Column label is required"))
+    column.points.forEach((point, pointIndex) => {
+      if (isBlank(point))
+        issues.push(
+          missing(
+            `${path}.points[${pointIndex}]`,
+            "Comparison point is required"
+          )
+        )
+    })
+  })
+  if (page.tradeoff && isBlank(page.tradeoff.why))
+    issues.push(missing("tradeoff.why", "Tradeoff reason is required"))
   return issues
 }
 
@@ -541,6 +565,7 @@ export function assessContentReadiness(
   return matchPage(page, {
     cover: assessCover,
     closing: assessClosing,
+    sideBySide: assessSideBySide,
     twoColumn: assessTwoColumn,
     overview: assessOverview,
     evidenceDecision: (decision) =>

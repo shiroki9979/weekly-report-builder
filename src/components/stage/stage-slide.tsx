@@ -1,3 +1,4 @@
+import { SideBySideSlide } from "./side-by-side-slide"
 import { CoverSlide } from "./cover-slide"
 import { ClosingSlide } from "./closing-slide"
 import { EvidenceDecisionSlide } from "@/components/stage/evidence-decision-slide"
@@ -31,6 +32,9 @@ export function StageSlide({
         </p>
       ) : null}
       {matchPage(page, {
+        sideBySide: (comparison) => (
+          <SideBySideSlide page={comparison} context={context} />
+        ),
         cover: (cover) => <CoverSlide page={cover} context={context} />,
         closing: (closing) => <ClosingSlide page={closing} context={context} />,
         html: (htmlPage) => (

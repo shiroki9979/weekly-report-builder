@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CoverEditorForm } from "@/components/workshop/cover-editor-form"
+import { SideBySideEditorForm } from "@/components/workshop/side-by-side-editor-form"
 import { ClosingEditorForm } from "@/components/workshop/closing-editor-form"
 import { ChartEditorForm } from "@/components/workshop/chart-editor-form"
 import { ChecklistEditorForm } from "@/components/workshop/checklist-editor-form"
@@ -65,6 +66,9 @@ export function PageEditorForm({
   return matchPage(page, {
     cover: (cover) => <CoverEditorForm {...editor} page={cover} />,
     closing: (closing) => <ClosingEditorForm {...editor} page={closing} />,
+    sideBySide: (comparison) => (
+      <SideBySideEditorForm {...editor} page={comparison} />
+    ),
     html: (htmlPage) => <HtmlPageEditorForm {...editor} page={htmlPage} />,
     overview: (overview) => <OverviewEditorForm {...editor} page={overview} />,
     evidenceDecision: (decision) => (
