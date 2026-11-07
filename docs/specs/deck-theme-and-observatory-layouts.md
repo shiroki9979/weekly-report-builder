@@ -3,7 +3,7 @@
 Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
 
 Created: 2026-11-07
-Last updated: 2026-11-07
+Last updated: 2026-11-07 (reference column contract and template scope clarified after review)
 
 Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [CONTEXT.md](../../CONTEXT.md).
 
@@ -125,11 +125,23 @@ Content-complete: `title`, both `label`s, and at least one non-empty point per c
 
 Panel `title` may be empty and is then not rendered. Completeness reuses the Two-column panel rules; the three narrative items do not exist.
 
+**Table reference column** (shared by Two-column and Full-width Panel tables)
+
+| Field             | Type     | Rule                                                                                                            |
+| ----------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `referenceColumn` | `number` | Optional on `TablePanel`. Zero-based index into `columns`; a non-integer or out-of-range value rejects the Deck |
+
+The reference column holds cross-references such as page numbers. It is rendered right-aligned, non-wrapping, in the accent colour, and in the mono face under `observatory`; it is not a completeness rule. The table panel editor offers a select (`None` or a column name); removing a column clears a `referenceColumn` that pointed at it and shifts a later one. Deck Template keeps it as panel structure, like `columns`.
+
 All four are supported pages for Page Position and batch export. Parser policy is unchanged: declared fields normalised, extra fields dropped, cardinality violations reject the Deck.
 
 ### Deck Template and Weekly Series
 
-Creating from a template keeps layouts, order, `theme`, Deck Title, Cover `byline`, and Closing `closingLine`; it clears every other authored string (titles, subtitle, points, labels, tradeoff, takeaways, boundary) and keeps panel structure under the existing Two-column rules.
+Creating from a template keeps layouts, order, `theme`, and Deck Title for every Deck.
+
+For the four new layouts only: Cover keeps `byline` and clears `title` and `subtitle`; Closing keeps `closingLine` and clears `eyebrow`, `title`, and `takeaways`; Side-by-side Comparison clears `title`, both labels, points, `chosen`, and `tradeoff`; Full-width Panel keeps panel structure (columns, `referenceColumn`, step and item counts) under the existing Two-column panel rules. `boundary` is cleared on every layout that carries it.
+
+Existing layouts keep their own retention rules unchanged: the [Editorial Layout Family](editorial-layout-family.md) clone rules (workstream, metric label, and unit retained) and the [Trend & Target](trend-target-and-next-actions-rows.md) rules (metric, target, dated history, and Measurement Context retained).
 
 ### Workshop
 
@@ -153,7 +165,7 @@ Red → Green → Refactor on public seams; no assertions on CSS class names or 
 ### Vitest seams
 
 - `parseDeck`: `theme` omitted/`default`/`observatory`/invalid; Deck Title trimming; each new layout's required fields, cardinalities, and `boundary` acceptance only on Editorial Frame layouts.
-- `createDeckFromTemplate` and the Weekly Series flow: theme, Deck Title, byline and closing line retained; other copy cleared.
+- `createDeckFromTemplate` and the Weekly Series flow: theme and Deck Title retained; the new layouts cleared and retained per the table above; existing layouts unchanged.
 - `assessContentReadiness`: the Content-complete rules above, including optional slots never blocking.
 - Stage context: theme and Deck Title exposed as typed facts; Cover counted in Page Position with no page label.
 - Editor modules: add/move/remove points and takeaways within limits.
