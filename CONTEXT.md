@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-09-29
+Last updated: 2026-11-07
 
 Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
 
@@ -19,6 +19,10 @@ _Avoid_: Monday, file name
 **Deck Period**:
 Optional start and end dates a Deck reports on. It produces the Frame Label and bounds Trend & Target observations; a Deck without one has neither.
 _Avoid_: Reporting week, date range
+
+**Deck Title**:
+The author-facing name of a Deck shown on its Stage footer; distinct from the Deck ID that names its file.
+_Avoid_: Deck name, file name, Deck ID
 
 **Weekly Series**:
 The weekly-report workflow: Decks named by their Monday, each with a Monday-to-Friday Deck Period, created from the latest one with authored copy cleared.
@@ -121,6 +125,40 @@ _Avoid_: Task board, checklist
 **Next Actions Rows**:
 A Layout Variant of Next Actions that presents ordered Commitments in full-width rows, with each action and intended outcome beside its verification checkpoint.
 _Avoid_: Action table, task list
+
+**Cover**:
+A Structured Layout that opens a Deck with its title, an optional subtitle and byline, and the Frame Label when the Deck has a period.
+_Avoid_: Title slide, hero
+
+**Closing**:
+A Structured Layout that ends a Deck with a headline, up to four takeaways, and an optional contact or next-step line.
+_Avoid_: Thank-you slide, Q&A slide
+
+**Side-by-side Comparison**:
+A Structured Layout that sets two labeled columns of points against each other without numeric metrics, optionally marking one column as chosen and explaining the trade-off.
+_Avoid_: Evidence-backed Decision, versus slide, two-card layout
+
+**Full-width Panel**:
+A Structured Layout that gives one panel (table, flow, checklist, or chart) the whole Stage body with no narrative items beside it.
+_Avoid_: Two-column Layout, wide table
+
+## Visual language
+
+**Deck Theme**:
+The visual language a Deck's Stage renders with—color roles, type, and spacing—chosen once per Deck and shared by every Page. The default theme matches the team presentation template.
+_Avoid_: Style, skin, palette, color scheme
+
+**Stage Element**:
+A visual unit reused across Structured Layouts, such as a tag, a card, or a single emphasized figure. It has no communication job of its own; the Structured Layout that places it does.
+_Avoid_: Component, widget, panel, template
+
+**Boundary Note**:
+An optional one-line Stage Element on the Editorial Frame stating the scope, verification, or limit a page's claim holds under.
+_Avoid_: Speaker notes, footnote, disclaimer
+
+**Tradeoff Callout**:
+A Stage Element on a Side-by-side Comparison that states why the chosen column was preferred and what it costs.
+_Avoid_: Pros and cons, note
 
 ## Page context
 

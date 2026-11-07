@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-09-29
+最後更新：2026-11-07
 
 ## Tutorials（入門教學）
 
@@ -40,24 +40,27 @@
 
 說明設計取捨與系統邊界，不含逐步操作。
 
-| 文件                                                                  | 說明                                                 |
-| --------------------------------------------------------------------- | ---------------------------------------------------- |
-| [工坊架構](explanation/workshop-architecture.md)                      | 工坊殼 vs 16:9 stage、資料流                         |
-| [Layout 家族原型](explanation/layout-prototype.md)                    | 歷史 800 × 450 驗證與 production adoption 指標       |
-| [Slide 設計研究](explanation/slide-design-research.md)                | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據 |
-| [Trend / Rows 原型決策](explanation/trend-target-layout-prototype.md) | 四視圖 A/D 決策、封存來源與生產驗證紀錄              |
-| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據          |
+| 文件                                                                  | 說明                                                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [工坊架構](explanation/workshop-architecture.md)                      | 工坊殼 vs 16:9 stage、資料流                                              |
+| [Layout 家族原型](explanation/layout-prototype.md)                    | 歷史 800 × 450 驗證與 production adoption 指標                            |
+| [Slide 設計研究](explanation/slide-design-research.md)                | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據                      |
+| [Trend / Rows 原型決策](explanation/trend-target-layout-prototype.md) | 四視圖 A/D 決策、封存來源與生產驗證紀錄                                   |
+| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據                               |
+| [Stage 設計哲學](explanation/stage-design-philosophy.md)              | Editorial Observatory：Deck Theme、layout 與 Stage Element 的上游美學依據 |
+| [Stage 主題原型](explanation/stage-theme-prototype.md)                | 三變體驗證與採用 Observatory 的決定                                       |
 
 ## Specs（已落地）
 
 已實作、仍供維護與驗收參照的規格。
 
-| 文件                                                                                | 說明                                                                                                      |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)                                            | `layout: "html"` 16:9 逃生口                                                                              |
-| [HTML Page export failure policy](specs/html-page-error-png.md)                     | HTML 載入／截圖失敗政策與共用 Export gate                                                                 |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)     | Editorial Layout Family 的 production 規格                                                                |
-| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md) | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)） |
+| 文件                                                                                  | 說明                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)                                              | `layout: "html"` 16:9 逃生口                                                                                                                                                 |
+| [HTML Page export failure policy](specs/html-page-error-png.md)                       | HTML 載入／截圖失敗政策與共用 Export gate                                                                                                                                    |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)       | Editorial Layout Family 的 production 規格                                                                                                                                   |
+| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)   | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）                                                                    |
+| [Deck Theme and the Observatory layouts](specs/deck-theme-and-observatory-layouts.md) | Deck Theme、Cover／Closing／Side-by-side Comparison／Full-width Panel 與 Boundary Note 規格（[#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)，待實作） |
 
 ## Decisions（ADR）
 
@@ -66,6 +69,7 @@
 | 文件                                                                                     | 說明                                                                                                                        |
 | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | [ADR-0001 週報流程與 slide 核心解耦](adr/0001-decouple-weekly-report-from-slide-core.md) | 改稱 Deck、`decks/` 儲存、選填期間與 Trend cadence（[#50](https://github.com/shiroki9979/weekly-report-builder/issues/50)） |
+| [ADR-0002 Deck Theme](adr/0002-deck-theme.md)                                            | 主題固定清單、token 角色名稱為契約、字型交付方式                                                                            |
 
 ## 其他
 
