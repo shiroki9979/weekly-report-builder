@@ -1,9 +1,9 @@
 # Deck Theme and the Observatory layouts
 
-Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
+Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07, seams and ticket breakdown confirmed 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with a prefactor ticket [#62](https://github.com/shiroki9979/weekly-report-builder/issues/62) and four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
 
 Created: 2026-11-07
-Last updated: 2026-11-07 (reference column contract and template scope clarified after review)
+Last updated: 2026-11-07
 
 Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [CONTEXT.md](../../CONTEXT.md).
 
@@ -11,52 +11,92 @@ Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), 
 
 The Stage has one visual language, tuned to paste PNGs into a team PowerPoint template. Authors making decks that are not weekly reports have been writing every page as an HTML Page with a second, hand-maintained language (teal/navy, Noto Sans TC, cards, tags, tradeoff callouts, boundary notes, a footer with the deck name). In the two real non-weekly decks, 43 of 43 pages are HTML Pages. Recurring compositions therefore sit outside Export Readiness, Page Position, Deck Template reuse, and the editors; page numbers collide with hand-made footers, so authors switch them off.
 
-The catalogue of those 43 pages shows four compositions that no Structured Layout can express: a cover, a closing page, a two-column qualitative comparison with a chosen option and a trade-off, and a full-width panel (table today). Two Stage Elements recur across layouts: a one-line Boundary Note and a Tradeoff Callout.
+The catalogue of those 43 pages shows four compositions that no Structured Layout can express: a cover, a closing page, a two-column qualitative comparison with a chosen option and a trade-off, and a full-width panel (a table today). Two Stage Elements recur across layouts: a one-line Boundary Note and a Tradeoff Callout. Tables also need a cross-reference column that today's panel model cannot mark.
 
 ## Solution
 
 Introduce **Deck Theme**: a Deck-level choice from a fixed list, `default` (the current blue, PowerPoint-compatible language) and `observatory` (the Editorial Observatory language selected in the prototype). Theme tokens are semantic roles; the existing `--blue*` names remain as aliases so HTML Pages keep working.
 
-Add four Structured Layouts, each with a named communication job: **Cover** (opening), **Closing** (closing), **Side-by-side Comparison** (qualitative decision between two options), **Full-width Panel** (one table, flow, checklist, or chart panel using the whole body). Add **Boundary Note** as an optional Stage Element on the Editorial Frame, and **Tradeoff Callout** as a slot on Side-by-side Comparison. Give the Editorial Frame a footer carrying **Deck Title** and the page label.
+Add four Structured Layouts, each with a named communication job: **Cover** (opening), **Closing** (closing), **Side-by-side Comparison** (qualitative decision between two options), **Full-width Panel** (one table, flow, checklist, or chart panel using the whole body). Add **Boundary Note** as an optional Stage Element on the Editorial Frame, **Tradeoff Callout** as a slot on Side-by-side Comparison, and a **reference column** on table panels. Give the Editorial Frame a footer carrying **Deck Title** and the page label.
 
 Existing Structured Layouts only read theme tokens; their compositions do not change. Spoken presentation and independent reading keep equal priority; the philosophy's contrast and single-emphasis constraints apply to both themes.
 
-## Goals
-
-- A non-weekly deck can be authored entirely from Structured Layouts in the `observatory` theme, with Export Readiness, Page Position, and Deck Template reuse applying to every page.
-- `default` output is pixel-compatible with today's output for existing decks.
-- HTML Pages that reference `--blue*` or role tokens follow the Deck Theme without edits.
-
-## Non-goals
-
-- Author-defined colours or fonts in Deck JSON; per-page theme overrides.
-- Bundled CJK fonts.
-- Horizontal step strips and timelines, branching diagrams, the profile "story grid", layer stacks, a dark Cover variant, and appendix page labels such as `B1`. These stay HTML Pages or later Layout Variants.
-- Re-composing existing Structured Layouts.
-- Migrating existing hand-written HTML Pages.
-
 ## User Stories
+
+### Theme
 
 1. As a deck author, I want to pick a theme once per Deck in the Workshop, so that every page shares one visual language without per-page settings.
 2. As a weekly report author, I want decks without a theme to keep today's appearance, so that existing reports and the team template workflow do not change.
-3. As a deck author, I want a new Deck created from a Deck Template to keep the template's theme and Deck Title, so that structure reuse includes the visual language.
-4. As an HTML Page author, I want my fragment's `--blue` and role token references to follow the Deck Theme, so that one-off pages do not drift from the rest of the deck.
-5. As a deck author, I want a Deck Title shown in the footer of every Editorial Frame page, so that a single PNG identifies the deck it came from.
-6. As a deck author, I want a Cover page with a title, optional subtitle and byline, and the Frame Label when the Deck has a period, so that a deck opens without a hand-written HTML Page.
-7. As a deck reader, I want the Cover to count in Page Position without showing a page number, so that the second page reads `2 / N` like any printed deck.
-8. As a deck author, I want a Closing page with a headline, up to four takeaways, and an optional closing line, so that a deck ends with what to remember and how to follow up.
-9. As a deck author, I want a Side-by-side Comparison with two labelled columns of points, an optional chosen column, and an optional Tradeoff Callout, so that a qualitative decision is shown without inventing numeric metrics.
-10. As a deck reader, I want the chosen column marked by a rule and a label, not only by colour, so that the choice is legible in print and without colour perception.
-11. As a deck author, I want a Full-width Panel that reuses the Two-column panel kinds and editors, so that a wide table or flow does not need three narrative items beside it.
-12. As a deck author, I want an optional Boundary Note on any Editorial Frame page, so that the scope or verification of a page's claim is visible without a speaker.
-13. As a deck author, I want Content-complete rules for the new layouts to match their required fields only, so that optional slots never block Copy or batch export.
-14. As a deck author, I want overflow at 1280 × 720 to block output for the new layouts as it does for existing ones, so that a long comparison is split rather than clipped.
-15. As a deck author, I want the `observatory` theme to embed its Latin fonts in PNG output, so that exported pages look the same on a machine without those fonts.
-16. As a maintainer, I want the theme's status tones and contrast checked in both themes, so that Overview and Trend & Target stay legible after switching.
-17. As a new user, I want a fictional demo deck in the `observatory` theme using the four new layouts, so that I can try the language without private content.
-18. As a maintainer, I want the prototype entry removed after the fourth slice and the decision captured in docs, so that two implementations do not drift.
+3. As a deck author, I want an invalid theme value to be rejected when the Deck loads, so that a typo does not silently fall back to a different look.
+4. As a deck author, I want a new Deck created from a Deck Template to keep the template's theme, so that structure reuse includes the visual language.
+5. As a weekly report author, I want the next week created by the Weekly Series to keep the theme, so that a themed weekly series stays consistent.
+6. As an HTML Page author, I want my fragment's `--blue` and role token references to follow the Deck Theme, so that one-off pages do not drift from the rest of the deck.
+7. As an HTML Page author, I want hard-coded colours in my fragment left untouched, so that a page designed on purpose is not restyled.
+8. As a deck reader, I want status tones to stay readable in every theme, so that Overview and Trend & Target status labels keep their meaning after switching.
+9. As a deck author, I want the `observatory` theme to embed its Latin fonts in PNG output, so that exported pages look the same on a machine without those fonts.
+10. As a deck author, I want Chinese text to use the system CJK font in every theme, so that the app does not ship a large font and my machine's rendering is used.
+
+### Deck Title and Editorial Frame
+
+11. As a deck author, I want to set a Deck Title in the Workshop, so that a single exported PNG identifies the deck it came from.
+12. As a deck reader, I want the Deck Title in the footer of every Editorial Frame page with the page label on the right, so that I can locate a page in the deck from the image alone.
+13. As a deck author, I want pages without a Deck Title or with page numbers hidden to keep the same body height, so that content does not shift between pages.
+14. As a deck reader, I want the `observatory` header to show the page index beside the eyebrow when page numbers are on, so that cross-references such as "see 07" are easy to follow.
+15. As a deck author, I want an optional Boundary Note on any Editorial Frame page, so that the scope or verification of a page's claim is visible without a speaker.
+16. As a deck author, I want the Boundary Note to never affect export readiness, so that an optional caveat does not block Copy or batch export.
+17. As a deck author, I want the Boundary Note cleared when creating from a Deck Template, so that last week's caveat is not reused unread.
+
+### Cover
+
+18. As a deck author, I want a Cover page with a title, optional subtitle and byline, so that a deck opens without a hand-written HTML Page.
+19. As a deck reader, I want the Cover to show the Frame Label when the Deck has a period, so that a weekly deck's cover names its week.
+20. As a deck reader, I want the Cover to count in Page Position without showing a page number, so that the second page reads `2 / N` like any printed deck.
+21. As a deck author, I want only the Cover title required for export, so that a cover with just a title is a complete page.
+22. As a deck author, I want the Cover byline kept when creating from a Deck Template, so that stable presenter information is not re-entered.
+
+### Closing
+
+23. As a deck author, I want a Closing page with a headline, up to four takeaways, and an optional closing line, so that a deck ends with what to remember and how to follow up.
+24. As a deck author, I want each takeaway to carry an optional short reference such as a page number or a day, so that follow-ups point at where the detail lives.
+25. As a deck reader, I want the closing line to follow the takeaways rather than sit at the page bottom, so that a short Closing does not leave a large gap.
+26. As a deck author, I want the Closing eyebrow to default to `Closing` but be overridable, so that a Q&A or Next page can say so.
+27. As a deck author, I want the closing line kept when creating from a Deck Template, so that contact details carry over.
+
+### Side-by-side Comparison
+
+28. As a deck author, I want a comparison of two labelled columns of points, so that a qualitative decision is shown without inventing numeric metrics.
+29. As a deck author, I want one to four points per column, so that the page stays readable at presentation size.
+30. As a deck author, I want to mark at most one column as chosen, so that the decision is visible at a glance.
+31. As a deck reader, I want the chosen column marked by a rule and a label, not only by colour, so that the choice is legible in print and without colour perception.
+32. As a deck author, I want an optional Tradeoff Callout with a reason and a cost, so that the decision is explained in the author's words.
+33. As a deck author, I want a comparison with no chosen column and no trade-off to still be exportable, so that an open comparison can be shown before a decision.
+34. As a deck author, I want every present point to be non-empty for export, so that an empty bullet never reaches a PNG.
+
+### Full-width Panel
+
+35. As a deck author, I want a page that gives one table, flow, checklist, or chart panel the whole body, so that a wide table does not need three narrative items beside it.
+36. As a deck author, I want the Full-width Panel to reuse the Two-column panel editors and rules, so that I do not learn a second table editor.
+37. As a deck author, I want the panel title optional on a Full-width Panel, so that the headline is not repeated.
+38. As a deck author, I want to mark one table column as the reference column, so that cross-references to other pages stand out and never wrap.
+39. As a deck author, I want the reference column kept when a Deck Template is created and adjusted when I remove a column, so that table structure survives without pointing at the wrong column.
+40. As a Two-column author, I want the same reference column available on my table panel, so that both table layouts behave alike.
+
+### Workshop, export, and delivery
+
+41. As a deck author, I want Add Page to offer the four new layouts, so that I can build a non-weekly deck entirely from Structured Layouts.
+42. As a deck author, I want each new layout to have its own editor with the shared title, notes, hidden, and Boundary Note controls, so that editing feels like the existing layouts.
+43. As a deck author, I want Content-complete rules for the new layouts to match their required fields only, so that optional slots never block Copy or batch export.
+44. As a deck author, I want overflow at 1280 × 720 to block output for the new layouts as it does for existing ones, so that a long comparison is split rather than clipped.
+45. As a deck author, I want Hidden Page, Draft Page, Overflowing Page, and Page Position to behave the same for the new layouts, so that the sharing workflow is unchanged.
+46. As a new user, I want a fictional demo deck in the `observatory` theme using the four new layouts, so that I can try the language without private content.
+47. As a maintainer, I want the prototype entry removed after the last slice and the decision captured in docs, so that two implementations do not drift.
+48. As a maintainer, I want the Stage context to carry typed facts before the theme is added to it, so that the theme does not join the existing display-string sentinels.
 
 ## Implementation Decisions
+
+### Prefactor: Stage context as typed facts
+
+Before the theme lands, the Stage context Module is deepened as described in architecture-deepening candidate 4: it returns typed facts (hidden, Page Position and total or none, whether the page number is drawn, Frame Label, document id) instead of the `"Hidden"` and `""` string sentinels, and the page-number policy (deck default, per-page override, HTML Page default, Two-column and Hidden exclusions, template retention) lives in that one module. Preview, Copy, and batch capture build the context through the same function. Theme and Deck Title are then added to the same context as further facts. Author-visible behaviour does not change in this step.
 
 ### Deck model
 
@@ -65,15 +105,15 @@ Existing Structured Layouts only read theme tokens; their compositions do not ch
 | `theme` | `"default" \| "observatory"` | Optional. Omitted reads as `default`. Any other value rejects the Deck; no silent fallback. |
 | `title` | `string`                     | Optional Deck Title. Trimmed-empty reads as absent. Shown in the Editorial Frame footer.    |
 
-Both are kept by `createDeckFromTemplate` and by the Weekly Series flow. Save writes the parsed value as-is: an omitted theme stays omitted and an explicit `default` is preserved, so existing files do not change on save.
+Both are kept by the Deck Template operation and by the Weekly Series flow. Save writes the parsed value as-is: an omitted theme stays omitted and an explicit `default` is preserved, so existing files do not change on save.
 
 ### Theme tokens and styles
 
-- `stage.css` defines role tokens on `.stage-root` for `default`: `--paper`, `--ink`, `--mute`, `--line`, `--accent`, `--accent-deep`, `--accent-soft`, `--accent-wash`, `--ok`, `--ok-ink`, `--ok-wash`, `--warn`, `--warn-ink`. `--blue`, `--blue-deep`, `--blue-soft`, `--blue-wash` become aliases of the accent roles. Values for `default` are today's values.
-- `src/styles/themes/observatory.css` overrides the roles under `.stage-root[data-theme="observatory"]` with the prototype palette (ink `#20384b`, mute `#5a6e7e`, line `#d6dee4`, accent `#287b78`, accent-deep `#1f5f5c`, accent-soft `#b9d9d6`, accent-wash `#e7f2f1`, ok-ink `#1f7a52`, warn-ink `#8a5508`; `ok`, `ok-wash`, `warn` chosen to keep 4.5:1 for text roles) and declares `@font-face` for Instrument Sans (400/700) and IBM Plex Mono (400/700) from `src/styles/fonts/`, with the OFL files alongside. The family stacks are `"Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif` and `--mono: "IBM Plex Mono", "Noto Sans TC", monospace`.
-- The Stage root carries `data-theme` from the Deck; preview and the capture adapter set it the same way through the Stage context Module, never from display strings.
-- Frame decorations specific to `observatory` (the `§ nn` index, the tick ruler, mono eyebrow and footer, the lead block as a hairline frame with an accent top rule) are CSS on existing frame classes. No layout component branches on the theme.
-- Class names are composed with `cn()` or whole conditional strings; `prettier-plugin-tailwindcss` strips leading spaces inside `className` template literals.
+- The Stage stylesheet defines role tokens on the Stage root for `default`: `--paper`, `--ink`, `--mute`, `--line`, `--accent`, `--accent-deep`, `--accent-soft`, `--accent-wash`, `--ok`, `--ok-ink`, `--ok-wash`, `--warn`, `--warn-ink`. `--blue`, `--blue-deep`, `--blue-soft`, `--blue-wash` become aliases of the accent roles. Values for `default` are today's values.
+- A separate theme stylesheet overrides the roles under the Stage root carrying `data-theme="observatory"` with the prototype palette (ink `#20384b`, mute `#5a6e7e`, line `#d6dee4`, accent `#287b78`, accent-deep `#1f5f5c`, accent-soft `#b9d9d6`, accent-wash `#e7f2f1`, ok-ink `#1f7a52`, warn-ink `#8a5508`; `ok`, `ok-wash`, `warn` chosen to keep 4.5:1 for text roles). It declares `@font-face` for self-hosted Instrument Sans (400/700) and IBM Plex Mono (400/700); the OFL licence files live beside the font assets. Family stacks are `"Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif` and `--mono: "IBM Plex Mono", "Noto Sans TC", monospace`.
+- The Stage root receives `data-theme` from the Stage context in preview and in the capture adapter, never from display strings.
+- Frame decorations specific to `observatory` (the `§ nn` index, the tick ruler, mono eyebrow and footer, the Overview lead block as a hairline frame with an accent top rule) are CSS on existing frame classes. No layout component branches on the theme.
+- Class names are composed with the project's `cn()` helper or whole conditional strings; the Tailwind Prettier plugin strips leading spaces inside `className` template literals (prototype finding).
 
 ### Editorial Frame
 
@@ -127,13 +167,13 @@ Panel `title` may be empty and is then not rendered. Completeness reuses the Two
 
 **Table reference column** (shared by Two-column and Full-width Panel tables)
 
-| Field             | Type     | Rule                                                                                                            |
-| ----------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
-| `referenceColumn` | `number` | Optional on `TablePanel`. Zero-based index into `columns`; a non-integer or out-of-range value rejects the Deck |
+| Field             | Type     | Rule                                                                                                               |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `referenceColumn` | `number` | Optional on the table panel. Zero-based index into `columns`; a non-integer or out-of-range value rejects the Deck |
 
 The reference column holds cross-references such as page numbers. It is rendered right-aligned, non-wrapping, in the accent colour, and in the mono face under `observatory`; it is not a completeness rule. The table panel editor offers a select (`None` or a column name); removing a column clears a `referenceColumn` that pointed at it and shifts a later one. Deck Template keeps it as panel structure, like `columns`.
 
-All four are supported pages for Page Position and batch export. Parser policy is unchanged: declared fields normalised, extra fields dropped, cardinality violations reject the Deck.
+All four layouts are supported pages for Page Position and batch export. Parser policy is unchanged: declared fields normalised, extra fields dropped, cardinality violations reject the Deck.
 
 ### Deck Template and Weekly Series
 
@@ -147,65 +187,67 @@ Existing layouts keep their own retention rules unchanged: the [Editorial Layout
 
 - Toolbar: a Deck-level theme select (`Default`, `Observatory`) and a Deck Title input, next to the page-number select. Both edit the Editing Session like other Deck-level fields and mark the session dirty.
 - Add Page gains Cover, Closing, Side-by-side Comparison, and Full-width Panel (with the panel-kind choice reused from Two-column).
-- Each new layout has its own editor module dispatched by `PageEditorForm`; the Boundary Note field lives in the shared editorial page chrome.
+- Each new layout has its own editor module dispatched by the page editor form; the Boundary Note field lives in the shared editorial page chrome. No schema-driven form engine.
 - Editors keep the existing readiness path conventions; Export Readiness copy lists missing required fields by name.
 
 ### Export
 
-No change to the Export gate contract. `html-to-image` embeds the `@font-face` fonts in use; the browser capture test asserts the SVG contains the two `observatory` families when the page uses them and none under `default`.
+No change to the Export gate contract. The capture library embeds the `@font-face` fonts in use; the browser capture test asserts the output contains the two `observatory` families when the page uses them and none under `default`.
 
 ### Demo Deck Set
 
-Add `demo/harbor-pilot-review.json` (fictional, `observatory`, Deck Title set) with Cover, Overview, Side-by-side Comparison, Full-width Panel (table), and Closing, using the prototype's fictional copy. Seeding behaviour is unchanged.
+The Demo Deck Set gains a fictional `observatory` deck (the prototype's "Harbor Forecast pilot review" copy, Deck Title set) with Cover, Overview, Side-by-side Comparison, Full-width Panel (table), and Closing. Seeding behaviour is unchanged.
 
 ## Testing Decisions
 
-Red → Green → Refactor on public seams; no assertions on CSS class names or private component structure.
+A good test exercises a seam a caller actually uses and asserts observable behaviour: parsed shapes, readiness verdicts, template results, rendered text and attributes, exported output. It does not assert CSS class names, private component structure, or helper call order. Red → Green → Refactor per vertical slice.
 
-### Vitest seams
+### Seams (confirmed with the author)
 
-- `parseDeck`: `theme` omitted/`default`/`observatory`/invalid; Deck Title trimming; each new layout's required fields, cardinalities, and `boundary` acceptance only on Editorial Frame layouts.
-- `createDeckFromTemplate` and the Weekly Series flow: theme and Deck Title retained; the new layouts cleared and retained per the table above; existing layouts unchanged.
-- `assessContentReadiness`: the Content-complete rules above, including optional slots never blocking.
-- Stage context: theme and Deck Title exposed as typed facts; Cover counted in Page Position with no page label.
-- Editor modules: add/move/remove points and takeaways within limits.
+1. Deck parsing and the Deck Template operation: `theme`, Deck Title, each new layout's cardinalities, `boundary` acceptance only on Editorial Frame layouts, `referenceColumn` bounds, retention and clearing rules. Prior art: the parse-deck, cardinality, and deck-template unit tests.
+2. Content readiness and export eligibility: the Content-complete rules above, including optional slots never blocking. Prior art: the export-readiness and content-readiness-summary unit tests.
+3. Stage context Module: typed facts including theme and Deck Title; Cover counted in Page Position with no page label. Prior art: the editorial-frame and page-lifecycle unit tests, rewritten away from string sentinels in the prefactor.
+4. Editor modules for each new layout: add, move, remove within limits; chosen toggle; reference column select and its removal adjustment. Prior art: the overview-editor, next-actions, and chart/flow/checklist editor unit tests.
+5. Browser: Playwright fixtures per new layout at min and max content, English, Chinese, and mixed, at 1280 × 720 in both themes, with overflow blocking; Overview and Trend & Target fixtures under `observatory`; a capture test for font embedding. Prior art: the existing per-layout e2e specs, the overflow detector harness, and the export-operation spec.
 
-### Browser seam
-
-- Playwright fixtures render each new layout at min and max content, English, Chinese, and mixed, at 1280 × 720 in both themes; overflow blocks export.
-- Overview and Trend & Target fixtures run under `observatory` to confirm tone contrast and unchanged composition.
-- A capture test checks font embedding as described under Export.
+No new seams are introduced; seam 3 is deepened.
 
 ## Delivery slices
 
-Sequential PRs; each must pass lint, format check, typecheck, Vitest, Playwright, and production build.
+Sequential PRs; each must pass lint, format check, typecheck, Vitest, Playwright, and production build. Each slice is a vertical cut through schema, editor, renderer, readiness, export, tests, and docs.
+
+### 0. Prefactor: Stage context typed facts
+
+Candidate 4 from the architecture-deepening review; no author-visible change.
 
 ### 1. Deck Theme foundation
 
-- `theme` and Deck Title in the Deck model, parser, save, template and Weekly Series.
-- Role tokens and `--blue*` aliases in `stage.css`; `themes/observatory.css` with self-hosted fonts.
-- `data-theme` through the Stage context Module; toolbar theme select and Deck Title input.
-- Editorial Frame footer with Deck Title; `observatory` frame decorations; existing layouts verified in both themes.
-- Font embedding capture test. Docs: Deck JSON reference, Workshop architecture.
+`theme` and Deck Title in the Deck model, parser, save, template and Weekly Series; role tokens and `--blue*` aliases; the `observatory` stylesheet with self-hosted fonts; theme through the Stage context; toolbar theme select and Deck Title input; Editorial Frame footer with Deck Title and `observatory` frame decorations; existing layouts verified in both themes; font-embedding capture test; Deck JSON reference and Workshop architecture updated.
 
 ### 2. Boundary Note, Cover, Closing
 
-- `boundary` on Editorial Frame layouts; the frame slot and shared editor field.
-- Cover and Closing: model, parser, factory/template, editor, renderer, readiness, Page Position, Playwright fixtures in both themes.
+`boundary` on Editorial Frame layouts with the frame slot and shared editor field; Cover and Closing end to end.
 
 ### 3. Side-by-side Comparison
 
-- Model, parser, factory/template, editor (two columns, chosen, Tradeoff Callout), renderer, readiness, fixtures.
+The layout end to end, including the Tradeoff Callout and the chosen marker.
 
-### 4. Full-width Panel, demo deck, retirement
+### 4. Full-width Panel, reference column, demo deck, retirement
 
-- Model, parser, editor reuse, renderer, readiness, fixtures.
-- `demo/harbor-pilot-review.json`; README and how-to updates.
-- Remove `prototype.html`, `src/prototype/`, and the `prototype` script; keep `docs/explanation/stage-theme-prototype.md` as the pointer to the throwaway branch.
+The layout end to end; `referenceColumn` on table panels for both table layouts; the fictional demo deck; README, docs index, how-to updates; removal of the prototype entry and its script, with the prototype record pointing to the throwaway branch.
 
 ## Issue plan
 
-Specification issue #57 references this document; implementation issues #58, #59, #60, #61 match the slices and are linked as its sub-issues. #59 is blocked by #58, #60 by #59, #61 by #60. All four carry `ready-for-agent`.
+Specification issue #57 references this document. Prefactor ticket #62 and implementation tickets #58, #59, #60, #61 match the slices and are its sub-issues. #58 is blocked by #62, #59 by #58, #60 by #59, #61 by #60 (native dependencies). All carry `ready-for-agent`.
+
+## Out of Scope
+
+- Author-defined colours or fonts in Deck JSON; per-page theme overrides.
+- Bundled CJK fonts.
+- Horizontal step strips and timelines, branching diagrams, the profile "story grid", layer stacks, a dark Cover variant, and appendix page labels such as `B1`. These stay HTML Pages or later Layout Variants.
+- Re-composing existing Structured Layouts.
+- Migrating existing hand-written HTML Pages.
+- A third theme.
 
 ## Acceptance Criteria
 
@@ -213,4 +255,10 @@ Specification issue #57 references this document; implementation issues #58, #59
 - A Deck with `theme: "observatory"` renders every Structured Layout and HTML Pages referencing `--blue*` in the new palette and fonts; PNG output embeds the Latin fonts.
 - The four new layouts can be added, edited, saved, reloaded, cloned through a Deck Template, previewed, copied, and batch-exported with the shared Export gate; Draft, Overflowing, Hidden, and Page Position behaviour matches existing layouts.
 - The fictional demo deck opens on a fresh install and exports all pages.
-- CONTEXT.md terms match the implemented behaviour; the Deck JSON reference documents `theme`, `title`, `boundary`, and the four layouts.
+- CONTEXT.md terms match the implemented behaviour; the Deck JSON reference documents `theme`, `title`, `boundary`, `referenceColumn`, and the four layouts.
+
+## Further Notes
+
+- The prototype that settled the visual direction lives on the throwaway branch named in the prototype record; its stylesheet for variant B is the starting point for the `observatory` stylesheet, rewritten from fixed pixels to the Stage's container units.
+- Two review findings after the first publication were folded in: the reference column contract and the scoping of template clearing to the new layouts.
+- Appendix labels (`B1`) and a dark Cover are the most likely follow-ups; both should start as Layout Variants, not new layouts.
