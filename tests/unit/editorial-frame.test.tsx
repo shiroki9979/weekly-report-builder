@@ -8,7 +8,8 @@ function renderFrame(showPageNumber: boolean) {
   const context: StagePageContext = {
     documentId: "2026-08-24",
     frameLabel: "2026-08-24 — 2026-08-28",
-    pageLabel: "2 / 5",
+    hidden: false,
+    position: { index: 2, total: 5 },
     showPageNumber,
   }
   return render(

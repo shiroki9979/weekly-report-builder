@@ -211,8 +211,9 @@ describe("Trend & Target cadence", () => {
           page={monthly}
           context={{
             documentId: "q1-review",
-            frameLabel: "",
-            pageLabel: "",
+            frameLabel: null,
+            hidden: false,
+            position: null,
             showPageNumber: false,
           }}
         />

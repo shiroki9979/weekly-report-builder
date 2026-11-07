@@ -31,6 +31,7 @@ import type { WorkshopStore } from "@/lib/deck-store"
 import type { SessionLoadStatus } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
 import { setDeckShowPageNumbers } from "@/lib/deck-editor"
+import { defaultPageNumberVisibility } from "@/lib/stage-page-context"
 
 type PageSelection = {
   pageIndex: number
@@ -133,7 +134,7 @@ function EditorSidebar({
               disabled: loading || create.creating || !editMode,
             }}
             pageNumbers={{
-              show: deck?.showPageNumbers ?? true,
+              show: defaultPageNumberVisibility(deck),
               disabled: !editable,
               onChange: (show) =>
                 editContent((current) => setDeckShowPageNumbers(current, show)),

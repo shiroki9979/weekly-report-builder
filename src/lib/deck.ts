@@ -326,41 +326,6 @@ export function isSupportedStagePage(page: Page): boolean {
   })
 }
 
-// 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
-function hasPageNumberSlot(page: Page): boolean {
-  return matchPage(page, {
-    html: () => true,
-    overview: () => true,
-    evidenceDecision: () => true,
-    nextActions: () => true,
-    trendTarget: () => true,
-    twoColumn: () => false,
-    unknown: () => false,
-  })
-}
-
-/**
- * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
- * 疊加 overlay 會改變既有輸出，所以不繼承週層級預設、須逐頁開啟。
- */
-export function defaultPageNumberVisibility(deck: Deck, page: Page): boolean {
-  if (isHtmlPage(page)) {
-    return false
-  }
-  return deck.showPageNumbers ?? true
-}
-
-/**
- * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
- * 單頁設定優先於預設。
- */
-export function isPageNumberVisible(deck: Deck, page: Page): boolean {
-  if (page.hidden || !hasPageNumberSlot(page)) {
-    return false
-  }
-  return page.showPageNumber ?? defaultPageNumberVisibility(deck, page)
-}
-
 type PageMatchers<T> = {
   html: (page: HtmlPage) => T
   twoColumn: (page: TwoColumnPage) => T

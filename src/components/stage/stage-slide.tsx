@@ -4,7 +4,10 @@ import { NextActionsSlide } from "@/components/stage/next-actions-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import { OverviewSlide } from "@/components/stage/overview-slide"
 import { TrendTargetSlide } from "@/components/stage/trend-target-slide"
-import type { StagePageContext } from "@/lib/stage-page-context"
+import {
+  formatPagePosition,
+  type StagePageContext,
+} from "@/lib/stage-page-context"
 import { isHtmlPage, matchPage, type Page } from "@/lib/deck"
 
 export type StageSlideProps = {
@@ -20,7 +23,7 @@ export function StageSlide({
 }: StageSlideProps) {
   return (
     <div className="stage-slide-host">
-      {context.pageLabel === "Hidden" ? (
+      {context.hidden ? (
         <p className="stage-hidden-label" role="status">
           Hidden
         </p>
@@ -52,8 +55,10 @@ export function StageSlide({
           </div>
         ),
       })}
-      {isHtmlPage(page) && context.showPageNumber && context.pageLabel ? (
-        <footer className="stage-page-number">{context.pageLabel}</footer>
+      {isHtmlPage(page) && context.showPageNumber ? (
+        <footer className="stage-page-number">
+          {formatPagePosition(context.position)}
+        </footer>
       ) : null}
     </div>
   )

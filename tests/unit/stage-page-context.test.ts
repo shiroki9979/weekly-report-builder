@@ -78,32 +78,40 @@ describe("createStagePageContext", () => {
 
     expect(createStagePageContext("q4-roadmap", deck, "p01")).toMatchObject({
       documentId: "q4-roadmap",
-      frameLabel: "",
+      frameLabel: null,
     })
   })
 
   it("numbers supported non-hidden pages and ignores draft or overflowing content", () => {
     const week = weekDocument()
 
-    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
-      "1 / 2"
-    )
-    expect(createStagePageContext("2026-08-24", week, "p03").pageLabel).toBe(
-      "2 / 2"
-    )
+    expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
+      hidden: false,
+      position: { index: 1, total: 2 },
+      showPageNumber: false,
+    })
+    expect(createStagePageContext("2026-08-24", week, "p03")).toMatchObject({
+      hidden: false,
+      position: { index: 2, total: 2 },
+      showPageNumber: false,
+    })
   })
 
   it("labels hidden pages without giving them a page position", () => {
     expect(
-      createStagePageContext("2026-08-24", weekDocument(), "p02").pageLabel
-    ).toBe("Hidden")
+      createStagePageContext("2026-08-24", weekDocument(), "p02").position
+    ).toBeNull()
   })
 
   it("does not assign a page position to unsupported layouts", () => {
     const week = weekDocument()
 
-    expect(createStagePageContext("2026-08-24", week, "p04").pageLabel).toBe("")
-    expect(createStagePageContext("2026-08-24", week, "p05").pageLabel).toBe("")
+    expect(
+      createStagePageContext("2026-08-24", week, "p04").position
+    ).toBeNull()
+    expect(
+      createStagePageContext("2026-08-24", week, "p05").position
+    ).toBeNull()
   })
 
   it("counts overview pages among supported page positions", () => {
@@ -133,12 +141,14 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
-      "1 / 2"
-    )
-    expect(createStagePageContext("2026-08-24", week, "p02").pageLabel).toBe(
-      "2 / 2"
-    )
+    expect(createStagePageContext("2026-08-24", week, "p01").position).toEqual({
+      index: 1,
+      total: 2,
+    })
+    expect(createStagePageContext("2026-08-24", week, "p02").position).toEqual({
+      index: 2,
+      total: 2,
+    })
   })
 
   it("counts evidence-decision and next-actions pages among supported page positions", () => {
@@ -189,15 +199,18 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext("2026-08-24", week, "p01").pageLabel).toBe(
-      "1 / 3"
-    )
-    expect(createStagePageContext("2026-08-24", week, "p02").pageLabel).toBe(
-      "2 / 3"
-    )
-    expect(createStagePageContext("2026-08-24", week, "p03").pageLabel).toBe(
-      "3 / 3"
-    )
+    expect(createStagePageContext("2026-08-24", week, "p01").position).toEqual({
+      index: 1,
+      total: 3,
+    })
+    expect(createStagePageContext("2026-08-24", week, "p02").position).toEqual({
+      index: 2,
+      total: 3,
+    })
+    expect(createStagePageContext("2026-08-24", week, "p03").position).toEqual({
+      index: 3,
+      total: 3,
+    })
   })
 
   it("lets an HTML Page opt in to a page number when the week hides them", () => {
@@ -291,7 +304,8 @@ describe("createStagePageContext", () => {
     })
 
     expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
-      pageLabel: "Hidden",
+      hidden: true,
+      position: null,
       showPageNumber: false,
     })
     expect(

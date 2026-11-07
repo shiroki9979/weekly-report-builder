@@ -66,7 +66,8 @@ describe("Trend & Target SVG ink", () => {
           context={{
             documentId: "2026-07-20",
             frameLabel: "2026-07-20",
-            pageLabel: "",
+            hidden: false,
+            position: null,
             showPageNumber: false,
           }}
         />

@@ -1,6 +1,9 @@
 import type { ReactNode } from "react"
 
-import type { StagePageContext } from "@/lib/stage-page-context"
+import {
+  formatPagePosition,
+  type StagePageContext,
+} from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
   eyebrow: string
@@ -29,8 +32,10 @@ export function EditorialFrame({
       </header>
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
-      {context.showPageNumber && context.pageLabel ? (
-        <footer className="editorial-page-number">{context.pageLabel}</footer>
+      {context.showPageNumber ? (
+        <footer className="editorial-page-number">
+          {formatPagePosition(context.position)}
+        </footer>
       ) : (
         // 隱藏頁碼時保留同高的空列，本文不往下撐滿，貼進簡報範本時底部仍有留白
         <footer className="editorial-page-number" aria-hidden="true">

@@ -14,7 +14,8 @@ import {
 const weekContext = {
   documentId: "2026-08-24",
   frameLabel: "2026-08-24 — 2026-08-28",
-  pageLabel: "1 / 1",
+  hidden: false,
+  position: { index: 1, total: 1 },
   showPageNumber: true,
 }
 
@@ -95,7 +96,7 @@ describe("StageSlide", () => {
     }).pages[0]
 
     const { container } = render(
-      <StageSlide page={page} context={{ ...weekContext, frameLabel: "" }} />
+      <StageSlide page={page} context={{ ...weekContext, frameLabel: null }} />
     )
 
     expect(container.querySelector(".editorial-period")).toBeNull()
@@ -123,7 +124,12 @@ describe("StageSlide", () => {
     render(
       <StageSlide
         page={page}
-        context={{ ...weekContext, pageLabel: "Hidden" }}
+        context={{
+          ...weekContext,
+          hidden: true,
+          position: null,
+          showPageNumber: false,
+        }}
       />
     )
 
@@ -275,7 +281,7 @@ describe("StageSlide", () => {
     render(
       <StageSlide
         page={week.pages[0]}
-        context={{ ...weekContext, pageLabel: "" }}
+        context={{ ...weekContext, position: null, showPageNumber: false }}
       />
     )
 

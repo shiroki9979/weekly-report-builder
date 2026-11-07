@@ -75,7 +75,8 @@ function renderTrend(
       context={{
         documentId: DOCUMENT_ID,
         frameLabel,
-        pageLabel: "",
+        hidden: false,
+        position: null,
         showPageNumber: false,
       }}
     />
