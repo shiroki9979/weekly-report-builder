@@ -656,10 +656,10 @@ function parseTablePanel(value: Record<string, unknown>): TablePanel {
   return {
     kind: "table",
     title: readString(value.title, "panel.title"),
-    ...(referenceColumn === undefined ? {} : { referenceColumn }),
     columns: columns.map((column, index) =>
       readString(column, `panel.columns[${index}]`)
     ),
+    ...(referenceColumn === undefined ? {} : { referenceColumn }),
     rows: rows.map((entry, rowIndex) => {
       const field = `panel.rows[${rowIndex}]`
       const row = readRecord(entry, field)
@@ -1409,9 +1409,9 @@ export function parseDeck(value: unknown): Deck {
       : readString(value.title, "title").trim()
 
   return {
-    ...(period ? { period } : {}),
     ...(theme !== undefined ? { theme } : {}),
     ...(title ? { title } : {}),
+    ...(period ? { period } : {}),
     ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
     pages: parsedPages,
   }

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
+import { serializeDeck } from "@/lib/decks-io"
 import { assessExportEligibility } from "@/lib/export-readiness"
 
 import {
@@ -38,6 +39,16 @@ function measuredValues(index: number): number[] {
 }
 
 describe("Demo Deck Set", () => {
+  it("saves the Harbor Deck without reordering any field", () => {
+    const raw = JSON.parse(
+      readFileSync(resolve(demoDir, "harbor-forecast.json"), "utf8")
+    )
+
+    const saved = JSON.parse(serializeDeck(parseDeck(raw)))
+
+    expect(JSON.stringify(saved)).toBe(JSON.stringify(raw))
+  })
+
   it("ships a complete fictional Observatory Deck with all four new layouts", () => {
     const harbor = parseDeck(
       JSON.parse(readFileSync(resolve(demoDir, "harbor-forecast.json"), "utf8"))

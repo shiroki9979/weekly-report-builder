@@ -133,8 +133,8 @@
     {
       "id": "closing",
       "layout": "closing",
-      "eyebrow": "Next",
       "title": "Decide on wider rollout after the large-image case",
+      "eyebrow": "Next",
       "takeaways": [
         {
           "ref": "Thu",

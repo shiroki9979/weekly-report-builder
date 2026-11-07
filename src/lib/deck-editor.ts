@@ -72,6 +72,11 @@ function moveItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
   return next
 }
 
+// 選填文字只剩空白時視同未填，避免畫出空的頁尾或分隔線；保留原輸入讓打字中的尾端空白不被吃掉
+function absentWhenBlank(text: string): string | undefined {
+  return text.trim() === "" ? undefined : text
+}
+
 export function setPageTitle(
   deck: Deck,
   pageIndex: number,
@@ -110,7 +115,7 @@ export function setPageBoundary(
 ): Deck {
   return updateEditorialPage(deck, pageIndex, (page) => ({
     ...page,
-    boundary: boundary === "" ? undefined : boundary,
+    boundary: absentWhenBlank(boundary),
   }))
 }
 
@@ -141,7 +146,7 @@ export function setDeckTheme(deck: Deck, theme: DeckTheme): Deck {
 }
 
 export function setDeckTitle(deck: Deck, title: string): Deck {
-  return { ...deck, title: title === "" ? undefined : title }
+  return { ...deck, title: absentWhenBlank(title) }
 }
 
 export function setDeckShowPageNumbers(
