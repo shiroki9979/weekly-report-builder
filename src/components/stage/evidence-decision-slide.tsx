@@ -81,6 +81,7 @@ export function EvidenceDecisionSlide({
       eyebrow="Evidence-backed Decision"
       headline={page.title}
       context={context}
+      boundary={page.boundary}
     >
       <p className="editorial-verdict">{page.verdict}</p>
       <div className="editorial-decision">

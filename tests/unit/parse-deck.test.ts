@@ -36,6 +36,59 @@ function twoColumnWeekWithPanel(panel: Record<string, unknown>) {
 }
 
 describe("parseDeck", () => {
+  it.each([123, null, {}])(
+    "rejects supplied non-string Deck Title %j",
+    (title) => {
+      expect(() =>
+        parseDeck({
+          title,
+          pages: [
+            { id: "p01", layout: "html", title: "", htmlFile: "p01.html" },
+          ],
+        })
+      ).toThrow("Invalid deck: title must be a string")
+    }
+  )
+
+  it.each(["unknown", "", null, 1, false])(
+    "rejects supplied invalid theme %j",
+    (theme) => {
+      expect(() =>
+        parseDeck({
+          theme,
+          pages: [
+            { id: "p01", layout: "html", title: "", htmlFile: "p01.html" },
+          ],
+        })
+      ).toThrow(/theme/)
+    }
+  )
+  it("preserves omitted and explicit default themes without an empty Deck Title", () => {
+    const pages = [
+      { id: "p01", layout: "html", title: "", htmlFile: "p01.html" },
+    ]
+    expect(
+      JSON.parse(serializeDeck(parseDeck({ pages, title: "  " })))
+    ).toEqual({ pages })
+    expect(
+      JSON.parse(serializeDeck(parseDeck({ pages, theme: "default" })))
+    ).toEqual({ pages, theme: "default" })
+  })
+
+  it("round-trips an Observatory Deck and trims its title", () => {
+    const deck = parseDeck({
+      theme: "observatory",
+      title: "  Harbor Forecast  ",
+      pages: [
+        { id: "p01", layout: "html", title: "Opening", htmlFile: "p01.html" },
+      ],
+    })
+    expect(JSON.parse(serializeDeck(deck))).toMatchObject({
+      theme: "observatory",
+      title: "Harbor Forecast",
+    })
+  })
+
   describe("period", () => {
     const pages = twoColumnWeekWithPanel({
       kind: "checklist",

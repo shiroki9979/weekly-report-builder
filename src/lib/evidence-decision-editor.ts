@@ -1,5 +1,6 @@
 import type { MetricFormat } from "./metric-format"
 import type { MetricValueField } from "./metric-input"
+import { moveEntry } from "./move-entry"
 import { typedPageUpdater } from "./update-deck-page"
 import {
   assertCanAddEntry,
@@ -106,18 +107,10 @@ export function moveDecisionMetric(
   toIndex: number
 ): Deck {
   return updateDecision(deck, pageIndex, (page) => {
-    if (
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= page.metrics.length ||
-      toIndex >= page.metrics.length
-    ) {
-      return page
+    return {
+      ...page,
+      metrics: moveEntry(page.metrics, { from: fromIndex, to: toIndex }),
     }
-    const metrics = [...page.metrics]
-    const [entry] = metrics.splice(fromIndex, 1)
-    metrics.splice(toIndex, 0, entry)
-    return { ...page, metrics }
   })
 }
 
@@ -165,17 +158,12 @@ export function moveDecisionInterpretation(
   toIndex: number
 ): Deck {
   return updateDecision(deck, pageIndex, (page) => {
-    if (
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= page.interpretations.length ||
-      toIndex >= page.interpretations.length
-    ) {
-      return page
+    return {
+      ...page,
+      interpretations: moveEntry(page.interpretations, {
+        from: fromIndex,
+        to: toIndex,
+      }),
     }
-    const interpretations = [...page.interpretations]
-    const [entry] = interpretations.splice(fromIndex, 1)
-    interpretations.splice(toIndex, 0, entry)
-    return { ...page, interpretations }
   })
 }

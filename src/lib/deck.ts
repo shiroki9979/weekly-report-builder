@@ -20,6 +20,7 @@ export type TablePanel = {
   title: string
   columns: string[]
   rows: TablePanelRow[]
+  referenceColumn?: number
 }
 
 export type ChartSeries = {
@@ -77,6 +78,9 @@ export type FieldsPanel = {
 export type Panel =
   TablePanel | ChartPanel | FlowPanel | ChecklistPanel | FieldsPanel
 
+// fields panel 只存在於舊 Two-column 檔案，編輯器與新頁面只產生其餘四種
+export type EditablePanel = Exclude<Panel, FieldsPanel>
+
 export type SlideLayout =
   | "two-column"
   | "html"
@@ -84,6 +88,10 @@ export type SlideLayout =
   | "evidence-decision"
   | "next-actions"
   | "trend-target"
+  | "cover"
+  | "closing"
+  | "side-by-side"
+  | "full-width-panel"
 
 /** 各版面共用的顯示與講稿欄位，避免每個 page type 各抄一次 */
 export type PageChrome = {
@@ -122,7 +130,9 @@ export type Outcome = {
   status: StatusSignal
 }
 
-export type OverviewPage = PageChrome & {
+export type EditorialPageChrome = PageChrome & { boundary?: string }
+
+export type OverviewPage = EditorialPageChrome & {
   id: string
   layout: "overview"
   title: string
@@ -168,7 +178,7 @@ export type ComparisonMetric = {
   precision: MetricPrecision
 }
 
-export type EvidenceDecisionPage = PageChrome & {
+export type EvidenceDecisionPage = EditorialPageChrome & {
   id: string
   layout: "evidence-decision"
   title: string
@@ -183,7 +193,7 @@ export type Commitment = {
   checkpoint: string
 }
 
-export type NextActionsPage = PageChrome & {
+export type NextActionsPage = EditorialPageChrome & {
   id: string
   layout: "next-actions"
   variant?: NextActionsVariant
@@ -198,7 +208,7 @@ export type TrendObservation =
 
 export type TrendCadence = "week" | "month"
 
-export type TrendTargetPage = PageChrome & {
+export type TrendTargetPage = EditorialPageChrome & {
   id: string
   layout: "trend-target"
   title: string
@@ -216,6 +226,44 @@ export type TrendTargetPage = PageChrome & {
   measurementContext: string
 }
 
+export type CoverPage = PageChrome & {
+  id: string
+  layout: "cover"
+  title: string
+  subtitle: string
+  byline: string
+}
+
+export type ClosingPage = EditorialPageChrome & {
+  id: string
+  layout: "closing"
+  title: string
+  eyebrow: string
+  takeaways: { ref?: string; text: string }[]
+  closingLine: string
+}
+
+export type ComparisonColumn = { label: string; points: string[] }
+
+// Side-by-side Comparison 固定兩欄；欄位位置同時用於編輯定位與 chosen 標記
+export type ComparisonColumnIndex = 0 | 1
+
+export type SideBySidePage = EditorialPageChrome & {
+  id: string
+  layout: "side-by-side"
+  title: string
+  columns: [ComparisonColumn, ComparisonColumn]
+  chosen?: ComparisonColumnIndex
+  tradeoff?: { why: string; cost?: string }
+}
+
+export type FullWidthPanelPage = EditorialPageChrome & {
+  id: string
+  layout: "full-width-panel"
+  title: string
+  panel: EditablePanel
+}
+
 export type UnknownPage = PageChrome & {
   id: string
   layout: string
@@ -229,6 +277,10 @@ export type StructuredPage =
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
+  | CoverPage
+  | ClosingPage
+  | SideBySidePage
+  | FullWidthPanelPage
 
 export type Page =
   | TwoColumnPage
@@ -237,6 +289,10 @@ export type Page =
   | EvidenceDecisionPage
   | NextActionsPage
   | TrendTargetPage
+  | CoverPage
+  | ClosingPage
+  | SideBySidePage
+  | FullWidthPanelPage
   | UnknownPage
 
 // 期間是選填 metadata：週次帶週一到週五，其他 Deck 可以沒有期間
@@ -245,7 +301,18 @@ export type DeckPeriod = {
   end: string
 }
 
+// 型別、parser 與 Workshop 選單共用這份清單；新增主題時由型別檢查提示補上選單標籤與樣式表
+export const DECK_THEMES = ["default", "observatory"] as const
+
+export type DeckTheme = (typeof DECK_THEMES)[number]
+
+export function isDeckTheme(value: unknown): value is DeckTheme {
+  return (DECK_THEMES as readonly unknown[]).includes(value)
+}
+
 export type Deck = {
+  theme?: DeckTheme
+  title?: string
   period?: DeckPeriod
   showPageNumbers?: boolean
   pages: Page[]
@@ -296,13 +363,46 @@ export function hasEnteredObservations(
   return observations.some((entry) => entry.state !== "unfilled")
 }
 
-export function isStructuredPage(page: Page): page is StructuredPage {
+export function isCoverPage(page: Page): page is CoverPage {
+  return page.layout === "cover" && "subtitle" in page && "byline" in page
+}
+
+export function isClosingPage(page: Page): page is ClosingPage {
+  return page.layout === "closing" && "takeaways" in page
+}
+
+export function isSideBySidePage(page: Page): page is SideBySidePage {
+  return page.layout === "side-by-side" && "columns" in page
+}
+
+export function isFullWidthPanelPage(page: Page): page is FullWidthPanelPage {
+  return page.layout === "full-width-panel" && "panel" in page
+}
+
+export type EditorialFramePage =
+  | OverviewPage
+  | EvidenceDecisionPage
+  | NextActionsPage
+  | TrendTargetPage
+  | ClosingPage
+  | SideBySidePage
+  | FullWidthPanelPage
+
+export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
-    isTwoColumnPage(page) ||
     isOverviewPage(page) ||
     isEvidenceDecisionPage(page) ||
     isNextActionsPage(page) ||
-    isTrendTargetPage(page)
+    isTrendTargetPage(page) ||
+    isClosingPage(page) ||
+    isSideBySidePage(page) ||
+    isFullWidthPanelPage(page)
+  )
+}
+
+export function isStructuredPage(page: Page): page is StructuredPage {
+  return (
+    isTwoColumnPage(page) || isCoverPage(page) || isEditorialFramePage(page)
   )
 }
 
@@ -320,45 +420,14 @@ export function isSupportedStagePage(page: Page): boolean {
     evidenceDecision: () => true,
     nextActions: () => true,
     trendTarget: () => true,
+    cover: () => true,
+    closing: () => true,
+    sideBySide: () => true,
+    fullWidthPanel: () => true,
     twoColumn: (twoColumn) =>
       SUPPORTED_TWO_COLUMN_PANEL_KINDS.has(twoColumn.panel.kind),
     unknown: () => false,
   })
-}
-
-// 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
-function hasPageNumberSlot(page: Page): boolean {
-  return matchPage(page, {
-    html: () => true,
-    overview: () => true,
-    evidenceDecision: () => true,
-    nextActions: () => true,
-    trendTarget: () => true,
-    twoColumn: () => false,
-    unknown: () => false,
-  })
-}
-
-/**
- * 單頁未覆寫時的頁碼可見性。HTML Page 的片段可能自帶頁碼，
- * 疊加 overlay 會改變既有輸出，所以不繼承週層級預設、須逐頁開啟。
- */
-export function defaultPageNumberVisibility(deck: Deck, page: Page): boolean {
-  if (isHtmlPage(page)) {
-    return false
-  }
-  return deck.showPageNumbers ?? true
-}
-
-/**
- * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
- * 單頁設定優先於預設。
- */
-export function isPageNumberVisible(deck: Deck, page: Page): boolean {
-  if (page.hidden || !hasPageNumberSlot(page)) {
-    return false
-  }
-  return page.showPageNumber ?? defaultPageNumberVisibility(deck, page)
 }
 
 type PageMatchers<T> = {
@@ -368,6 +437,10 @@ type PageMatchers<T> = {
   evidenceDecision: (page: EvidenceDecisionPage) => T
   nextActions: (page: NextActionsPage) => T
   trendTarget: (page: TrendTargetPage) => T
+  cover: (page: CoverPage) => T
+  closing: (page: ClosingPage) => T
+  sideBySide: (page: SideBySidePage) => T
+  fullWidthPanel: (page: FullWidthPanelPage) => T
   unknown: (page: Page) => T
 }
 
@@ -391,6 +464,10 @@ export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {
   if (isTrendTargetPage(page)) {
     return matchers.trendTarget(page)
   }
+  if (isCoverPage(page)) return matchers.cover(page)
+  if (isClosingPage(page)) return matchers.closing(page)
+  if (isSideBySidePage(page)) return matchers.sideBySide(page)
+  if (isFullWidthPanelPage(page)) return matchers.fullWidthPanel(page)
   return matchers.unknown(page)
 }
 
@@ -407,6 +484,19 @@ export type Cardinality = {
 // 數量規則的單一來源。版面規則由 parser、reducer 與表單共用；panel 規則只約束編輯，
 // chart／flow／checklist 的 parser 容許空陣列，交由 readiness 標成 Draft Page
 export const CARDINALITY = {
+  sideBySideColumns: {
+    min: 2,
+    max: 2,
+    owner: "Side-by-side Comparison",
+    noun: "column",
+  },
+  sideBySidePoints: {
+    min: 1,
+    max: 4,
+    owner: "Comparison column",
+    noun: "point",
+  },
+  takeaways: { min: 0, max: 4, owner: "Closing", noun: "takeaway" },
   supportingOutcomes: {
     min: 1,
     max: 3,
@@ -528,6 +618,11 @@ function parseSlideItem(value: unknown, index: number): SlideItem {
   }
 }
 
+// 選填文字欄位省略時以空字串表示草稿，編輯器與 renderer 不必再分辨 undefined
+function readOptionalString(value: unknown, field: string): string {
+  return value === undefined ? "" : readString(value, field)
+}
+
 function readArray(value: unknown, field: string): unknown[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid deck: ${field} must be an array`)
@@ -564,6 +659,17 @@ function readRecord(value: unknown, field: string): Record<string, unknown> {
 function parseTablePanel(value: Record<string, unknown>): TablePanel {
   const columns = readNonEmptyArray(value.columns, "panel.columns")
   const rows = readNonEmptyArray(value.rows, "panel.rows")
+  const referenceColumn = value.referenceColumn
+  if (
+    referenceColumn !== undefined &&
+    (typeof referenceColumn !== "number" ||
+      !Number.isInteger(referenceColumn) ||
+      referenceColumn < 0 ||
+      referenceColumn >= columns.length)
+  )
+    throw new Error(
+      "Invalid deck: panel.referenceColumn must index an existing data column"
+    )
 
   return {
     kind: "table",
@@ -571,6 +677,7 @@ function parseTablePanel(value: Record<string, unknown>): TablePanel {
     columns: columns.map((column, index) =>
       readString(column, `panel.columns[${index}]`)
     ),
+    ...(referenceColumn === undefined ? {} : { referenceColumn }),
     rows: rows.map((entry, rowIndex) => {
       const field = `panel.rows[${rowIndex}]`
       const row = readRecord(entry, field)
@@ -1108,6 +1215,105 @@ function parseTwoColumnPage(
   })
 }
 
+function parseFullWidthPanelPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome
+): FullWidthPanelPage {
+  const panel = parsePanel(value.panel)
+  if (panel.kind === "fields")
+    throw new Error(
+      "Invalid deck: Full-width Panel does not support fields panels"
+    )
+  return withChrome(chrome, "full-width-panel", { panel })
+}
+
+function parseCoverPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): CoverPage {
+  return withChrome(chrome, "cover", {
+    subtitle: readOptionalString(value.subtitle, `${field}.subtitle`),
+    byline: readOptionalString(value.byline, `${field}.byline`),
+  })
+}
+
+function parseClosingPage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): ClosingPage {
+  return withChrome(chrome, "closing", {
+    eyebrow: readOptionalString(value.eyebrow, `${field}.eyebrow`),
+    takeaways: readEntries(
+      value.takeaways,
+      `${field}.takeaways`,
+      CARDINALITY.takeaways
+    ).map((entry, index) => {
+      const path = `${field}.takeaways[${index}]`
+      const takeaway = readRecord(entry, path)
+      return {
+        ...(takeaway.ref === undefined
+          ? {}
+          : { ref: readString(takeaway.ref, `${path}.ref`) }),
+        text: readString(takeaway.text, `${path}.text`),
+      }
+    }),
+    closingLine: readOptionalString(value.closingLine, `${field}.closingLine`),
+  })
+}
+
+function parseComparisonColumn(
+  value: unknown,
+  field: string
+): ComparisonColumn {
+  const column = readRecord(value, field)
+  return {
+    label: readString(column.label, `${field}.label`),
+    points: readEntries(
+      column.points,
+      `${field}.points`,
+      CARDINALITY.sideBySidePoints
+    ).map((point, index) => readString(point, `${field}.points[${index}]`)),
+  }
+}
+
+function parseSideBySidePage(
+  value: Record<string, unknown>,
+  chrome: ParsedPageChrome,
+  field: string
+): SideBySidePage {
+  const columns = readEntries(
+    value.columns,
+    `${field}.columns`,
+    CARDINALITY.sideBySideColumns
+  )
+  const chosen = value.chosen
+  if (chosen !== undefined && chosen !== 0 && chosen !== 1)
+    throw new Error(`Invalid ${field}.chosen: expected 0 or 1`)
+  const tradeoff =
+    value.tradeoff === undefined
+      ? undefined
+      : readRecord(value.tradeoff, `${field}.tradeoff`)
+  return withChrome(chrome, "side-by-side", {
+    columns: [
+      parseComparisonColumn(columns[0], `${field}.columns[0]`),
+      parseComparisonColumn(columns[1], `${field}.columns[1]`),
+    ],
+    ...(chosen === undefined ? {} : { chosen }),
+    ...(tradeoff === undefined
+      ? {}
+      : {
+          tradeoff: {
+            why: readString(tradeoff.why, `${field}.tradeoff.why`),
+            ...(tradeoff.cost === undefined
+              ? {}
+              : { cost: readString(tradeoff.cost, `${field}.tradeoff.cost`) }),
+          },
+        }),
+  })
+}
+
 type PageParser = (
   value: Record<string, unknown>,
   chrome: ParsedPageChrome,
@@ -1116,6 +1322,10 @@ type PageParser = (
 
 // parser 面對的是未驗證 JSON，無法走 matchPage；以 layout 表格分派，新增版面只改這裡
 const PAGE_PARSERS: Record<SlideLayout, PageParser> = {
+  cover: parseCoverPage,
+  closing: parseClosingPage,
+  "side-by-side": parseSideBySidePage,
+  "full-width-panel": parseFullWidthPanelPage,
   html: parseHtmlPage,
   "two-column": parseTwoColumnPage,
   overview: parseOverviewPage,
@@ -1163,7 +1373,13 @@ function parsePage(value: unknown, index: number): Page {
     return { ...page, ...withChrome(chrome, layout, {}) }
   }
 
-  return PAGE_PARSERS[layout](page, chrome, field)
+  const parsed = PAGE_PARSERS[layout](page, chrome, field)
+  if (isEditorialFramePage(parsed) && page.boundary !== undefined) {
+    const boundary = readString(page.boundary, `${field}.boundary`)
+    // 只有空白的 Boundary Note 會畫出沒有文字的分隔線，與省略同義
+    if (boundary.trim() !== "") parsed.boundary = boundary
+  }
+  return parsed
 }
 
 export function parseDeck(value: unknown): Deck {
@@ -1191,8 +1407,20 @@ export function parseDeck(value: unknown): Deck {
       : undefined
 
   const period = parsePeriod(value)
+  const theme = value.theme
+  if (theme !== undefined && !isDeckTheme(theme)) {
+    throw new Error(
+      `Invalid deck: theme must be one of ${DECK_THEMES.join(", ")}`
+    )
+  }
+  const title =
+    value.title === undefined
+      ? undefined
+      : readString(value.title, "title").trim()
 
   return {
+    ...(theme !== undefined ? { theme } : {}),
+    ...(title ? { title } : {}),
     ...(period ? { period } : {}),
     ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
     pages: parsedPages,

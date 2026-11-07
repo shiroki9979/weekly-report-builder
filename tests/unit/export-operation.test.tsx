@@ -14,7 +14,10 @@ import {
   writeMetricInput,
   type EditingSession,
 } from "@/lib/editing-session"
-import { createStagePageContext } from "@/lib/stage-page-context"
+import {
+  formatPagePosition,
+  createStagePageContext,
+} from "@/lib/stage-page-context"
 import type { Deck, Page } from "@/lib/deck"
 import { deferred, until } from "./support/async"
 
@@ -126,7 +129,7 @@ describe("export operation lifecycle", () => {
       prepare.mockImplementation(async (documentId, document, page) => {
         const context = createStagePageContext(documentId, document, page.id)
         seen.push(
-          `${page.id}:${page.title}:${context.frameLabel}:${context.pageLabel}`
+          `${page.id}:${page.title}:${context.frameLabel}:${formatPagePosition(context.position)}`
         )
         return preparedCapture(() => capture(page))
       })
@@ -203,7 +206,7 @@ describe("export operation lifecycle", () => {
     const seen: string[] = []
     prepare.mockImplementation(async (documentId, document, page) => {
       seen.push(
-        `${page.id}:${createStagePageContext(documentId, document, page.id).pageLabel}`
+        `${page.id}:${formatPagePosition(createStagePageContext(documentId, document, page.id).position)}`
       )
       return preparedCapture(() => capture(page))
     })

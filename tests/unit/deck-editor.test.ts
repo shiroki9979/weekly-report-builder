@@ -16,8 +16,13 @@ import {
   setTablePanelCell,
   setTablePanelTitle,
   setDeckShowPageNumbers,
+  setDeckTitle,
+  setPageBoundary,
 } from "@/lib/deck-editor"
-import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
+import {
+  createBlankOverviewPage,
+  createBlankTwoColumnPage,
+} from "@/lib/page-lifecycle"
 import { parseDeck, type Deck } from "@/lib/deck"
 
 const fixturePath = resolve(
@@ -170,5 +175,33 @@ describe("deck-editor", () => {
     expect(() => removeChecklistItem(weekWith("checklist"), 0, 0)).toThrow(
       "Checklist must keep at least 1 item"
     )
+  })
+})
+
+describe("optional Deck text", () => {
+  it("treats a whitespace-only Deck Title as absent", () => {
+    const deck: Deck = { title: "Harbor", pages: [] }
+
+    const next = setDeckTitle(deck, "   ")
+
+    expect(next.title).toBeUndefined()
+  })
+
+  it("keeps the typed Deck Title while it has visible text", () => {
+    const deck: Deck = { pages: [] }
+
+    const next = setDeckTitle(deck, "Harbor ")
+
+    expect(next.title).toBe("Harbor ")
+  })
+
+  it("treats a whitespace-only Boundary Note as absent", () => {
+    const deck: Deck = {
+      pages: [{ ...createBlankOverviewPage("p01"), boundary: "Sample only" }],
+    }
+
+    const next = setPageBoundary(deck, 0, " \t ")
+
+    expect(next.pages[0]).toMatchObject({ boundary: undefined })
   })
 })

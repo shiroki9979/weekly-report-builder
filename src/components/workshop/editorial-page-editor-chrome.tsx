@@ -6,8 +6,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
+import { isCoverPage, isEditorialFramePage } from "@/lib/deck"
 import type { ExportIssue } from "@/lib/export-readiness"
-import { setPageHidden, setPageNotes, setPageTitle } from "@/lib/deck-editor"
+import {
+  setPageBoundary,
+  setPageHidden,
+  setPageNotes,
+  setPageTitle,
+} from "@/lib/deck-editor"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 
 type EditorialPageEditorChromeProps = PageEditorProps & {
@@ -48,6 +54,21 @@ export function EditorialPageEditorChrome({
           />
         </div>
         {children}
+        {isEditorialFramePage(page) ? (
+          <div className="space-y-2">
+            <Label htmlFor="page-boundary">Boundary Note</Label>
+            <Textarea
+              id="page-boundary"
+              value={page.boundary ?? ""}
+              placeholder="Scope, verification, or limit"
+              onChange={(event) =>
+                onChange((currentDeck) =>
+                  setPageBoundary(currentDeck, pageIndex, event.target.value)
+                )
+              }
+            />
+          </div>
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="speaker-notes">Speaker notes</Label>
           <Textarea
@@ -60,12 +81,14 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
-        <PageNumberSelect
-          deck={deck}
-          pageIndex={pageIndex}
-          disabled={readOnly}
-          onChange={onChange}
-        />
+        {!isCoverPage(page) ? (
+          <PageNumberSelect
+            deck={deck}
+            pageIndex={pageIndex}
+            disabled={readOnly}
+            onChange={onChange}
+          />
+        ) : null}
         <div className="flex items-center gap-2">
           <Checkbox
             id="page-hidden"

@@ -1,0 +1,198 @@
+/* 主題只覆寫角色與外框裝飾；既有版型保留同一構圖。 */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("../assets/fonts/InstrumentSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("../assets/fonts/InstrumentSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/IBMPlexMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/IBMPlexMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.stage-root[data-theme="observatory"] {
+  --paper: #ffffff;
+  --ink: #20384b;
+  --mute: #5a6e7e;
+  --line: #d6dee4;
+  --accent: #287b78;
+  --accent-deep: #1f5f5c;
+  --accent-soft: #b9d9d6;
+  --accent-wash: #e7f2f1;
+  --ok: #1f7a52;
+  --ok-ink: #1f7a52;
+  --ok-wash: #e6f6ee;
+  --warn: #8a5508;
+  --warn-ink: #8a5508;
+  --chart-1: var(--accent);
+  --chart-2: var(--accent-deep);
+  --chart-3: var(--accent-soft);
+  --chart-4: var(--ink);
+  --chart-5: var(--mute);
+  --mono: "IBM Plex Mono", "Noto Sans TC", monospace;
+  font-family:
+    "Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    sans-serif;
+}
+
+.stage-root[data-theme="observatory"] .editorial-eyebrow,
+.stage-root[data-theme="observatory"] .editorial-period,
+.stage-root[data-theme="observatory"] .editorial-workstream,
+.stage-root[data-theme="observatory"] .editorial-status,
+.stage-root[data-theme="observatory"] .editorial-page-number {
+  font-family: var(--mono);
+}
+
+.stage-root[data-theme="observatory"] .editorial-page-index {
+  display: inline;
+  margin-right: 1.09375cqw;
+  color: var(--accent);
+}
+
+.stage-root[data-theme="observatory"] .editorial-number-default {
+  display: none;
+}
+
+.stage-root[data-theme="observatory"] .editorial-number-padded {
+  display: inline;
+  color: var(--accent);
+}
+
+.stage-root[data-theme="observatory"] .editorial-rule {
+  height: 0.625cqw;
+  border: 0;
+  background:
+    repeating-linear-gradient(
+        to right,
+        var(--line) 0 0.078125cqw,
+        transparent 0.078125cqw 3.125cqw
+      )
+      top / 100% 0.46875cqw no-repeat,
+    linear-gradient(var(--line), var(--line)) bottom / 100% 0.078125cqw
+      no-repeat;
+}
+
+.stage-root[data-theme="observatory"] .editorial-headline {
+  color: var(--ink);
+}
+
+.stage-root[data-theme="observatory"] .editorial-lead {
+  background: transparent;
+  border: 0.078125cqw solid var(--line);
+  border-top: 0.234375cqw solid var(--accent);
+}
+
+.stage-root[data-theme="observatory"] .editorial-lead .editorial-figure {
+  color: var(--accent);
+}
+
+.stage-root[data-theme="observatory"] .editorial-boundary,
+.stage-root[data-theme="observatory"] .editorial-takeaway-ref,
+.stage-root[data-theme="observatory"] .editorial-closing-line {
+  font-family: var(--mono);
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-title {
+  color: var(--ink);
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin-top: auto;
+  border-top: 1px solid var(--ink);
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-meta > div {
+  padding: 1.09375cqw 1.5625cqw 1.09375cqw 0;
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-meta > div + div {
+  padding-left: 1.5625cqw;
+  border-left: 1px solid var(--line);
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-meta dt {
+  display: block;
+  margin-bottom: 0.46875cqw;
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 0.859375cqw;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stage-root[data-theme="observatory"] .editorial-cover-content {
+  justify-content: flex-start;
+  padding-top: 8.59375cqw;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-label,
+.stage-root[data-theme="observatory"] .editorial-tradeoff dt {
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-label h2 {
+  font-weight: inherit;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-points li {
+  display: grid;
+  grid-template-columns: 2.1875cqw minmax(0, 1fr);
+  gap: 0.78125cqw;
+}
+
+.stage-root[data-theme="observatory"] .editorial-comparison-index {
+  display: block;
+  padding-top: 0.46875cqw;
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+}
+
+.stage-root[data-theme="observatory"] .stage-panel th,
+.stage-root[data-theme="observatory"] .stage-table-reference {
+  font-family: var(--mono);
+}
+
+.stage-root[data-theme="observatory"]
+  .editorial-full-width-panel
+  .stage-table-row-index {
+  display: table-cell;
+  width: 2.96875cqw;
+  padding-right: 0.78125cqw;
+  font-family: var(--mono);
+  font-size: 0.9375cqw;
+  font-weight: 400;
+  color: var(--mute);
+}
+
+.stage-root[data-theme="observatory"] .editorial-full-width-panel th {
+  font-weight: 400;
+}

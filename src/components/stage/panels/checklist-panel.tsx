@@ -2,12 +2,16 @@ import type { ChecklistPanel } from "@/lib/deck"
 
 type ChecklistPanelViewProps = {
   panel: ChecklistPanel
+  showTitle?: boolean
 }
 
-export function ChecklistPanelView({ panel }: ChecklistPanelViewProps) {
+export function ChecklistPanelView({
+  panel,
+  showTitle = true,
+}: ChecklistPanelViewProps) {
   return (
     <aside className="stage-panel">
-      <h4>{panel.title}</h4>
+      {showTitle ? <h4>{panel.title}</h4> : null}
       <ul className="stage-checklist">
         {panel.items.map((item, index) => (
           <li

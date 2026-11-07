@@ -30,7 +30,12 @@ import type { Deck, Page } from "@/lib/deck"
 import type { WorkshopStore } from "@/lib/deck-store"
 import type { SessionLoadStatus } from "@/lib/editing-session"
 import type { PageMoveDirection } from "@/lib/page-lifecycle"
-import { setDeckShowPageNumbers } from "@/lib/deck-editor"
+import {
+  setDeckShowPageNumbers,
+  setDeckTheme,
+  setDeckTitle,
+} from "@/lib/deck-editor"
+import { defaultPageNumberVisibility } from "@/lib/stage-page-context"
 
 type PageSelection = {
   pageIndex: number
@@ -132,8 +137,17 @@ function EditorSidebar({
               ...create,
               disabled: loading || create.creating || !editMode,
             }}
+            appearance={{
+              theme: deck?.theme ?? "default",
+              title: deck?.title ?? "",
+              disabled: !editable,
+              onThemeChange: (theme) =>
+                editContent((current) => setDeckTheme(current, theme)),
+              onTitleChange: (title) =>
+                editContent((current) => setDeckTitle(current, title)),
+            }}
             pageNumbers={{
-              show: deck?.showPageNumbers ?? true,
+              show: defaultPageNumberVisibility(deck),
               disabled: !editable,
               onChange: (show) =>
                 editContent((current) => setDeckShowPageNumbers(current, show)),

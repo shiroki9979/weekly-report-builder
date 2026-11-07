@@ -1,0 +1,159 @@
+{
+  "theme": "observatory",
+  "title": "Harbor Forecast · Pilot review",
+  "period": {
+    "start": "2026-01-05",
+    "end": "2026-01-09"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "layout": "cover",
+      "title": "Keep the pilot small until large-image exports pass",
+      "subtitle": "What changed in the export path, which option was chosen, and what to verify next.",
+      "byline": "Mei Lin (fictional) · Platform team"
+    },
+    {
+      "id": "overview",
+      "layout": "overview",
+      "title": "Repeat exports improved; the pilot remains limited",
+      "lead": {
+        "workstream": "Export path",
+        "figure": "12 s → 8 s",
+        "result": "Cached renders reduced average export time on the sample.",
+        "impact": "Reviewers can repeat a review without recapturing unchanged pages.",
+        "status": {
+          "label": "Verified on sample",
+          "tone": "positive"
+        }
+      },
+      "supporting": [
+        {
+          "workstream": "Reliability",
+          "figure": "20 runs",
+          "result": "The fictional sample completed without a failed page.",
+          "impact": "The same checks can be repeated after the next change.",
+          "status": {
+            "label": "Repeatable",
+            "tone": "neutral"
+          }
+        },
+        {
+          "workstream": "Coverage",
+          "figure": "1 open case",
+          "result": "Large-image exports are not yet verified.",
+          "impact": "Keep the pilot within the platform team until the case passes.",
+          "status": {
+            "label": "Needs verification",
+            "tone": "caution"
+          }
+        }
+      ],
+      "boundary": "Fictional pilot measurements from one ten-page sample on one machine."
+    },
+    {
+      "id": "comparison",
+      "layout": "side-by-side",
+      "title": "Cache rendered pages; keep per-page capture as the fallback",
+      "columns": [
+        {
+          "label": "Cached renders",
+          "points": [
+            "Reuses unchanged pages across runs",
+            "Average export 12 s → 8 s on the ten-page sample",
+            "Needs an invalidation rule per layout"
+          ]
+        },
+        {
+          "label": "Per-page capture",
+          "points": [
+            "No cache state to reason about",
+            "Same 12 s baseline on every run",
+            "Already covered by export tests"
+          ]
+        }
+      ],
+      "chosen": 0,
+      "tradeoff": {
+        "why": "Reviewers re-export the same deck several times a day; most pages do not change between runs.",
+        "cost": "Every layout needs an invalidation rule to prevent stale PNGs."
+      },
+      "boundary": "Timings average 20 runs on a fictional ten-page deck; large images remain unverified."
+    },
+    {
+      "id": "checks",
+      "layout": "full-width-panel",
+      "title": "What the pilot has verified so far",
+      "panel": {
+        "kind": "table",
+        "title": "",
+        "columns": ["Check", "Result", "Reference"],
+        "referenceColumn": 2,
+        "rows": [
+          {
+            "cells": [
+              "Cold export of the sample deck",
+              "8 s average, no failed pages",
+              "02"
+            ],
+            "emphasis": [0]
+          },
+          {
+            "cells": [
+              "Warm export after a one-page edit",
+              "Only the edited page re-rendered",
+              "03"
+            ],
+            "emphasis": [0]
+          },
+          {
+            "cells": [
+              "Hidden pages",
+              "Skipped and counted in the summary",
+              "02"
+            ],
+            "emphasis": [0]
+          },
+          {
+            "cells": [
+              "HTML Page load failure",
+              "Skipped with its reason listed",
+              "02"
+            ],
+            "emphasis": [0]
+          },
+          {
+            "cells": ["Large images in an HTML Page", "Not tested", "05"],
+            "emphasis": [0]
+          }
+        ]
+      },
+      "boundary": "One fictional deck on one machine; the numbers are illustrative."
+    },
+    {
+      "id": "closing",
+      "layout": "closing",
+      "title": "Decide on wider rollout after the large-image case",
+      "eyebrow": "Next",
+      "takeaways": [
+        {
+          "ref": "Thu",
+          "text": "Finish the large-image export case"
+        },
+        {
+          "ref": "Fri",
+          "text": "Re-run the 20-run timing on the same deck"
+        },
+        {
+          "ref": "03",
+          "text": "Write the invalidation rule for HTML Pages"
+        },
+        {
+          "ref": "04",
+          "text": "Decide whether to widen the pilot or keep it within the platform team"
+        }
+      ],
+      "closingLine": "Mei Lin · platform@example.invalid · fictional demo content"
+    }
+  ]
+}

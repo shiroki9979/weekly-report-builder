@@ -1,10 +1,15 @@
 import type {
+  CoverPage,
+  ClosingPage,
+  SideBySidePage,
+  FullWidthPanelPage,
   ChartPanel,
   ChecklistPanel,
   FlowPanel,
   TablePanel,
   TwoColumnPage,
   Deck,
+  EditablePanel,
   Page,
   OverviewPage,
   EvidenceDecisionPage,
@@ -24,11 +29,9 @@ export const ADDABLE_PANEL_KINDS = [
   "checklist",
 ] as const
 
-export type AddableTwoColumnPanelKind = (typeof ADDABLE_PANEL_KINDS)[number]
+export type AddablePanelKind = (typeof ADDABLE_PANEL_KINDS)[number]
 
-export function isAddablePanelKind(
-  value: unknown
-): value is AddableTwoColumnPanelKind {
+export function isAddablePanelKind(value: unknown): value is AddablePanelKind {
   return (ADDABLE_PANEL_KINDS as readonly unknown[]).includes(value)
 }
 
@@ -48,7 +51,7 @@ function blankItems(): TwoColumnPage["items"] {
   }))
 }
 
-function blankPanel(kind: AddableTwoColumnPanelKind): TwoColumnPage["panel"] {
+function blankPanel(kind: AddablePanelKind): EditablePanel {
   switch (kind) {
     case "table":
       return {
@@ -108,13 +111,25 @@ function formatPageId(value: number): string {
 
 export function createBlankTwoColumnPage(
   id: string,
-  panelKind: AddableTwoColumnPanelKind
+  panelKind: AddablePanelKind
 ): TwoColumnPage {
   return {
     id,
     layout: "two-column",
     title: "",
     items: blankItems(),
+    panel: blankPanel(panelKind),
+  }
+}
+
+export function createBlankFullWidthPanelPage(
+  id: string,
+  panelKind: AddablePanelKind
+): FullWidthPanelPage {
+  return {
+    id,
+    layout: "full-width-panel",
+    title: "",
     panel: blankPanel(panelKind),
   }
 }
@@ -179,17 +194,52 @@ export function createBlankTrendTargetPage(id: string): TrendTargetPage {
   }
 }
 
+export function createBlankCoverPage(id: string): CoverPage {
+  return { id, layout: "cover", title: "", subtitle: "", byline: "" }
+}
+
+export function createBlankClosingPage(id: string): ClosingPage {
+  return {
+    id,
+    layout: "closing",
+    title: "",
+    eyebrow: "",
+    takeaways: [],
+    closingLine: "",
+  }
+}
+
+export function createBlankSideBySidePage(id: string): SideBySidePage {
+  return {
+    id,
+    layout: "side-by-side",
+    title: "",
+    columns: [
+      { label: "", points: [""] },
+      { label: "", points: [""] },
+    ],
+  }
+}
+
 export type AddableLayout =
   | "two-column"
   | "overview"
   | "evidence-decision"
   | "next-actions"
   | "trend-target"
+  | "cover"
+  | "closing"
+  | "side-by-side"
+  | "full-width-panel"
 
 const BLANK_PAGE_FACTORIES: Record<
   AddableLayout,
-  (id: string, panelKind: AddableTwoColumnPanelKind) => Page
+  (id: string, panelKind: AddablePanelKind) => Page
 > = {
+  cover: createBlankCoverPage,
+  closing: createBlankClosingPage,
+  "side-by-side": createBlankSideBySidePage,
+  "full-width-panel": createBlankFullWidthPanelPage,
   "two-column": createBlankTwoColumnPage,
   overview: createBlankOverviewPage,
   "evidence-decision": createBlankEvidenceDecisionPage,
@@ -209,7 +259,7 @@ export function isAddableLayout(value: unknown): value is AddableLayout {
 export function createBlankAddablePage(
   id: string,
   layout: AddableLayout,
-  panelKind: AddableTwoColumnPanelKind
+  panelKind: AddablePanelKind
 ): Page {
   return BLANK_PAGE_FACTORIES[layout](id, panelKind)
 }

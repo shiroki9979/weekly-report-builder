@@ -10,16 +10,28 @@
 
 /* 16:9 預覽畫布專用 token；不套用 shadcn 元件 */
 .stage-root {
-  --blue: #2e75b6;
-  --blue-deep: #1f5a8f;
-  --blue-soft: #c5d9ed;
-  --blue-wash: #eef4fa;
+  --accent: #2e75b6;
+  --accent-deep: #1f5a8f;
+  --accent-soft: #c5d9ed;
+  --accent-wash: #eef4fa;
+  --blue: var(--accent);
+  --blue-deep: var(--accent-deep);
+  --blue-soft: var(--accent-soft);
+  --blue-wash: var(--accent-wash);
+  --chart-1: var(--accent);
+  /* 第二系列需要介於 accent 與 accent-soft 之間的明度，沒有對應的語意角色 */
+  --chart-2: #7eb0d6;
+  --chart-3: var(--accent-soft);
+  --chart-4: var(--accent-deep);
+  --chart-5: var(--mute);
   --ink: #2d2d2d;
   --mute: #5c5c5c;
   --line: #d0d7de;
   --ok: #2f9e6b;
+  --ok-ink: #1f7a52;
   --ok-wash: #e6f6ee;
   --warn: #c47b16;
+  --warn-ink: #8a5508;
   --paper: #ffffff;
 
   box-sizing: border-box;
@@ -335,4 +347,16 @@
   letter-spacing: 0.06em;
   color: var(--mute);
   pointer-events: none;
+}
+
+/* 列索引預設隱藏，由主題樣式表決定是否呈現；它不參與資料欄索引。 */
+.stage-table-row-index {
+  display: none;
+}
+
+.stage-panel th.stage-table-reference,
+.stage-panel td.stage-table-reference {
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
 }

@@ -3,6 +3,30 @@ import { describe, expect, it } from "vitest"
 import { buildStackedBarSegments } from "@/lib/chart-stack"
 
 describe("buildStackedBarSegments", () => {
+  it("cycles theme roles while retaining explicit series colours", () => {
+    const stacks = buildStackedBarSegments({
+      categories: ["Pilot"],
+      series: [
+        { name: "A", values: [1] },
+        { name: "B", values: [1] },
+        { name: "C", values: [1] },
+        { name: "D", values: [1] },
+        { name: "E", values: [1] },
+        { name: "F", values: [1] },
+        { name: "G", values: [1], color: "#123456" },
+      ],
+    })
+    expect(stacks[0].bars.map((bar) => bar.color)).toEqual([
+      "var(--chart-1)",
+      "var(--chart-2)",
+      "var(--chart-3)",
+      "var(--chart-4)",
+      "var(--chart-5)",
+      "var(--chart-1)",
+      "#123456",
+    ])
+  })
+
   it("scales stacked segment heights against the largest category total", () => {
     const segments = buildStackedBarSegments({
       categories: ["Mon", "Tue"],

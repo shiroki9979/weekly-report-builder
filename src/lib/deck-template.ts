@@ -7,6 +7,7 @@ import {
   type Deck,
   type Page,
 } from "./deck.ts"
+import { templatePageNumberOverride } from "./stage-page-context.ts"
 import { blankCommitment } from "./next-actions-editor.ts"
 
 function clearPanel(panel: Panel): Panel {
@@ -16,6 +17,9 @@ function clearPanel(panel: Panel): Panel {
         kind: "table",
         title: "",
         columns: panel.columns.map(() => ""),
+        ...(panel.referenceColumn === undefined
+          ? {}
+          : { referenceColumn: panel.referenceColumn }),
         rows: panel.rows.map((row) => ({
           cells: row.cells.map(() => ""),
           emphasis: row.emphasis,
@@ -68,9 +72,43 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: Page): Page {
+  return {
+    ...clearPageContent(page),
+    showPageNumber: templatePageNumberOverride(page),
+  }
+}
+
+function clearPageContent(page: Page): Page {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
   return matchPage<Page>(page, {
-    // HTML Page 的頁碼須逐頁開啟、不吃 Deck 層級預設；沿用範本的選擇，新 Deck 才不必逐頁重開
+    fullWidthPanel: (fullWidth) => ({
+      ...fullWidth,
+      title: "",
+      panel: clearPanel(fullWidth.panel),
+      boundary: undefined,
+      notes: undefined,
+    }),
+    sideBySide: (comparison) => ({
+      ...comparison,
+      title: "",
+      columns: [
+        { label: "", points: comparison.columns[0].points.map(() => "") },
+        { label: "", points: comparison.columns[1].points.map(() => "") },
+      ],
+      chosen: undefined,
+      tradeoff: undefined,
+      boundary: undefined,
+      notes: undefined,
+    }),
+    cover: (cover) => ({ ...cover, title: "", subtitle: "", notes: undefined }),
+    closing: (closing) => ({
+      ...closing,
+      title: "",
+      eyebrow: "",
+      takeaways: [],
+      boundary: undefined,
+      notes: undefined,
+    }),
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
@@ -78,7 +116,6 @@ function clearPage(page: Page): Page {
       htmlFile: htmlPage.htmlFile,
       hidden: htmlPage.hidden,
       notes: undefined,
-      showPageNumber: htmlPage.showPageNumber,
     }),
     overview: (overview) => ({
       id: overview.id,
@@ -114,10 +151,10 @@ function clearPage(page: Page): Page {
     }),
     trendTarget: (trend) => ({
       ...trend,
+      boundary: undefined,
       title: "",
       interpretation: "",
       notes: undefined,
-      showPageNumber: undefined,
     }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
@@ -132,7 +169,6 @@ function clearPage(page: Page): Page {
       ...unknown,
       title: "",
       notes: undefined,
-      showPageNumber: undefined,
     }),
   })
 }
@@ -145,6 +181,8 @@ export function createDeckFromTemplate(
   // Editorial 頁碼回到預設顯示，不沿用範本的開關，否則從隱藏頁碼的範本建立會改變既有輸出
   return {
     ...(options.period ? { period: options.period } : {}),
+    ...(template.theme !== undefined ? { theme: template.theme } : {}),
+    ...(template.title !== undefined ? { title: template.title } : {}),
     pages: template.pages.map(clearPage),
   }
 }

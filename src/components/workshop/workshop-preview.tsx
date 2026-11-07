@@ -193,11 +193,15 @@ function PreviewStage({
   selectedPage: Page | null
 }) {
   const loading = loadStatus.kind === "loading"
+  const context =
+    deck && selectedPage
+      ? createStagePageContext(documentId, deck, selectedPage.id)
+      : null
   return (
     <div className="relative h-full min-h-0 min-w-0 overflow-hidden">
       <div className="stage-preview-slot absolute inset-0 flex items-center justify-center">
         <div className="stage-preview-fit">
-          <StageFrame ref={stageRef}>
+          <StageFrame ref={stageRef} theme={context?.theme}>
             {loading ? (
               <div className="stage-placeholder">Loading deck…</div>
             ) : null}
@@ -211,15 +215,8 @@ function PreviewStage({
                 {loadStatus.message}
               </div>
             ) : null}
-            {!loading && selectedPage && deck ? (
-              <StageSlide
-                page={selectedPage}
-                context={createStagePageContext(
-                  documentId,
-                  deck,
-                  selectedPage.id
-                )}
-              />
+            {!loading && selectedPage && context ? (
+              <StageSlide page={selectedPage} context={context} />
             ) : null}
           </StageFrame>
         </div>

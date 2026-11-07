@@ -7,7 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { defaultPageNumberVisibility, type Deck } from "@/lib/deck"
+import type { Deck } from "@/lib/deck"
+import { defaultPageNumberVisibility } from "@/lib/stage-page-context"
 import { setPageShowPageNumber } from "@/lib/deck-editor"
 
 type PageNumberSelectProps = {
@@ -58,7 +59,7 @@ export function PageNumberSelect({
   onChange,
 }: PageNumberSelectProps) {
   const page = deck.pages[pageIndex]
-  const defaultVisible = page ? defaultPageNumberVisibility(deck, page) : true
+  const defaultVisible = defaultPageNumberVisibility(deck, page)
 
   return (
     <div className={cn("space-y-2", disabled && "opacity-50")}>

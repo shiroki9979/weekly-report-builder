@@ -1,25 +1,26 @@
-import { buildStackedBarSegments } from "@/lib/chart-stack"
+import { buildStackedBarSegments, resolveSeriesColor } from "@/lib/chart-stack"
 import type { ChartPanel } from "@/lib/deck"
 
 type ChartPanelViewProps = {
   panel: ChartPanel
+  showTitle?: boolean
 }
 
-export function ChartPanelView({ panel }: ChartPanelViewProps) {
+export function ChartPanelView({
+  panel,
+  showTitle = true,
+}: ChartPanelViewProps) {
   const stacks = buildStackedBarSegments(panel)
 
   return (
     <aside className="stage-panel">
-      <h4>{panel.title}</h4>
+      {showTitle ? <h4>{panel.title}</h4> : null}
       <div className="stage-chart-legend">
         {panel.series.map((series, seriesIndex) => (
           <span key={`${series.name}-${seriesIndex}`}>
             <i
               style={{
-                background:
-                  series.color ??
-                  stacks[0]?.bars[seriesIndex]?.color ??
-                  "#2e75b6",
+                background: resolveSeriesColor(series.color, seriesIndex),
               }}
             />
             {series.name}

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
+import type { StagePageContext } from "@/lib/stage-page-context"
 import { StageSlide } from "@/components/stage/stage-slide"
 import {
   parseDeck,
@@ -11,10 +12,12 @@ import {
   type NextActionsPage,
 } from "@/lib/deck"
 
-const weekContext = {
+const weekContext: StagePageContext = {
+  theme: "default",
   documentId: "2026-08-24",
   frameLabel: "2026-08-24 — 2026-08-28",
-  pageLabel: "1 / 1",
+  hidden: false,
+  position: { index: 1, total: 1 },
   showPageNumber: true,
 }
 
@@ -62,6 +65,7 @@ describe("StageSlide", () => {
         page={page}
         context={{
           ...weekContext,
+          theme: "default",
           documentId: "2026-08-31",
           frameLabel: "Label that is not an id",
         }}
@@ -95,7 +99,7 @@ describe("StageSlide", () => {
     }).pages[0]
 
     const { container } = render(
-      <StageSlide page={page} context={{ ...weekContext, frameLabel: "" }} />
+      <StageSlide page={page} context={{ ...weekContext, frameLabel: null }} />
     )
 
     expect(container.querySelector(".editorial-period")).toBeNull()
@@ -123,7 +127,12 @@ describe("StageSlide", () => {
     render(
       <StageSlide
         page={page}
-        context={{ ...weekContext, pageLabel: "Hidden" }}
+        context={{
+          ...weekContext,
+          hidden: true,
+          position: null,
+          showPageNumber: false,
+        }}
       />
     )
 
@@ -275,7 +284,7 @@ describe("StageSlide", () => {
     render(
       <StageSlide
         page={week.pages[0]}
-        context={{ ...weekContext, pageLabel: "" }}
+        context={{ ...weekContext, position: null, showPageNumber: false }}
       />
     )
 

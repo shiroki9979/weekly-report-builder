@@ -1,11 +1,15 @@
 import type { ReactNode } from "react"
 
-import type { StagePageContext } from "@/lib/stage-page-context"
+import {
+  formatPagePosition,
+  type StagePageContext,
+} from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
   eyebrow: string
   headline: string
   context: StagePageContext
+  boundary?: string
   children: ReactNode
 }
 
@@ -14,13 +18,25 @@ export function EditorialFrame({
   eyebrow,
   headline,
   context,
+  boundary,
   children,
 }: EditorialFrameProps) {
+  const position = context.showPageNumber ? context.position : null
+  const index = position?.index.toString().padStart(2, "0")
+  const paddedLabel = position
+    ? `${index} / ${position.total.toString().padStart(2, "0")}`
+    : null
+
   return (
     <article className="editorial-page">
       <header className="editorial-header">
         <div className="editorial-meta">
-          <p className="editorial-eyebrow">{eyebrow}</p>
+          <p className="editorial-eyebrow">
+            {position ? (
+              <span className="editorial-page-index">§ {index} </span>
+            ) : null}
+            {eyebrow}
+          </p>
           {context.frameLabel ? (
             <p className="editorial-period">{context.frameLabel}</p>
           ) : null}
@@ -29,14 +45,24 @@ export function EditorialFrame({
       </header>
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
-      {context.showPageNumber && context.pageLabel ? (
-        <footer className="editorial-page-number">{context.pageLabel}</footer>
-      ) : (
-        // 隱藏頁碼時保留同高的空列，本文不往下撐滿，貼進簡報範本時底部仍有留白
-        <footer className="editorial-page-number" aria-hidden="true">
-          {" "}
-        </footer>
-      )}
+      {boundary ? <p className="editorial-boundary">{boundary}</p> : null}
+      <footer
+        className="editorial-page-number"
+        aria-hidden={!context.deckTitle && !position ? true : undefined}
+      >
+        {context.deckTitle ? (
+          <span className="editorial-deck-title">{context.deckTitle}</span>
+        ) : null}
+        {position ? (
+          <span className="editorial-page-label">
+            <span className="editorial-number-default">
+              {formatPagePosition(position)}
+            </span>
+            <span className="editorial-number-padded">{paddedLabel}</span>
+          </span>
+        ) : null}
+        {!context.deckTitle && !position ? " " : null}
+      </footer>
     </article>
   )
 }

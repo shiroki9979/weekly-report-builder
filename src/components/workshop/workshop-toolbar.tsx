@@ -13,6 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { DECK_THEMES, isDeckTheme, type DeckTheme } from "@/lib/deck"
+
+const DECK_THEME_LABELS: Record<DeckTheme, string> = {
+  default: "Default",
+  observatory: "Observatory",
+}
 
 type DeckPickerProps = {
   decks: string[]
@@ -83,6 +89,14 @@ export type ToolbarPageNumberControls = {
   disabled?: boolean
 }
 
+export type ToolbarAppearanceControls = {
+  theme: DeckTheme
+  title: string
+  onThemeChange: (theme: DeckTheme) => void
+  onTitleChange: (title: string) => void
+  disabled?: boolean
+}
+
 type WorkshopToolbarProps = {
   decks: string[]
   selectedDeckId: string
@@ -91,6 +105,7 @@ type WorkshopToolbarProps = {
   save: ToolbarSaveControls
   create: ToolbarCreateControls
   pageNumbers?: ToolbarPageNumberControls
+  appearance?: ToolbarAppearanceControls
 }
 
 export function WorkshopToolbar({
@@ -101,6 +116,7 @@ export function WorkshopToolbar({
   save,
   create,
   pageNumbers,
+  appearance,
 }: WorkshopToolbarProps) {
   if (decks.length === 0) {
     return null
@@ -115,6 +131,7 @@ export function WorkshopToolbar({
         disabled={deckSelectDisabled}
         trailing={<SaveStatus save={save} />}
       />
+      {appearance ? <DeckAppearanceFields appearance={appearance} /> : null}
       {pageNumbers ? <PageNumbersToggle pageNumbers={pageNumbers} /> : null}
       <NewWeekForm
         suggestedMonday={create.suggestedMonday}
@@ -122,6 +139,44 @@ export function WorkshopToolbar({
         creating={create.creating}
         createError={create.error}
         disabled={create.disabled}
+      />
+    </div>
+  )
+}
+
+function DeckAppearanceFields({
+  appearance,
+}: {
+  appearance: ToolbarAppearanceControls
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="deck-theme">Theme</Label>
+      <Select
+        value={appearance.theme}
+        disabled={appearance.disabled}
+        onValueChange={(theme) => {
+          if (isDeckTheme(theme)) appearance.onThemeChange(theme)
+        }}
+      >
+        <SelectTrigger id="deck-theme" className="w-full">
+          <SelectValue>{DECK_THEME_LABELS[appearance.theme]}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {DECK_THEMES.map((theme) => (
+            <SelectItem key={theme} value={theme}>
+              {DECK_THEME_LABELS[theme]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Label htmlFor="deck-title">Deck Title</Label>
+      <Input
+        id="deck-title"
+        value={appearance.title}
+        disabled={appearance.disabled}
+        placeholder="Optional deck title"
+        onChange={(event) => appearance.onTitleChange(event.target.value)}
       />
     </div>
   )

@@ -63,3 +63,42 @@ test("blocks copy of a draft page and skips overflow during batch export", async
     page.getByRole("status").filter({ hasText: "Skipped pages" })
   ).toContainText("p03:")
 })
+
+test("navigator uses supported Page Position across hidden and unsupported pages", async ({
+  page,
+  request,
+}) => {
+  const actions = (id: string, hidden = false) => ({
+    id,
+    layout: "next-actions",
+    title: id,
+    hidden,
+    commitments: [
+      { title: "Ship", outcome: "Pilot ready", checkpoint: "Friday" },
+      { title: "Measure", outcome: "Baseline ready", checkpoint: "Monday" },
+    ],
+  })
+  const saved = await request.put("/api/decks/navigation", {
+    data: {
+      pages: [
+        actions("first"),
+        actions("hidden", true),
+        { id: "unsupported", layout: "future-layout", title: "Future" },
+        actions("last"),
+      ],
+    },
+  })
+  expect(saved.ok()).toBe(true)
+  await page.goto("/?deck=navigation&page=4")
+
+  const navigator = page.getByRole("navigation", { name: "Page navigator" })
+  await expect(navigator.getByText("2 / 2", { exact: true })).toBeVisible()
+  await expect(page.getByTestId("stage-frame").getByText("2 / 2")).toBeVisible()
+  await navigator.getByRole("button", { name: "Previous page" }).click()
+  await expect(navigator.getByText(/\d+ \/ \d+/)).toHaveCount(0)
+  await navigator.getByRole("button", { name: "Previous page" }).click()
+  await expect(
+    navigator.getByText("hidden (hidden)", { exact: true })
+  ).toBeVisible()
+  await expect(navigator.getByText(/\d+ \/ \d+/)).toHaveCount(0)
+})

@@ -17,14 +17,14 @@
 
 假設已會基本操作，針對特定任務給步驟。
 
-| 文件                                                           | 說明                               |
-| -------------------------------------------------------------- | ---------------------------------- |
-| [建立新週次](how-to/create-new-week.md)                        | 自上一週 clone 結構並建立新檔      |
-| [編輯並儲存 Deck](how-to/edit-and-save-a-deck.md)              | 修改頁面內容並寫回 JSON            |
-| [新增、刪除與重排頁面](how-to/add-delete-reorder-pages.md)     | Workshop 頁面生命週期操作          |
-| [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md)    | 批次下載或複製到剪貼簿             |
-| [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)         | 保留編輯但略過 PNG 匯出            |
-| [Author Editorial Layouts](how-to/author-editorial-layouts.md) | 新增與編輯 Editorial Layout Family |
+| 文件                                                           | 說明                                                  |
+| -------------------------------------------------------------- | ----------------------------------------------------- |
+| [建立新週次](how-to/create-new-week.md)                        | 自上一週 clone 結構並建立新檔                         |
+| [編輯並儲存 Deck](how-to/edit-and-save-a-deck.md)              | 修改頁面內容並寫回 JSON                               |
+| [新增、刪除與重排頁面](how-to/add-delete-reorder-pages.md)     | Workshop 頁面生命週期操作                             |
+| [匯出 PNG 至團隊簡報](how-to/export-slides-to-team-deck.md)    | 批次下載或複製到剪貼簿                                |
+| [隱藏不需匯出的頁面](how-to/hide-pages-from-export.md)         | 保留編輯但略過 PNG 匯出                               |
+| [Author Editorial Layouts](how-to/author-editorial-layouts.md) | 主題、四個 Observatory 版型與 Editorial Layout Family |
 
 ## Reference（規格手冊）
 
@@ -54,13 +54,13 @@
 
 已實作、仍供維護與驗收參照的規格。
 
-| 文件                                                                                  | 說明                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)                                              | `layout: "html"` 16:9 逃生口                                                                                                                                                 |
-| [HTML Page export failure policy](specs/html-page-error-png.md)                       | HTML 載入／截圖失敗政策與共用 Export gate                                                                                                                                    |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)       | Editorial Layout Family 的 production 規格                                                                                                                                   |
-| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)   | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）                                                                    |
-| [Deck Theme and the Observatory layouts](specs/deck-theme-and-observatory-layouts.md) | Deck Theme、Cover／Closing／Side-by-side Comparison／Full-width Panel 與 Boundary Note 規格（[#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)，待實作） |
+| 文件                                                                                  | 說明                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [HTML 全幅頁](specs/html-page-layout.md)                                              | `layout: "html"` 16:9 逃生口                                                                                                                                         |
+| [HTML Page export failure policy](specs/html-page-error-png.md)                       | HTML 載入／截圖失敗政策與共用 Export gate                                                                                                                            |
+| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)       | Editorial Layout Family 的 production 規格                                                                                                                           |
+| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)   | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）                                                            |
+| [Deck Theme and the Observatory layouts](specs/deck-theme-and-observatory-layouts.md) | Deck Theme、Cover／Closing／Side-by-side Comparison／Full-width Panel 與 Boundary Note 規格（[#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)） |
 
 ## Decisions（ADR）
 

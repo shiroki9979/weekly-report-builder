@@ -1,9 +1,4 @@
 /* 生產 Editorial Layout 專用；只掛在 Stage，不引入 shadcn */
-.stage-root {
-  --ok-ink: #1f7a52;
-  --warn-ink: #8a5508;
-}
-
 .editorial-page {
   display: flex;
   flex-direction: column;
@@ -64,13 +59,33 @@
   min-height: 0;
 }
 
+.editorial-page-index,
+.editorial-number-padded {
+  display: none;
+}
+
 .editorial-page-number {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  height: 1.5em;
+  line-height: 1.5;
   flex: none;
   margin: 1.4% 0 0;
   font-size: clamp(8px, 1cqw, 13px);
   letter-spacing: 0.06em;
   color: var(--mute);
   text-align: right;
+}
+
+.editorial-page-label {
+  flex: none;
+  margin-left: auto;
+}
+
+.editorial-deck-title {
+  min-width: 0;
+  text-align: left;
 }
 
 .editorial-overview {
@@ -526,4 +541,258 @@
 .editorial-trend-exact {
   color: var(--warn-ink);
   font-weight: 700;
+}
+
+.editorial-boundary {
+  flex: none;
+  margin: 1.4cqw 0 0;
+  padding-top: 1.2cqw;
+  border-top: 1px solid var(--line);
+  color: var(--mute);
+  font-size: 1.05cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* 溢出量測只檢查內容是否超出 Stage；本文若縮到內容高度以下，內容會蓋住
+   Boundary Note 或頁尾卻仍判定為 fit。保留內容最小高度，讓過長內容把頁尾推出
+   Stage 而被擋下。不會自行縮放的版型即使沒有 Boundary Note 也需要這層保護。 */
+.editorial-page:has(> .editorial-boundary) > .editorial-body,
+.editorial-body:has(
+  > .editorial-comparison,
+  > .editorial-closing,
+  > .editorial-full-width-panel
+) {
+  min-height: min-content;
+}
+
+.editorial-cover-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min-content;
+}
+
+.editorial-cover-title {
+  margin: 0;
+  max-width: 80cqw;
+  font-size: 4.0625cqw;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--accent-deep);
+  overflow-wrap: anywhere;
+}
+
+.editorial-cover-subtitle {
+  margin: 1.5625cqw 0 0;
+  max-width: 67.1875cqw;
+  color: var(--mute);
+  font-size: 1.5625cqw;
+  line-height: 1.45;
+}
+
+.editorial-cover-meta {
+  display: flex;
+  gap: 3.125cqw;
+  margin: 4.375cqw 0 0;
+  font-size: 1.25cqw;
+  line-height: 1.4;
+}
+
+.editorial-cover-meta dt {
+  display: none;
+}
+
+.editorial-cover-meta dd {
+  margin: 0;
+}
+
+.editorial-closing {
+  flex: none;
+}
+
+.editorial-takeaways {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 3.125cqw;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.editorial-takeaways li {
+  display: grid;
+  grid-template-columns: 6.25cqw minmax(0, 1fr);
+  gap: 1.25cqw;
+  padding: 1.25cqw 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.484375cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.editorial-takeaways p {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+
+.editorial-takeaway-ref {
+  grid-column: 1;
+  grid-row: 1;
+  padding-top: 0.3125cqw;
+  color: var(--accent);
+  font-size: 1.09375cqw;
+}
+
+.editorial-closing-line {
+  margin: 2.1875cqw 0 0;
+  padding-top: 1.25cqw;
+  border-top: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 1.09375cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.editorial-comparison {
+  flex: none;
+  min-width: 0;
+}
+
+.editorial-comparison-columns {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6.25cqw;
+}
+
+.editorial-comparison-columns::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px solid var(--line);
+  content: "";
+}
+
+.editorial-comparison-column {
+  min-width: 0;
+  padding-top: 1.09375cqw;
+  border-top: 0.078125cqw solid var(--line);
+}
+
+.editorial-comparison-column.is-chosen {
+  padding-top: 0.9375cqw;
+  border-top: 0.234375cqw solid var(--accent);
+}
+
+.editorial-comparison-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1cqw;
+  color: var(--mute);
+  font-size: 1.09375cqw;
+  line-height: 1.4;
+}
+
+.editorial-comparison-label h2 {
+  margin: 0;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.editorial-comparison-column.is-chosen .editorial-comparison-label {
+  color: var(--accent);
+}
+
+.editorial-chosen-tag {
+  flex: none;
+  border: 1px solid var(--accent);
+  padding: 0.078125cqw 0.46875cqw;
+  color: var(--accent);
+  font-size: 0.859375cqw;
+}
+
+.editorial-comparison-points {
+  display: grid;
+  gap: 1.09375cqw;
+  list-style: none;
+  padding: 0;
+  margin: 1.40625cqw 0 0;
+  font-size: 1.484375cqw;
+  line-height: 1.45;
+}
+
+.editorial-comparison-points li {
+  overflow-wrap: anywhere;
+}
+
+.editorial-comparison-index {
+  display: none;
+}
+
+.editorial-tradeoff {
+  display: grid;
+  grid-template-columns: 7.03125cqw minmax(0, 1fr);
+  gap: 0.625cqw 1.5625cqw;
+  margin: 2.1875cqw 0 0;
+  padding-top: 1.25cqw;
+  border-top: 1px solid var(--line);
+  font-size: 1.25cqw;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.editorial-tradeoff dt {
+  padding-top: 0.3125cqw;
+  color: var(--accent);
+  font-size: 0.9375cqw;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.editorial-tradeoff dd {
+  margin: 0;
+}
+
+.editorial-full-width-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: min-content;
+}
+
+.editorial-full-width-panel > .stage-panel {
+  flex: 1;
+  min-height: min-content;
+  padding: 0;
+  border: 0;
+}
+
+.editorial-full-width-panel .stage-panel th {
+  padding: 0 1.25cqw 0.78125cqw 0;
+  border-bottom-color: var(--ink);
+  font-size: 0.859375cqw;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.editorial-full-width-panel .stage-panel td {
+  padding: 1.015625cqw 1.25cqw 1.015625cqw 0;
+  color: var(--ink);
+  vertical-align: top;
+  font-size: 1.25cqw;
+  line-height: 1.45;
+}
+
+.editorial-full-width-panel .stage-table-row-index + td {
+  font-weight: 700;
+}
+
+.editorial-full-width-panel .stage-panel .stage-table-reference {
+  padding-right: 0;
+  color: var(--accent);
 }

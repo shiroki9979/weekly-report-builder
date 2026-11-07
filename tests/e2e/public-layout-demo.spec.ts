@@ -97,7 +97,7 @@ test("fresh public demo opens both directions and both Next Actions compositions
   // 六頁都做真實 PNG 擷取，完整旅程會超過一般 e2e 的 45 秒上限。
   test.slow()
   await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
-  await page.goto("/")
+  await page.goto("/?deck=2026-01-05")
   await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-01-05"
   )
@@ -157,7 +157,7 @@ test("dated missing history survives next-week trim, append, save, reload, and P
       duplicateKeyWarnings.push(message.text())
     }
   })
-  await page.goto("/")
+  await page.goto("/?deck=2026-01-05")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
   await selectPage(page, 6)
   await expect(
@@ -222,7 +222,7 @@ test("dated missing history survives next-week trim, append, save, reload, and P
 test("blocks a Trend page whose text leaves no room for the full-width chart", async ({
   page,
 }) => {
-  await page.goto("/")
+  await page.goto("/?deck=2026-01-05")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
   await selectPage(page, 6)
   await page

@@ -2,12 +2,13 @@ import type { FlowPanel } from "@/lib/deck"
 
 type FlowPanelViewProps = {
   panel: FlowPanel
+  showTitle?: boolean
 }
 
-export function FlowPanelView({ panel }: FlowPanelViewProps) {
+export function FlowPanelView({ panel, showTitle = true }: FlowPanelViewProps) {
   return (
     <aside className="stage-panel">
-      <h4>{panel.title}</h4>
+      {showTitle ? <h4>{panel.title}</h4> : null}
       <div className="stage-flow">
         {panel.steps.map((step, index) => (
           <div key={index} className="stage-flow-step-group">

@@ -2,6 +2,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { Page } from "@/lib/deck"
+import { formatPagePosition, getPagePosition } from "@/lib/stage-page-context"
 
 type PageNavigatorProps = {
   pages: Page[]
@@ -21,6 +22,7 @@ export function PageNavigator({
   }
 
   const page = pages[selectedPageIndex]
+  const position = page ? getPagePosition(pages, page.id) : null
   const canGoPrev = selectedPageIndex > 0
   const canGoNext = selectedPageIndex < pages.length - 1
   const title = page
@@ -47,10 +49,14 @@ export function PageNavigator({
 
       <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
         <div className="flex max-w-full items-center gap-2 text-xs text-muted-foreground">
-          <span className="tabular-nums">
-            {selectedPageIndex + 1} / {pages.length}
-          </span>
-          <span aria-hidden>·</span>
+          {position ? (
+            <>
+              <span className="tabular-nums">
+                {formatPagePosition(position)}
+              </span>
+              <span aria-hidden>·</span>
+            </>
+          ) : null}
           <span className="truncate font-medium text-foreground">{title}</span>
           {page?.id ? (
             <span className="shrink-0 text-muted-foreground tabular-nums">
@@ -68,7 +74,7 @@ export function PageNavigator({
             <button
               key={entry.id}
               type="button"
-              aria-label={`Go to page ${index + 1}${entry.hidden ? " (hidden)" : ""}`}
+              aria-label={navigationLabel(pages, entry)}
               aria-current={index === selectedPageIndex ? "page" : undefined}
               disabled={disabled}
               className={
@@ -98,4 +104,10 @@ export function PageNavigator({
       </Button>
     </nav>
   )
+}
+
+function navigationLabel(pages: Page[], page: Page): string {
+  const position = getPagePosition(pages, page.id)
+  if (position) return `Go to page ${position.index}`
+  return `Go to ${page.title || page.id}${page.hidden ? " (hidden)" : " (unsupported)"}`
 }

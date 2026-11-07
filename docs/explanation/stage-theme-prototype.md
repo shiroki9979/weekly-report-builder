@@ -69,7 +69,7 @@
 
 ## 封存
 
-原型程式碼（含 A、C 兩個落選變體與切換列）是本決定的一手來源，依約定放在拋棄分支 `prototype/stage-theme-variants`，不進 `dev`；`dev` 只保留本文件、規格與 ADR。原型的拋棄式入口在規格第四個 slice 完成後移除。
+原型程式碼（含 A、C 兩個落選變體與切換列）是本決定的一手來源，依約定放在拋棄分支 `prototype/stage-theme-variants`，不進 `dev`；`dev` 只保留本文件、規格與 ADR。正式版已採用 Deck Theme 與四個 Structured Layout；生產分支不包含 `prototype.html`、`src/prototype/` 或 `prototype` script。原型來源仍由該拋棄分支保留，正式示例改走 [`demo/harbor-forecast.json`](../../demo/harbor-forecast.json) 與一般 Workshop／Export gate。
 
 ## 相關文件
 

@@ -7,6 +7,9 @@ import {
   isSupportedStagePage,
   matchPage,
   type ChartPanel,
+  type CoverPage,
+  type ClosingPage,
+  type SideBySidePage,
   type ChecklistPanel,
   type FlowPanel,
   type EvidenceDecisionPage,
@@ -16,6 +19,8 @@ import {
   type StructuredPage,
   type TablePanel,
   type TwoColumnPage,
+  type FullWidthPanelPage,
+  type Panel,
   type Page,
   type OverviewPage,
 } from "./deck"
@@ -204,6 +209,46 @@ function assessChecklist(panel: ChecklistPanel): ExportIssue[] {
   )
 }
 
+function assessCover(page: CoverPage): ExportIssue[] {
+  return isBlank(page.title) ? [missing("title", "Title is required")] : []
+}
+
+function assessClosing(page: ClosingPage): ExportIssue[] {
+  const issues = isBlank(page.title)
+    ? [missing("title", "Title is required")]
+    : []
+  page.takeaways.forEach((takeaway, index) => {
+    if (isBlank(takeaway.text))
+      issues.push(
+        missing(`takeaways[${index}].text`, "Takeaway text is required")
+      )
+  })
+  return issues
+}
+
+function assessSideBySide(page: SideBySidePage): ExportIssue[] {
+  const issues = isBlank(page.title)
+    ? [missing("title", "Title is required")]
+    : []
+  page.columns.forEach((column, columnIndex) => {
+    const path = `columns[${columnIndex}]`
+    if (isBlank(column.label))
+      issues.push(missing(`${path}.label`, "Column label is required"))
+    column.points.forEach((point, pointIndex) => {
+      if (isBlank(point))
+        issues.push(
+          missing(
+            `${path}.points[${pointIndex}]`,
+            "Comparison point is required"
+          )
+        )
+    })
+  })
+  if (page.tradeoff && isBlank(page.tradeoff.why))
+    issues.push(missing("tradeoff.why", "Tradeoff reason is required"))
+  return issues
+}
+
 function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
@@ -226,24 +271,29 @@ function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
     issues.push(missing("panel.title", "Panel title is required"))
   }
 
-  switch (page.panel.kind) {
-    case "table":
-      issues.push(...assessTable(page.panel))
-      break
-    case "chart":
-      issues.push(...assessChart(page.panel))
-      break
-    case "flow":
-      issues.push(...assessFlow(page.panel))
-      break
-    case "checklist":
-      issues.push(...assessChecklist(page.panel))
-      break
-    case "fields":
-      break
-  }
+  return [...issues, ...assessPanelContent(page.panel)]
+}
 
-  return issues
+function assessFullWidthPanel(page: FullWidthPanelPage): ExportIssue[] {
+  return [
+    ...(isBlank(page.title) ? [missing("title", "Title is required")] : []),
+    ...assessPanelContent(page.panel),
+  ]
+}
+
+function assessPanelContent(panel: Panel): ExportIssue[] {
+  switch (panel.kind) {
+    case "table":
+      return assessTable(panel)
+    case "chart":
+      return assessChart(panel)
+    case "flow":
+      return assessFlow(panel)
+    case "checklist":
+      return assessChecklist(panel)
+    case "fields":
+      return []
+  }
 }
 
 function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
@@ -520,6 +570,10 @@ export function assessContentReadiness(
   { metricInput = {}, asOf }: ReadinessContext = {}
 ): ExportIssue[] {
   return matchPage(page, {
+    cover: assessCover,
+    closing: assessClosing,
+    sideBySide: assessSideBySide,
+    fullWidthPanel: assessFullWidthPanel,
     twoColumn: assessTwoColumn,
     overview: assessOverview,
     evidenceDecision: (decision) =>

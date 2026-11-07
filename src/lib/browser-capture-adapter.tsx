@@ -105,17 +105,14 @@ function createCaptureHost(signal?: AbortSignal): CaptureHost {
   signal?.addEventListener("abort", dispose, { once: true })
 
   const mount = (documentId: string, deck: Deck, page: Page) => {
+    const context = createStagePageContext(documentId, deck, page.id)
     const mountedRoot = createRoot(element)
     root = mountedRoot
     // 同步提交，後續的 HTML 輪詢與 paint 等待才看得到完整的 Stage DOM
     flushSync(() => {
       mountedRoot.render(
-        <StageFrame>
-          <StageSlide
-            page={page}
-            context={createStagePageContext(documentId, deck, page.id)}
-            isCapture
-          />
+        <StageFrame theme={context.theme}>
+          <StageSlide page={page} context={context} isCapture />
         </StageFrame>
       )
     })
