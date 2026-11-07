@@ -1,4 +1,4 @@
-import { buildStackedBarSegments } from "@/lib/chart-stack"
+import { buildStackedBarSegments, resolveSeriesColor } from "@/lib/chart-stack"
 import type { ChartPanel } from "@/lib/deck"
 
 type ChartPanelViewProps = {
@@ -16,10 +16,7 @@ export function ChartPanelView({ panel }: ChartPanelViewProps) {
           <span key={`${series.name}-${seriesIndex}`}>
             <i
               style={{
-                background:
-                  series.color ??
-                  stacks[0]?.bars[seriesIndex]?.color ??
-                  "#2e75b6",
+                background: resolveSeriesColor(series.color, seriesIndex),
               }}
             />
             {series.name}

@@ -250,7 +250,7 @@ export function editSessionContent(
       "Metric changes require a dedicated Editing Session operation"
     )
   }
-  return { ...session, deck: next }
+  return { ...session, deck: next, savedMessage: null }
 }
 
 function changesTrendRange(before: Deck, after: Deck): boolean {

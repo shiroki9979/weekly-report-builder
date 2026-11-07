@@ -41,6 +41,19 @@ const template = parseDeck({
 })
 
 describe("createDeckFromTemplate", () => {
+  it("keeps Deck Theme and Deck Title while clearing page copy", () => {
+    const deck = createDeckFromTemplate({
+      ...template,
+      theme: "observatory",
+      title: "Harbor Forecast",
+    })
+    expect(deck).toMatchObject({
+      theme: "observatory",
+      title: "Harbor Forecast",
+    })
+    expect(deck.pages[0].title).toBe("")
+  })
+
   it("keeps structure and clears authored copy without needing a period", () => {
     const deck = createDeckFromTemplate(template)
 

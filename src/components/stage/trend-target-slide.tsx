@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { EditorialFrame } from "@/components/stage/editorial-frame"
 import type { StagePageContext } from "@/lib/stage-page-context"
@@ -16,7 +16,7 @@ import {
   trendEndDate,
   UNMEASURED_COPY,
 } from "@/lib/trend-target"
-import type { TrendTargetPage, TrendObservation } from "@/lib/deck"
+import type { DeckTheme, TrendTargetPage, TrendObservation } from "@/lib/deck"
 
 type Props = { page: TrendTargetPage; context: StagePageContext }
 
@@ -54,24 +54,58 @@ const PLAIN_TICK_DIGITS = 12
 // 左側留白約容納八個完整數字，更長的軸標改用科學記號。
 const MAX_PLAIN_TICK_CHARS = 8
 const SCIENTIFIC_TICK_DECIMALS = 3
-// html-to-image 擷取 PNG 時不會把 stylesheet 或 var() 帶進 SVG 子元素，
-// SVG 外觀（顏色、線寬、字級）只能以字面值寫在屬性上；顏色須與 stage.css／editorial-layouts.css 的同名 token 一致
-const SVG_INK = {
-  line: "#d0d7de",
-  mute: "#5c5c5c",
-  blue: "#2e75b6",
-  warnInk: "#8a5508",
-  paper: "#ffffff",
+// html-to-image 深複製 SVG 並跳過子元素的 computed style；擷取前須把主題角色解析成字面色碼。
+const SVG_INK_ROLES = {
+  line: "--line",
+  mute: "--mute",
+  accent: "--accent",
+  warnInk: "--warn-ink",
+  paper: "--paper",
 } as const
 
-const SVG_STYLE = {
-  grid: { stroke: SVG_INK.line },
-  axis: { fill: SVG_INK.mute, fontSize: AXIS_FONT_SIZE },
-  target: { stroke: SVG_INK.warnInk, strokeWidth: 3, strokeDasharray: "7 5" },
-  line: { fill: "none", stroke: SVG_INK.blue, strokeWidth: 3 },
-  point: { fill: SVG_INK.blue, stroke: SVG_INK.paper, strokeWidth: 2 },
-  missing: { fill: SVG_INK.mute, fontSize: 20, fontWeight: 700 },
-} as const
+type SvgInk = Record<keyof typeof SVG_INK_ROLES, string>
+
+function useTrendSvgStyles(
+  ref: RefObject<HTMLDivElement | null>,
+  theme: DeckTheme
+) {
+  const [ink, setInk] = useState<SvgInk>({
+    line: "var(--line)",
+    mute: "var(--mute)",
+    accent: "var(--accent)",
+    warnInk: "var(--warn-ink)",
+    paper: "var(--paper)",
+  })
+  useLayoutEffect(() => {
+    const resolveInk = () => {
+      if (!ref.current) return
+      const computed = getComputedStyle(ref.current)
+      setInk((current) => {
+        const next = { ...current }
+        for (const key of Object.keys(SVG_INK_ROLES) as (keyof SvgInk)[]) {
+          next[key] =
+            computed.getPropertyValue(SVG_INK_ROLES[key]).trim() || current[key]
+        }
+        return Object.keys(next).every(
+          (key) => next[key as keyof SvgInk] === current[key as keyof SvgInk]
+        )
+          ? current
+          : next
+      })
+    }
+    resolveInk()
+  }, [ref, theme])
+  return {
+    grid: { stroke: ink.line },
+    axis: { fill: ink.mute, fontSize: AXIS_FONT_SIZE },
+    target: { stroke: ink.warnInk, strokeWidth: 3, strokeDasharray: "7 5" },
+    line: { fill: "none", stroke: ink.accent, strokeWidth: 3 },
+    point: { fill: ink.accent, stroke: ink.paper, strokeWidth: 2 },
+    missing: { fill: ink.mute, fontSize: 20, fontWeight: 700 },
+  }
+}
+
+type SvgStyles = ReturnType<typeof useTrendSvgStyles>
 
 function latestStatus(page: TrendTargetPage): string {
   const latest = page.observations.at(-1)
@@ -183,13 +217,19 @@ function metricCaption(page: TrendTargetPage): string {
   return unit ? `${label} (${unit})` : label
 }
 
-function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
+function TrendYAxis({
+  geometry,
+  styles,
+}: {
+  geometry: ChartGeometry
+  styles: SvgStyles
+}) {
   const { axisOffset, y, ticks } = geometry
   return ticks.map((tick, index) => (
     <g key={index}>
       <line
         className="editorial-trend-grid"
-        {...SVG_STYLE.grid}
+        {...styles.grid}
         x1={CHART_LEFT}
         x2={CHART_RIGHT}
         y1={y(tick)}
@@ -197,7 +237,7 @@ function TrendYAxis({ geometry }: { geometry: ChartGeometry }) {
       />
       <text
         className="editorial-trend-axis"
-        {...SVG_STYLE.axis}
+        {...styles.axis}
         x={CHART_LEFT - Y_LABEL_GAP}
         y={y(tick) + Y_LABEL_BASELINE}
         textAnchor="end"
@@ -213,17 +253,19 @@ function TrendMarker({
   index,
   isLatest,
   geometry,
+  styles,
 }: {
   entry: TrendObservation
   index: number
   isLatest: boolean
   geometry: ChartGeometry
+  styles: SvgStyles
 }) {
   if (entry.state === "measured")
     return (
       <circle
         className="editorial-trend-point"
-        {...SVG_STYLE.point}
+        {...styles.point}
         cx={geometry.x(index)}
         cy={geometry.y(entry.value)}
         r={isLatest ? LATEST_POINT_RADIUS : POINT_RADIUS}
@@ -233,7 +275,7 @@ function TrendMarker({
     return (
       <text
         className="editorial-trend-missing"
-        {...SVG_STYLE.missing}
+        {...styles.missing}
         aria-label={UNMEASURED_COPY.missing.observation}
         textAnchor="middle"
         x={geometry.x(index)}
@@ -248,21 +290,23 @@ function TrendMarker({
 function TrendSeries({
   page,
   geometry,
+  styles,
 }: {
   page: TrendTargetPage
   geometry: ChartGeometry
+  styles: SvgStyles
 }) {
   return (
     <>
       <path
         className="editorial-trend-line"
-        {...SVG_STYLE.line}
+        {...styles.line}
         d={geometry.line}
       />
       {page.target !== null ? (
         <line
           className="editorial-trend-target"
-          {...SVG_STYLE.target}
+          {...styles.target}
           x1={CHART_LEFT}
           x2={CHART_RIGHT}
           y1={geometry.y(page.target)}
@@ -276,6 +320,7 @@ function TrendSeries({
           index={index}
           isLatest={index === page.observations.length - 1}
           geometry={geometry}
+          styles={styles}
         />
       ))}
     </>
@@ -291,9 +336,11 @@ function showsDateLabel(index: number, length: number): boolean {
 function TrendXAxis({
   page,
   geometry,
+  styles,
 }: {
   page: TrendTargetPage
   geometry: ChartGeometry
+  styles: SvgStyles
 }) {
   const { cadence, start } = page
   if (!start) return null
@@ -304,7 +351,7 @@ function TrendXAxis({
       <g key={date}>
         <line
           className="editorial-trend-grid"
-          {...SVG_STYLE.grid}
+          {...styles.grid}
           x1={geometry.x(index)}
           x2={geometry.x(index)}
           y1={geometry.bottom}
@@ -313,7 +360,7 @@ function TrendXAxis({
         {showsDateLabel(index, page.observations.length) ? (
           <text
             className="editorial-trend-axis"
-            {...SVG_STYLE.axis}
+            {...styles.axis}
             x={geometry.x(index)}
             y={geometry.bottom + X_LABEL_OFFSET}
             textAnchor="middle"
@@ -370,12 +417,15 @@ function TrendPlot({
   page,
   bounds,
   targetLabel,
+  theme,
 }: {
   page: TrendTargetPage
+  theme: DeckTheme
   bounds: [number, number]
   targetLabel: string
 }) {
   const { ref, height, minHeightPx } = useFittedChartHeight()
+  const styles = useTrendSvgStyles(ref, theme)
   const geometry = chartGeometry(page, bounds, height)
   return (
     <div
@@ -394,9 +444,9 @@ function TrendPlot({
         <desc>
           {trendDescription(page)}; {targetLabel}
         </desc>
-        <TrendYAxis geometry={geometry} />
-        <TrendSeries page={page} geometry={geometry} />
-        <TrendXAxis page={page} geometry={geometry} />
+        <TrendYAxis geometry={geometry} styles={styles} />
+        <TrendSeries page={page} geometry={geometry} styles={styles} />
+        <TrendXAxis page={page} geometry={geometry} styles={styles} />
       </svg>
     </div>
   )
@@ -435,7 +485,13 @@ function axisOffsetNote(offset: number): string {
   return ` · Y-axis offset ${sign}${offset.toExponential()}`
 }
 
-function TrendChart({ page }: { page: TrendTargetPage }) {
+function TrendChart({
+  page,
+  theme,
+}: {
+  page: TrendTargetPage
+  theme: DeckTheme
+}) {
   let bounds: [number, number]
   try {
     bounds = trendBounds(page)
@@ -455,7 +511,12 @@ function TrendChart({ page }: { page: TrendTargetPage }) {
           </span>
         ) : null}
       </figcaption>
-      <TrendPlot page={page} bounds={bounds} targetLabel={targetLabel} />
+      <TrendPlot
+        page={page}
+        bounds={bounds}
+        targetLabel={targetLabel}
+        theme={theme}
+      />
       <TrendLegend page={page} targetLabel={targetLabel} />
     </figure>
   )
@@ -503,7 +564,7 @@ export function TrendTargetSlide({ page, context }: Props) {
       context={context}
     >
       <div className="editorial-trend">
-        <TrendChart page={page} />
+        <TrendChart page={page} theme={context.theme} />
         <TrendSummary page={page} />
         {comparison ? (
           <p className="editorial-trend-exact">{comparison}</p>

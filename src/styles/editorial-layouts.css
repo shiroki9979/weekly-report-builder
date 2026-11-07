@@ -1,9 +1,4 @@
 /* 生產 Editorial Layout 專用；只掛在 Stage，不引入 shadcn */
-.stage-root {
-  --ok-ink: #1f7a52;
-  --warn-ink: #8a5508;
-}
-
 .editorial-page {
   display: flex;
   flex-direction: column;
@@ -64,13 +59,33 @@
   min-height: 0;
 }
 
+.editorial-page-index,
+.editorial-number-padded {
+  display: none;
+}
+
 .editorial-page-number {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  height: 1.5em;
+  line-height: 1.5;
   flex: none;
   margin: 1.4% 0 0;
   font-size: clamp(8px, 1cqw, 13px);
   letter-spacing: 0.06em;
   color: var(--mute);
   text-align: right;
+}
+
+.editorial-page-label {
+  flex: none;
+  margin-left: auto;
+}
+
+.editorial-deck-title {
+  min-width: 0;
+  text-align: left;
 }
 
 .editorial-overview {

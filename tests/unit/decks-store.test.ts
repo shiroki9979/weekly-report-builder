@@ -27,6 +27,28 @@ const cloneFixturePath = join(
 )
 
 describe("decks-store", () => {
+  it("keeps Deck Theme and Deck Title in the next Weekly Series Deck on disk", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-theme-"))
+    const previous = parseDeck({
+      ...JSON.parse(readFileSync(cloneFixturePath, "utf-8")),
+      theme: "observatory",
+      title: "Harbor Forecast pilot review",
+    })
+
+    try {
+      writeDeckFile(tempDir, "2026-08-24", previous)
+
+      const created = createWeekFromPrevious(tempDir, "2026-08-31")
+
+      expect(created.theme).toBe("observatory")
+      expect(created.title).toBe("Harbor Forecast pilot review")
+      expect(readDeckFile(tempDir, "2026-08-31")).toEqual(created)
+      expect(created.pages.every((page) => page.title === "")).toBe(true)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
   it("writes a week file that reloads with the same content and hide flag", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-"))
     const sourceWeek = parseDeck({

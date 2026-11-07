@@ -73,6 +73,7 @@ function renderTrend(
     <StageSlide
       page={page}
       context={{
+        theme: "default",
         documentId: DOCUMENT_ID,
         frameLabel,
         hidden: false,

@@ -1,22 +1,9 @@
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
-import { render } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import type { TrendTargetPage } from "@/lib/deck"
-
-// 投影片 SVG 以字面色碼繪製（html-to-image 不帶 var()），須與 stage token 保持一致
-function cssToken(stylesheet: string, token: string): string {
-  const css = readFileSync(
-    resolve(import.meta.dirname, "../../src/styles", stylesheet),
-    "utf8"
-  )
-  const match = new RegExp(`--${token}:\\s*(#[0-9a-fA-F]+)`).exec(css)
-  if (!match) throw new Error(`Missing --${token} in ${stylesheet}`)
-  return match[1].toLowerCase()
-}
+import { createStagePageContext } from "@/lib/stage-page-context"
+import type { DeckTheme, TrendTargetPage } from "@/lib/deck"
 
 const page: TrendTargetPage = {
   id: "p01",
@@ -42,42 +29,41 @@ const page: TrendTargetPage = {
   measurementContext: "p95 exports.",
 }
 
-describe("Trend & Target SVG ink", () => {
-  it.each([
-    { mark: "grid", attribute: "stroke", sheet: "stage.css", token: "line" },
-    { mark: "axis", attribute: "fill", sheet: "stage.css", token: "mute" },
-    { mark: "line", attribute: "stroke", sheet: "stage.css", token: "blue" },
-    { mark: "point", attribute: "fill", sheet: "stage.css", token: "blue" },
-    { mark: "point", attribute: "stroke", sheet: "stage.css", token: "paper" },
-    {
-      mark: "target",
-      attribute: "stroke",
-      sheet: "editorial-layouts.css",
-      token: "warn-ink",
-    },
-    // 缺測標記與目標線分色，目標貼近 y 軸下限時 × 疊在虛線上也不會被讀成「等於目標」
-    { mark: "missing", attribute: "fill", sheet: "stage.css", token: "mute" },
-  ])(
-    "paints the $mark $attribute with --$token",
-    ({ mark, attribute, sheet, token }) => {
-      const { container } = render(
-        <StageSlide
-          page={page}
-          context={{
-            documentId: "2026-07-20",
-            frameLabel: "2026-07-20",
-            hidden: false,
-            position: null,
-            showPageNumber: false,
-          }}
-        />
-      )
+describe("Trend & Target theme ink", () => {
+  const style = document.createElement("style")
+  afterEach(() => style.remove())
 
-      const element = container.querySelector(`svg .editorial-trend-${mark}`)
+  it("resolves Stage colour roles into capture-safe SVG attributes when the theme changes", () => {
+    // jsdom 不繼承 custom properties；直接提供繪圖元素可讀的瀏覽器邊界值。
+    style.textContent =
+      "div { --line: #d0d7de; --mute: #5c5c5c; --accent: #2e75b6; --warn-ink: #8a5508; --paper: #ffffff; }"
+    document.head.append(style)
+    const slide = (theme: DeckTheme) => (
+      <StageSlide
+        page={page}
+        context={createStagePageContext(
+          "harbor",
+          { theme, pages: [page] },
+          page.id
+        )}
+      />
+    )
+    const { rerender } = render(slide("default"))
+    const chart = screen.getByRole("img")
+    expect(chart.querySelector("path")).toHaveAttribute("stroke", "#2e75b6")
+    expect(chart.querySelector("circle")).toHaveAttribute("fill", "#2e75b6")
+    expect(chart.querySelector("circle")).toHaveAttribute("stroke", "#ffffff")
 
-      expect(element?.getAttribute(attribute)?.toLowerCase()).toBe(
-        cssToken(sheet, token)
-      )
-    }
-  )
+    style.textContent =
+      "div { --line: #d6dee4; --mute: #5a6e7e; --accent: #287b78; --warn-ink: #8a5508; --paper: #ffffff; }"
+    rerender(slide("observatory"))
+    expect(chart.querySelector("path")).toHaveAttribute("stroke", "#287b78")
+    expect(chart.querySelector("circle")).toHaveAttribute("fill", "#287b78")
+    expect(chart.querySelector("line")).toHaveAttribute("stroke", "#d6dee4")
+    expect(chart.querySelector("text")).toHaveAttribute("fill", "#5a6e7e")
+    expect(screen.getByLabelText("No observation")).toHaveAttribute(
+      "fill",
+      "#5a6e7e"
+    )
+  })
 })

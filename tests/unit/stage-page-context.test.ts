@@ -67,6 +67,21 @@ function weekDocument() {
 }
 
 describe("createStagePageContext", () => {
+  it("carries effective theme and Deck Title as facts without changing persisted defaults", () => {
+    const deck = weekDocument()
+    expect(createStagePageContext("harbor", deck, "p01")).toMatchObject({
+      theme: "default",
+    })
+    expect(deck).not.toHaveProperty("theme")
+    expect(
+      createStagePageContext(
+        "harbor",
+        { ...deck, theme: "observatory", title: "Harbor Forecast" },
+        "p01"
+      )
+    ).toMatchObject({ theme: "observatory", deckTitle: "Harbor Forecast" })
+  })
+
   it("builds the frame label from the deck period", () => {
     expect(
       createStagePageContext("2026-08-24", weekDocument(), "p01").frameLabel

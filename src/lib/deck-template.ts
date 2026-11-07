@@ -149,6 +149,8 @@ export function createDeckFromTemplate(
   // Editorial 頁碼回到預設顯示，不沿用範本的開關，否則從隱藏頁碼的範本建立會改變既有輸出
   return {
     ...(options.period ? { period: options.period } : {}),
+    ...(template.theme !== undefined ? { theme: template.theme } : {}),
+    ...(template.title !== undefined ? { title: template.title } : {}),
     pages: template.pages.map(clearPage),
   }
 }

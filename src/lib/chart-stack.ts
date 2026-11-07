@@ -13,23 +13,15 @@ export type ChartCategoryStack = {
   bars: ChartBarSegment[]
 }
 
-const DEFAULT_SERIES_COLORS = [
-  "#2e75b6",
-  "#7eb0d6",
-  "#c5d9ed",
-  "#1f5a8f",
-  "#5c5c5c",
-]
+const CHART_SERIES_ROLE_COUNT = 5
 
-function resolveSeriesColor(
+export function resolveSeriesColor(
   color: string | undefined,
   seriesIndex: number
 ): string {
-  if (color && color.trim() !== "") {
-    return color
-  }
-
-  return DEFAULT_SERIES_COLORS[seriesIndex % DEFAULT_SERIES_COLORS.length]
+  return color && color.trim() !== ""
+    ? color
+    : `var(--chart-${(seriesIndex % CHART_SERIES_ROLE_COUNT) + 1})`
 }
 
 function roundPercent(value: number): number {

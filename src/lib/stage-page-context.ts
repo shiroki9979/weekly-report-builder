@@ -4,6 +4,7 @@ import {
   isSupportedStagePage,
   periodLabel,
   type Deck,
+  type DeckTheme,
   type Page,
 } from "./deck.ts"
 
@@ -12,6 +13,8 @@ export type PagePosition = { index: number; total: number }
 // documentId 與顯示文字分開傳；HTML Page 靠它組資源路徑，不可由 Frame Label 反推
 export type StagePageContext = {
   documentId: string
+  theme: DeckTheme
+  deckTitle?: string
   frameLabel: string | null
   hidden: boolean
   position: PagePosition | null
@@ -28,6 +31,8 @@ export function createStagePageContext(
 
   return {
     documentId,
+    theme: deck.theme ?? "default",
+    ...(deck.title ? { deckTitle: deck.title } : {}),
     frameLabel: deck.period ? periodLabel(deck.period) : null,
     hidden: page.hidden === true,
     position: getPagePosition(deck.pages, pageId),

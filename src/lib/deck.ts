@@ -245,7 +245,11 @@ export type DeckPeriod = {
   end: string
 }
 
+export type DeckTheme = "default" | "observatory"
+
 export type Deck = {
+  theme?: DeckTheme
+  title?: string
   period?: DeckPeriod
   showPageNumbers?: boolean
   pages: Page[]
@@ -1156,9 +1160,16 @@ export function parseDeck(value: unknown): Deck {
       : undefined
 
   const period = parsePeriod(value)
+  const theme = value.theme
+  if (theme !== undefined && theme !== "default" && theme !== "observatory") {
+    throw new Error("Invalid deck: theme must be default or observatory")
+  }
+  const title = typeof value.title === "string" ? value.title.trim() : undefined
 
   return {
     ...(period ? { period } : {}),
+    ...(theme !== undefined ? { theme } : {}),
+    ...(title ? { title } : {}),
     ...(showPageNumbers !== undefined ? { showPageNumbers } : {}),
     pages: parsedPages,
   }

@@ -39,6 +39,26 @@ describe("browserCaptureAdapter", () => {
     vi.restoreAllMocks()
   })
 
+  it("mounts the Deck Theme on the canonical capture root", async () => {
+    let theme: string | null = null
+    vi.mocked(captureStageToPng).mockImplementationOnce(async (element) => {
+      theme = element.getAttribute("data-theme")
+      return new Blob(["png"], { type: "image/png" })
+    })
+    const prepared = await browserCaptureAdapter.prepare(
+      "harbor",
+      { ...week, theme: "observatory" },
+      page
+    )
+    if (isHtmlLoadFailure(prepared)) throw new Error(prepared.message)
+    try {
+      await prepared.capture()
+    } finally {
+      prepared.dispose()
+    }
+    expect(theme).toBe("observatory")
+  })
+
   it("mounts a Structured Layout, captures its canonical root, and removes the host on dispose", async () => {
     let captured: { isCanonicalRoot: boolean; text: string } | undefined
     vi.mocked(captureStageToPng).mockImplementationOnce(async (element) => {

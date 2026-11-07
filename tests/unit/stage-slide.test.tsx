@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
+import type { StagePageContext } from "@/lib/stage-page-context"
 import { StageSlide } from "@/components/stage/stage-slide"
 import {
   parseDeck,
@@ -11,7 +12,8 @@ import {
   type NextActionsPage,
 } from "@/lib/deck"
 
-const weekContext = {
+const weekContext: StagePageContext = {
+  theme: "default",
   documentId: "2026-08-24",
   frameLabel: "2026-08-24 — 2026-08-28",
   hidden: false,
@@ -63,6 +65,7 @@ describe("StageSlide", () => {
         page={page}
         context={{
           ...weekContext,
+          theme: "default",
           documentId: "2026-08-31",
           frameLabel: "Label that is not an id",
         }}

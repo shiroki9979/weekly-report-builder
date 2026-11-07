@@ -210,6 +210,7 @@ describe("Trend & Target cadence", () => {
         <StageSlide
           page={monthly}
           context={{
+            theme: "default",
             documentId: "q1-review",
             frameLabel: null,
             hidden: false,

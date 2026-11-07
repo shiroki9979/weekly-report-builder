@@ -6,7 +6,7 @@ import {
   isHtmlPage,
   isTwoColumnPage,
 } from "@/lib/deck"
-import type { FlowStepVariant, Panel, Deck } from "@/lib/deck"
+import type { FlowStepVariant, Panel, Deck, DeckTheme } from "@/lib/deck"
 
 const updateTwoColumnPage = typedPageUpdater(
   isTwoColumnPage,
@@ -100,6 +100,14 @@ export function setPageHidden(
     ...page,
     hidden: hidden ? true : undefined,
   }))
+}
+
+export function setDeckTheme(deck: Deck, theme: DeckTheme): Deck {
+  return { ...deck, theme }
+}
+
+export function setDeckTitle(deck: Deck, title: string): Deck {
+  return { ...deck, title: title === "" ? undefined : title }
 }
 
 export function setDeckShowPageNumbers(

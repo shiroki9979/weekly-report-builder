@@ -1,7 +1,7 @@
 # Deck JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-10-03
+最後更新：2026-11-07
 
 ---
 
@@ -19,11 +19,13 @@ decks/<id>/<htmlFile>
 
 ## Deck（根物件）
 
-| 欄位              | 型別      | 必填 | 說明                                                                                           |
-| ----------------- | --------- | ---- | ---------------------------------------------------------------------------------------------- |
-| `period`          | `object`  | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
-| `pages`           | `Page[]`  | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean` | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
+| 欄位              | 型別                         | 必填 | 說明                                                                                           |
+| ----------------- | ---------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
+| `theme`           | `"default" \| "observatory"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
+| `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 頁尾                      |
+| `period`          | `object`                     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
+| `pages`           | `Page[]`                     | 是   | 至少一頁                                                                                       |
+| `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -33,6 +35,16 @@ decks/<id>/<htmlFile>
   "pages": []
 }
 ```
+
+### Deck Theme 與 Deck Title
+
+Workshop 的 Theme 與 Deck Title 控制項修改目前的 Editing Session。Save 保留原有表示：省略的 `theme` 不會補成 `default`，明確寫入的 `default` 仍保留。Deck Template 與 Weekly Series 均沿用主題與 Deck Title；單頁 `title` 仍是投影片主標，與 Deck Title 分開。
+
+`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。
+
+Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
+
+Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
 
 ## Page（discriminated union）
 
