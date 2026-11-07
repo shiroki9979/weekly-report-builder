@@ -1403,7 +1403,10 @@ export function parseDeck(value: unknown): Deck {
   if (theme !== undefined && theme !== "default" && theme !== "observatory") {
     throw new Error("Invalid deck: theme must be default or observatory")
   }
-  const title = typeof value.title === "string" ? value.title.trim() : undefined
+  const title =
+    value.title === undefined
+      ? undefined
+      : readString(value.title, "title").trim()
 
   return {
     ...(period ? { period } : {}),

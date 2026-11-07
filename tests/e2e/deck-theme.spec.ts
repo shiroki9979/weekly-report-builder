@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
@@ -10,6 +10,7 @@ import {
   type DeckTheme,
 } from "../../src/lib/deck"
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
+import { fitAtCaptureSize, copyPng } from "./stage-capture"
 
 const demo = parseDeck(
   JSON.parse(
@@ -94,47 +95,6 @@ function themeFixture(theme: DeckTheme): Deck {
   }
 }
 
-async function setCaptureSize(page: Page) {
-  const stage = page.getByTestId("stage-frame")
-  await expect(stage.locator(".stage-slide-host")).toBeVisible()
-  await stage.evaluate((element) => {
-    element.style.width = "1280px"
-    element.style.maxWidth = "1280px"
-    element.style.height = "720px"
-  })
-  await expect(async () => {
-    const result = await stage.evaluate(async (element) => {
-      const moduleUrl = "/src/lib/overflow-measurement.ts"
-      const { measureStageOverflow } = await import(moduleUrl)
-      return measureStageOverflow(element)
-    })
-    expect(result).toEqual({ status: "fit" })
-    const dimensions = await stage.boundingBox()
-    expect(dimensions?.width).toBe(1280)
-    expect(dimensions?.height).toBe(720)
-  }).toPass()
-}
-
-async function capturePng(page: Page, name: string) {
-  await page.evaluate(() =>
-    navigator.clipboard.writeText("Pending Stage capture")
-  )
-  await page.getByRole("button", { name: "Copy to clipboard" }).click()
-  await expect(
-    page.getByRole("status").filter({ hasText: "Copied" })
-  ).toBeVisible()
-  const png = await page.evaluate(async () => {
-    const item = (await navigator.clipboard.read())[0]
-    return Array.from(
-      new Uint8Array(await (await item.getType("image/png")).arrayBuffer())
-    )
-  })
-  const bytes = Buffer.from(png)
-  expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
-  expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([2560, 1440])
-  writeFileSync(test.info().outputPath(name), bytes)
-}
-
 for (const theme of ["default", "observatory"] as const) {
   test(`renders six existing layouts at capture size with ${theme} roles`, async ({
     page,
@@ -152,8 +112,8 @@ for (const theme of ["default", "observatory"] as const) {
         stage.getByRole("heading", { name: entry.title, exact: true })
       ).toBeVisible()
       await expect(stage).toHaveAttribute("data-theme", theme)
-      await setCaptureSize(page)
-      await capturePng(page, `${theme}-${entry.layout}-${index}.png`)
+      await fitAtCaptureSize(page)
+      await copyPng(page, `${theme}-${entry.layout}-${index}.png`)
       if (index === 0) {
         const ratios = await stage
           .locator(".editorial-status")
@@ -252,7 +212,7 @@ for (const theme of ["default", "observatory"] as const) {
         ).ok()
       ).toBe(true)
       await page.goto("/?deck=footer-review")
-      await setCaptureSize(page)
+      await fitAtCaptureSize(page)
       heights.push(
         await page
           .getByTestId("stage-frame")
@@ -290,7 +250,7 @@ for (const theme of ["default", "observatory"] as const) {
       ).ok()
     ).toBe(true)
     await page.goto("/?deck=font-review")
-    await setCaptureSize(page)
+    await fitAtCaptureSize(page)
     const faces = await page
       .getByTestId("stage-frame")
       .evaluate(async (element) => {
@@ -373,7 +333,7 @@ test("Trend PNG contains the Observatory series colour inside the SVG plot", asy
     ).ok()
   ).toBe(true)
   await page.goto("/?deck=trend-theme")
-  await setCaptureSize(page)
+  await fitAtCaptureSize(page)
   const sample = await page
     .getByTestId("stage-frame")
     .evaluate(async (element) => {
