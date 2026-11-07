@@ -1,0 +1,402 @@
+/* PROTOTYPE — Variant B「Observatory」 */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("./fonts/InstrumentSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("./fonts/InstrumentSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./fonts/IBMPlexMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./fonts/IBMPlexMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+.stage-root[data-variant="B"] {
+  --paper: #ffffff;
+  --ink: #20384b;
+  --mute: #5a6e7e;
+  --line: #d6dee4;
+  --ink-wash: #f1f4f7;
+  --accent: #287b78;
+  --accent-deep: #1f5f5c;
+  --accent-soft: #b9d9d6;
+  --accent-wash: #e7f2f1;
+  --ok-ink: #1f7a52;
+  --warn-ink: #8a5508;
+  --blue: var(--accent);
+  --blue-deep: var(--accent-deep);
+  --blue-soft: var(--accent-soft);
+  --blue-wash: var(--accent-wash);
+  --mono: "IBM Plex Mono", "Noto Sans TC", monospace;
+  font-family:
+    "Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    sans-serif;
+}
+
+.vb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 44px 64px 60px;
+  display: flex;
+  flex-direction: column;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+:where(.vb) h1,
+:where(.vb) p,
+:where(.vb) ul,
+:where(.vb) dl,
+:where(.vb) dd {
+  margin: 0;
+}
+
+.vb-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.vb-index {
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 14px;
+}
+
+/* 刻度：每 40px 一道 6px 的細線，底下一條基線 */
+.vb-ruler {
+  flex: none;
+  height: 8px;
+  margin-top: 12px;
+  background:
+    repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 40px)
+      top / 100% 6px no-repeat,
+    linear-gradient(var(--line), var(--line)) bottom / 100% 1px no-repeat;
+}
+
+.vb-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-top: 22px;
+  max-width: 1040px;
+}
+
+.vb-content {
+  flex: 1;
+  min-height: 0;
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vb-cols {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0 40px;
+}
+
+.vb-col {
+  grid-row: 1;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.vb-col.is-chosen {
+  border-top: 3px solid var(--accent);
+  padding-top: 12px;
+}
+
+.vb-divider {
+  background: var(--line);
+}
+
+.vb-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.vb-col.is-chosen .vb-label {
+  color: var(--accent);
+}
+
+.vb-tag {
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 1px 6px;
+}
+
+.vb-points {
+  list-style: none;
+  padding: 0;
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+  font-size: 19px;
+}
+
+.vb-points li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+}
+
+.vb-points i,
+.vb-table i {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 12px;
+  color: var(--mute);
+  padding-top: 6px;
+}
+
+.vb-tradeoff {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px 20px;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
+}
+
+.vb-tradeoff dt {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 4px;
+}
+
+.vb-boundary {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.vb-boundary b {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+  padding-top: 3px;
+}
+
+.vb-footer {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--mute);
+}
+
+.vb-footer .vb-pg {
+  color: var(--accent);
+}
+
+.vb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.vb-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 400;
+  text-align: left;
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.vb-table th.is-ref {
+  text-align: right;
+  padding-right: 0;
+}
+
+.vb-table td {
+  padding: 13px 16px 13px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.vb-table td:first-child {
+  font-weight: 700;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+}
+
+.vb-table td:first-child i {
+  padding-top: 5px;
+}
+
+.vb-table td.is-ref {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 0;
+}
+
+.vb-cover .vb-title {
+  font-size: 52px;
+  margin-top: 110px;
+  max-width: 1000px;
+}
+
+.vb-sub {
+  margin-top: 20px;
+  font-size: 20px;
+  color: var(--mute);
+  max-width: 860px;
+}
+
+.vb-meta {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 0.6fr;
+  border-top: 1px solid var(--ink);
+}
+
+.vb-meta-cell {
+  padding: 14px 20px 14px 0;
+  border-right: 1px solid var(--line);
+  font-size: 16px;
+}
+
+.vb-meta-cell + .vb-meta-cell {
+  padding-left: 20px;
+}
+
+.vb-meta-cell:last-child {
+  border-right: 0;
+  font-family: var(--mono);
+}
+
+.vb-meta-cell small {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 6px;
+}
+
+.vb-index-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 40px;
+}
+
+.vb-index-list li {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 19px;
+}
+
+.vb-index-list b {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 400;
+  padding-top: 4px;
+}
+
+.vb-contact {
+  margin-top: 28px;
+  font-family: var(--mono);
+  font-size: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ink);
+}
+
+/* 既有 Overview 套 B：等寬 eyebrow、刻度線取代分隔線、lead 以細框加上緣粗線取代色塊 */
+.stage-root[data-variant="B"] .editorial-eyebrow,
+.stage-root[data-variant="B"] .editorial-period,
+.stage-root[data-variant="B"] .editorial-workstream,
+.stage-root[data-variant="B"] .editorial-status,
+.stage-root[data-variant="B"] .editorial-page-number,
+.stage-root[data-variant="B"] .proto-deck-title {
+  font-family: var(--mono);
+}
+
+.stage-root[data-variant="B"] .proto-deck-title {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  bottom: 22px;
+}
+
+.stage-root[data-variant="B"] .editorial-rule {
+  height: 8px;
+  border: 0;
+  background:
+    repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 40px)
+      top / 100% 6px no-repeat,
+    linear-gradient(var(--line), var(--line)) bottom / 100% 1px no-repeat;
+}
+
+.stage-root[data-variant="B"] .editorial-headline {
+  color: var(--ink);
+}
+
+.stage-root[data-variant="B"] .editorial-lead {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+}
+
+.stage-root[data-variant="B"] .editorial-lead .editorial-figure {
+  color: var(--accent);
+}

@@ -1,0 +1,294 @@
+/* PROTOTYPE — Variant A「Rule」 */
+.stage-root[data-variant="A"] {
+  --paper: #ffffff;
+  --ink: #20384b;
+  --mute: #5a6e7e;
+  --line: #d6dee4;
+  --ink-wash: #f1f4f7;
+  --accent: #287b78;
+  --accent-deep: #1f5f5c;
+  --accent-soft: #b9d9d6;
+  --accent-wash: #e7f2f1;
+  --ok-ink: #1f7a52;
+  --warn-ink: #8a5508;
+  --blue: var(--accent);
+  --blue-deep: var(--accent-deep);
+  --blue-soft: var(--accent-soft);
+  --blue-wash: var(--accent-wash);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.va {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 52px 64px 64px;
+  display: flex;
+  flex-direction: column;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.va::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 56px;
+  width: 6px;
+  height: 72px;
+  background: var(--accent);
+}
+
+:where(.va) h1,
+:where(.va) p,
+:where(.va) ul {
+  margin: 0;
+}
+
+.va-eyebrow {
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.va-title {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.28;
+  margin-top: 8px;
+  max-width: 1080px;
+}
+
+.va-content {
+  flex: 1;
+  min-height: 0;
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.va-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.va-card {
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.va-card.is-chosen {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.va-pane-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 10px;
+}
+
+.va-card.is-chosen .va-pane-title {
+  color: var(--accent);
+}
+
+.va-points {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.va-points li {
+  position: relative;
+  padding-left: 24px;
+}
+
+.va-points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.va-tradeoff {
+  border-left: 4px solid var(--accent);
+  background: var(--ink-wash);
+  padding: 12px 18px;
+  font-size: 16px;
+}
+
+.va-tradeoff b {
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.va-closing-line {
+  margin-top: auto;
+}
+
+.va-boundary {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  font-size: 15px;
+  color: var(--mute);
+}
+
+.va-boundary b {
+  color: var(--ink);
+}
+
+.va-footer {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--mute);
+}
+
+.va-footer .va-pg {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.va-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.va-table th {
+  text-align: left;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 0 16px 10px 0;
+  border-bottom: 2px solid var(--ink);
+}
+
+.va-table th:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+.va-table td {
+  padding: 12px 16px 12px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.va-table td.is-ref {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 0;
+}
+
+.va-cover {
+  justify-content: center;
+}
+
+.va-cover::before {
+  top: 50%;
+  height: 120px;
+  transform: translateY(-50%);
+}
+
+.va-cover .va-title {
+  font-size: 48px;
+  max-width: 1000px;
+  margin-top: 14px;
+}
+
+.va-sub {
+  margin-top: 18px;
+  font-size: 21px;
+  color: var(--mute);
+  max-width: 900px;
+}
+
+.va-who {
+  margin-top: 48px;
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+}
+
+.va-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.va-meta {
+  font-size: 16px;
+  color: var(--mute);
+}
+
+.va-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.va-chip {
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 17px;
+}
+
+.va-chip b {
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+/* 既有 Overview 套 A：accent bar、去分隔線、ink 標題 */
+.stage-root[data-variant="A"] .editorial-page {
+  position: relative;
+}
+
+.stage-root[data-variant="A"] .editorial-page::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 56px;
+  width: 6px;
+  height: 72px;
+  background: var(--accent);
+}
+
+.stage-root[data-variant="A"] .editorial-rule {
+  display: none;
+}
+
+.stage-root[data-variant="A"] .editorial-headline {
+  color: var(--ink);
+  margin-bottom: 30px;
+}
+
+.stage-root[data-variant="A"] .editorial-page-number {
+  color: var(--accent);
+  font-weight: 700;
+}

@@ -1,0 +1,103 @@
+/* PROTOTYPE — 宿主外觀：把 1280 × 720 的 Stage 縮放進視窗，切換列與被評估的設計明顯區分 */
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #3b3f45;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.proto-viewport {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px 96px;
+}
+
+.proto-scale {
+  width: 1280px;
+  height: 720px;
+  transform-origin: top left;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.proto-scale .stage-root {
+  width: 1280px;
+  height: 720px;
+  aspect-ratio: auto;
+  position: relative;
+}
+
+.proto-scale .stage-root.is-overflowing {
+  outline: 4px solid #e5484d;
+  outline-offset: -4px;
+}
+
+/* Overview 沒有 Deck Title 欄位，原型用覆蓋層示意頁尾左側 */
+.proto-deck-title {
+  position: absolute;
+  left: 64px;
+  bottom: 24px;
+  font-size: 13px;
+  color: var(--mute);
+  pointer-events: none;
+}
+
+.proto-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.proto-bar button {
+  border: 1px solid #555;
+  background: #222;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.proto-bar button.is-active {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+
+.proto-bar .proto-sep {
+  width: 1px;
+  height: 18px;
+  background: #555;
+}
+
+.proto-bar .proto-label {
+  min-width: 150px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.proto-bar .proto-fit {
+  color: #7ad39a;
+}
+
+.proto-bar .proto-fit.is-bad {
+  color: #ff7b7b;
+}
