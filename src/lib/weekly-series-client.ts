@@ -1,9 +1,14 @@
 import { parseDeck, type Deck } from "@/lib/deck"
 
 // 週報流程的建新週 API；週次規則由 dev server 端的 weekly-series 判斷
-export async function createWeekFromPrevious(monday: string): Promise<Deck> {
+export async function createWeekFromPrevious(
+  monday: string,
+  selectedDeckId?: string
+): Promise<Deck> {
   const response = await fetch(`/api/decks/${monday}`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ templateId: selectedDeckId }),
   })
 
   if (!response.ok) {

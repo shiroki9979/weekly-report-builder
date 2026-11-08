@@ -3,7 +3,7 @@
 Status: Approved for implementation (grill consensus 2026-11-07, prototype verdict 2026-11-07, seams and ticket breakdown confirmed 2026-11-07). Published as [specification #57](https://github.com/shiroki9979/weekly-report-builder/issues/57) with a prefactor ticket [#62](https://github.com/shiroki9979/weekly-report-builder/issues/62) and four sequential implementation tickets [#58](https://github.com/shiroki9979/weekly-report-builder/issues/58) → [#59](https://github.com/shiroki9979/weekly-report-builder/issues/59) → [#60](https://github.com/shiroki9979/weekly-report-builder/issues/60) → [#61](https://github.com/shiroki9979/weekly-report-builder/issues/61); all carry `ready-for-agent`.
 
 Created: 2026-11-07
-Last updated: 2026-11-08 (Demo Deck Set coverage, #64)
+Last updated: 2026-11-08 (Demo Deck Set coverage, #64; naming and first-week workflow consensus)
 
 Upstream: [Stage design philosophy](../explanation/stage-design-philosophy.md), [Stage theme prototype](../explanation/stage-theme-prototype.md), [ADR-0002](../adr/0002-deck-theme.md). Domain terms follow [GLOSSARY.md](../../GLOSSARY.md).
 
@@ -199,7 +199,16 @@ No change to the Export gate contract. The capture library embeds the `@font-fac
 
 ### Demo Deck Set
 
-The Demo Deck Set ships one Deck per Deck Theme, and each Deck shows every Structured Layout and an HTML Page (#64). `2026-01-05` stays the Weekly Series seed under `default` with twelve pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, two Trend & Target pages (at-most; at-least ending in a Missing week), Two-column (chart), Full-width Panel (checklist), HTML Page, Next Actions in Columns and in Rows, and Closing. `harbor-forecast` is the fictional `observatory` pilot review (Deck Title set) with ten pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, Trend & Target, Two-column (flow), Full-width Panel (table), an HTML Page that only references colour roles and the `--blue*` aliases, Next Actions, and Closing. Together the two Decks show table, chart, flow, and checklist panels once each. Seeding behaviour is unchanged.
+The Demo Deck Set ships one Deck per Deck Theme, and each Deck shows every Structured Layout and an HTML Page (#64). `demo-default` (Deck Title `Demo · Default`) demonstrates a weekly report under `default` with twelve pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, two Trend & Target pages (at-most; at-least ending in a Missing week), Two-column (chart), Full-width Panel (checklist), HTML Page, Next Actions in Columns and in Rows, and Closing. `demo-observatory` (Deck Title `Demo · Observatory`) is the fictional `observatory` pilot review with ten pages: Cover, Overview, Evidence-backed Decision, Side-by-side Comparison, Trend & Target, Two-column (flow), Full-width Panel (table), an HTML Page that only references colour roles and the `--blue*` aliases, Next Actions, and Closing. Together the two Decks show table, chart, flow, and checklist panels once each.
+
+Naming and first-week workflow decisions (2026-11-08):
+
+- JSON files and HTML resource folders use `demo-default` and `demo-observatory`. Page IDs, slide content, Deck Periods, and layouts stay unchanged.
+- With no Weekly Series Deck in the store, **Create week** uses the currently selected, saved Deck as its template. The author enters a Monday manually; the new Deck uses that date as its ID and a Monday-to-Friday Deck Period. Existing Deck Template rules preserve the theme and structure, clear authored copy, and copy referenced HTML files unchanged.
+- Once a Weekly Series Deck exists, **Create week** always uses the latest one, regardless of the current selection.
+- Startup honours a Deck specified in the URL, then prefers the latest Weekly Series Deck, then the first ID in ascending order. A fresh install therefore opens `demo-default`.
+- Seeding behaviour is unchanged. Existing local `decks/` stores are not renamed, merged, or migrated; only new stores receive the renamed Demo Deck Set.
+- Verification covers first and subsequent week creation, startup selection, HTML resources, theme/layout coverage, and full PNG export of both Demo Decks.
 
 ## Testing Decisions
 

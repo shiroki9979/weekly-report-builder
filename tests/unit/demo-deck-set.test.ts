@@ -23,8 +23,10 @@ import { readDemoDecks } from "../demo-decks"
 const demoDir = resolve(import.meta.dirname, "../../demo")
 const demoDecks = readDemoDecks(demoDir)
 
-const week = demoDecks.find((entry) => entry.id === "2026-01-05")!.deck
-const harbor = demoDecks.find((entry) => entry.id === "harbor-forecast")!.deck
+const week = demoDecks.find((entry) => !entry.deck.theme)!.deck
+const harbor = demoDecks.find(
+  (entry) => entry.deck.theme === "observatory"
+)!.deck
 
 // Record 讓新增 layout 時型別檢查強制把它加進示範涵蓋
 const EVERY_LAYOUT: Record<SlideLayout, true> = {
@@ -51,6 +53,14 @@ function measuredValues(page: TrendTargetPage): number[] {
 }
 
 describe("Demo Deck Set", () => {
+  it("names both Decks by their theme", () => {
+    expect(
+      demoDecks.map(({ id, deck }) => ({ id, title: deck.title }))
+    ).toEqual([
+      { id: "demo-default", title: "Demo · Default" },
+      { id: "demo-observatory", title: "Demo · Observatory" },
+    ])
+  })
   it("ships exactly one Deck per Deck Theme", () => {
     const themes = demoDecks.map((entry) => entry.deck.theme ?? "default")
 
@@ -116,7 +126,7 @@ describe("Demo Deck Set", () => {
     }
   })
 
-  describe("Weekly Series seed", () => {
+  describe("Default weekly report", () => {
     it("keeps the Monday-to-Friday Deck Period and the default theme", () => {
       expect(week.theme).toBeUndefined()
       expect(week.period).toEqual({ start: "2026-01-05", end: "2026-01-09" })
@@ -181,9 +191,8 @@ describe("Demo Deck Set", () => {
   })
 
   describe("Observatory pilot review", () => {
-    it("keeps the Harbor Deck Title and theme", () => {
+    it("keeps the Observatory theme", () => {
       expect(harbor.theme).toBe("observatory")
-      expect(harbor.title).toBe("Harbor Forecast · Pilot review")
     })
 
     it("ends its Trend on the Deck Period's Monday, still above the target", () => {

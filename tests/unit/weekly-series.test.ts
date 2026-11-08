@@ -32,11 +32,11 @@ describe("weekly-series", () => {
     expect(nextMondayAfter("2026-08-24")).toBe("2026-08-31")
   })
 
-  it("opens the latest week by default and falls back to the last deck", () => {
+  it("opens the latest week by default and falls back to the first deck", () => {
     expect(defaultDeckId(["2026-08-17", "2026-08-24", "q4-roadmap"])).toBe(
       "2026-08-24"
     )
-    expect(defaultDeckId(["q3-review", "q4-roadmap"])).toBe("q4-roadmap")
+    expect(defaultDeckId(["q3-review", "q4-roadmap"])).toBe("q3-review")
     expect(defaultDeckId([])).toBeUndefined()
   })
 

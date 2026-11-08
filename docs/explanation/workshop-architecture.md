@@ -28,7 +28,7 @@
 - **`decks/`**（ignored）：本機 authoring store。真實週報只活在這裡。Git 忽略整個目錄，並從目前 index 移除既有 tracked paths；這一步**不重寫 Git history**，也不會刪除舊 commits 內的物件。
 - **Runtime 契約不變**：瀏覽器走 `/decks/...` URL；save／clone API、HTML 相對路徑與 `DECKS_DIR` 覆寫繼續指向這個 runtime store。`DECKS_DIR` 只給開發伺服器與測試隔離，bootstrap 不讀它。
 
-Fresh checkout 靠 install bootstrap 取得可開啟的 `decks/`。Workshop 透過 Deck store 列出可用 Deck，再由 Editing Session 開啟最新一週（沒有週次時開啟最後一份 Deck），因此 demo 日期可以演進，程式不必寫死某個週一。若 `decks/` 已存在但沒有 Deck，那是有意的空 store：bootstrap 與 `build` 都不會補檔或 seed；操作者須自行移除空目錄後再 `pnpm seed:decks`。`build` 只複製既有 `decks/`，缺少該目錄時失敗並提示手動 seed。
+Fresh checkout 靠 install bootstrap 取得可開啟的 `decks/`。Workshop 透過 Deck store 列出可用 Deck，再由 Editing Session 優先開啟網址指定的 Deck，其次最新一週，最後才是 ID 排序第一份 Deck。新安裝會開啟 `demo-default`；尚無日期 Deck 時，可從目前選取的 Deck 建立第一週，之後沿用最新週報。程式不需寫死示範名稱或週一日期。若 `decks/` 已存在但沒有 Deck，那是有意的空 store：bootstrap 與 `build` 都不會補檔或 seed；操作者須自行移除空目錄後再 `pnpm seed:decks`。`build` 只複製既有 `decks/`，缺少該目錄時失敗並提示手動 seed。
 
 ## 資料流
 

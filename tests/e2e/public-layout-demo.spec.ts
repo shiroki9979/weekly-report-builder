@@ -97,9 +97,9 @@ test("fresh public demo opens both directions and both Next Actions compositions
   // 四頁都做真實 PNG 擷取，完整旅程會超過一般 e2e 的 45 秒上限。
   test.slow()
   await page.context().grantPermissions(["clipboard-write", "clipboard-read"])
-  await page.goto("/?deck=2026-01-05")
+  await page.goto("/?deck=demo-default")
   await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
-    "2026-01-05"
+    "demo-default"
   )
   for (const [number, required] of [
     [5, "Exact: 8.04 s > 8 s"],
@@ -155,12 +155,13 @@ test("dated missing history survives next-week trim, append, save, reload, and P
       duplicateKeyWarnings.push(message.text())
     }
   })
-  await page.goto("/?deck=2026-01-05")
+  await page.goto("/?deck=demo-default")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
   await selectPage(page, 5)
   await expect(
     page.getByRole("button", { name: "Add later week" })
   ).toBeDisabled()
+  await page.getByLabel("New week (Monday)").fill("2026-01-12")
   await page.getByRole("button", { name: "Create week" }).click()
   await expect(page.getByRole("combobox", { name: "Deck" })).toContainText(
     "2026-01-12"
@@ -220,7 +221,7 @@ test("dated missing history survives next-week trim, append, save, reload, and P
 test("blocks a Trend page whose text leaves no room for the full-width chart", async ({
   page,
 }) => {
-  await page.goto("/?deck=2026-01-05")
+  await page.goto("/?deck=demo-default")
   await page.getByRole("button", { name: "Edit", exact: true }).click()
   await selectPage(page, 5)
   await page

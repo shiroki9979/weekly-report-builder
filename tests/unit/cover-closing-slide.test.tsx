@@ -59,7 +59,7 @@ describe("Cover and Closing on the Stage", () => {
     const demo = parseDeck(
       JSON.parse(
         readFileSync(
-          resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+          resolve(import.meta.dirname, "../../demo/demo-default.json"),
           "utf8"
         )
       )

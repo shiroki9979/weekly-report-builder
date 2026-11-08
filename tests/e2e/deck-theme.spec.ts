@@ -19,7 +19,7 @@ import { fitAtCaptureSize, copyPng } from "./stage-capture"
 const demo = parseDeck(
   JSON.parse(
     readFileSync(
-      path.resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+      path.resolve(import.meta.dirname, "../../demo/demo-default.json"),
       "utf8"
     )
   )

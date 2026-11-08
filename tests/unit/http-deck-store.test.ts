@@ -32,9 +32,9 @@ describe("HTTP Workshop store", () => {
     expect(await httpWorkshopStore.listDecks()).toEqual([monday])
     expect(await httpWorkshopStore.loadDeck(monday)).toEqual(document)
     await httpWorkshopStore.saveDeck(monday, document)
-    expect(await httpWorkshopStore.createWeekFromPrevious(monday)).toEqual(
-      document
-    )
+    expect(
+      await httpWorkshopStore.createWeekFromPrevious(monday, "my-pilot")
+    ).toEqual(document)
     expect(
       fetch.mock.calls.map(([input, init]) => [
         String(input),
@@ -47,5 +47,8 @@ describe("HTTP Workshop store", () => {
       [`/api/decks/${monday}`, "POST"],
     ])
     expect(fetch.mock.calls[2][1]?.body).toBe(JSON.stringify(document))
+    expect(fetch.mock.calls[3][1]?.body).toBe(
+      JSON.stringify({ templateId: "my-pilot" })
+    )
   })
 })

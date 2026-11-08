@@ -51,7 +51,7 @@ Copy 與 **Download PNGs** 只輸出 Content-complete 且不 overflow 的頁。D
 
 ## Observatory 示範 Deck
 
-首次安裝後在 Deck 選擇器選 **harbor-forecast**，可查看十頁虛構的 Harbor Forecast 試行回顧，涵蓋每一種版型：Cover、Overview、Evidence-backed Decision、Side-by-side Comparison、Trend & Target、Two-column（flow panel）、Full-width Panel 表格、HTML Page（只引用顏色角色與 `--blue*` 別名，因此跟著主題變色）、Next Actions 與 Closing。主題已設為 Observatory，頁尾共用 Deck Title，表格 Reference column 指向資料第三欄。示例來源為 [`demo/harbor-forecast.json`](../../demo/harbor-forecast.json)，可用一般 Preview、Copy 與 Download PNGs 流程驗證。Default 主題下的同一組版型見 **2026-01-05**。
+首次安裝後在 Deck 選擇器選 **demo-observatory**（Deck Title：`Demo · Observatory`），可查看十頁虛構的 Harbor Forecast 試行回顧，涵蓋每一種版型：Cover、Overview、Evidence-backed Decision、Side-by-side Comparison、Trend & Target、Two-column（flow panel）、Full-width Panel 表格、HTML Page（只引用顏色角色與 `--blue*` 別名，因此跟著主題變色）、Next Actions 與 Closing。主題已設為 Observatory，頁尾共用 Deck Title，表格 Reference column 指向資料第三欄。示例來源為 [`demo/demo-observatory.json`](../../demo/demo-observatory.json)，可用一般 Preview、Copy 與 Download PNGs 流程驗證。Default 主題下的同一組版型見 **demo-default**（Deck Title：`Demo · Default`）。
 
 既有 `decks/` 不會因 seed 再執行而被覆寫或混入新示例。
 

@@ -258,7 +258,7 @@ for (const theme of ["default", "observatory"] as const) {
   }) => {
     const demo = JSON.parse(
       readFileSync(
-        path.resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+        path.resolve(import.meta.dirname, "../../demo/demo-default.json"),
         "utf8"
       )
     )

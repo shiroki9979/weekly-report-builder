@@ -13,7 +13,7 @@ import { createDeckFromTemplate } from "@/lib/deck-template"
 function readDemoWeek(): { pages: Page[] } {
   return JSON.parse(
     readFileSync(
-      resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+      resolve(import.meta.dirname, "../../demo/demo-default.json"),
       "utf8"
     )
   )
