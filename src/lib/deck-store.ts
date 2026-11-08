@@ -10,7 +10,7 @@ export type DeckStore = {
 
 // 建新週是週報流程的入口，與 Deck 核心儲存分開宣告；核心不需要知道週次
 export type WeeklySeriesStore = {
-  createWeekFromPrevious(monday: string): Promise<Deck>
+  createWeekFromPrevious(monday: string, selectedDeckId?: string): Promise<Deck>
 }
 
 export type WorkshopStore = DeckStore & WeeklySeriesStore

@@ -1,7 +1,7 @@
 # weekly-report-builder
 
 Created: 2026-08-31
-Last updated: 2026-11-07
+Last updated: 2026-11-08
 
 Personal slide workshop: edit a deck in a form, preview slides at 16:9, export PNGs, and paste them into the team’s shared deck. The weekly report is the built-in workflow; other decks work the same way ([ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)). Solo use only.
 
@@ -32,13 +32,13 @@ Also: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`
 
 `pnpm build` copies the local `decks/` store into `dist/decks/`. It does not seed. If `decks/` is missing, the build fails and tells you to run `pnpm seed:decks`.
 
-Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and hyphens. Weekly reports use their Monday date (`decks/2026-08-24.json`); other decks can use any id (`decks/q4-roadmap.json`). The Workshop lists every deck and opens the latest weekly one; demo Mondays can change and are not a required startup date.
+Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and hyphens. Weekly reports use their Monday date (`decks/2026-08-24.json`); other decks can use any id (`decks/q4-roadmap.json`). The Workshop opens the Deck specified in the URL, otherwise the latest weekly one, otherwise the first ID in ascending order. A fresh install opens `demo-default`.
 
 **Privacy:** `demo/` is tracked, fictional, and public. `decks/` is the ignored runtime authoring store for your real decks. Ignoring `decks/` and dropping it from the current Git index does not rewrite history or delete objects in old commits.
 
 If `decks/` exists but has no decks, remove that empty directory and run `pnpm seed:decks`. The Workshop will not create a first deck for you.
 
-The public fictional Demo Deck Set opens in the Workshop on a fresh install. Select **harbor-forecast** to see the Observatory Cover, Overview, Side-by-side Comparison, Full-width Panel table with a reference column, and Closing. In **2026-01-05**, pages 6–8 show Trend & Target with both target directions and a missing final week; pages 4 and 9 compare identical Next Actions Commitments in Columns and Rows. Page 10 shows longer Rows. See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
+The public fictional Demo Deck Set opens in the Workshop on a fresh install. It ships one Deck per Deck Theme, and each Deck shows every layout: **demo-default** (`Demo · Default`) is the `default` weekly-report demonstration (twelve pages, including Trend & Target in both target directions with a missing final week, Next Actions in Columns and in Rows, a chart and a checklist panel), and **demo-observatory** (`Demo · Observatory`) is the Observatory pilot review (ten pages, including a Full-width Panel table with a reference column, a flow panel, and an HTML Page that follows the theme through colour roles). See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 
@@ -53,7 +53,7 @@ Workshop UI and in-app strings are **English**. Slide copy in `decks/*.json` is 
 
 ## Workflow
 
-1. Open a deck. For the weekly report, create the new week from the latest one (`decks/YYYY-MM-DD.json`); it keeps the previous structure with cleared copy.
+1. Open a deck. With no weekly Deck yet, select a Deck as the template and enter a Monday in **New week (Monday)**. Once weekly Decks exist, **Create week** uses the latest one (`decks/YYYY-MM-DD.json`), regardless of the selected Deck. Both paths keep the template structure and theme with authored copy cleared.
 2. Fill each page. Two-column pages use three left items and a right panel (`chart` / `table` / `flow` / `checklist`). Full-width Panel gives one of the same panel kinds the whole body. Other Structured Layouts include Cover, Closing, Side-by-side Comparison, Overview, Evidence-backed Decision, Next Actions, and Trend & Target — see [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md).
 3. Hide pages you will not paste into the team deck. Draft and Overflowing Pages cannot be copied or batch-exported until they are Content-complete and fit the 1280 × 720 capture Stage.
 4. Review each page both as a spoken slide and as a standalone image: check the conclusion, dated evidence, status, source, and action checkpoints. Export ready pages as PNG or copy the current page to the clipboard.

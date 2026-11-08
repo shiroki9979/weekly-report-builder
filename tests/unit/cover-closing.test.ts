@@ -13,7 +13,7 @@ import { createDeckFromTemplate } from "@/lib/deck-template"
 function readDemoWeek(): { pages: Page[] } {
   return JSON.parse(
     readFileSync(
-      resolve(import.meta.dirname, "../../demo/2026-01-05.json"),
+      resolve(import.meta.dirname, "../../demo/demo-default.json"),
       "utf8"
     )
   )
@@ -32,6 +32,18 @@ const titledCoverAndClosing = parseDeck({
     { id: "last", layout: "closing", title: "Continue", takeaways: [] },
   ],
 })
+
+// 規格（docs/specs/deck-theme-and-observatory-layouts.md Boundary Note 段落）列出的 Editorial Frame 版型；
+// 刻意不用 isEditorialFramePage，避免斷言與受測實作同構
+const EDITORIAL_FRAME_LAYOUTS = [
+  "overview",
+  "evidence-decision",
+  "next-actions",
+  "trend-target",
+  "closing",
+  "side-by-side",
+  "full-width-panel",
+]
 
 function structured(page: Page) {
   if (!isStructuredPage(page)) throw new Error("Expected Structured Page")
@@ -75,14 +87,8 @@ describe("Cover and Closing contracts", () => {
       })),
     })
 
-    const editorial = [
-      "overview",
-      "evidence-decision",
-      "next-actions",
-      "trend-target",
-    ]
     for (const page of deck.pages) {
-      if (editorial.includes(page.layout))
+      if (EDITORIAL_FRAME_LAYOUTS.includes(page.layout))
         expect(page).toHaveProperty("boundary", "Fictional sample only.")
       else expect(page).not.toHaveProperty("boundary")
     }
@@ -238,7 +244,11 @@ describe("Cover and Closing contracts", () => {
 
     const reused = createDeckFromTemplate({
       ...demo,
-      pages: demo.pages.map((page) => ({ ...page, boundary: "Old caveat" })),
+      pages: demo.pages.map((page) =>
+        EDITORIAL_FRAME_LAYOUTS.includes(page.layout)
+          ? { ...page, boundary: "Old caveat" }
+          : page
+      ),
     })
 
     expect(reused.pages.every((page) => page.boundary === undefined)).toBe(true)

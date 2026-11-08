@@ -27,12 +27,16 @@ export class InMemoryWorkshopStore implements WorkshopStore {
     this.documents.set(deckId, structuredClone(deck))
   }
 
-  async createWeekFromPrevious(monday: string): Promise<Deck> {
+  async createWeekFromPrevious(
+    monday: string,
+    selectedDeckId?: string
+  ): Promise<Deck> {
     if (this.documents.has(monday))
       throw new Error(`Deck already exists: ${monday}`)
     const { templateId, period } = planWeekFromPrevious(
       await this.listDecks(),
-      monday
+      monday,
+      selectedDeckId
     )
     const deck = createDeckFromTemplate(await this.loadDeck(templateId), {
       period,

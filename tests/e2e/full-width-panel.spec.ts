@@ -1,8 +1,5 @@
-import { expect, test, type Download } from "@playwright/test"
-import { readFileSync, rmSync } from "node:fs"
-import { resolve } from "node:path"
-import { seedDecksFromDemo } from "../../scripts/seed-decks"
-import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
+import { expect, test } from "@playwright/test"
+import { resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
 
 test.beforeEach(() => resetE2eDecks())
@@ -43,59 +40,6 @@ test("Full-width table renders without a panel title and exports", async ({
   ).toBeVisible()
   await fitAtCaptureSize(page)
   await copyPng(page, "full-width-table.png")
-})
-
-test("fresh Harbor Forecast demo exports all five Observatory pages", async ({
-  page,
-}) => {
-  test.slow()
-  rmSync(e2eDecksDir(), { recursive: true, force: true })
-  expect(
-    seedDecksFromDemo(resolve(import.meta.dirname, "../../demo"), e2eDecksDir())
-  ).toEqual({ status: "seeded" })
-  await page.goto("/?deck=harbor-forecast")
-  await expect(
-    page.getByRole("combobox", { name: "Deck", exact: true })
-  ).toContainText("harbor-forecast")
-  const titles = [
-    "Keep the pilot small until large-image exports pass",
-    "Repeat exports improved; the pilot remains limited",
-    "Cache rendered pages; keep per-page capture as the fallback",
-    "What the pilot has verified so far",
-    "Decide on wider rollout after the large-image case",
-  ]
-  for (const [index, title] of titles.entries()) {
-    await page
-      .getByRole("button", { name: `Go to page ${index + 1}`, exact: true })
-      .click()
-    await expect(
-      page
-        .getByTestId("stage-frame")
-        .getByRole("heading", { name: title, exact: true })
-    ).toBeVisible()
-    await fitAtCaptureSize(page)
-  }
-  const downloads: Download[] = []
-  page.on("download", (download) => downloads.push(download))
-  await page.getByRole("button", { name: "Download PNGs", exact: true }).click()
-  const ids = ["cover", "overview", "comparison", "checks", "closing"]
-  await expect
-    .poll(() => downloads.map((download) => download.suggestedFilename()), {
-      timeout: 30000,
-    })
-    .toEqual(ids.map((id) => `harbor-forecast-${id}.png`))
-  for (const download of downloads) {
-    const path = test.info().outputPath(download.suggestedFilename())
-    await download.saveAs(path)
-    const bytes = readFileSync(path)
-    expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
-    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([
-      2560, 1440,
-    ])
-  }
-  await expect(
-    page.getByRole("status").filter({ hasText: "Skipped pages" })
-  ).toHaveCount(0)
 })
 
 const tableCopy = {

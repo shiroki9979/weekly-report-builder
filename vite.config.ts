@@ -124,19 +124,36 @@ function decksApiMiddleware(
   }
 
   if (req.method === "POST") {
-    try {
-      const deck = createWeekFromPrevious(decksDir, deckId)
-      sendJson(res, 201, { deck })
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create week file"
-      const status = error instanceof DeckAlreadyExistsError ? 409 : 400
-      sendJson(res, status, { error: message })
-    }
+    void readRequestBody(req)
+      .then((body) => {
+        const templateId = parseWeekTemplateId(body)
+        const deck = createWeekFromPrevious(decksDir, deckId, templateId)
+        sendJson(res, 201, { deck })
+      })
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : "Failed to create week file"
+        const status = error instanceof DeckAlreadyExistsError ? 409 : 400
+        sendJson(res, status, { error: message })
+      })
     return
   }
 
   sendJson(res, 405, { error: "Method not allowed" })
+}
+
+function parseWeekTemplateId(body: string): string | undefined {
+  // 舊版建週呼叫不帶 body；已有日期 Deck 時仍可沿用
+  if (body.trim() === "") return undefined
+  const value: unknown = JSON.parse(body)
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("Create week body must be an object")
+  }
+  if (!("templateId" in value)) return undefined
+  if (typeof value.templateId !== "string" || !isDeckId(value.templateId)) {
+    throw new Error("Invalid templateId: expected a Deck ID")
+  }
+  return value.templateId
 }
 
 function sendNotFound(res: ServerResponse): void {

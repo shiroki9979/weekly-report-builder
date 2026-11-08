@@ -3,7 +3,7 @@
 # 開發伺服器 API
 
 建立日期：2026-08-31  
-最後更新：2026-10-03
+最後更新：2026-11-08
 
 ---
 
@@ -53,7 +53,15 @@
 
 ## POST /api/decks/{monday}
 
-自最新週次（只看週一日期 id，其他 Deck 不作為範本）clone 結構並建立新檔。見 [建立新週次](../how-to/create-new-week.md)。
+已有週次時，以最新的週一日期 Deck 為模板；尚無週次時，以 request 的 `templateId` 指定本機已儲存的 Deck。兩者皆沿用 Deck Template 規則清空文案並建立新檔。見 [建立新週次](../how-to/create-new-week.md)。
+
+### Request body（選填）
+
+```json
+{ "templateId": "demo-observatory" }
+```
+
+`templateId` 須為合法 Deck ID。只在尚無週次時使用；已有週次時仍採最新週次。省略 body 或傳入 `{}` 可沿用舊版建週呼叫，但尚無週次時必須提供既有模板。來源 HTML 檔缺漏時中止建立。
 
 ### Response 201
 
@@ -61,7 +69,7 @@
 { "deck": {/* Deck */} }
 ```
 
-**Response 400**：無上一週可 clone、日期非週一等
+**Response 400**：無週次且未指定模板、模板不存在、非法 body／Deck ID、日期非週一等
 
 **Response 409**：`Deck already exists: {monday}`
 

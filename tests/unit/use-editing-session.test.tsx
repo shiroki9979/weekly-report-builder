@@ -417,6 +417,29 @@ describe("useEditingSession", () => {
     expect(result.current.save.saving).toBe(false)
   })
 
+  it("creates the first week from the selected Deck rather than the startup Deck", async () => {
+    const backend = new InMemoryWorkshopStore(
+      new Map<string, Deck>([
+        ["alpha-review", week(older)],
+        ["zeta-review", { ...week(latest), theme: "observatory" }],
+      ])
+    )
+    const { result } = renderHook(() => useEditingSession(backend))
+    await ready(result)
+    expect(result.current.selectedDeckId).toBe("alpha-review")
+    expect(result.current.suggestedMonday).toBe("")
+    act(() => result.current.selectDeck("zeta-review"))
+    await openedWeek(result, latest)
+
+    await act(() => result.current.create.createWeek(next))
+
+    expect(result.current.create.error).toBeNull()
+    expect(result.current.selectedDeckId).toBe(next)
+    expect(result.current.deck?.theme).toBe("observatory")
+    expect(result.current.deck?.pages[0].title).toBe("")
+    expect(result.current.suggestedMonday).toBe("2026-01-26")
+  })
+
   it("creates a week and opens it without earlier messages or input", async () => {
     const backend = store()
     const { result } = renderHook(() => useEditingSession(backend))

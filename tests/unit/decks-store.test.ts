@@ -27,6 +27,39 @@ const cloneFixturePath = join(
 )
 
 describe("decks-store", () => {
+  it("creates the first week from the selected Deck with its theme and HTML assets", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "first-week-template-"))
+    const template = parseDeck({
+      theme: "observatory",
+      title: "Pilot review",
+      pages: [
+        { id: "map", layout: "html", title: "Pilot map", htmlFile: "map.html" },
+      ],
+    })
+
+    try {
+      writeDeckFile(tempDir, "my-pilot", template)
+      mkdirSync(join(tempDir, "my-pilot"))
+      writeFileSync(join(tempDir, "my-pilot", "map.html"), "<p>Pilot map</p>")
+
+      const created = createWeekFromPrevious(tempDir, "2026-08-31", "my-pilot")
+
+      expect(created.theme).toBe("observatory")
+      expect(created.title).toBe("Pilot review")
+      expect(created.period).toEqual({ start: "2026-08-31", end: "2026-09-04" })
+      expect(created.pages).toEqual([
+        { id: "map", layout: "html", title: "", htmlFile: "map.html" },
+      ])
+      expect(readDeckFile(tempDir, "2026-08-31")).toEqual(created)
+      expect(
+        readFileSync(join(tempDir, "2026-08-31", "map.html"), "utf8")
+      ).toBe("<p>Pilot map</p>")
+      expect(readDeckFile(tempDir, "my-pilot")).toEqual(template)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
   it("keeps Deck Theme and Deck Title in the next Weekly Series Deck on disk", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "weekly-report-builder-theme-"))
     const previous = parseDeck({

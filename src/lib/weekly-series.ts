@@ -1,4 +1,4 @@
-// 週報流程：週次以週一日期當 Deck ID、期間固定週一到週五、新週以最新一週為範本。
+// 週報流程：週次以週一日期當 Deck ID、期間固定週一到週五；尚無週報時由選取的 Deck 起步。
 // 通用的清空與建立規則在 deck-template，這裡只放週次專屬的日期規則
 import type { DeckPeriod } from "./deck.ts"
 import {
@@ -32,15 +32,15 @@ export function weekRangeForMonday(monday: string): DeckPeriod {
   }
 }
 
-// 週報序列只看週一日期 id；其他 Deck 不能當建新週的起點
+// 週報序列只看週一日期 id；有期間的非日期 Deck 仍是一般 Deck
 export function latestWeekMonday(decks: string[]): string | null {
   return decks.filter(isCalendarMonday).at(-1) ?? null
 }
 
 // 週報作者開啟 Workshop 多半是要編最新一週；非週報 Deck 的 id 依字串排序會排在日期之後，
-// 直接取最後一份會跳過週報。沒有週次時才退回最後一份 Deck
+// 直接取最後一份會跳過週報。沒有週次時才退回排序第一份 Deck
 export function defaultDeckId(deckIds: string[]): string | undefined {
-  return latestWeekMonday(deckIds) ?? deckIds.at(-1)
+  return latestWeekMonday(deckIds) ?? deckIds.at(0)
 }
 
 export function nextMondayAfter(monday: string): string {
@@ -57,9 +57,10 @@ export type WeekFromPreviousPlan = {
 // 建新週的週次規則只在這裡判斷；dev server 與測試替身拿到計畫後各自走通用的「從模板建立 Deck」，錯誤文案因此一致
 export function planWeekFromPrevious(
   deckIds: string[],
-  monday: string
+  monday: string,
+  selectedDeckId?: string
 ): WeekFromPreviousPlan {
-  const templateId = latestWeekMonday(deckIds)
+  const templateId = latestWeekMonday(deckIds) ?? selectedDeckId
   if (!templateId) {
     throw new Error("No previous week to clone")
   }

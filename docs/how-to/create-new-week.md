@@ -1,20 +1,21 @@
 # 建立新週次
 
 建立日期：2026-08-31  
-最後更新：2026-09-28
+最後更新：2026-11-08
 
 ---
 
 ## 適用情境
 
-每週一需要新週次檔，且希望保留與上週相同的頁數、panel 種類與 hidden 設定。來源是本機 `decks/` 裡最新的 Deck（fresh install 時即為 Demo Deck Set 的副本）。
+建立第一份週報，或每週沿用既有週報的頁數、panel 種類與 hidden 設定。尚無日期 Deck 時，來源是目前選取且已儲存的 Deck；已有週報時，固定使用本機 `decks/` 裡最新的週一日期 Deck，不受目前選取項目影響。
 
 ## 步驟
 
 1. 啟動工坊（`pnpm dev`）
-2. 在 **New week (Monday)** 選擇目標週一日期（預設為最新週的下一個週一）
-3. 點 **Create week**
-4. **Week** 下拉選單會切換至新週次；左側表單內容為空白，結構與上一週相同
+2. 尚無週報時，先選取要採用的 Deck，例如 `demo-default` 或 `demo-observatory`；需要沿用的修改須先 Save
+3. 解鎖 **Edit**，在 **New week (Monday)** 輸入目標週一。首次建週不預填日期；已有週報時預設為最新週的下一個週一
+4. 點 **Create week**
+5. **Deck** 下拉選單會切換至新週次；文案依 Deck Template 規則清空，結構與主題沿用來源 Deck
 
 ## 結果
 
@@ -24,24 +25,24 @@
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
 - 若來源週次包含 Next Actions，clone 會保留 Rows／Columns 選擇與 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
 - 若來源週次包含 Trend & Target，clone 會保留帶日期的所有觀測、目標、指標格式與 Measurement Context，清除 Title、Interpretation 與 notes。新週不會自動加週或移除舊週；在編輯頁手動增減端點後填入新結果
-- `period` 自動設為該週週一至週五
+- `period` 自動設為該週週一至週五；Deck Theme 與 Deck Title 沿用來源，可在建立後修改
 - 新週不複製上一週的 `showPageNumbers` 與 Editorial 頁的 `showPageNumber`，Editorial 頁碼回到預設顯示；HTML Page 逐頁開啟，沿用上一週該頁的 `showPageNumber`
 
 ## 常見問題
 
 | 狀況                                   | 處理                                                                                                                                                           |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Week already exists`                  | 該週檔已存在，改選其他日期或先刪除舊檔                                                                                                                         |
+| `Deck already exists`                  | 該週檔已存在，改選其他日期或先刪除舊檔                                                                                                                         |
 | `Week file name must be a Monday date` | 所選日期不是週一                                                                                                                                               |
 | `decks/` 不存在                        | 執行 `pnpm seed:decks`（與 `pnpm install` 的 `postinstall` 相同）。`pnpm build` 與 `pnpm dev` 都不會自動建立該目錄。                                           |
-| `decks/` 存在但沒有週次檔              | 視為有意的空 store；bootstrap 不會補檔。移除這個空目錄後再執行 `pnpm seed:decks`。不要手動複製某個固定日期的週報。工坊會顯示 empty state，不會幫你建立第一週。 |
+| `decks/` 存在但沒有任何 Deck           | 視為有意的空 store；bootstrap 不會補檔。移除這個空目錄後再執行 `pnpm seed:decks`。不要手動複製某個固定日期的週報。工坊會顯示 empty state，不會幫你建立第一週。 |
 
-`demo/` 是 Git 追蹤的公開範例來源；你編輯與 Create week 寫入的永遠是被忽略的本機 `decks/`。忽略該目錄與從目前 index 移除它，不會刪除舊 commits 裡的 Git 物件。
+`demo/` 是 Git 追蹤的公開 Demo Deck Set；編輯與 Create week 寫入的永遠是被忽略的本機 `decks/`。既有 `decks/` 不會因示範改名而自動改名或補檔。忽略該目錄與從目前 index 移除它，不會刪除舊 commits 裡的 Git 物件。
 
 若 Trend & Target 已達 12 週，先確認要移除的最早或最新端點，再補入新週。保留的 Measured／Missing 仍對應原日期；新增位置是 Unfilled，完成量測或明確標記 Missing 後才可匯出。不要把上一週的結論當成新週結論。
 
 ## 相關文件
 
-- API 細節：[開發伺服器 API — POST](../reference/dev-server-api.md#post-apiweeksmonday)
+- API 細節：[開發伺服器 API — POST](../reference/dev-server-api.md#post-apidecksmonday)
 - 欄位結構：[週次 JSON 格式](../reference/deck-json-format.md)
 - 指令行為：[pnpm 指令](../reference/npm-scripts.md)

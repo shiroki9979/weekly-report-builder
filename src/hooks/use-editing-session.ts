@@ -260,8 +260,9 @@ function useDeckLifecycle(
     [lifecycle, sessionRef]
   )
   const createWeek = useCallback(
-    (monday: string) => createAndOpenWeek(lifecycle, monday),
-    [lifecycle]
+    (monday: string) =>
+      createAndOpenWeek(lifecycle, monday, sessionRef.current.selectedDeckId),
+    [lifecycle, sessionRef]
   )
   const restoreLocation = useCallback(
     ({ deckId, pageNumber }: DeckLocation) => {
@@ -466,7 +467,8 @@ async function saveOpenDeck(
 
 async function createAndOpenWeek(
   lifecycle: DeckLifecycle,
-  monday: string
+  monday: string,
+  selectedDeckId: string
 ): Promise<void> {
   const { store, update } = lifecycle
   const isLatest = claimLatest(lifecycle.creates, lifecycle.openedDecks)
@@ -479,23 +481,27 @@ async function createAndOpenWeek(
     )
   update(beginSessionCreate)
   // 建立後先確認仍是最新操作，過期的建立不再列出 Deck
-  await whenLatest(isLatest, () => store.createWeekFromPrevious(monday), {
-    description: `create week ${monday}`,
-    resolved: (deck) =>
-      whenLatest(isLatest, () => store.listDecks(), {
-        description: `list decks after creating ${monday}`,
-        resolved: (decks) => {
-          // 新週真正開啟時才讓舊 Deck 的進行中結果過期；建立失敗時，舊 Deck 的 Save 結果仍要回報
-          expireOpenedDeckResults(lifecycle)
-          update((current) =>
-            finishSessionOpen(
-              setSessionDecks(beginSessionOpen(current, monday), decks),
-              deck
+  await whenLatest(
+    isLatest,
+    () => store.createWeekFromPrevious(monday, selectedDeckId),
+    {
+      description: `create week ${monday}`,
+      resolved: (deck) =>
+        whenLatest(isLatest, () => store.listDecks(), {
+          description: `list decks after creating ${monday}`,
+          resolved: (decks) => {
+            // 新週真正開啟時才讓舊 Deck 的進行中結果過期；建立失敗時，舊 Deck 的 Save 結果仍要回報
+            expireOpenedDeckResults(lifecycle)
+            update((current) =>
+              finishSessionOpen(
+                setSessionDecks(beginSessionOpen(current, monday), decks),
+                deck
+              )
             )
-          )
-        },
-        rejected: failCreate,
-      }),
-    rejected: failCreate,
-  })
+          },
+          rejected: failCreate,
+        }),
+      rejected: failCreate,
+    }
+  )
 }

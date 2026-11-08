@@ -1,7 +1,7 @@
 # 第一份週報
 
 > 建立日期：2026-08-31  
-> 最後更新：2026-09-28
+> 最後更新：2026-11-08
 
 ---
 
@@ -19,14 +19,18 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm install` 會在本機還沒有 `decks/` 時，從公開的 `demo/` 建立初始週報。瀏覽器開啟終端機顯示的本地網址（通常為 `http://localhost:5173`）。左側為編輯區，右側為 **16:9 preview**。
+`pnpm install` 會在本機還沒有 `decks/` 時，從公開的 `demo/` 複製 Demo Deck Set。瀏覽器開啟終端機顯示的本地網址（通常為 `http://localhost:5173`）。左側為編輯區，右側為 **16:9 preview**。
 
-## 步驟 2：確認已開啟最新週次
+## 步驟 2：建立第一份週報
 
-工坊會列出可用週次並自動開啟最新的 Deck，不必挑選固定日期。Fresh install 後，這就是剛 seed 進來的 Demo Deck Set。
+Fresh install 會先開啟 `demo-default`（Deck Title：`Demo · Default`）；也可在 **Deck** 選擇 `demo-observatory`（`Demo · Observatory`）作為模板。兩份示範都保留完整內容，供預覽與匯出參考。
 
-1. 確認 **Week** 下拉選單已選中該週
-2. 右側預覽應顯示第一頁 slide
+1. 選取要沿用主題與結構的 Deck，右側預覽應顯示第一頁 slide
+2. 解鎖 **Edit**，在 **New week (Monday)** 輸入這份週報的週一日期
+3. 點 **Create week**；**Deck** 選單會切換到新建的日期 Deck，文案依 Deck Template 規則清空
+4. 若新 Deck 已鎖定，再次點 **Edit** 後繼續編輯
+
+已有週報時，工坊預設開啟最新日期 Deck；Create week 也固定使用最新週報，並建議下一個週一。網址指定的 Deck 優先於預設開啟規則。
 
 若畫面說明 `decks/` 沒有 Deck，先關掉開發伺服器，移除那個空目錄，再執行 `pnpm seed:decks` 後重新 `pnpm dev`。
 

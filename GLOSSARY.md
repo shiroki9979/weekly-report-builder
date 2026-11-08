@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-11-07
+Last updated: 2026-11-08
 
 Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
 
@@ -25,12 +25,16 @@ The author-facing name of a Deck shown on its Stage footer; distinct from the De
 _Avoid_: Deck name, file name, Deck ID
 
 **Weekly Series**:
-The weekly-report workflow: Decks named by their Monday, each with a Monday-to-Friday Deck Period, created from the latest one with authored copy cleared.
+The weekly-report workflow: Decks named by their Monday, each with a Monday-to-Friday Deck Period. The first is created from a selected Deck Template; later Decks use the latest Weekly Series Deck, with authored copy cleared.
 _Avoid_: Weeks, report history
 
 **Deck Template**:
 An existing Deck used to create a new one that keeps its layouts, order, and structure but clears authored copy.
 _Avoid_: Clone, copy
+
+**Demo Deck Set**:
+The fictional, public Decks shipped with the repo that seed a new local authoring store and show every Structured Layout and HTML Page under every Deck Theme. Each is named for its Deck Theme and can serve as a Deck Template.
+_Avoid_: Sample decks, fixtures, examples
 
 ## Page layouts
 

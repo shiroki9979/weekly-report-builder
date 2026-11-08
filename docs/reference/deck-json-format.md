@@ -1,7 +1,7 @@
 # Deck JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-11-07
+最後更新：2026-11-08
 
 ---
 
@@ -228,7 +228,7 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 
 每個觀測位置是 `{ "state": "measured", "value": <finite number> }`、`{ "state": "missing" }` 或 `{ "state": "unfilled" }`。只有 `measured` 能有 `value`；允許負數與零。Parser 拒絕無效日期、列舉值、非有限數字及非量測狀態中隱藏的數值。
 
-公開虛構示例在 [`demo/2026-01-05.json`](../../demo/2026-01-05.json)：`p06` 為 12 週 at-most 與精確比較、`p07` 為含負數和零的 at-least、`p08` 為末週 Missing。`p04` 未設 variant，對照 `p09` 的相同 Commitments、Rows 版面；`p10` 為較長的 Rows 文字。
+公開虛構示例在 [`demo/demo-default.json`](../../demo/demo-default.json)：`p05` 為 12 週 at-most 與精確比較、`p06` 為含負數和零、末週 Missing 的 at-least。`p10` 明確寫 `"variant": "columns"`，`p11` 為較長的 Rows 文字；兩頁都明確寫 variant，讓示範檔存檔後不產生 diff。[`demo/demo-observatory.json`](../../demo/demo-observatory.json) 的 `trend` 頁示範觀測終點落在 Deck Period 內。
 
 可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點（最後一個週期的起點）不晚於 Deck 的 `period.end`；沒有 `period` 時略過這項比較，且通過 Stage fit。`missing` 保留觀測位置並切斷折線；最後一個位置為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪觀測位置。
 
