@@ -1,7 +1,7 @@
 # pnpm 指令
 
 建立日期：2026-08-31  
-最後更新：2026-09-28
+最後更新：2026-11-08
 
 ---
 
@@ -15,6 +15,8 @@
 | `pnpm build`        | TypeScript 建置 + Vite production build；複製既有 `decks/` 至 `dist/decks/`。缺少 `decks/` 時失敗並提示執行 `pnpm seed:decks`，不會自動 seed。                                                        |
 | `pnpm preview`      | 預覽 production build                                                                                                                                                                                 |
 | `pnpm lint`         | ESLint                                                                                                                                                                                                |
+| `pnpm lint:md`      | `markdownlint-cli2` 檢查 Markdown 格式與規則                                                                                                                                                          |
+| `pnpm lint:md:fix`  | `markdownlint-cli2 --fix` 自動修復可修正的 Markdown 規則違規                                                                                                                                          |
 | `pnpm format`       | Prettier 格式化程式碼、JSON、CSS、Markdown、YAML 與根目錄 HTML（`index.html`）                                                                                                                        |
 | `pnpm format:check` | 檢查 Prettier 格式，不修改檔案                                                                                                                                                                        |
 | `pnpm typecheck`    | `tsc --noEmit`                                                                                                                                                                                        |

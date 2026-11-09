@@ -8,11 +8,11 @@
 
 內容範圍註記：以下五頁是初次 bootstrap 的驗收基線。[#47](https://github.com/shiroki9979/weekly-report-builder/issues/47) 將公開 Demo Week Set 擴為十頁，新增 Trend & Target 與 Next Actions Rows；既有只在 `weeks/` 缺失時 seed 的契約不變。
 
-### Amendment：Demo Deck Set 命名與首次建週（2026-11-08）
+## Amendment：Demo Deck Set 命名與首次建週（2026-11-08）
 
 現行公開示範為 `demo-default` 與 `demo-observatory`，分別以 `Demo · Default` 與 `Demo · Observatory` 作為 Deck Title。兩份都是非日期 Deck；尚無週報時，Create week 使用目前選取的 Deck，已有週報時沿用最新日期 Deck。首次開啟依序採用網址指定、最新週報、ID 排序第一份。既有本機 `decks/` 不改名、不合併；bootstrap 的目錄存在即跳過規則不變。以下舊日期與頁數保留作歷史記錄，現行內容以 [Demo Deck Set 規格](deck-theme-and-observatory-layouts.md#demo-deck-set) 為準。
 
-### Amendment：Deck 改名與遷移（2026-10-03）
+## Amendment：Deck 改名與遷移（2026-10-03）
 
 [#55](https://github.com/shiroki9979/weekly-report-builder/issues/55)（[ADR-0001](../adr/0001-decouple-weekly-report-from-slide-core.md)）推翻本文〈Out of Scope〉的「改名 runtime `weeks/`、公開 `/weeks/...` URL 或既有讀寫 API」。下文保留定案當時的名稱；現行名稱與契約以本節為準。
 

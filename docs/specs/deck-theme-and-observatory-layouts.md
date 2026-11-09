@@ -38,59 +38,59 @@ Existing Structured Layouts only read theme tokens; their compositions do not ch
 
 ### Deck Title and Editorial Frame
 
-11. As a deck author, I want to set a Deck Title in the Workshop, so that a single exported PNG identifies the deck it came from.
-12. As a deck reader, I want the Deck Title in the footer of every Editorial Frame page with the page label on the right, so that I can locate a page in the deck from the image alone.
-13. As a deck author, I want pages without a Deck Title or with page numbers hidden to keep the same body height, so that content does not shift between pages.
-14. As a deck reader, I want the `observatory` header to show the page index beside the eyebrow when page numbers are on, so that cross-references such as "see 07" are easy to follow.
-15. As a deck author, I want an optional Boundary Note on any Editorial Frame page, so that the scope or verification of a page's claim is visible without a speaker.
-16. As a deck author, I want the Boundary Note excluded from Content-complete but still subject to the overflow check, so that an optional caveat never blocks export by being absent, and an overlong one is split rather than clipped.
-17. As a deck author, I want the Boundary Note cleared when creating from a Deck Template, so that last week's caveat is not reused unread.
+1. As a deck author, I want to set a Deck Title in the Workshop, so that a single exported PNG identifies the deck it came from.
+2. As a deck reader, I want the Deck Title in the footer of every Editorial Frame page with the page label on the right, so that I can locate a page in the deck from the image alone.
+3. As a deck author, I want pages without a Deck Title or with page numbers hidden to keep the same body height, so that content does not shift between pages.
+4. As a deck reader, I want the `observatory` header to show the page index beside the eyebrow when page numbers are on, so that cross-references such as "see 07" are easy to follow.
+5. As a deck author, I want an optional Boundary Note on any Editorial Frame page, so that the scope or verification of a page's claim is visible without a speaker.
+6. As a deck author, I want the Boundary Note excluded from Content-complete but still subject to the overflow check, so that an optional caveat never blocks export by being absent, and an overlong one is split rather than clipped.
+7. As a deck author, I want the Boundary Note cleared when creating from a Deck Template, so that last week's caveat is not reused unread.
 
 ### Cover
 
-18. As a deck author, I want a Cover page with a title, optional subtitle and byline, so that a deck opens without a hand-written HTML Page.
-19. As a deck reader, I want the Cover to show the Frame Label when the Deck has a period, so that a weekly deck's cover names its week.
-20. As a deck reader, I want the Cover to count in Page Position without showing a page number, so that the second page reads `2 / N` like any printed deck.
-21. As a deck author, I want only the Cover title required for export, so that a cover with just a title is a complete page.
-22. As a deck author, I want the Cover byline kept when creating from a Deck Template, so that stable presenter information is not re-entered.
+1. As a deck author, I want a Cover page with a title, optional subtitle and byline, so that a deck opens without a hand-written HTML Page.
+2. As a deck reader, I want the Cover to show the Frame Label when the Deck has a period, so that a weekly deck's cover names its week.
+3. As a deck reader, I want the Cover to count in Page Position without showing a page number, so that the second page reads `2 / N` like any printed deck.
+4. As a deck author, I want only the Cover title required for export, so that a cover with just a title is a complete page.
+5. As a deck author, I want the Cover byline kept when creating from a Deck Template, so that stable presenter information is not re-entered.
 
 ### Closing
 
-23. As a deck author, I want a Closing page with a headline, up to four takeaways, and an optional closing line, so that a deck ends with what to remember and how to follow up.
-24. As a deck author, I want each takeaway to carry an optional short reference such as a page number or a day, so that follow-ups point at where the detail lives.
-25. As a deck reader, I want the closing line to follow the takeaways rather than sit at the page bottom, so that a short Closing does not leave a large gap.
-26. As a deck author, I want the Closing eyebrow to default to `Closing` but be overridable, so that a Q&A or Next page can say so.
-27. As a deck author, I want the closing line kept when creating from a Deck Template, so that contact details carry over.
+1. As a deck author, I want a Closing page with a headline, up to four takeaways, and an optional closing line, so that a deck ends with what to remember and how to follow up.
+2. As a deck author, I want each takeaway to carry an optional short reference such as a page number or a day, so that follow-ups point at where the detail lives.
+3. As a deck reader, I want the closing line to follow the takeaways rather than sit at the page bottom, so that a short Closing does not leave a large gap.
+4. As a deck author, I want the Closing eyebrow to default to `Closing` but be overridable, so that a Q&A or Next page can say so.
+5. As a deck author, I want the closing line kept when creating from a Deck Template, so that contact details carry over.
 
 ### Side-by-side Comparison
 
-28. As a deck author, I want a comparison of two labelled columns of points, so that a qualitative decision is shown without inventing numeric metrics.
-29. As a deck author, I want one to four points per column, so that the page stays readable at presentation size.
-30. As a deck author, I want to mark at most one column as chosen, so that the decision is visible at a glance.
-31. As a deck reader, I want the chosen column marked by a rule and a label, not only by colour, so that the choice is legible in print and without colour perception.
-32. As a deck author, I want an optional Tradeoff Callout with a reason and a cost, so that the decision is explained in the author's words.
-33. As a deck author, I want a comparison with no chosen column and no trade-off to still be exportable, so that an open comparison can be shown before a decision.
-34. As a deck author, I want every present point to be non-empty for export, so that an empty bullet never reaches a PNG.
+1. As a deck author, I want a comparison of two labelled columns of points, so that a qualitative decision is shown without inventing numeric metrics.
+2. As a deck author, I want one to four points per column, so that the page stays readable at presentation size.
+3. As a deck author, I want to mark at most one column as chosen, so that the decision is visible at a glance.
+4. As a deck reader, I want the chosen column marked by a rule and a label, not only by colour, so that the choice is legible in print and without colour perception.
+5. As a deck author, I want an optional Tradeoff Callout with a reason and a cost, so that the decision is explained in the author's words.
+6. As a deck author, I want a comparison with no chosen column and no trade-off to still be exportable, so that an open comparison can be shown before a decision.
+7. As a deck author, I want every present point to be non-empty for export, so that an empty bullet never reaches a PNG.
 
 ### Full-width Panel
 
-35. As a deck author, I want a page that gives one table, flow, checklist, or chart panel the whole body, so that a wide table does not need three narrative items beside it.
-36. As a deck author, I want the Full-width Panel to reuse the Two-column panel editors and rules, so that I do not learn a second table editor.
-37. As a deck author, I want the panel title optional on a Full-width Panel, so that the headline is not repeated.
-38. As a deck author, I want to mark one table column as the reference column, so that cross-references to other pages stand out and never wrap.
-39. As a deck author, I want the reference column kept when a Deck Template is created and adjusted when I remove a column, so that table structure survives without pointing at the wrong column.
-40. As a Two-column author, I want the same reference column available on my table panel, so that both table layouts behave alike.
+1. As a deck author, I want a page that gives one table, flow, checklist, or chart panel the whole body, so that a wide table does not need three narrative items beside it.
+2. As a deck author, I want the Full-width Panel to reuse the Two-column panel editors and rules, so that I do not learn a second table editor.
+3. As a deck author, I want the panel title optional on a Full-width Panel, so that the headline is not repeated.
+4. As a deck author, I want to mark one table column as the reference column, so that cross-references to other pages stand out and never wrap.
+5. As a deck author, I want the reference column kept when a Deck Template is created and adjusted when I remove a column, so that table structure survives without pointing at the wrong column.
+6. As a Two-column author, I want the same reference column available on my table panel, so that both table layouts behave alike.
 
 ### Workshop, export, and delivery
 
-41. As a deck author, I want Add Page to offer the four new layouts, so that I can build a non-weekly deck entirely from Structured Layouts.
-42. As a deck author, I want each new layout to have its own editor with the shared title, notes, hidden, and Boundary Note controls, so that editing feels like the existing layouts.
-43. As a deck author, I want Content-complete rules for the new layouts to match their required fields only, so that optional slots never block Copy or batch export.
-44. As a deck author, I want overflow at 1280 × 720 to block output for the new layouts as it does for existing ones, so that a long comparison is split rather than clipped.
-45. As a deck author, I want Hidden Page, Draft Page, Overflowing Page, and Page Position to behave the same for the new layouts, so that the sharing workflow is unchanged.
-46. As a new user, I want a fictional demo deck in the `observatory` theme using the four new layouts, so that I can try the language without private content.
-47. As a maintainer, I want the prototype entry removed after the last slice and the decision captured in docs, so that two implementations do not drift.
-48. As a maintainer, I want the Stage context to carry typed facts before the theme is added to it, so that the theme does not join the existing display-string sentinels.
+1. As a deck author, I want Add Page to offer the four new layouts, so that I can build a non-weekly deck entirely from Structured Layouts.
+2. As a deck author, I want each new layout to have its own editor with the shared title, notes, hidden, and Boundary Note controls, so that editing feels like the existing layouts.
+3. As a deck author, I want Content-complete rules for the new layouts to match their required fields only, so that optional slots never block Copy or batch export.
+4. As a deck author, I want overflow at 1280 × 720 to block output for the new layouts as it does for existing ones, so that a long comparison is split rather than clipped.
+5. As a deck author, I want Hidden Page, Draft Page, Overflowing Page, and Page Position to behave the same for the new layouts, so that the sharing workflow is unchanged.
+6. As a new user, I want a fictional demo deck in the `observatory` theme using the four new layouts, so that I can try the language without private content.
+7. As a maintainer, I want the prototype entry removed after the last slice and the decision captured in docs, so that two implementations do not drift.
+8. As a maintainer, I want the Stage context to carry typed facts before the theme is added to it, so that the theme does not join the existing display-string sentinels.
 
 ## Implementation Decisions
 
