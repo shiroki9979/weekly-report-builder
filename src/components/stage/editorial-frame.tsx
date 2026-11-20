@@ -35,7 +35,8 @@ export function EditorialFrame({
             {position ? (
               <span className="editorial-page-index">§ {index} </span>
             ) : null}
-            {eyebrow}
+            {/* 空 eyebrow 仍保留一行高，標題與本文不隨 § nn 或期間的有無上下跳動 */}
+            {eyebrow || " "}
           </p>
           {context.frameLabel ? (
             <p className="editorial-period">{context.frameLabel}</p>

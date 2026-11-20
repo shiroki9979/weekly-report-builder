@@ -48,7 +48,9 @@ export function StageSlide({
             isCapture={isCapture}
           />
         ),
-        twoColumn: (twoColumn) => <TwoColumnSlide page={twoColumn} />,
+        twoColumn: (twoColumn) => (
+          <TwoColumnSlide page={twoColumn} context={context} />
+        ),
         overview: (overview) => (
           <OverviewSlide page={overview} context={context} />
         ),

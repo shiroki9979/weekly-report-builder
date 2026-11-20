@@ -374,7 +374,7 @@ describe("StageSlide", () => {
     expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
   })
 
-  it("does not render a page number on two-column layout", () => {
+  it("renders the page number on two-column layout only when the context shows it", () => {
     const page: TwoColumnPage = {
       id: "p01",
       layout: "two-column",
@@ -392,13 +392,20 @@ describe("StageSlide", () => {
       },
     }
 
-    render(
+    const { rerender } = render(
       <StageSlide
         page={page}
         context={{ ...weekContext, showPageNumber: true }}
       />
     )
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("1 / 1")
 
+    rerender(
+      <StageSlide
+        page={page}
+        context={{ ...weekContext, showPageNumber: false }}
+      />
+    )
     expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
   })
 })

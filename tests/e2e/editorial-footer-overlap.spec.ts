@@ -11,6 +11,24 @@ const MAX_GROWTH_STEPS = 160
 
 const layouts = [
   {
+    id: "two-column",
+    grow: ".stage-item p",
+    page: {
+      layout: "two-column",
+      title: "Exports stay review-ready",
+      items: [
+        { heading: "Cold export", body: "No failed pages." },
+        { heading: "Warm export", body: "Reuses unchanged pages." },
+        { heading: "Fallback", body: "Per-page capture still works." },
+      ],
+      panel: {
+        kind: "checklist",
+        title: "Checks",
+        items: [{ label: "Cold export", checked: true }],
+      },
+    },
+  },
+  {
     id: "comparison",
     grow: ".editorial-comparison-points li",
     page: {

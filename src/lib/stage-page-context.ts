@@ -69,7 +69,7 @@ function hasPageNumberSlot(page: Page): boolean {
     evidenceDecision: () => true,
     nextActions: () => true,
     trendTarget: () => true,
-    twoColumn: () => false,
+    twoColumn: () => true,
     unknown: () => false,
   })
 }

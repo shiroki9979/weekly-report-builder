@@ -9,6 +9,7 @@ import {
   isEvidenceDecisionPage,
   isNextActionsPage,
   isTrendTargetPage,
+  periodLabel,
   type Deck,
   type Page,
   type DeckTheme,
@@ -121,6 +122,25 @@ for (const theme of ["default", "observatory"] as const) {
         stage.getByRole("heading", { name: entry.title, exact: true })
       ).toBeVisible()
       await expect(stage).toHaveAttribute("data-theme", theme)
+      // Two-column 也走 Editorial Frame：翻頁時日期列與頁尾不因版型忽有忽無
+      await expect(stage.locator(".editorial-period")).toHaveText(
+        periodLabel(deck.period)
+      )
+      await expect(stage.locator(".editorial-deck-title")).toHaveText(
+        deck.title!
+      )
+      const total = deck.pages.length
+      await expect(
+        stage.locator(
+          theme === "default"
+            ? ".editorial-number-default"
+            : ".editorial-number-padded"
+        )
+      ).toHaveText(
+        theme === "default"
+          ? `${index + 1} / ${total}`
+          : `0${index + 1} / 0${total}`
+      )
       await fitAtCaptureSize(page)
       await copyPng(page, `${theme}-${entry.layout}-${index}.png`)
       if (index === 0) {
@@ -206,44 +226,49 @@ for (const theme of ["default", "observatory"] as const) {
     request,
   }) => {
     const deck = themeFixture(theme)
-    const heights: number[] = []
-    for (const [title, showPageNumbers] of [
-      ["Harbor Forecast", true],
-      [undefined, true],
-      ["Harbor Forecast", false],
-      [undefined, false],
-    ] as const) {
-      expect(
-        (
-          await request.put("/api/decks/footer-review", {
-            data: { ...deck, title, showPageNumbers, pages: [deck.pages[0]] },
-          })
-        ).ok()
-      ).toBe(true)
-      await page.goto("/?deck=footer-review")
-      await fitAtCaptureSize(page)
-      heights.push(
-        await page
+    // Overview 與 Two-column 各代表一種構圖，兩者都要不受頁尾空槽影響
+    for (const framed of [deck.pages[0], deck.pages[4]]) {
+      const heights: number[] = []
+      for (const [title, showPageNumbers] of [
+        ["Harbor Forecast", true],
+        [undefined, true],
+        ["Harbor Forecast", false],
+        [undefined, false],
+      ] as const) {
+        expect(
+          (
+            await request.put("/api/decks/footer-review", {
+              data: { ...deck, title, showPageNumbers, pages: [framed] },
+            })
+          ).ok()
+        ).toBe(true)
+        await page.goto("/?deck=footer-review")
+        await fitAtCaptureSize(page)
+        heights.push(
+          await page
+            .getByTestId("stage-frame")
+            .locator(".editorial-body")
+            .evaluate((element) => element.getBoundingClientRect().height)
+        )
+        const index = page
           .getByTestId("stage-frame")
-          .locator(".editorial-body")
-          .evaluate((element) => element.getBoundingClientRect().height)
+          .locator(".editorial-page-index")
+        if (theme === "observatory" && showPageNumbers) {
+          await expect(index).toBeVisible()
+          await expect(index).toHaveText("§ 01")
+          await expect(
+            page.getByTestId("stage-frame").locator(".editorial-number-padded")
+          ).toHaveText("01 / 01")
+        } else await expect(index).not.toBeVisible()
+        if (!showPageNumbers)
+          await expect(
+            page.getByTestId("stage-frame").locator(".editorial-page-label")
+          ).toHaveCount(0)
+      }
+      expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(
+        0.1
       )
-      const index = page
-        .getByTestId("stage-frame")
-        .locator(".editorial-page-index")
-      if (theme === "observatory" && showPageNumbers) {
-        await expect(index).toBeVisible()
-        await expect(index).toHaveText("§ 01")
-        await expect(
-          page.getByTestId("stage-frame").locator(".editorial-number-padded")
-        ).toHaveText("01 / 01")
-      } else await expect(index).not.toBeVisible()
-      if (!showPageNumbers)
-        await expect(
-          page.getByTestId("stage-frame").locator(".editorial-page-label")
-        ).toHaveCount(0)
     }
-    expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(0.1)
   })
 
   test(`embeds only fonts in use in ${theme} capture`, async ({

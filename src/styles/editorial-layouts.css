@@ -559,6 +559,7 @@
    Stage 而被擋下。不會自行縮放的版型即使沒有 Boundary Note 也需要這層保護。 */
 .editorial-page:has(> .editorial-boundary) > .editorial-body,
 .editorial-body:has(
+  > .stage-cols,
   > .editorial-comparison,
   > .editorial-closing,
   > .editorial-full-width-panel
