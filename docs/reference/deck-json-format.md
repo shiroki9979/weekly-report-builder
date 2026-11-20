@@ -19,13 +19,13 @@ decks/<id>/<htmlFile>
 
 ## Deck（根物件）
 
-| 欄位              | 型別                         | 必填 | 說明                                                                                           |
-| ----------------- | ---------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
-| `theme`           | `"default" \| "observatory"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
-| `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 與 HTML Page 頁尾         |
-| `period`          | `object`                     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
-| `pages`           | `Page[]`                     | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值                             |
+| 欄位              | 型別                                     | 必填 | 說明                                                                                           |
+| ----------------- | ---------------------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
+| `theme`           | `"default" \| "observatory" \| "ledger"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
+| `title`           | `string`                                 | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 與 HTML Page 頁尾         |
+| `period`          | `object`                                 | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
+| `pages`           | `Page[]`                                 | 是   | 至少一頁                                                                                       |
+| `showPageNumbers` | `boolean`                                | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值                             |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -40,9 +40,9 @@ decks/<id>/<htmlFile>
 
 Workshop 的 Theme 與 Deck Title 控制項修改目前的 Editing Session。Save 保留原有表示：省略的 `theme` 不會補成 `default`，明確寫入的 `default` 仍保留。Deck Template 與 Weekly Series 均沿用主題與 Deck Title；單頁 `title` 仍是投影片主標，與 Deck Title 分開。
 
-`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。
+`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。`ledger`（2026-11-20，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）沿用 `default` 的色彩、字型與構圖，只換較深的 `--line`、`--accent-wash`、配合底色壓暗的 `--ok-ink`，並讓 eyebrow、Frame Label、workstream、status、頁尾與 Boundary Note 改用 IBM Plex Mono；Frame Label 維持 ISO 日期。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。詳見 [Ledger Deck Theme](../specs/ledger-theme.md)。
 
-Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`，以及等寬字型角色 `--mono`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。HTML Page 內文不指定 `font-family` 時繼承主題的內文字型，等寬字用 `var(--mono)`：`default` 為系統等寬字，`observatory` 為 IBM Plex Mono。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
+Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`，以及等寬字型角色 `--mono`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。HTML Page 內文不指定 `font-family` 時繼承主題的內文字型，等寬字用 `var(--mono)`：`default` 為系統等寬字，`observatory` 與 `ledger` 為 IBM Plex Mono。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
 
 Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
 

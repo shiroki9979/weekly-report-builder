@@ -11,7 +11,7 @@ Not a presenter, not multi-user, not a CMS, and not a replacement for the team d
 
 - **Workshop**: edit a deck, preview at 16:9, export PNGs or copy one page to the clipboard.
 - **Structured Layouts**: Cover, Closing, Side-by-side Comparison, Full-width Panel, Two-column, Overview, Evidence-backed Decision, Next Actions (Rows or Columns), and Trend & Target (weekly or monthly), plus HTML Pages.
-- **Deck Theme**: Default preserves the team-template appearance; Observatory adds semantic colour roles, self-hosted Latin fonts, and the Editorial Frame footer with Deck Title. Theme and title are edited once per Deck.
+- **Deck Theme**: Default preserves the team-template appearance; Observatory adds semantic colour roles, self-hosted Latin fonts, and the Editorial Frame footer with Deck Title; Ledger keeps the Default palette and compositions but sets the frame's dates, labels, and footer in IBM Plex Mono so Weekly Series HTML Pages and Structured Layouts match. Theme and title are edited once per Deck.
 
 Agent setup: [AGENTS.md](AGENTS.md).
 
@@ -38,14 +38,14 @@ Deck files: `decks/<id>.json`, where the id uses lowercase letters, digits, and 
 
 If `decks/` exists but has no decks, remove that empty directory and run `pnpm seed:decks`. The Workshop will not create a first deck for you.
 
-The public fictional Demo Deck Set opens in the Workshop on a fresh install. It ships one Deck per Deck Theme, and each Deck shows every layout: **demo-default** (`Demo · Default`) is the `default` weekly-report demonstration (twelve pages, including Trend & Target in both target directions with a missing final week, Next Actions in Columns and in Rows, a chart and a checklist panel), and **demo-observatory** (`Demo · Observatory`) is the Observatory pilot review (ten pages, including a Full-width Panel table with a reference column, a flow panel, and an HTML Page that follows the theme through colour roles). See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
+The public fictional Demo Deck Set opens in the Workshop on a fresh install. It ships one Deck per Deck Theme, and each Deck shows every layout: **demo-default** (`Demo · Default`) is the `default` weekly-report demonstration (twelve pages, including Trend & Target in both target directions with a missing final week, Next Actions in Columns and in Rows, a chart and a checklist panel), and **demo-observatory** (`Demo · Observatory`) is the Observatory pilot review (ten pages, including a Full-width Panel table with a reference column, a flow panel, and an HTML Page that follows the theme through colour roles), and **demo-ledger** (`Demo · Ledger`) is a `ledger` weekly report (ten pages, including a table and a chart panel and an HTML batch schedule that uses only colour roles and `var(--mono)`). See [Author Editorial Layouts](docs/how-to/author-editorial-layouts.md) and the [prototype decision record](docs/explanation/trend-target-layout-prototype.md).
 
 ## Architecture
 
-| Area                                                | Stack                                                                                                                     |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                                                                                    |
-| 16:9 preview stage                                  | `src/styles/stage.css` roles, `editorial-layouts.css` compositions, and `observatory-theme.css` — no shadcn on the canvas |
+| Area                                                | Stack                                                                                                                                                             |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workshop chrome (editor, sidebar, resizable panels) | shadcn                                                                                                                                                            |
+| 16:9 preview stage                                  | `src/styles/stage.css` roles, `editorial-layouts.css` compositions, and the theme sheets `observatory-theme.css` and `ledger-theme.css` — no shadcn on the canvas |
 
 ## Language
 

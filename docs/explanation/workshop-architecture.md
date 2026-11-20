@@ -55,7 +55,7 @@ Editing Session 持有開啟中的 Deck、Metric Input、選取的 Page ID 與�
 
 `createStagePageContext` 是 Preview、Copy 與 batch 共用的介面：回傳 Deck ID、Frame Label、hidden、Page Position、頁碼可見性，以及有效 Deck Theme 和 Deck Title。頁碼政策集中在 `stage-page-context.ts`；renderer 不再從 `"Hidden"` 或空字串推測狀態。預覽與 capture 都把同一 context 的 theme 傳入 `StageFrame`，由根節點的 `data-theme` 選擇樣式。
 
-`stage.css` 定義 default 語意角色與舊 `--blue*` 相容別名；`observatory-theme.css` 覆寫角色、宣告 OFL 拉丁字型並提供外框裝飾。既有版型維持構圖，不依主題名稱分支。Trend SVG 在主題改變時讀取 CSS 角色並寫入字面 SVG 顏色，因 `html-to-image` 深複製 SVG 時不處理其子元素的 computed style；色票仍由 CSS 單獨持有。
+`stage.css` 定義 default 語意角色與舊 `--blue*` 相容別名；`observatory-theme.css` 與 `ledger-theme.css` 覆寫角色並提供外框裝飾；自架 OFL 拉丁字型由 `observatory-theme.css`（Instrument Sans）與兩者共用的 `ibm-plex-mono.css` 宣告。既有版型維持構圖，不依主題名稱分支。Trend SVG 在主題改變時讀取 CSS 角色並寫入字面 SVG 顏色，因 `html-to-image` 深複製 SVG 時不處理其子元素的 computed style；色票仍由 CSS 單獨持有。
 
 Theme 與 Deck Title 經既有 Editing Session 編輯，保存、建立 Deck Template 與 Weekly Series 共用 Deck model。匯出快照包含這些欄位，操作中切換主題不改變已開始的 Copy 或 batch。共用 overflow 量測已等待字型載入，PNG 只嵌入該頁實際使用的自架字型。
 

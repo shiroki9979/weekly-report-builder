@@ -1,7 +1,7 @@
 # ADR-0002：Deck Theme 為固定清單，token 角色名稱是跨主題契約
 
 建立日期：2026-11-07  
-修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)）  
+修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）  
 狀態：Accepted
 
 ## 背景
@@ -15,6 +15,7 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 ### 主題是 Deck 層級的固定清單
 
 - Deck JSON 新增選填 `theme`，值為 app 內建的主題名稱：`default`（現行藍色，PPT 相容）與 `observatory`。未提供視為 `default`；未知值拒絕整份 Deck，不靜默退回。
+- 2026-11-20 修訂：依本節「需要第三種語言時新增一個主題」新增 `ledger`（Evidence Ledger），讓 Weekly Series 的 Structured Layout 與 HTML Page 共用同一套色票、等寬字與頁尾。它沿用 `default` 的色彩與構圖，只改 `--line`、`--accent-wash`、`--ok-ink` 與 `--mono`，並把 Editorial Frame 的外框元素改為等寬字。細節見 [Ledger Deck Theme](../specs/ledger-theme.md)。
 - 沒有單頁覆寫。從 Deck Template 建立新 Deck（含 Weekly Series）沿用主題。
 - 作者不能在 JSON 裡填自訂色碼或字型。
 
@@ -31,9 +32,9 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 
 ### 字型：拉丁展示字型自架，CJK 一律系統字型
 
-- `observatory` 主題自架 Instrument Sans（標題、正文的拉丁字）與 IBM Plex Mono（記號、索引、頁碼），OFL 授權檔隨字型進 repo。`@font-face` 只在該主題的樣式表宣告。
+- `observatory` 主題自架 Instrument Sans（標題、正文的拉丁字）與 IBM Plex Mono（記號、索引、頁碼），OFL 授權檔隨字型進 repo。`@font-face` 只在該主題的樣式表宣告；多個主題共用的字型（2026-11-20 起為 IBM Plex Mono）改放共用字型樣式表 `ibm-plex-mono.css`，避免同一字型重複宣告、匯出時重複嵌入。
 - CJK 不內建：字型堆疊為 `"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`。
-- `--mono`（2026-11-20 修訂）：`default` 用系統等寬字堆疊，不自架字型，CJK 退回與內文相同的系統字型；`observatory` 用自架的 IBM Plex Mono。
+- `--mono`（2026-11-20 修訂）：`default` 用系統等寬字堆疊，不自架字型，CJK 退回與內文相同的系統字型；`observatory` 與 `ledger` 用自架的 IBM Plex Mono。
 - PNG 輸出依賴 `html-to-image` 嵌入 `@font-face`；原型已驗證只嵌入該頁用到的字型。
 
 取捨：內建 CJK 字型可讓不同機器輸出一致，但 Noto Sans TC 完整字集每個字重約 10 MB，且無法針對未知內容子集化；接受「CJK 字形隨機器而異」是刻意的。
@@ -45,6 +46,6 @@ Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target
 ## 後果
 
 - Deck JSON 多一個欄位；`docs/reference/deck-json-format.md` 同步更新。
-- 新主題的對比與 tone 由主題樣式表負責，Playwright 在兩個主題下各跑一次 layout fixture。
+- 新主題的對比與 tone 由主題樣式表負責，Playwright 依 `DECK_THEMES` 在每個主題下各跑一次 layout fixture。
 - HTML Page 作者若要跟隨主題，用角色名稱或既有 `--blue*` 別名即可；寫死色碼的片段不受影響也不跟隨。
 - 追蹤規格：[Deck Theme and the Observatory layouts](../specs/deck-theme-and-observatory-layouts.md)，issue [#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)。
