@@ -83,7 +83,7 @@ test("rejects invalid first-week templates without writing a Deck", async ({
   const missingTemplate = await request.post("/api/decks/2026-01-12")
   expect(missingTemplate.status()).toBe(400)
   expect(await (await request.get("/api/decks")).json()).toEqual({
-    decks: ["demo-default", "demo-observatory"],
+    decks: demoDecks.map(({ id }) => id),
   })
 })
 

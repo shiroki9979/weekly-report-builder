@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tidewater · Batch schedule</title>
+    <style>
+      /* 色彩只用 Stage 角色、等寬字只用 --mono，換主題時與 Structured Layout 一起變；底部 8cqw 留給 app 頁尾 */
+      .ledger {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding: 4.4cqw 5cqw 8cqw;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .ledger-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 2cqw;
+      }
+      .ledger-eyebrow,
+      .ledger-period {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 1.05cqw;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .ledger-eyebrow {
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .ledger-period {
+        color: var(--mute);
+      }
+      .ledger h1 {
+        margin: 0.6cqw 0 0;
+        max-width: 80cqw;
+        font-size: 3.15cqw;
+        font-weight: 700;
+        line-height: 1.18;
+        color: var(--accent-deep);
+      }
+      .gantt {
+        display: grid;
+        grid-template-columns: 19cqw repeat(5, minmax(0, 1fr));
+        flex: 1;
+        align-content: start;
+        margin-top: 3.4cqw;
+        border-bottom: 1px solid var(--line);
+      }
+      .gantt-day,
+      .gantt-lane-count {
+        font-family: var(--mono);
+        font-size: 1cqw;
+        color: var(--mute);
+      }
+      .gantt-head {
+        display: contents;
+      }
+      .gantt-day {
+        padding: 0 0 0.8cqw 0.6cqw;
+        border-left: 1px solid var(--line);
+        letter-spacing: 0.04em;
+      }
+      .gantt-lane {
+        grid-column: 1;
+        padding: 1.15cqw 1.4cqw 1.15cqw 0;
+        border-top: 1px solid var(--line);
+      }
+      .gantt-lane-name {
+        margin: 0;
+        font-size: 1.45cqw;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .gantt-lane-count {
+        margin: 0.25cqw 0 0;
+      }
+      .gantt-track {
+        display: grid;
+        grid-column: 2 / 7;
+        grid-template-columns: subgrid;
+        align-items: center;
+        border-top: 1px solid var(--line);
+      }
+      .gantt-bar {
+        height: 1.9cqw;
+        margin: 0 0.6cqw;
+        padding: 0 0.7cqw;
+        font-family: var(--mono);
+        font-size: 0.95cqw;
+        line-height: 1.9cqw;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .gantt-bar.is-done {
+        background: var(--accent);
+        color: var(--paper);
+      }
+      .gantt-bar.is-planned {
+        background: var(--accent-wash);
+        color: var(--accent-deep);
+        box-shadow: inset 0 0 0 1px var(--accent-soft);
+      }
+      .gantt-bar.is-slipped {
+        background: var(--paper);
+        color: var(--warn-ink);
+        box-shadow: inset 0 0 0 1px var(--warn);
+      }
+      .d1-3 {
+        grid-column: 1 / 3;
+      }
+      .d1-4 {
+        grid-column: 1 / 4;
+      }
+      .d3-6 {
+        grid-column: 3 / 6;
+      }
+      .d5-6 {
+        grid-column: 5 / 6;
+      }
+      .ledger-source {
+        margin: 1.6cqw 0 0;
+        font-size: 1.05cqw;
+        line-height: 1.45;
+        color: var(--mute);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ledger">
+      <div class="ledger-meta">
+        <p class="ledger-eyebrow">Batch schedule</p>
+        <p class="ledger-period">2026-01-05 — 2026-01-09</p>
+      </div>
+      <h1>Backfill ran a day late; the cutover rehearsal still fits Friday</h1>
+      <div class="gantt">
+        <div class="gantt-head">
+          <span></span>
+          <span class="gantt-day">2026-01-05</span>
+          <span class="gantt-day">2026-01-06</span>
+          <span class="gantt-day">2026-01-07</span>
+          <span class="gantt-day">2026-01-08</span>
+          <span class="gantt-day">2026-01-09</span>
+        </div>
+        <div class="gantt-lane">
+          <p class="gantt-lane-name">Nightly ingest</p>
+          <p class="gantt-lane-count">5 / 5 runs</p>
+        </div>
+        <div class="gantt-track">
+          <span class="gantt-bar is-done d1-4">Done · 0 failed</span>
+        </div>
+        <div class="gantt-lane">
+          <p class="gantt-lane-name">Schema validation</p>
+          <p class="gantt-lane-count">412 tables</p>
+        </div>
+        <div class="gantt-track">
+          <span class="gantt-bar is-done d1-3">Done · 3 fixed</span>
+        </div>
+        <div class="gantt-lane">
+          <p class="gantt-lane-name">History backfill</p>
+          <p class="gantt-lane-count">18 / 24 months</p>
+        </div>
+        <div class="gantt-track">
+          <span class="gantt-bar is-slipped d3-6">+1 day · 75%</span>
+        </div>
+        <div class="gantt-lane">
+          <p class="gantt-lane-name">Cutover rehearsal</p>
+          <p class="gantt-lane-count">1 dry run</p>
+        </div>
+        <div class="gantt-track">
+          <span class="gantt-bar is-planned d5-6">Planned</span>
+        </div>
+      </div>
+      <p class="ledger-source">
+        Source: fictional run log for the Tidewater nightly batch, one week.
+        Colours and the monospace face come from the Deck Theme.
+      </p>
+    </div>
+  </body>
+</html>

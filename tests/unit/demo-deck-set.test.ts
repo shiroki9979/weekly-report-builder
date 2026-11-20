@@ -14,6 +14,7 @@ import {
   isNextActionsPage,
   isTrendTargetPage,
   isTwoColumnPage,
+  type DeckTheme,
   type NextActionsPage,
   type SlideLayout,
   type TrendTargetPage,
@@ -27,6 +28,14 @@ const week = demoDecks.find((entry) => !entry.deck.theme)!.deck
 const harbor = demoDecks.find(
   (entry) => entry.deck.theme === "observatory"
 )!.deck
+const ledger = demoDecks.find((entry) => entry.deck.theme === "ledger")!
+
+// Record 讓新增主題時型別檢查強制為它準備一份示範 Deck
+const DEMO_TITLES: Record<DeckTheme, string> = {
+  default: "Demo · Default",
+  observatory: "Demo · Observatory",
+  ledger: "Demo · Ledger",
+}
 
 // Record 讓新增 layout 時型別檢查強制把它加進示範涵蓋
 const EVERY_LAYOUT: Record<SlideLayout, true> = {
@@ -53,13 +62,14 @@ function measuredValues(page: TrendTargetPage): number[] {
 }
 
 describe("Demo Deck Set", () => {
-  it("names both Decks by their theme", () => {
+  it("names every Deck by its theme", () => {
     expect(
       demoDecks.map(({ id, deck }) => ({ id, title: deck.title }))
-    ).toEqual([
-      { id: "demo-default", title: "Demo · Default" },
-      { id: "demo-observatory", title: "Demo · Observatory" },
-    ])
+    ).toEqual(
+      [...DECK_THEMES]
+        .sort()
+        .map((theme) => ({ id: `demo-${theme}`, title: DEMO_TITLES[theme] }))
+    )
   })
   it("ships exactly one Deck per Deck Theme", () => {
     const themes = demoDecks.map((entry) => entry.deck.theme ?? "default")
@@ -154,6 +164,27 @@ describe("Demo Deck Set", () => {
         })
       }
     }
+  })
+
+  describe("Ledger weekly report", () => {
+    it("keeps the Ledger theme", () => {
+      expect(ledger.deck.theme).toBe("ledger")
+    })
+
+    // ledger 的 HTML Page 要和 Structured Layout 共用同一套色票，寫死色碼就會在換主題時脫隊
+    it("colours its HTML Pages only through Stage roles", () => {
+      for (const page of ledger.deck.pages.filter(isHtmlPage)) {
+        const html = readFileSync(
+          resolve(demoDir, ledger.id, page.htmlFile),
+          "utf8"
+        )
+
+        expect({
+          page: page.htmlFile,
+          literals: html.match(/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi),
+        }).toEqual({ page: page.htmlFile, literals: null })
+      }
+    })
   })
 
   describe("Default weekly report", () => {
