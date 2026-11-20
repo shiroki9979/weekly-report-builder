@@ -210,7 +210,7 @@ function PageNumbersToggle({
 }) {
   const disabled = pageNumbers.disabled || !pageNumbers.onChange
 
-  // HTML Page 的片段可能自帶頁尾，不跟隨週層級設定；在此註明，避免作者以為勾選後每頁都會疊上 Deck Title 與頁碼
+  // HTML Page 的片段可能自帶頁尾，不跟隨 Deck 層級設定；在此註明，避免作者以為勾選後每頁都會疊上 Deck Title 與頁碼
   return (
     <div
       className={cn("space-y-1", disabled && "cursor-not-allowed opacity-50")}

@@ -18,7 +18,7 @@ type PageNumberSelectProps = {
   onChange: (update: (deck: Deck) => Deck) => void
 }
 
-// Select 只收字串；頁面欄位以 undefined 表示沿用週層級預設
+// Select 只收字串；頁面欄位以 undefined 表示沿用 Deck 層級預設
 const OVERRIDE_BY_CHOICE = {
   default: undefined,
   show: true,
@@ -44,7 +44,7 @@ function visibilityLabel(visible: boolean): string {
   return visible ? "Show" : "Hide"
 }
 
-// HTML Page 的預設與週層級設定不同，Default 須標出實際結果，作者才知道會不會疊頁碼
+// HTML Page 的預設與 Deck 層級設定不同，Default 須標出實際結果，作者才知道會不會疊頁碼
 function choiceLabel(choice: PageNumberChoice, defaultVisible: boolean) {
   const override = OVERRIDE_BY_CHOICE[choice]
   return override === undefined

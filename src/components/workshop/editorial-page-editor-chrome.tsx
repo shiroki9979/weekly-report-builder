@@ -22,7 +22,7 @@ type EditorialPageEditorChromeProps = PageEditorProps & {
   children: ReactNode
 }
 
-/** Editorial Layout Family 共用 Title／notes／Hide，避免各 form 各寫一份 chrome */
+/** Editorial Frame 頁面與 Cover 共用 Title／notes／Hide，避免各 form 各寫一份 chrome */
 export function EditorialPageEditorChrome({
   deck,
   pageIndex,

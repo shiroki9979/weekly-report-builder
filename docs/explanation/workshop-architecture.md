@@ -63,8 +63,8 @@ Theme 與 Deck Title 經既有 Editing Session 編輯，保存、建立 Deck Tem
 
 工坊支援下列頁面版面：
 
-- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。共用 Editorial Frame（headline、週次範圍、Boundary Note、Deck Title、頁碼；eyebrow 留空）。間距見下方「Two-column 間距」。
-- `overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、週次範圍、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
+- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。共用 Editorial Frame（headline、Frame Label、Boundary Note、Deck Title、頁碼；eyebrow 留空）。間距見下方「Two-column 間距」。
+- `overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、Frame Label、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `evidence-decision`：Editorial Layout。裁決條 + 1–2 個 Comparison Metric 與 1–2 則 interpretation。Metric Input 由 Editing Session 持有；非法非空輸入擋 Save／Copy，batch 略過該頁。
 - `next-actions`：Editorial Layout。2–4 個 Commitment；顯示編號由順序派生。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `html`：16:9 全幅 HTML 逃生口。整頁由週資料夾獨立 `.html` 片段鋪滿，不渲染三點與 panel。工坊僅編輯相對檔名路徑、標題、講稿與 hidden，不提供線上 HTML 編輯器。HTML Page 不套用 Structured Layout 的 completeness 或 overflow gate。逐頁開啟 `showPageNumber` 時，Stage 在片段之外畫出與 Editorial Frame 相同的頁尾（Deck Title 與頁碼），片段須讓出底部安全區。
