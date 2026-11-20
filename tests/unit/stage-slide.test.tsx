@@ -1,7 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
-import type { StagePageContext } from "@/lib/stage-page-context"
+import {
+  createStagePageContext,
+  type StagePageContext,
+} from "@/lib/stage-page-context"
 import { StageSlide } from "@/components/stage/stage-slide"
 import {
   parseDeck,
@@ -326,52 +329,164 @@ describe("StageSlide", () => {
     expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
   })
 
-  it("renders page number on html layout when showPageNumber is true", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-      ok: true,
-      text: async () => "<div>Custom Content</div>",
-    } as Response)
-
-    const page: HtmlPage = {
+  describe("HTML Page footer", () => {
+    const htmlPage: HtmlPage = {
       id: "p03",
       layout: "html",
       title: "HTML Slide",
       htmlFile: "p03.html",
     }
 
-    render(
-      <StageSlide
-        page={page}
-        context={{ ...weekContext, showPageNumber: true }}
-      />
-    )
-
-    expect(screen.getByText("1 / 1").closest("footer")).toHaveClass(
-      "stage-page-number"
-    )
-  })
-
-  it("hides page number on html layout when showPageNumber is false", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-      ok: true,
-      text: async () => "<div>Custom Content</div>",
-    } as Response)
-
-    const page: HtmlPage = {
-      id: "p03",
-      layout: "html",
-      title: "HTML Slide",
-      htmlFile: "p03.html",
+    function serveFragment() {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        text: async () => "<div>Custom Content</div>",
+      } as Response)
     }
 
-    render(
-      <StageSlide
-        page={page}
-        context={{ ...weekContext, showPageNumber: false }}
-      />
-    )
+    it("shows the Deck Title and Page Position when the page turns it on", () => {
+      serveFragment()
 
-    expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
+      render(
+        <StageSlide
+          page={htmlPage}
+          context={{
+            ...weekContext,
+            deckTitle: "Harbor Forecast",
+            position: { index: 3, total: 9 },
+            showPageNumber: true,
+          }}
+        />
+      )
+
+      const footer = screen.getByRole("contentinfo")
+      expect(footer).toHaveTextContent("Harbor Forecast")
+      expect(footer).toHaveTextContent("3 / 9")
+    })
+
+    it("shows only the Page Position when the Deck has no Deck Title", () => {
+      serveFragment()
+
+      render(
+        <StageSlide
+          page={htmlPage}
+          context={{
+            ...weekContext,
+            position: { index: 3, total: 9 },
+            showPageNumber: true,
+          }}
+        />
+      )
+
+      // 頁尾同時帶一般與補零兩種 Page Position，由主題決定顯示哪一個
+      const footer = screen.getByRole("contentinfo")
+      expect(footer).toHaveTextContent("3 / 9")
+      expect(footer.textContent?.replace(/0?3 \/ 0?9/g, "")).toBe("")
+    })
+
+    it("draws no footer, not even the Deck Title, when the page leaves it off", () => {
+      serveFragment()
+
+      render(
+        <StageSlide
+          page={htmlPage}
+          context={{
+            ...weekContext,
+            deckTitle: "Harbor Forecast",
+            showPageNumber: false,
+          }}
+        />
+      )
+
+      expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument()
+      expect(screen.queryByText("Harbor Forecast")).not.toBeInTheDocument()
+      expect(screen.queryByText("1 / 1")).not.toBeInTheDocument()
+    })
+
+    it("draws no footer on a Hidden Page that turns it on", () => {
+      serveFragment()
+      const deck = parseDeck({
+        title: "Harbor Forecast",
+        pages: [{ ...htmlPage, hidden: true, showPageNumber: true }],
+      })
+
+      render(
+        <StageSlide
+          page={deck.pages[0]}
+          context={createStagePageContext("2026-08-24", deck, "p03")}
+        />
+      )
+
+      expect(screen.getByText("Hidden")).toBeInTheDocument()
+      expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument()
+      expect(screen.queryByText("Harbor Forecast")).not.toBeInTheDocument()
+    })
+
+    it("draws the same footer as an Editorial Frame page", () => {
+      serveFragment()
+      const context: StagePageContext = {
+        ...weekContext,
+        deckTitle: "Harbor Forecast",
+        position: { index: 3, total: 9 },
+        showPageNumber: true,
+      }
+      const editorial = parseDeck({
+        pages: [
+          {
+            id: "p01",
+            layout: "next-actions",
+            title: "Next",
+            commitments: [
+              { title: "A", outcome: "a", checkpoint: "Mon" },
+              { title: "B", outcome: "b", checkpoint: "Tue" },
+            ],
+          },
+        ],
+      }).pages[0]
+
+      const { container: editorialHost } = render(
+        <StageSlide page={editorial} context={context} />
+      )
+      const { container: htmlHost } = render(
+        <StageSlide page={htmlPage} context={context} />
+      )
+
+      expect(htmlHost.querySelector("footer")?.outerHTML).toBe(
+        editorialHost.querySelector("footer")?.outerHTML
+      )
+    })
+
+    it("draws the same footer in preview and capture", async () => {
+      serveFragment()
+      const context: StagePageContext = {
+        ...weekContext,
+        deckTitle: "Harbor Forecast",
+        position: { index: 3, total: 9 },
+        showPageNumber: true,
+      }
+
+      const { container: preview } = render(
+        <StageSlide page={htmlPage} context={context} />
+      )
+      const { container: capture } = render(
+        <StageSlide page={htmlPage} context={context} isCapture />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId("html-slide-shadow")).toHaveAttribute(
+          "data-status",
+          "ready"
+        )
+        expect(screen.getByTestId("html-slide-capture")).toHaveAttribute(
+          "data-status",
+          "ready"
+        )
+      })
+      expect(preview.querySelector("footer")).not.toBeNull()
+      expect(capture.querySelector("footer")?.outerHTML).toBe(
+        preview.querySelector("footer")?.outerHTML
+      )
+    })
   })
 
   it("does not render a page number on two-column layout", () => {

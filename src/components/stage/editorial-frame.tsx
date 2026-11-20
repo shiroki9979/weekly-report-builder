@@ -1,9 +1,7 @@
 import type { ReactNode } from "react"
 
-import {
-  formatPagePosition,
-  type StagePageContext,
-} from "@/lib/stage-page-context"
+import { EditorialFooter } from "@/components/stage/editorial-footer"
+import type { StagePageContext } from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
   eyebrow: string
@@ -23,9 +21,6 @@ export function EditorialFrame({
 }: EditorialFrameProps) {
   const position = context.showPageNumber ? context.position : null
   const index = position?.index.toString().padStart(2, "0")
-  const paddedLabel = position
-    ? `${index} / ${position.total.toString().padStart(2, "0")}`
-    : null
 
   return (
     <article className="editorial-page">
@@ -46,23 +41,7 @@ export function EditorialFrame({
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
       {boundary ? <p className="editorial-boundary">{boundary}</p> : null}
-      <footer
-        className="editorial-page-number"
-        aria-hidden={!context.deckTitle && !position ? true : undefined}
-      >
-        {context.deckTitle ? (
-          <span className="editorial-deck-title">{context.deckTitle}</span>
-        ) : null}
-        {position ? (
-          <span className="editorial-page-label">
-            <span className="editorial-number-default">
-              {formatPagePosition(position)}
-            </span>
-            <span className="editorial-number-padded">{paddedLabel}</span>
-          </span>
-        ) : null}
-        {!context.deckTitle && !position ? " " : null}
-      </footer>
+      <EditorialFooter deckTitle={context.deckTitle} position={position} />
     </article>
   )
 }

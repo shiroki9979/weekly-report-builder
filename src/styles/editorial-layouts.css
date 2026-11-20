@@ -78,6 +78,18 @@
   text-align: right;
 }
 
+/* HTML Page 沒有文流頁尾：疊一層與 .editorial-page 同 padding 的外框，頁尾才落在 Editorial Frame 的同一位置，不改片段本身 */
+.editorial-html-footer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4.4% 5% 5%;
+  pointer-events: none;
+}
+
 .editorial-page-label {
   flex: none;
   margin-left: auto;
