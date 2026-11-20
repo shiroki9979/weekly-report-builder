@@ -33,6 +33,10 @@
   --warn: #c47b16;
   --warn-ink: #8a5508;
   --paper: #ffffff;
+  /* default 版型沒用到等寬字；只給 HTML Page 用，CJK 退回與內文相同的系統字型，不自架字型 */
+  --mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    "PingFang TC", "Microsoft JhengHei", monospace;
 
   box-sizing: border-box;
   width: 100%;

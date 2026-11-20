@@ -126,6 +126,24 @@ describe("Demo Deck Set", () => {
     }
   })
 
+  // HTML Page 規格的字型規則：內文繼承主題字型、等寬字用 var(--mono)、不內嵌字型
+  it("leaves HTML Page fonts to the theme, using only var(--mono) when monospace is needed", () => {
+    for (const { id, deck } of demoDecks) {
+      for (const page of deck.pages.filter(isHtmlPage)) {
+        const html = readFileSync(resolve(demoDir, id, page.htmlFile), "utf8")
+        const families = [
+          ...html.matchAll(/font-family\s*[:=]\s*("[^"]*"|[^;"}]+)/g),
+        ].map((match) => match[1].replace(/^"|"$/g, "").trim())
+
+        expect({
+          page: page.htmlFile,
+          authored: families.filter((family) => family !== "var(--mono)"),
+          embedsFont: /@font-face/.test(html),
+        }).toEqual({ page: page.htmlFile, authored: [], embedsFont: false })
+      }
+    }
+  })
+
   it("turns on the app-drawn footer on every HTML Page", () => {
     for (const { id, deck } of demoDecks) {
       for (const page of deck.pages.filter(isHtmlPage)) {
