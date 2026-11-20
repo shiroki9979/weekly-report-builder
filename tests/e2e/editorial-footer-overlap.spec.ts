@@ -1,6 +1,16 @@
 import { expect, test } from "@playwright/test"
-import { resetE2eDecks } from "./decks-reset"
+import { cpSync, mkdirSync } from "node:fs"
+import { resolve } from "node:path"
+
+import { isHtmlPage } from "../../src/lib/deck"
+import { readDemoDecks } from "../demo-decks"
+import { e2eDecksDir, resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize } from "./stage-capture"
+
+const demoDir = resolve(import.meta.dirname, "../../demo")
+const demoHtmlPages = readDemoDecks(demoDir).flatMap(({ id, deck }) =>
+  deck.pages.filter(isHtmlPage).map((page) => ({ demoId: id, page }))
+)
 
 test.beforeEach(() => resetE2eDecks())
 
@@ -97,6 +107,101 @@ for (const theme of ["default", "observatory"] as const) {
       )
 
       expect(hiddenOverlap).toBeNull()
+    })
+  }
+}
+
+// HTML Page 的頁尾疊在片段上方；片段須讓出底部安全區，示範頁要以身作則
+for (const theme of ["default", "observatory"] as const) {
+  for (const { demoId, page: htmlPage } of demoHtmlPages) {
+    test(`${theme} ${demoId} HTML Page ${htmlPage.id} keeps its content clear of the app-drawn footer`, async ({
+      page,
+      request,
+    }) => {
+      const deckId = `footer-${theme}-${demoId}-${htmlPage.id}`
+      mkdirSync(resolve(e2eDecksDir(), deckId), { recursive: true })
+      cpSync(
+        resolve(demoDir, demoId, htmlPage.htmlFile),
+        resolve(e2eDecksDir(), deckId, htmlPage.htmlFile)
+      )
+      const saved = await request.put(`/api/decks/${deckId}`, {
+        data: {
+          theme,
+          title: "Harbor Forecast",
+          pages: [
+            { ...htmlPage, showPageNumber: true },
+            { id: "closing", ...layouts[1].page },
+          ],
+        },
+      })
+      expect(saved.ok()).toBe(true)
+      await page.goto(`/?deck=${deckId}`)
+      const stage = page.getByTestId("stage-frame")
+      await expect(stage.getByTestId("html-slide-shadow")).toHaveAttribute(
+        "data-status",
+        "ready"
+      )
+      await fitAtCaptureSize(page)
+      const footer = stage.locator(".editorial-page-number")
+      await expect(footer).toContainText("Harbor Forecast")
+      await expect(footer).toBeVisible()
+
+      const overlap = await stage.evaluate((root) => {
+        const fragment = root.querySelector(
+          "[data-testid='html-slide-shadow']"
+        )?.shadowRoot
+        const footer = root.querySelector(".editorial-page-number")
+        if (!fragment || !footer) throw new Error("Missing fragment or footer")
+        const stageBox = root.getBoundingClientRect()
+        const footerTop = footer.getBoundingClientRect().top
+
+        // 內容只算文字與圖形；鋪滿整頁的底色不算佔用安全區
+        const rects: DOMRect[] = []
+        const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT)
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (!node.textContent?.trim()) continue
+          if (node.parentElement?.closest("style, title, desc")) continue
+          const range = document.createRange()
+          range.selectNodeContents(node)
+          rects.push(...range.getClientRects())
+        }
+        for (const shape of fragment.querySelectorAll(
+          "svg *:not(g, title, desc, svg), img"
+        )) {
+          const box = shape.getBoundingClientRect()
+          const coversStage =
+            box.width >= stageBox.width - 1 && box.height >= stageBox.height - 1
+          if (!coversStage) rects.push(box)
+        }
+        const visible = rects.filter((box) => box.width > 0 && box.height > 0)
+        if (visible.length === 0) throw new Error("Fragment has no content")
+        const bottom = Math.max(...visible.map((box) => box.bottom))
+        return bottom > footerTop + 1 ? { bottom, footerTop } : null
+      })
+
+      expect(overlap).toBeNull()
+
+      // 片段遵守的安全區以 Editorial Frame 頁尾為準，兩者必須落在同一位置
+      const footerBox = () =>
+        stage.evaluate((root) => {
+          const stageBox = root.getBoundingClientRect()
+          const box = root
+            .querySelector(".editorial-page-number")!
+            .getBoundingClientRect()
+          return {
+            top: box.top - stageBox.top,
+            left: box.left - stageBox.left,
+            width: box.width,
+            height: box.height,
+          }
+        })
+      const htmlFooter = await footerBox()
+      await page.goto(`/?deck=${deckId}&page=2`)
+      await expect(
+        stage.getByRole("heading", { name: "Continue the pilot" })
+      ).toBeVisible()
+      await fitAtCaptureSize(page)
+      expect(await footerBox()).toEqual(htmlFooter)
     })
   }
 }

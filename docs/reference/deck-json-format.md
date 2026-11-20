@@ -22,7 +22,7 @@ decks/<id>/<htmlFile>
 | 欄位              | 型別                         | 必填 | 說明                                                                                           |
 | ----------------- | ---------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
 | `theme`           | `"default" \| "observatory"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
-| `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 頁尾                      |
+| `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 與 HTML Page 頁尾         |
 | `period`          | `object`                     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
 | `pages`           | `Page[]`                     | 是   | 至少一頁                                                                                       |
 | `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
@@ -46,6 +46,8 @@ Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--acce
 
 Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
 
+HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editorial Frame 相同的頁尾：左側 Deck Title、右側頁碼，Deck 沒有 Deck Title 時只畫頁碼。關閉時整組頁尾都不畫。片段須讓出底部安全區，見 [HTML Page 規格](../specs/html-page-layout.md#頁尾與安全區)。
+
 ## Page（discriminated union）
 
 以 `layout` 欄位區分版面模式。共同欄位如下：
@@ -57,7 +59,7 @@ Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任�
 | `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                                            |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                                          |
 | `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                                       |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄                                  |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不畫頁尾，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄                                  |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
