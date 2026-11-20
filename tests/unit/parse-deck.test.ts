@@ -50,7 +50,7 @@ describe("parseDeck", () => {
     }
   )
 
-  it.each(["unknown", "", null, 1, false])(
+  it.each(["unknown", "Ledger", "evidence-ledger", "", null, 1, false])(
     "rejects supplied invalid theme %j",
     (theme) => {
       expect(() =>
@@ -86,6 +86,20 @@ describe("parseDeck", () => {
     expect(JSON.parse(serializeDeck(deck))).toMatchObject({
       theme: "observatory",
       title: "Harbor Forecast",
+    })
+  })
+
+  it("round-trips a Ledger Deck", () => {
+    const deck = parseDeck({
+      theme: "ledger",
+      title: "Weekly Series",
+      pages: [
+        { id: "p01", layout: "html", title: "Opening", htmlFile: "p01.html" },
+      ],
+    })
+    expect(JSON.parse(serializeDeck(deck))).toMatchObject({
+      theme: "ledger",
+      title: "Weekly Series",
     })
   })
 

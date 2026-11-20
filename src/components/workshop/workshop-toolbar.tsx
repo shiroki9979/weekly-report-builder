@@ -18,6 +18,7 @@ import { DECK_THEMES, isDeckTheme, type DeckTheme } from "@/lib/deck"
 const DECK_THEME_LABELS: Record<DeckTheme, string> = {
   default: "Default",
   observatory: "Observatory",
+  ledger: "Ledger",
 }
 
 type DeckPickerProps = {

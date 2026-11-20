@@ -4,7 +4,9 @@ import { STAGE_CAPTURE_ROOT_ATTR } from "@/lib/overflow-measurement"
 import type { DeckTheme } from "@/lib/deck"
 import "@/styles/editorial-layouts.css"
 import "@/styles/stage.css"
+import "@/styles/ibm-plex-mono.css"
 import "@/styles/observatory-theme.css"
+import "@/styles/ledger-theme.css"
 
 type StageFrameProps = {
   children?: React.ReactNode

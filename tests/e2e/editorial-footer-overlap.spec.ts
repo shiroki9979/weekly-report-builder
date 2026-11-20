@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 import { cpSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { isHtmlPage } from "../../src/lib/deck"
+import { DECK_THEMES, isHtmlPage } from "../../src/lib/deck"
 import { readDemoDecks } from "../demo-decks"
 import { e2eDecksDir, resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize } from "./stage-capture"
@@ -80,7 +80,7 @@ const layouts = [
 
 const closingLayout = layouts.find((layout) => layout.id === "closing")!
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   for (const layout of layouts) {
     test(`${theme} ${layout.id} without a Boundary Note never overlaps the footer while it fits`, async ({
       page,
@@ -132,7 +132,7 @@ for (const theme of ["default", "observatory"] as const) {
 }
 
 // HTML Page 的頁尾疊在片段上方；片段須讓出底部安全區，示範頁要以身作則
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   for (const { demoId, page: htmlPage } of demoHtmlPages) {
     test(`${theme} ${demoId} HTML Page ${htmlPage.id} keeps its content clear of the app-drawn footer`, async ({
       page,
