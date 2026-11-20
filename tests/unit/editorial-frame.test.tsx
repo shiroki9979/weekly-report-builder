@@ -63,3 +63,29 @@ describe("EditorialFrame page number row", () => {
     expect(footer).not.toHaveTextContent("2 / 5")
   })
 })
+
+describe("EditorialFrame eyebrow row", () => {
+  // 沒有溝通任務的頁面不給 eyebrow；這一行仍須佔位，標題與本文才不會隨主題的 § nn 上下跳動
+  it("keeps a blank eyebrow row when the page has no eyebrow", () => {
+    const { container } = render(
+      <EditorialFrame
+        headline="Headline"
+        context={{
+          documentId: "harbor",
+          theme: "observatory",
+          frameLabel: null,
+          hidden: false,
+          position: null,
+          showPageNumber: false,
+        }}
+      >
+        <p>Body</p>
+      </EditorialFrame>
+    )
+
+    const row = container.querySelector(".editorial-eyebrow")
+    expect(row).toBeInTheDocument()
+    expect(row?.textContent).not.toBe("")
+    expect(row?.textContent?.trim()).toBe("")
+  })
+})

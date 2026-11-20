@@ -4,7 +4,7 @@ import { EditorialFooter } from "@/components/stage/editorial-footer"
 import { padPageNumber, type StagePageContext } from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
-  eyebrow: string
+  eyebrow?: string
   headline: string
   context: StagePageContext
   boundary?: string
@@ -31,7 +31,7 @@ export function EditorialFrame({
                 § {padPageNumber(position.index)}{" "}
               </span>
             ) : null}
-            {/* 空 eyebrow 仍保留一行高，標題與本文不隨 § nn 或期間的有無上下跳動 */}
+            {/* 沒有 eyebrow 仍保留一行高，標題與本文不隨 § nn 或期間的有無上下跳動 */}
             {eyebrow || "\u00a0"}
           </p>
           {context.frameLabel ? (

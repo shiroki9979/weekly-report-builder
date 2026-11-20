@@ -8,11 +8,10 @@ type TwoColumnSlideProps = {
   context: StagePageContext
 }
 
-// 通用版型沒有單一溝通任務，eyebrow 留空而不寫死一個詞（#67）
+// 通用版型沒有單一溝通任務，不給 eyebrow 而不寫死一個詞（#67）
 export function TwoColumnSlide({ page, context }: TwoColumnSlideProps) {
   return (
     <EditorialFrame
-      eyebrow=""
       headline={page.title}
       context={context}
       boundary={page.boundary}
