@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 import { EditorialFooter } from "@/components/stage/editorial-footer"
-import type { StagePageContext } from "@/lib/stage-page-context"
+import { padPageNumber, type StagePageContext } from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
   eyebrow: string
@@ -20,7 +20,6 @@ export function EditorialFrame({
   children,
 }: EditorialFrameProps) {
   const position = context.showPageNumber ? context.position : null
-  const index = position?.index.toString().padStart(2, "0")
 
   return (
     <article className="editorial-page">
@@ -28,7 +27,9 @@ export function EditorialFrame({
         <div className="editorial-meta">
           <p className="editorial-eyebrow">
             {position ? (
-              <span className="editorial-page-index">§ {index} </span>
+              <span className="editorial-page-index">
+                § {padPageNumber(position.index)}{" "}
+              </span>
             ) : null}
             {/* 空 eyebrow 仍保留一行高，標題與本文不隨 § nn 或期間的有無上下跳動 */}
             {eyebrow || "\u00a0"}

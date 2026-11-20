@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createStagePageContext } from "@/lib/stage-page-context"
+import { createStagePageContext, padPageNumber } from "@/lib/stage-page-context"
 import { parseDeck } from "@/lib/deck"
 
 function weekDocument() {
@@ -340,5 +340,13 @@ describe("createStagePageContext", () => {
     expect(visibility(shown, "p02")).toBe(false)
     expect(visibility(hidden, "p01")).toBe(false)
     expect(visibility(hidden, "p02")).toBe(true)
+  })
+})
+
+describe("padPageNumber", () => {
+  it("pads single-digit Page Position numbers to two digits for theme labels", () => {
+    expect(padPageNumber(3)).toBe("03")
+    expect(padPageNumber(12)).toBe("12")
+    expect(padPageNumber(104)).toBe("104")
   })
 })

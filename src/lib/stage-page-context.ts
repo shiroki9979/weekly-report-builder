@@ -57,6 +57,11 @@ export function formatPagePosition(
   return position ? `${position.index} / ${position.total}` : null
 }
 
+// 主題以 CSS 切換補零版本（§ 03、03 / 10），補零規則只在這裡定一次
+export function padPageNumber(value: number): string {
+  return value.toString().padStart(2, "0")
+}
+
 // 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
 function hasPageNumberSlot(page: Page): boolean {
   return matchPage(page, {
