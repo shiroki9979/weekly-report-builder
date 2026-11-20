@@ -1,7 +1,7 @@
 # HTML 全幅頁（16:9 逃生口）
 
 建立日期：2026-09-03  
-最後更新：2026-09-27
+最後更新：2026-11-20
 狀態：implemented（v0.1.0）
 
 Grill 共識（2026-09-03）。已於 v0.1.0 實作。
@@ -67,6 +67,11 @@ Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 - **載入**：預覽與 capture 都 fetch 片段字串，消毒後再掛上。不要把未消毒的檔案直接當 `srcdoc`。
 - **消毒**：掛上前以 DOMPurify 消毒，移除 `script`、事件屬性、危險 URL 與可執行內容的巢狀瀏覽環境（例如 `iframe`／`srcdoc`）；保留片段自帶的 `<style>`。這是防止 DOM XSS 的必要相依。
 - **預覽掛載**：`.stage-root` 內 Shadow DOM；**不要**把 `stage.css` stylesheet adopt 進 shadow。CSS 變數從 `.stage-root` 繼承即可。
+- **字型**（2026-11-20，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)）：字型和色彩一樣透過 [ADR-0002](../adr/0002-deck-theme.md) 的角色跟隨 Deck Theme。
+  - 片段內文不指定 `font-family`，從 `.stage-root` 繼承主題的內文字型（繼承會穿過 Shadow DOM，capture host 的 light DOM 也一樣）。
+  - 等寬字一律用 `var(--mono)`；SVG 的 `font-family` 屬性不能用 `var()`，改用片段 `<style>` 裡的 class。
+  - 不內嵌字型（`@font-face` 搭配 `data:` URI）；需要的字型由主題樣式表提供，PNG 匯出只嵌入該頁用到的自架字型。
+  - sanitizer 不強制剝除既有片段的 `font-family` 或 `@font-face`：既有私人 Deck 的輸出不會無預警改變，只是不跟隨主題。
 - **匯出掛載**：既有 off-screen capture host 改走 **light DOM 注入**（同一份已消毒字串）。不要為 HTML 頁換截圖庫，也不要用 iframe（現行 capture 拍不到）。
 - **工坊表單**：`layout === "html"` 時顯示 `htmlFile` 與既有 title／notes／hidden；隱藏 items／panel 編輯。受既有 edit lock 約束。沒有 layout 切換控件。
 - **錯誤**：讀檔失敗、路徑非法、缺失檔案 → stage 英文警告（既有 warning 模式），不要靜默空白。
