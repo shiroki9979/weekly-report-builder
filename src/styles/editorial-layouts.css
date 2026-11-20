@@ -1,10 +1,14 @@
 /* 生產 Editorial Layout 專用；只掛在 Stage，不引入 shadcn */
+.stage-root {
+  /* 底部多留白，PNG 貼進團隊簡報範本時不壓到範本頁尾；HTML Page 頁尾外框共用同一值才會對齊 */
+  --editorial-frame-padding: 4.4% 5% 5%;
+}
+
 .editorial-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* 底部多留白，PNG 貼進團隊簡報範本時不壓到範本頁尾 */
-  padding: 4.4% 5% 5%;
+  padding: var(--editorial-frame-padding);
 }
 
 .editorial-header {
@@ -86,7 +90,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 4.4% 5% 5%;
+  padding: var(--editorial-frame-padding);
   pointer-events: none;
 }
 
