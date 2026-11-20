@@ -215,7 +215,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     ).toBeInTheDocument()
   })
 
-  it("does not render page number select for a two-column page", () => {
+  it("renders page number select for a two-column page", () => {
     const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
@@ -248,7 +248,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     )
 
     expect(
-      screen.queryByRole("combobox", { name: "Page number" })
-    ).not.toBeInTheDocument()
+      screen.getByRole("combobox", { name: "Page number" })
+    ).toBeInTheDocument()
   })
 })
