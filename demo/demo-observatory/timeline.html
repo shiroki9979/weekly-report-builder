@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Harbor Forecast · Pilot timeline</title>
     <style>
-      /* 只引用 Stage 的角色 token 與 --blue 別名，不給 fallback：這頁只在 Stage 內呈現 */
+      /* 只引用 Stage 的角色 token 與 --blue 別名，不給 fallback：這頁只在 Stage 內呈現。字型同理：內文繼承主題，日期用 --mono */
       .timeline {
         box-sizing: border-box;
         display: flex;
@@ -14,7 +14,6 @@
         padding: 4.4cqw 5cqw 5cqw;
         background: var(--paper);
         color: var(--ink);
-        font-family: inherit;
       }
       .timeline-eyebrow {
         margin: 0;
@@ -69,6 +68,7 @@
       }
       .timeline-date {
         margin: 0;
+        font-family: var(--mono);
         font-size: 1.05cqw;
         letter-spacing: 0.08em;
         text-transform: uppercase;
