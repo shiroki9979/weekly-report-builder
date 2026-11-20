@@ -17,7 +17,7 @@
     {
       "id": "overview",
       "layout": "overview",
-      "title": "Nightly ingest is under an hour; the backfill is one day behind",
+      "title": "Ingest runs under an hour; the backfill is a day late",
       "lead": {
         "workstream": "Nightly ingest",
         "figure": "94 → 61 min",
@@ -245,12 +245,12 @@
       "commitments": [
         {
           "title": "Finish the last six backfill months",
-          "outcome": "All 24 months are loaded and checked, so the rehearsal copy holds the full history.",
+          "outcome": "All 24 months are loaded and checked on the rehearsal copy.",
           "checkpoint": "Checkpoint table shows 24 of 24 months by Wednesday."
         },
         {
           "title": "Run the cutover rehearsal",
-          "outcome": "The team switches reads to the new store on a copy and switches back without data loss.",
+          "outcome": "Reads move to the new store on a copy and back without data loss.",
           "checkpoint": "Rehearsal log with both switch times posted on Friday."
         },
         {

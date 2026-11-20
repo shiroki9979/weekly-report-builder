@@ -42,7 +42,7 @@
           "workstream": "Coverage",
           "figure": "1 open case",
           "result": "Large-image exports are not yet verified.",
-          "impact": "Keep the pilot within the platform team until the case passes.",
+          "impact": "Keep the pilot inside the platform team until it passes.",
           "status": {
             "label": "Needs verification",
             "tone": "caution"

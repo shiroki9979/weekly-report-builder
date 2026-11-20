@@ -1,12 +1,12 @@
 import { expect, test, type Download } from "@playwright/test"
-import { readFileSync, rmSync } from "node:fs"
+import { cpSync, readFileSync, rmSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { seedDecksFromDemo } from "../../scripts/seed-decks"
 import { readDemoDecks } from "../demo-decks"
 import { e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize } from "./stage-capture"
-import { parseDeck } from "../../src/lib/deck"
+import { DECK_THEMES, parseDeck } from "../../src/lib/deck"
 
 const demoDir = resolve(import.meta.dirname, "../../demo")
 const demoDecks = readDemoDecks(demoDir)
@@ -154,4 +154,62 @@ for (const { id, deck } of demoDecks) {
       page.getByRole("status").filter({ hasText: "Skipped pages" })
     ).toHaveCount(0)
   })
+}
+
+// Export Readiness 只看內容是否超出 1280 × 720；頁尾被擠進底部留白仍判定為 fit，
+// 所以另外要求每一份示範 Deck 在每個主題下，所有頁尾都落在同一條底線、且不越過頁框留白
+for (const { id, raw, deck } of demoDecks) {
+  for (const theme of DECK_THEMES) {
+    test(`${id} under ${theme} keeps every footer on the same baseline inside the frame padding`, async ({
+      page,
+      request,
+    }) => {
+      test.slow()
+      const deckId = `${id}-${theme}-footers`
+      cpSync(resolve(demoDir, id), resolve(e2eDecksDir(), deckId), {
+        recursive: true,
+      })
+      const saved = await request.put(`/api/decks/${deckId}`, {
+        data: { ...(raw as object), theme },
+      })
+      expect(saved.ok()).toBe(true)
+      await page.goto(`/?deck=${deckId}`)
+      const stage = page.getByTestId("stage-frame")
+
+      const footers: { pageId: string; bottom: number }[] = []
+      for (const [index, entry] of deck.pages.entries()) {
+        await page
+          .getByRole("button", { name: `Go to page ${index + 1}`, exact: true })
+          .click()
+        if (entry.layout === "html")
+          await expect(
+            stage.locator(
+              '[data-testid="html-slide-shadow"][data-status="ready"]'
+            )
+          ).toBeVisible()
+        else
+          await expect(
+            stage.getByRole("heading", { name: entry.title, exact: true })
+          ).toBeVisible()
+        await fitAtCaptureSize(page)
+        const bottom = await stage.evaluate((root) => {
+          const footer = root.querySelector(".editorial-page-number")
+          if (!footer) return null
+          return (
+            footer.getBoundingClientRect().bottom -
+            root.getBoundingClientRect().top
+          )
+        })
+        if (bottom !== null) footers.push({ pageId: entry.id, bottom })
+      }
+
+      expect(footers.length).toBeGreaterThan(1)
+      // 頁框底部留白為寬度 5%（1280 × 5% = 64px）
+      const frameBottom = 720 - 64
+      const misplaced = footers.filter(
+        (footer) => Math.abs(footer.bottom - frameBottom) > 0.5
+      )
+      expect(misplaced).toEqual([])
+    })
+  }
 }
