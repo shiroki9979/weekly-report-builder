@@ -63,7 +63,7 @@ Theme 與 Deck Title 經既有 Editing Session 編輯，保存、建立 Deck Tem
 
 工坊支援下列頁面版面：
 
-- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。間距見下方「Two-column 間距」。不渲染頁碼。
+- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。共用 Editorial Frame（headline、週次範圍、Boundary Note、Deck Title、頁碼；eyebrow 留空）。間距見下方「Two-column 間距」。
 - `overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、週次範圍、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `evidence-decision`：Editorial Layout。裁決條 + 1–2 個 Comparison Metric 與 1–2 則 interpretation。Metric Input 由 Editing Session 持有；非法非空輸入擋 Save／Copy，batch 略過該頁。
 - `next-actions`：Editorial Layout。2–4 個 Commitment；顯示編號由順序派生。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
@@ -77,8 +77,7 @@ Draft Structured Layout 可 Save，但 Copy 與 batch export 不輸出。Canonic
 
 左欄的圓點與主標共用同一條起始邊，項目標題與內文在圓點右側，整個項目不超出標題範圍。關係只由版面決定，不看文案或語言。預覽與 PNG 共用 `src/styles/stage.css`。
 
-- `.stage-slide` 內距與 Editorial Frame 相同：上 `4.4%`、左右 `5%`、下 `3.2%`。兩種版型混排時，翻頁的邊界不會跳動。主標與右側 panel 都落在左右內距裡，所以標題、左欄、右欄共用同一條格線。
-- 主標下方留 `4.6%`，等於 Editorial 標題到本文的距離（分隔線上下 `1.8%` + `2.8%`），明顯大於項目之間的間距。
+- 外框、主標、分隔線與頁尾都由 Editorial Frame 提供，和其他 Editorial 版型混排時翻頁的邊界不會跳動。主標與右側 panel 都落在左右內距裡，所以標題、左欄、右欄共用同一條格線。
 - `.stage-item` 是兩欄 grid：圓點欄 `0.55em`、間距 `0.65em`。圓點從主標的起始邊開始，項目標題與內文因此比主標內縮 `1.2em`；不使用負邊距，圓點不會落進左側 `5%` 內距。
 
 ## 語言邊界

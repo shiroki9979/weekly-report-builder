@@ -25,7 +25,7 @@ decks/<id>/<htmlFile>
 | `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 頁尾                      |
 | `period`          | `object`                     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
 | `pages`           | `Page[]`                     | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
+| `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值                             |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -57,13 +57,13 @@ Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任�
 | `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                                            |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                                          |
 | `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                                       |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄                                  |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`cover` 忽略此欄                                                  |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### Boundary Note
 
-`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover、HTML Page 與 Two-column 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
+`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover 與 HTML Page 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
 
 空白或省略 Boundary Note 不影響 Content-complete；內容過長導致 Stage 溢出時仍阻擋 Copy，batch 略過該頁。Deck Template 與 Weekly Series 會清除此欄位；既有版型的其他保留規則不變。
 
@@ -117,7 +117,7 @@ Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點
 
 ### `layout: "two-column"`
 
-傳統雙欄版面（左欄三點 + 右側 panel）。
+傳統雙欄版面（左欄三點 + 右側 panel）。共用 Editorial Frame 與選填 Boundary Note：headline 為 `title`，eyebrow 留空，頁碼跟隨 `showPageNumbers` 與單頁 `showPageNumber`。`fields` panel 不渲染，因此沒有 Page Position。
 
 | 欄位    | 型別          | 必填 | 說明              |
 | ------- | ------------- | ---- | ----------------- |

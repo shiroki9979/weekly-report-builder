@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-11-08
+Last updated: 2026-11-20
 
 Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
 
@@ -101,7 +101,7 @@ A priority action that pairs an intended outcome with a verification checkpoint.
 _Avoid_: Task, to-do
 
 **Editorial Frame**:
-The shared context around an editorial page: its communication job, central conclusion, Frame Label, optional Boundary Note, Deck Title, and Page Position. It surrounds Editorial Layout Family pages, Trend & Target, Closing, Side-by-side Comparison, and Full-width Panel.
+The shared context around an editorial page: its communication job, central conclusion, Frame Label, optional Boundary Note, Deck Title, and Page Position. It surrounds Editorial Layout Family pages, Trend & Target, Closing, Side-by-side Comparison, Full-width Panel, and Two-column Layout.
 _Avoid_: Header, wrapper
 
 ## Editorial layouts
