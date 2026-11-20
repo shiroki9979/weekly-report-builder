@@ -340,10 +340,14 @@ for (const theme of DECK_THEMES) {
     await page.goto("/?deck=mono-review")
     const stage = page.getByTestId("stage-frame")
     await expect(stage).toHaveAttribute("data-theme", theme)
-    const mono = await stage.evaluate((element) =>
-      getComputedStyle(element).getPropertyValue("--mono").trim()
-    )
-    expect(mono).not.toBe("")
+    // dev server 的 CSS 由模組非同步注入，寫入 Deck 後也可能重新載入；輪詢到樣式生效為止
+    await expect
+      .poll(() =>
+        stage.evaluate((element) =>
+          getComputedStyle(element).getPropertyValue("--mono").trim()
+        )
+      )
+      .not.toBe("")
   })
 
   test(`HTML Page text without a font-family inherits the ${theme} body font`, async ({
@@ -354,13 +358,21 @@ for (const theme of DECK_THEMES) {
     await page.goto(`/?deck=${theme}-html-font`)
     const stage = page.getByTestId("stage-frame")
     await expect(stage.locator("#html-mono")).toBeVisible()
-    const stageFont = await stage.evaluate(
-      (element) => getComputedStyle(element).fontFamily
-    )
-    await expect(stage.locator("#html-body")).toHaveCSS(
-      "font-family",
-      stageFont
-    )
+    await expect
+      .poll(() =>
+        stage.locator("#html-body").evaluate((element) => {
+          const stageRoot = (element.getRootNode() as ShadowRoot).host.closest(
+            ".stage-root"
+          )!
+          const theme = getComputedStyle(stageRoot).fontFamily
+          return {
+            inherits: getComputedStyle(element).fontFamily === theme,
+            // 確認 Stage 樣式已生效，避免兩邊都還是文件預設字型而空洞通過
+            themed: theme !== getComputedStyle(document.body).fontFamily,
+          }
+        })
+      )
+      .toEqual({ inherits: true, themed: true })
   })
 
   test(`embeds IBM Plex Mono for var(--mono) in a ${theme} HTML Page capture only when the theme hosts it`, async ({
