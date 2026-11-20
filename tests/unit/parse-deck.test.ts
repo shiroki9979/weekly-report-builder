@@ -186,6 +186,29 @@ describe("parseDeck", () => {
     expect(htmlPage.htmlFile).toBe("p02.html")
   })
 
+  it("keeps a Boundary Note on a two-column page", () => {
+    const week = parseDeck(
+      twoColumnWeekWithPanel({
+        kind: "table",
+        title: "Grid",
+        columns: ["A"],
+        rows: [{ cells: ["1"] }],
+      })
+    )
+    const withBoundary = parseDeck({
+      ...week,
+      pages: [{ ...week.pages[0], boundary: "Fictional sample only" }],
+    })
+
+    expect(withBoundary.pages[0]).toHaveProperty(
+      "boundary",
+      "Fictional sample only"
+    )
+    expect(
+      parseDeck(JSON.parse(serializeDeck(withBoundary))).pages[0]
+    ).toHaveProperty("boundary", "Fictional sample only")
+  })
+
   it("parses interleaved html pages among two-column pages", () => {
     const raw = readFileSync(interleavedHtmlFixturePath, "utf-8")
     const week = parseDeck(JSON.parse(raw))

@@ -100,7 +100,9 @@ export type PageChrome = {
   showPageNumber?: boolean
 }
 
-export type TwoColumnPage = PageChrome & {
+export type EditorialPageChrome = PageChrome & { boundary?: string }
+
+export type TwoColumnPage = EditorialPageChrome & {
   id: string
   layout: "two-column"
   title: string
@@ -129,8 +131,6 @@ export type Outcome = {
   impact: string
   status: StatusSignal
 }
-
-export type EditorialPageChrome = PageChrome & { boundary?: string }
 
 export type OverviewPage = EditorialPageChrome & {
   id: string
@@ -380,6 +380,7 @@ export function isFullWidthPanelPage(page: Page): page is FullWidthPanelPage {
 }
 
 export type EditorialFramePage =
+  | TwoColumnPage
   | OverviewPage
   | EvidenceDecisionPage
   | NextActionsPage
@@ -390,6 +391,7 @@ export type EditorialFramePage =
 
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
+    isTwoColumnPage(page) ||
     isOverviewPage(page) ||
     isEvidenceDecisionPage(page) ||
     isNextActionsPage(page) ||
@@ -401,9 +403,7 @@ export function isEditorialFramePage(page: Page): page is EditorialFramePage {
 }
 
 export function isStructuredPage(page: Page): page is StructuredPage {
-  return (
-    isTwoColumnPage(page) || isCoverPage(page) || isEditorialFramePage(page)
-  )
+  return isCoverPage(page) || isEditorialFramePage(page)
 }
 
 const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
