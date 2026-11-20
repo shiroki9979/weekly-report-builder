@@ -126,6 +126,18 @@ describe("Demo Deck Set", () => {
     }
   })
 
+  it("turns on the app-drawn footer on every HTML Page", () => {
+    for (const { id, deck } of demoDecks) {
+      for (const page of deck.pages.filter(isHtmlPage)) {
+        expect({ id, page: page.id, footer: page.showPageNumber }).toEqual({
+          id,
+          page: page.id,
+          footer: true,
+        })
+      }
+    }
+  })
+
   describe("Default weekly report", () => {
     it("keeps the Monday-to-Friday Deck Period and the default theme", () => {
       expect(week.theme).toBeUndefined()

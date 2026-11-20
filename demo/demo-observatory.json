@@ -257,7 +257,8 @@
       "layout": "html",
       "title": "Pilot timeline · kickoff to review",
       "htmlFile": "timeline.html",
-      "notes": "A hand-written HTML Page. It only references Stage colour roles and the --blue aliases, so it follows the Deck Theme."
+      "notes": "A hand-written HTML Page. It only references Stage colour roles and the --blue aliases, so it follows the Deck Theme.",
+      "showPageNumber": true
     },
     {
       "id": "actions",
