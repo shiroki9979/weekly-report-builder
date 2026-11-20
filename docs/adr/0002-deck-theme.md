@@ -1,7 +1,7 @@
 # ADR-0002：Deck Theme 為固定清單，token 角色名稱是跨主題契約
 
 建立日期：2026-11-07  
-修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）  
+修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)；Two-column 納入 Editorial Frame，[#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)）  
 狀態：Accepted
 
 ## 背景
@@ -42,6 +42,8 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 ### 既有 Structured Layout 只接 token，不重排
 
 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target 在 `observatory` 下只改讀主題 token 與 Editorial Frame 的外框處理；構圖不動。想改構圖另開 Layout Variant。
+
+- 2026-11-20 修訂：Two-column 在所有主題下都納入 Editorial Frame（Frame Label、headline、Boundary Note、頁尾），見 [#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)。這屬於外框處理，不是構圖變更：項目欄與 panel 的格線、項目樣式與 panel 都不動，因此不需要 Layout Variant。
 
 ## 後果
 
