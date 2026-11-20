@@ -1,7 +1,7 @@
 # Author Editorial Layouts
 
 建立日期：2026-09-10  
-最後更新：2026-11-08
+最後更新：2026-11-20
 
 ---
 
@@ -29,9 +29,9 @@
 
 ## Boundary Note
 
-Closing、Side-by-side Comparison、Full-width Panel、Overview、Evidence-backed Decision、Next Actions 與 Trend & Target 的共用編輯區有 **Boundary Note**，可填寫這頁結論成立的範圍、驗證方式或限制。內容出現在正文下方、頁尾上方；空白不影響內容完整性。以一行為目標，較長文字會換行，超出 1280 × 720 Stage 時會阻擋匯出，不會裁切或縮字。
+Two-column、Closing、Side-by-side Comparison、Full-width Panel、Overview、Evidence-backed Decision、Next Actions 與 Trend & Target 的共用編輯區有 **Boundary Note**，可填寫這頁結論成立的範圍、驗證方式或限制。內容出現在正文下方、頁尾上方；空白不影響內容完整性。以一行為目標，較長文字會換行，超出 1280 × 720 Stage 時會阻擋匯出，不會裁切或縮字。
 
-Cover、HTML Page 與 Two-column 沒有此欄位。建立 Deck Template 或下一週時，Boundary Note 一律清空，避免沿用過期條件。
+同一編輯區也有單頁 **Page number** 選單，可覆寫 Deck 的頁碼預設。Cover 與 HTML Page 沒有 Boundary Note；HTML Page 有 Page number 選單，Cover 沒有。建立 Deck Template 或下一週時，Boundary Note 一律清空，避免沿用過期條件。
 
 ## 匯出
 
