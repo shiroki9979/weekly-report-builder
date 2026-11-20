@@ -312,7 +312,8 @@
       "layout": "html",
       "title": "Fictional forecast · sample throughput",
       "htmlFile": "p09.html",
-      "notes": "Full-bleed HTML for the three fictional sites on the forecast board. Its colours are hard-coded, so it stays blue under any Deck Theme."
+      "notes": "Full-bleed HTML for the three fictional sites on the forecast board. Its colours are hard-coded, so it stays blue under any Deck Theme.",
+      "showPageNumber": true
     },
     {
       "id": "p10",
