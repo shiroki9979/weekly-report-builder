@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type APIRequestContext } from "@playwright/test"
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
@@ -12,6 +12,7 @@ import {
   type Deck,
   type Page,
   type DeckTheme,
+  DECK_THEMES,
 } from "../../src/lib/deck"
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
@@ -286,6 +287,128 @@ for (const theme of ["default", "observatory"] as const) {
         )
       ).toBe(true)
     } else expect(customFaces).toEqual([])
+  })
+}
+
+// Record 讓新增主題時型別檢查強制宣告它的 --mono 是否自架 IBM Plex Mono
+const HOSTS_IBM_PLEX_MONO: Record<DeckTheme, boolean> = {
+  default: false,
+  observatory: true,
+}
+
+async function putHtmlFontDeck(request: APIRequestContext, theme: DeckTheme) {
+  const id = `${theme}-html-font`
+  const dir = path.join(e2eDecksDir(), id)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(
+    path.join(dir, "fonts.html"),
+    '<div style="padding:5%"><p id="html-body">Pilot timeline 試行時程</p><p id="html-mono" style="font-family:var(--mono)">2026-11-20 · 12 runs</p></div>'
+  )
+  expect(
+    (
+      await request.put(`/api/decks/${id}`, {
+        data: {
+          theme,
+          pages: [
+            {
+              id: "html",
+              layout: "html",
+              title: "Font inheritance",
+              htmlFile: "fonts.html",
+            },
+          ],
+        },
+      })
+    ).ok()
+  ).toBe(true)
+}
+
+// --mono 是 HTML Page 契約的一部分；新增主題時不能漏定義
+for (const theme of DECK_THEMES) {
+  test(`defines the --mono role under the ${theme} theme`, async ({
+    page,
+    request,
+  }) => {
+    const deck = themeFixture(theme)
+    expect(
+      (
+        await request.put("/api/decks/mono-review", {
+          data: { ...deck, pages: [deck.pages[0]] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=mono-review")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    const mono = await stage.evaluate((element) =>
+      getComputedStyle(element).getPropertyValue("--mono").trim()
+    )
+    expect(mono).not.toBe("")
+  })
+
+  test(`HTML Page text without a font-family inherits the ${theme} body font`, async ({
+    page,
+    request,
+  }) => {
+    await putHtmlFontDeck(request, theme)
+    await page.goto(`/?deck=${theme}-html-font`)
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage.locator("#html-mono")).toBeVisible()
+    const stageFont = await stage.evaluate(
+      (element) => getComputedStyle(element).fontFamily
+    )
+    await expect(stage.locator("#html-body")).toHaveCSS(
+      "font-family",
+      stageFont
+    )
+  })
+
+  test(`embeds IBM Plex Mono for var(--mono) in a ${theme} HTML Page capture only when the theme hosts it`, async ({
+    page,
+    request,
+  }) => {
+    await putHtmlFontDeck(request, theme)
+    await page.goto(`/?deck=${theme}-html-font`)
+    await expect(
+      page.getByTestId("stage-frame").locator("#html-mono")
+    ).toBeVisible()
+    // HTML Page 匯出走離屏 capture host 的 light DOM，必須從那裡取 SVG 才代表實際 PNG
+    const faces = await page.evaluate(async (deckId) => {
+      const deckModule = "/src/lib/deck.ts"
+      const adapterModule = "/src/lib/browser-capture-adapter.tsx"
+      const imageModule = "/node_modules/.vite/deps/html-to-image.js"
+      const { parseDeck } = await import(deckModule)
+      const { browserCaptureAdapter } = await import(adapterModule)
+      const { toSvg } = await import(imageModule)
+      const deck = parseDeck(
+        await (await fetch(`/decks/${deckId}.json`)).json()
+      )
+      const prepared = await browserCaptureAdapter.prepare(
+        deckId,
+        deck,
+        deck.pages[0]
+      )
+      if ("kind" in prepared) throw new Error(prepared.message)
+      try {
+        const root = [
+          ...document.querySelectorAll("[data-stage-capture-root]"),
+        ].find((element) => element.closest('[aria-hidden="true"]'))
+        if (!root?.querySelector("#html-mono"))
+          throw new Error("Capture host has no HTML Page")
+        const encoded = await toSvg(root)
+        const svg = decodeURIComponent(encoded.slice(encoded.indexOf(",") + 1))
+        return [...svg.matchAll(/@font-face\s*\{[^}]+\}/g)].map(
+          (match) => match[0]
+        )
+      } finally {
+        prepared.dispose()
+      }
+    }, `${theme}-html-font`)
+    const plexMono = faces.filter(
+      (face) => /IBM Plex Mono/.test(face) && /data:.*base64/.test(face)
+    )
+    if (HOSTS_IBM_PLEX_MONO[theme]) expect(plexMono).not.toEqual([])
+    else expect(plexMono).toEqual([])
   })
 }
 
