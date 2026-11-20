@@ -42,7 +42,7 @@ Workshop 的 Theme 與 Deck Title 控制項修改目前的 Editing Session。Sav
 
 `default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。
 
-Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
+Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`，以及等寬字型角色 `--mono`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。HTML Page 內文不指定 `font-family` 時繼承主題的內文字型，等寬字用 `var(--mono)`：`default` 為系統等寬字，`observatory` 為 IBM Plex Mono。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
 
 Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
 

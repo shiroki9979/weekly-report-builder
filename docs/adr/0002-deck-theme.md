@@ -1,6 +1,7 @@
 # ADR-0002：Deck Theme 為固定清單，token 角色名稱是跨主題契約
 
 建立日期：2026-11-07  
+修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)）  
 狀態：Accepted
 
 ## 背景
@@ -22,6 +23,7 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 ### token 以語意角色命名，舊名稱保留為別名
 
 - 主題提供的 token 是角色：`--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`。
+- 2026-11-20 修訂：新增字型角色 `--mono`（等寬字堆疊），每個主題都必須定義。HTML Page 的等寬字一律用 `var(--mono)`，才能跟著主題換字型；內文字型不設角色，靠 `.stage-root` 繼承。依本節「只能新增」的規則原地修訂，不另開 ADR。
 - 既有 `--blue`、`--blue-deep`、`--blue-soft`、`--blue-wash` 保留，定義為對應 accent 角色的別名。HTML Page 規格第 15 條允許片段引用這些名稱，別名讓既有片段不必改就跟著主題走。
 - 角色名稱是 HTML Page 的契約：新增主題不得改名或刪除既有角色，只能新增。
 
@@ -31,6 +33,7 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 
 - `observatory` 主題自架 Instrument Sans（標題、正文的拉丁字）與 IBM Plex Mono（記號、索引、頁碼），OFL 授權檔隨字型進 repo。`@font-face` 只在該主題的樣式表宣告。
 - CJK 不內建：字型堆疊為 `"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`。
+- `--mono`（2026-11-20 修訂）：`default` 用系統等寬字堆疊，不自架字型，CJK 退回與內文相同的系統字型；`observatory` 用自架的 IBM Plex Mono。
 - PNG 輸出依賴 `html-to-image` 嵌入 `@font-face`；原型已驗證只嵌入該頁用到的字型。
 
 取捨：內建 CJK 字型可讓不同機器輸出一致，但 Noto Sans TC 完整字集每個字重約 10 MB，且無法針對未知內容子集化；接受「CJK 字形隨機器而異」是刻意的。
