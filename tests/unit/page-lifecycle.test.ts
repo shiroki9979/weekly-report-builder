@@ -226,9 +226,12 @@ describe("blank two-column pages remain drafts", () => {
 
 describe("new Editorial Frame pages", () => {
   // 新頁直接顯示版型預設詞；預填空字串會讓存檔多出空的 eyebrow
-  it.each(ADDABLE_LAYOUTS)("starts %s without an Eyebrow override", (layout) => {
-    const page = createBlankAddablePage("p01", layout, "table")
+  it.each(ADDABLE_LAYOUTS)(
+    "starts %s without an Eyebrow override",
+    (layout) => {
+      const page = createBlankAddablePage("p01", layout, "table")
 
-    expect(page).not.toHaveProperty("eyebrow")
-  })
+      expect(page).not.toHaveProperty("eyebrow")
+    }
+  )
 })
