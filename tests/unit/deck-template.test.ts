@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest"
 
 import { createDeckFromTemplate } from "@/lib/deck-template"
 import {
+  ADDABLE_LAYOUTS,
+  createBlankAddablePage,
   createBlankClosingPage,
   createBlankEvidenceDecisionPage,
   createBlankFullWidthPanelPage,
@@ -331,6 +333,17 @@ describe("createDeckFromTemplate", () => {
     expect(cloned.pages[0]).toMatchObject({ layout: "two-column", title: "" })
     expect(cloned.pages[0].boundary).toBeUndefined()
     expect(cloned.pages[0].showPageNumber).toBeUndefined()
+  })
+
+  // tests/ 不在 npm run typecheck 範圍內，對照表的型別涵蓋只在編輯器生效；以新增選單的版型清單在執行期補上同樣的保證
+  it("covers every Editorial Frame layout an author can add", () => {
+    const addableEditorialLayouts = ADDABLE_LAYOUTS.filter((layout) =>
+      isEditorialFramePage(createBlankAddablePage("p01", layout, "table"))
+    )
+
+    expect(Object.keys(EDITORIAL_FRAME_FIXTURES).sort()).toEqual(
+      [...addableEditorialLayouts].sort()
+    )
   })
 
   it.each(editorialFrameCases)(
