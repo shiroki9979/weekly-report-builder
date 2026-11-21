@@ -40,13 +40,13 @@ decks/<id>/<htmlFile>
 
 Workshop 的 Theme 與 Deck Title 控制項修改目前的 Editing Session。Save 保留原有表示：省略的 `theme` 不會補成 `default`，明確寫入的 `default` 仍保留。Deck Template 與 Weekly Series 均沿用主題與 Deck Title；單頁 `title` 仍是投影片主標，與 Deck Title 分開。
 
-`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。`ledger`（2026-11-20，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）沿用 `default` 的色彩、字型與構圖，只換較深的 `--line`、`--accent-wash`、配合底色壓暗的 `--ok-ink`，並讓 eyebrow、Frame Label、workstream、status、頁尾與 Boundary Note 改用 IBM Plex Mono；Frame Label 維持 ISO 日期。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。詳見 [Ledger Deck Theme](../specs/ledger-theme.md)。
+`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。`ledger`（2026-11-20，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）沿用 `default` 的色彩、字型與構圖，只換較深的 `--line`、`--accent-wash`、配合底色壓暗的 `--ok-ink`，並讓 eyebrow、Frame Label、workstream、status、頁尾與 Boundary Note 改用 IBM Plex Mono；Frame Label 維持 ISO 日期。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。`ledger` 的 `--mute` 維持 `#5c5c5c`（白底 6.7:1），不用 Evidence Ledger 原稿的 `#7a7a7a`（只有 4.3:1）；`--ok-ink` 壓暗為 `#1c704b`，因為 `#1f7a52` 在較深的 `--accent-wash` 上只有 4.25:1，Overview lead 的正向 Status Signal 會低於 4.5:1；`--ok*` 與 `--warn*` 不併入單一訊號藍，三種 Status Signal tone 才分得開。
 
 Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`，以及等寬字型角色 `--mono`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。HTML Page 內文不指定 `font-family` 時繼承主題的內文字型，等寬字用 `var(--mono)`：`default` 為系統等寬字，`observatory` 與 `ledger` 為 IBM Plex Mono。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
 
 Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
 
-HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editorial Frame 相同的頁尾：左側 Deck Title、右側頁碼，Deck 沒有 Deck Title 時只畫頁碼。關閉時整組頁尾都不畫。片段須讓出底部安全區，見 [HTML Page 規格](../specs/html-page-layout.md#頁尾與安全區)。
+HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editorial Frame 相同的頁尾：左側 Deck Title、右側頁碼，Deck 沒有 Deck Title 時只畫頁碼。關閉時整組頁尾都不畫。片段須讓出底部安全區，見 [HTML Page](html-page.md#頁尾與安全區)。
 
 ## Page（discriminated union）
 
@@ -152,6 +152,8 @@ Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點
 | ---------- | -------- | ---- | --------------------------------------------------------------------------------------- |
 | `htmlFile` | `string` | 是   | 相對該 Deck 目錄之單一檔名（如 `p03.html`），禁止包含路徑穿越（`..`）、路徑分隔符或空白 |
 
+路徑規則、消毒、掛載方式、字型與片段撰寫契約見 [HTML Page](html-page.md)。
+
 ### `layout: "overview"`
 
 結論先行的總覽。預設 Eyebrow 為 `Overview`，可用 [`eyebrow`](#eyebrow) 覆寫。
@@ -251,6 +253,22 @@ Trend & Target 呈現單一指標依週或月的量測與固定目標。新頁�
 公開虛構示例在 [`demo/demo-default.json`](../../demo/demo-default.json)：`p05` 為 12 週 at-most 與精確比較、`p06` 為含負數和零、末週 Missing 的 at-least。`p10` 明確寫 `"variant": "columns"`，`p11` 為較長的 Rows 文字；兩頁都明確寫 variant，讓示範檔存檔後不產生 diff。[`demo/demo-observatory.json`](../../demo/demo-observatory.json) 的 `trend` 頁示範觀測終點落在 Deck Period 內。
 
 可儲存結構合法的草稿。匯出則需要必填文字、有效目標、至少兩個量測、沒有 `unfilled`、觀測終點（最後一個週期的起點）不晚於 Deck 的 `period.end`；沒有 `period` 時略過這項比較，且通過 Stage fit。`missing` 保留觀測位置並切斷折線；最後一個位置為 `missing` 時摘要顯示 No data。Clone 保留 metric、目標、觀測日期與所有狀態、Measurement Context，清空 title、interpretation、notes；不自動延伸或裁剪觀測位置。
+
+#### 編輯規則
+
+- 先設定 `start`，才能輸入 Measured 或 Missing；日期不合法時拒絕，不會自動挪到週一或月初。清空 `start` 只在所有位置都是 Unfilled 時可儲存。
+- 只能從兩端延伸或裁剪：新位置為 Unfilled；移除第一個位置時 `start` 前移，其餘觀測的日期不變。達到 12 個位置後須先移除一端才能延伸，沒有自動滾動視窗。
+- 已有 Measured 或 Missing 時改 `start`，會顯示新舊日期範圍並要求確認；取消時日期與數值不變。
+- `cadence` 只在所有位置都是 Unfilled 時可切換，切換時 `start` 對齊新週期；已有觀測時選單停用。理由：改 `start` 只是平移已輸入值的日期，換週期則會改變每個值量的是什麼。
+- 清空已量測的數字回到 Unfilled；選擇 No observation 會清掉數值與待修正的輸入錯誤。非法或未完成的輸入保留在畫面上，不覆蓋最後一個合法值，並依 [Metric Input](export-gate.md#metric-input) 規則擋下 Save 與 Copy。
+
+#### 圖表與摘要
+
+- 橫軸等距；Measured 點連成一條線，Missing 與 Unfilled 都斷線且不當成零，只有 Missing 在可匯出的輸出中畫缺值記號。
+- 兩個方向都含等號。以最後一個位置的原始數值與原始 target 比較，不往回找較早的量測，也不另外儲存判定結果。
+- 顯示精度不影響判定。四捨五入後看起來與判定矛盾時（例如 at most 8 s、一位小數下 8.04 顯示為 8.0），Stage 加上未四捨五入的 `Exact: 8.04 s > 8 s`。顯示時負零正規化為零。
+- 縱軸範圍涵蓋所有量測值與 target，上下各加 10% 的跨度，不強制包含零；數值全相同時，上下各加該值絕對值的 10% 與 1 之中較大者。範圍計算失敗時阻擋 capture，不輸出非有限座標或空白圖表。
+- 刻度格式與標題精度分開，確保刻度文字不重複；極端數量級可用科學記號。日期標籤過密時減少標籤，但保留首尾與含年份的完整範圍。月週期的刻度只寫月份縮寫（`Jan`），年份寫在圖下的觀測範圍；`YYYY-MM` 會在圖表右緣被裁掉。
 
 ### SlideItem
 

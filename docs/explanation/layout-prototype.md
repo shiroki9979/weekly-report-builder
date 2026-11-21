@@ -30,7 +30,7 @@ Production adoption 完成後，該入口與重複模型已移除。作者改從
 - PNG 匯出與 1280 × 720 overflow gate：Copy 與 batch export
 - 生產樣式：`src/styles/editorial-layouts.css`，不從已刪除的 `src/prototype/` import
 
-完整規格見 [Editorial Layout Family production adoption](../specs/editorial-layout-family.md)。
+Production 契約見 [Deck JSON 格式](../reference/deck-json-format.md) 與 [Export gate](../reference/export-gate.md)。
 
 ## 相關文件
 

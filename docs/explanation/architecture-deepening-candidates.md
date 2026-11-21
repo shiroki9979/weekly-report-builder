@@ -194,7 +194,7 @@ typed Week Document、Metric Input 與存檔狀態同住一處。原名「Week �
   - `useWeekEditor` 直接回傳 React 的 `setWeek`，shell 原樣交給表單當 `onChange`，任何呼叫端都能繞過規則換掉整份 Week Document。
   - `tests/unit/evidence-decision.test.ts` 的 "does not revive a deleted page's invalid draft…" 手動重演 shell 的 delete → prune → add 順序，shell 漏呼叫 prune 時它照樣通過。沒有任何測試渲染 `MetricDraftProvider`；context 預設值是 no-op，`page-lifecycle-controls.test.tsx` 在 provider 外渲染表單，草稿寫入在那裡被靜默丟掉。切週清空、Save 擋下與 lifecycle prune 都沒有測試。
 - **收益**：locality，Week Document 與 Metric Input 的不變條件只在一處；更新成為原子操作；切週不再殘留舊訊息；Export hook 不再接收獨立 Metric Input；漏接類 bug 在 module 的 interface 測試中現形。
-- **既有決定**：保留 [Editorial Layout Family 規格](../specs/editorial-layout-family.md) 規定的 Page ID 與 field path 鍵值，改由 Editing Session 持有 Metric Input。
+- **既有決定**：保留 [Export gate](../reference/export-gate.md#metric-input) 規定的 Page ID 與 field path 鍵值，改由 Editing Session 持有 Metric Input。
 - **狀態**：2026-09-27 設計定案，規格見 [#37](https://github.com/shiroki9979/weekly-report-builder/issues/37)，實作票 [#38](https://github.com/shiroki9979/weekly-report-builder/issues/38) → [#39](https://github.com/shiroki9979/weekly-report-builder/issues/39) → [#40](https://github.com/shiroki9979/weekly-report-builder/issues/40) 已納入 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)。Editing Session 供應唯讀 operation snapshot，Export gate 契約維持不變。
 - **2026-11-09 追蹤**：lib 維持深；`editing-session.test.ts` 16 個測試透過 interface，舊的 delete → prune → add 重演已改為 delete → add 的 session 操作（36-57）。hook 側長出的規則另立為候選 7。
 
@@ -227,7 +227,7 @@ Copy 與 batch export 共用同一條單頁流程。
   - 已確認：HTML 載入與量測上限維持 3 秒／5 秒，PNG 產生新增 15 秒上限；PNG 逾時後隔離舊頁，丟棄遲到結果，batch 繼續。
   - 已確認：Copy、batch 與編輯器共用原因文字，各自保留前綴與摘要；編輯器不因此執行正式截圖。
   - 已確認：browser adapter 為每次單頁 capture session 自行建立並清理臨時 React root；shell 不再掛 capture host／ref／Provider。沿用既有 Stage renderer 與 CSS，adapter 負責 commit、unmount 與遲到結果隔離。
-  - module 介面、失敗政策與驗收設計見 [HTML Page export failure policy](../specs/html-page-error-png.md)。完整規格為 [#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)；四張實作票依 [共用截圖流程 #32](https://github.com/shiroki9979/weekly-report-builder/issues/32) → [失敗政策 #33](https://github.com/shiroki9979/weekly-report-builder/issues/33)／[操作快照 #34](https://github.com/shiroki9979/weekly-report-builder/issues/34) → [結果摘要 #35](https://github.com/shiroki9979/weekly-report-builder/issues/35) 完成，整體實作見 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)。
+  - module 介面與失敗政策見 [Export gate](../reference/export-gate.md)。完整規格為 [#31](https://github.com/shiroki9979/weekly-report-builder/issues/31)；四張實作票依 [共用截圖流程 #32](https://github.com/shiroki9979/weekly-report-builder/issues/32) → [失敗政策 #33](https://github.com/shiroki9979/weekly-report-builder/issues/33)／[操作快照 #34](https://github.com/shiroki9979/weekly-report-builder/issues/34) → [結果摘要 #35](https://github.com/shiroki9979/weekly-report-builder/issues/35) 完成，整體實作見 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)。
 - **2026-11-09 追蹤**：capture 關注點只剩一塊留在 renderer 外（Trend SVG ink），另立為候選 9。`use-stage-export.test.tsx` 與 `export-operation.test.tsx` 仍各 `vi.mock` 三個 module，本次未深究。
 
 ### 4. Stage context 帶型別事實，頁碼政策收進同一 module
@@ -296,6 +296,6 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
 - [工坊架構](workshop-architecture.md)
 - [ADR-0001：把週報流程從 slide 核心解耦](../adr/0001-decouple-weekly-report-from-slide-core.md)
 - [ADR-0002：Deck Theme 為固定清單](../adr/0002-deck-theme.md)
-- [Editorial Layout Family production adoption](../specs/editorial-layout-family.md)
-- [Deck Theme and the Observatory layouts](../specs/deck-theme-and-observatory-layouts.md)
+- [Deck JSON 格式](../reference/deck-json-format.md)
+- [Export gate](../reference/export-gate.md)
 - [GLOSSARY.md](../../GLOSSARY.md)

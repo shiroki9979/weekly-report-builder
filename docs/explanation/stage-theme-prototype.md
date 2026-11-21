@@ -49,7 +49,7 @@
 | `§ B1–B2` 之類的附錄參照                                 | takeaway 的 ref 是作者自由文字；附錄頁標號（B1）本輪延後，`§ nn` 索引只來自 Page Position。 |
 | `prettier-plugin-tailwindcss` 修掉 `className` 前導空白  | 正式實作組 class 名一律用 `cn()` 或整串條件式，不用 template literal 拼接。                 |
 
-規格見 [Deck Theme and the Observatory layouts](../specs/deck-theme-and-observatory-layouts.md)，決策見 [ADR-0002](../adr/0002-deck-theme.md)。
+規格見 issue [#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)，決策見 [ADR-0002](../adr/0002-deck-theme.md)，現行契約見 [Deck JSON 格式](../reference/deck-json-format.md)。
 
 ## 截圖（虛構文案）
 

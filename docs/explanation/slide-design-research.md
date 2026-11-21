@@ -165,4 +165,4 @@
 | [ONS 資料視覺化指引](https://service-manual.ons.gov.uk/data-visualisation/chart-types/choosing-a-chart-type)                                                                                                                                                                                   | 圖表選擇、座標軸與文字等頁面；屬機構實務指引。                                                  |
 | [W3C WAI 簡報指引](https://www.w3.org/WAI/teach-advocate/accessible-presentations/) 與上文各 WCAG 2.2 Understanding 頁面                                                                                                                                                                       | 可讀性、顏色、圖形對比與可近用材料；本筆記不是完整 WCAG 符合性稽核。                            |
 
-新 layout 提案可引用本文件作為設計理由，再把已確認的內容契約與驗證方法寫入專屬 spec。研究建議和現有核准規格不同時，以明確的後續決策處理；本文件本身不覆寫既有 [Editorial Layout Family 規格](../specs/editorial-layout-family.md)。
+新 layout 提案可引用本文件作為設計理由，再把已確認的內容契約與驗證方法寫入規格 issue，落地後更新 [Deck JSON 格式](../reference/deck-json-format.md)。研究建議和現有版型契約不同時，以明確的後續決策處理；本文件本身不覆寫既有契約。

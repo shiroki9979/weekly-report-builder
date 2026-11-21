@@ -10,7 +10,7 @@
 
 ## 這份文件的角色
 
-本文件借用「先寫設計哲學，再以視覺表達」的兩段法：先定義 Stage 的美學世界觀，之後每個主題、版型與元素都以它為準，而不是各自發明一套外觀。它回答「這個 Stage 應該長什麼樣、為什麼」，不回答欄位、schema 或 CSS 怎麼寫；那些屬於 [Editorial Layout Family 規格](../specs/editorial-layout-family.md) 及後續規格。
+本文件借用「先寫設計哲學，再以視覺表達」的兩段法：先定義 Stage 的美學世界觀，之後每個主題、版型與元素都以它為準，而不是各自發明一套外觀。它回答「這個 Stage 應該長什麼樣、為什麼」，不回答欄位、schema 或 CSS 怎麼寫；那些屬於 [Deck JSON 格式](../reference/deck-json-format.md) 與 [Export gate](../reference/export-gate.md)。
 
 哲學的對象是投影片，不是海報或藝術品。投影片必須在沒有講者時也能被讀懂（見 [好的 Slide](slide-design-research.md) 的雙情境原則），所以文字不是裝飾，資訊密度也不以「少」為美；這裡追求的是每一個元素都有可說明的作用，並以一致的手法安放。
 
@@ -71,5 +71,5 @@
 ## 相關文件
 
 - [好的 Slide：新 Structured Layout 的研究參考](slide-design-research.md)：溝通職能、雙情境與驗證方法。
-- [Editorial Layout Family 規格](../specs/editorial-layout-family.md)：既有版型的內容契約。
+- [Deck JSON 格式](../reference/deck-json-format.md)：既有版型的內容契約。
 - [ADR-0001](../adr/0001-decouple-weekly-report-from-slide-core.md)：Deck 不限於週報的方向。

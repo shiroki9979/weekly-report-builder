@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-11-07
+最後更新：2026-11-21
 
 ## Tutorials（入門教學）
 
@@ -30,11 +30,13 @@
 
 客觀描述格式、API 與指令，不含操作步驟。
 
-| 文件                                            | 說明                      |
-| ----------------------------------------------- | ------------------------- |
-| [Deck JSON 格式](reference/deck-json-format.md) | `decks/<id>.json` 結構    |
-| [開發伺服器 API](reference/dev-server-api.md)   | `GET/PUT/POST /api/decks` |
-| [pnpm 指令](reference/npm-scripts.md)           | 建置、測試、lint          |
+| 文件                                            | 說明                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------ |
+| [Deck JSON 格式](reference/deck-json-format.md) | `decks/<id>.json` 結構                                             |
+| [開發伺服器 API](reference/dev-server-api.md)   | `GET/PUT/POST /api/decks`                                          |
+| [pnpm 指令](reference/npm-scripts.md)           | 建置、測試、lint                                                   |
+| [HTML Page](reference/html-page.md)             | `layout: "html"` 路徑、消毒、掛載、頁尾安全區與片段撰寫契約        |
+| [Export gate](reference/export-gate.md)         | Export Readiness 規則、reason codes、overflow 量測、失敗與逾時政策 |
 
 ## Explanation（架構闡述）
 
@@ -49,19 +51,6 @@
 | [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據                               |
 | [Stage 設計哲學](explanation/stage-design-philosophy.md)              | Editorial Observatory：Deck Theme、layout 與 Stage Element 的上游美學依據 |
 | [Stage 主題原型](explanation/stage-theme-prototype.md)                | 三變體驗證與採用 Observatory 的決定                                       |
-
-## Specs（已落地）
-
-已實作、仍供維護與驗收參照的規格。
-
-| 文件                                                                                  | 說明                                                                                                                                                                 |
-| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [HTML 全幅頁](specs/html-page-layout.md)                                              | `layout: "html"` 16:9 逃生口                                                                                                                                         |
-| [HTML Page export failure policy](specs/html-page-error-png.md)                       | HTML 載入／截圖失敗政策與共用 Export gate                                                                                                                            |
-| [Editorial Layout Family production adoption](specs/editorial-layout-family.md)       | Editorial Layout Family 的 production 規格                                                                                                                           |
-| [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)   | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）                                                            |
-| [Deck Theme and the Observatory layouts](specs/deck-theme-and-observatory-layouts.md) | Deck Theme、Cover／Closing／Side-by-side Comparison／Full-width Panel 與 Boundary Note 規格（[#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)） |
-| [Ledger Deck Theme](specs/ledger-theme.md)                                            | Weekly Series 用的 `ledger` 主題：色票、IBM Plex Mono、外框等寬字範圍與 Demo（[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）                |
 
 ## Decisions（ADR）
 

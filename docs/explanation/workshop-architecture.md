@@ -94,6 +94,6 @@ Login、分享、canvas 拖曳排版、從本 app 播放、以 localStorage 為�
 - [週次 JSON 格式](../reference/deck-json-format.md)
 - [pnpm 指令](../reference/npm-scripts.md)
 - [第一份週報](../tutorials/first-weekly-report.md)
-- [HTML 全幅頁規格](../specs/html-page-layout.md)
+- [HTML Page](../reference/html-page.md)
+- [Export gate](../reference/export-gate.md)
 - [Layout 家族原型（歷史）](layout-prototype.md)
-- [Editorial Layout Family production adoption 規格](../specs/editorial-layout-family.md)
