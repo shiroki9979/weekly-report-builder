@@ -3,8 +3,42 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createDeckFromTemplate } from "@/lib/deck-template"
-import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
-import { parseDeck, type Deck } from "@/lib/deck"
+import {
+  ADDABLE_LAYOUTS,
+  createBlankAddablePage,
+  createBlankClosingPage,
+  createBlankEvidenceDecisionPage,
+  createBlankFullWidthPanelPage,
+  createBlankNextActionsPage,
+  createBlankOverviewPage,
+  createBlankSideBySidePage,
+  createBlankTrendTargetPage,
+  createBlankTwoColumnPage,
+} from "@/lib/page-lifecycle"
+import {
+  isEditorialFramePage,
+  parseDeck,
+  type Deck,
+  type EditorialFramePage,
+} from "@/lib/deck"
+
+type EditorialFrameLayout = EditorialFramePage["layout"]
+
+// 以版型為 key 的對照表：新增 Editorial Frame 版型而沒補 fixture 時，型別檢查會失敗
+const EDITORIAL_FRAME_FIXTURES: {
+  [L in EditorialFrameLayout]: Extract<EditorialFramePage, { layout: L }>
+} = {
+  "two-column": createBlankTwoColumnPage("p01", "table"),
+  overview: createBlankOverviewPage("p01"),
+  "evidence-decision": createBlankEvidenceDecisionPage("p01"),
+  "next-actions": createBlankNextActionsPage("p01"),
+  "trend-target": createBlankTrendTargetPage("p01"),
+  closing: createBlankClosingPage("p01"),
+  "side-by-side": createBlankSideBySidePage("p01"),
+  "full-width-panel": createBlankFullWidthPanelPage("p01", "chart"),
+}
+
+const editorialFrameCases = Object.entries(EDITORIAL_FRAME_FIXTURES)
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -300,6 +334,44 @@ describe("createDeckFromTemplate", () => {
     expect(cloned.pages[0].boundary).toBeUndefined()
     expect(cloned.pages[0].showPageNumber).toBeUndefined()
   })
+
+  // tests/ 不在 npm run typecheck 範圍內，對照表的型別涵蓋只在編輯器生效；以新增選單的版型清單在執行期補上同樣的保證
+  it("covers every Editorial Frame layout an author can add", () => {
+    const addableEditorialLayouts = ADDABLE_LAYOUTS.filter((layout) =>
+      isEditorialFramePage(createBlankAddablePage("p01", layout, "table"))
+    )
+
+    expect(Object.keys(EDITORIAL_FRAME_FIXTURES).sort()).toEqual(
+      [...addableEditorialLayouts].sort()
+    )
+  })
+
+  it.each(editorialFrameCases)(
+    "clears the %s Editorial Frame chrome a template must not carry over",
+    (layout, blankPage) => {
+      const previous: Deck = {
+        showPageNumbers: false,
+        pages: [
+          {
+            ...blankPage,
+            boundary: "Fictional sample only",
+            notes: "Say this aloud",
+            showPageNumber: true,
+          },
+        ],
+      }
+
+      const [page] = createDeckFromTemplate(previous).pages
+      if (!isEditorialFramePage(page)) {
+        throw new Error(`expected an Editorial Frame page, got ${page.layout}`)
+      }
+
+      expect(page.layout).toBe(layout)
+      expect(page.boundary).toBeUndefined()
+      expect(page.notes).toBeUndefined()
+      expect(page.showPageNumber).toBeUndefined()
+    }
+  )
 
   it("resets Editorial page numbers to the deck default", () => {
     const previous: Deck = {
