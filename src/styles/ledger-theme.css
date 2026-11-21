@@ -1,0 +1,17 @@
+/* ledger 沿用 default 的色彩與構圖，只換兩個色票與外框等寬字；不帶入 observatory 的 § nn、刻度尺、補零編號與 Lead Outcome 細線框 */
+.stage-root[data-theme="ledger"] {
+  --line: #c7d9e9;
+  --accent-wash: #dbe8f4;
+  /* Lead Outcome 底色加深後，default 的 #1f7a52 只剩 4.25:1；對比由主題負責，只壓暗到 4.5:1 以上 */
+  --ok-ink: #1c704b;
+  --mono: "IBM Plex Mono", "PingFang TC", "Microsoft JhengHei", monospace;
+}
+
+.stage-root[data-theme="ledger"] .editorial-eyebrow,
+.stage-root[data-theme="ledger"] .editorial-period,
+.stage-root[data-theme="ledger"] .editorial-workstream,
+.stage-root[data-theme="ledger"] .editorial-status,
+.stage-root[data-theme="ledger"] .editorial-page-number,
+.stage-root[data-theme="ledger"] .editorial-boundary {
+  font-family: var(--mono);
+}

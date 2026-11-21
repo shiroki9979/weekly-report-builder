@@ -1,10 +1,14 @@
 /* 生產 Editorial Layout 專用；只掛在 Stage，不引入 shadcn */
+.stage-root {
+  /* 底部多留白，PNG 貼進團隊簡報範本時不壓到範本頁尾；HTML Page 頁尾外框共用同一值才會對齊 */
+  --editorial-frame-padding: 4.4% 5% 5%;
+}
+
 .editorial-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* 底部多留白，PNG 貼進團隊簡報範本時不壓到範本頁尾 */
-  padding: 4.4% 5% 5%;
+  padding: var(--editorial-frame-padding);
 }
 
 .editorial-header {
@@ -76,6 +80,18 @@
   letter-spacing: 0.06em;
   color: var(--mute);
   text-align: right;
+}
+
+/* HTML Page 沒有文流頁尾：疊一層與 .editorial-page 同 padding 的外框，頁尾才落在 Editorial Frame 的同一位置，不改片段本身 */
+.editorial-html-footer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--editorial-frame-padding);
+  pointer-events: none;
 }
 
 .editorial-page-label {
@@ -559,6 +575,7 @@
    Stage 而被擋下。不會自行縮放的版型即使沒有 Boundary Note 也需要這層保護。 */
 .editorial-page:has(> .editorial-boundary) > .editorial-body,
 .editorial-body:has(
+  > .stage-cols,
   > .editorial-comparison,
   > .editorial-closing,
   > .editorial-full-width-panel

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createStagePageContext } from "@/lib/stage-page-context"
+import { createStagePageContext, padPageNumber } from "@/lib/stage-page-context"
 import { parseDeck } from "@/lib/deck"
 
 function weekDocument() {
@@ -103,7 +103,7 @@ describe("createStagePageContext", () => {
     expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
       hidden: false,
       position: { index: 1, total: 2 },
-      showPageNumber: false,
+      showPageNumber: true,
     })
     expect(createStagePageContext("2026-08-24", week, "p03")).toMatchObject({
       hidden: false,
@@ -286,7 +286,7 @@ describe("createStagePageContext", () => {
     ).toBe(false)
   })
 
-  it("does not show a page number on a hidden page or a two-column page", () => {
+  it("does not show a page number on a hidden page", () => {
     const week = parseDeck({
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
@@ -298,23 +298,6 @@ describe("createStagePageContext", () => {
           hidden: true,
           showPageNumber: true,
         },
-        {
-          id: "p02",
-          layout: "two-column",
-          title: "Two column",
-          showPageNumber: true,
-          items: [
-            { heading: "A", body: "1" },
-            { heading: "B", body: "2" },
-            { heading: "C", body: "3" },
-          ],
-          panel: {
-            kind: "table",
-            title: "Grid",
-            columns: ["A"],
-            rows: [{ cells: ["1"] }],
-          },
-        },
       ],
     })
 
@@ -323,8 +306,47 @@ describe("createStagePageContext", () => {
       position: null,
       showPageNumber: false,
     })
-    expect(
-      createStagePageContext("2026-08-24", week, "p02").showPageNumber
-    ).toBe(false)
+  })
+
+  it("lets a two-column page follow the deck default and its own override", () => {
+    const twoColumn = (id: string, showPageNumber?: boolean) => ({
+      id,
+      layout: "two-column",
+      title: "Two column",
+      ...(showPageNumber === undefined ? {} : { showPageNumber }),
+      items: [
+        { heading: "A", body: "1" },
+        { heading: "B", body: "2" },
+        { heading: "C", body: "3" },
+      ],
+      panel: {
+        kind: "table",
+        title: "Grid",
+        columns: ["A"],
+        rows: [{ cells: ["1"] }],
+      },
+    })
+    const shown = parseDeck({
+      pages: [twoColumn("p01"), twoColumn("p02", false)],
+    })
+    const hidden = parseDeck({
+      showPageNumbers: false,
+      pages: [twoColumn("p01"), twoColumn("p02", true)],
+    })
+
+    const visibility = (deck: typeof shown, id: string) =>
+      createStagePageContext("deck", deck, id).showPageNumber
+    expect(visibility(shown, "p01")).toBe(true)
+    expect(visibility(shown, "p02")).toBe(false)
+    expect(visibility(hidden, "p01")).toBe(false)
+    expect(visibility(hidden, "p02")).toBe(true)
+  })
+})
+
+describe("padPageNumber", () => {
+  it("pads single-digit Page Position numbers to two digits for theme labels", () => {
+    expect(padPageNumber(3)).toBe("03")
+    expect(padPageNumber(12)).toBe("12")
+    expect(padPageNumber(104)).toBe("104")
   })
 })

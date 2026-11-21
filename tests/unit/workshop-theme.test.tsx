@@ -72,6 +72,20 @@ describe("Deck appearance toolbar", () => {
     )
     expect(screen.queryByText("Saved", { exact: true })).not.toBeInTheDocument()
   })
+  it("offers the Ledger theme", async () => {
+    const user = userEvent.setup()
+    render(<ThemeHarness />)
+
+    await user.click(screen.getByRole("combobox", { name: "Theme" }))
+    await user.click(await screen.findByRole("option", { name: "Ledger" }))
+
+    expect(screen.getByRole("combobox", { name: "Theme" })).toHaveTextContent(
+      "Ledger"
+    )
+    expect(screen.getByLabelText("Saved Deck")).toHaveTextContent(
+      '"theme":"ledger"'
+    )
+  })
   it("updates the Deck Title and allows it to be cleared", async () => {
     const user = userEvent.setup()
     render(<ThemeHarness />)

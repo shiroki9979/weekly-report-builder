@@ -1,7 +1,7 @@
 # HTML 全幅頁（16:9 逃生口）
 
 建立日期：2026-09-03  
-最後更新：2026-09-27
+最後更新：2026-11-20
 狀態：implemented（v0.1.0）
 
 Grill 共識（2026-09-03）。已於 v0.1.0 實作。
@@ -67,6 +67,11 @@ Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 - **載入**：預覽與 capture 都 fetch 片段字串，消毒後再掛上。不要把未消毒的檔案直接當 `srcdoc`。
 - **消毒**：掛上前以 DOMPurify 消毒，移除 `script`、事件屬性、危險 URL 與可執行內容的巢狀瀏覽環境（例如 `iframe`／`srcdoc`）；保留片段自帶的 `<style>`。這是防止 DOM XSS 的必要相依。
 - **預覽掛載**：`.stage-root` 內 Shadow DOM；**不要**把 `stage.css` stylesheet adopt 進 shadow。CSS 變數從 `.stage-root` 繼承即可。
+- **字型**（2026-11-20，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)）：字型和色彩一樣透過 [ADR-0002](../adr/0002-deck-theme.md) 的角色跟隨 Deck Theme。
+  - 片段內文不指定 `font-family`，從 `.stage-root` 繼承主題的內文字型（繼承會穿過 Shadow DOM，capture host 的 light DOM 也一樣）。
+  - 等寬字一律用 `var(--mono)`；SVG 的 `font-family` 屬性不能用 `var()`，改用片段 `<style>` 裡的 class。
+  - 不內嵌字型（`@font-face` 搭配 `data:` URI）；需要的字型由主題樣式表提供，PNG 匯出只嵌入該頁用到的自架字型。
+  - sanitizer 不強制剝除既有片段的 `font-family` 或 `@font-face`：既有私人 Deck 的輸出不會無預警改變，只是不跟隨主題。
 - **匯出掛載**：既有 off-screen capture host 改走 **light DOM 注入**（同一份已消毒字串）。不要為 HTML 頁換截圖庫，也不要用 iframe（現行 capture 拍不到）。
 - **工坊表單**：`layout === "html"` 時顯示 `htmlFile` 與既有 title／notes／hidden；隱藏 items／panel 編輯。受既有 edit lock 約束。沒有 layout 切換控件。
 - **錯誤**：讀檔失敗、路徑非法、缺失檔案 → stage 英文警告（既有 warning 模式），不要靜默空白。
@@ -74,6 +79,16 @@ Grill 共識（2026-09-03）。已於 v0.1.0 實作。
 - **Clone**：拷貝來源週目錄內被引用的 html 檔到新週目錄；內容不清空。`cloneWeekFromPrevious` 對 html 頁保留 `htmlFile` 字串、清空 title／notes；不要發明空的 items／panel。
 - **語言**：工坊 chrome 英文；片段內容與 `weeks` JSON 一樣由作者自訂、語言不限。
 - **文件**：更新週次 JSON 格式說明、clone how-to（會連 html 檔一起拷）、工坊架構（第二種頁面模式）。不要新開 tutorial，除非現有入門文需要一句話提到 html 頁。
+
+## 頁尾與安全區
+
+2026-11-20 新增（#68）。
+
+- **頁尾內容**：頁面設 `showPageNumber: true` 時，app 在片段之外畫出與 Editorial Frame 相同的頁尾：左側 Deck Title、右側 Page Position。Deck 沒有 Deck Title 時只畫 Page Position。所有 Deck Theme 都畫同一組頁尾；主題只改字型與頁碼格式（例如 `observatory` 補零），不改結構。
+- **開關**：沿用每頁的 `showPageNumber`，預設關閉，不繼承 Deck 層級的 `showPageNumbers`。關閉時整組頁尾都不畫，Deck Title 不會單獨出現。這點刻意和 Editorial Frame 不同：既有片段可能自帶頁尾，Deck Title 若永遠出現，會改變既有輸出並造成重疊。Hidden Page 不畫頁尾。從 Deck Template 或上一週建立 Deck 時，HTML Page 沿用該頁的 `showPageNumber`。
+- **一致性**：頁尾掛在片段之外、Stage 上與 Editorial Frame 頁尾相同的位置，預覽（Shadow DOM）與匯出（light DOM）相同。
+- **安全區**：開啟頁尾時，片段底部 `8cqw`（1280 × 720 下約 102 px）保留給頁尾，與 Editorial Frame 正文底部到 Stage 底邊的距離相同。`cqw` 以 Stage 寬度為準，片段在 Shadow DOM 內也能使用。安全區內不放文字、圖形或來源說明，片段也不自帶頁尾或頁碼；鋪滿整頁的底色不算內容。
+- **責任**：任意 HTML 是否遵守安全區由作者負責，系統不偵測片段是否自帶頁尾，也不裁切內容。`editorial-footer-overlap.spec` 只檢查 Demo Deck Set 的 HTML Page 在每個 Deck Theme 下不與頁尾重疊。
 
 ## Testing Decisions
 

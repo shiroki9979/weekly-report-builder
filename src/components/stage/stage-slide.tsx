@@ -8,10 +8,8 @@ import { NextActionsSlide } from "@/components/stage/next-actions-slide"
 import { TwoColumnSlide } from "@/components/stage/two-column-slide"
 import { OverviewSlide } from "@/components/stage/overview-slide"
 import { TrendTargetSlide } from "@/components/stage/trend-target-slide"
-import {
-  formatPagePosition,
-  type StagePageContext,
-} from "@/lib/stage-page-context"
+import { EditorialFooter } from "@/components/stage/editorial-footer"
+import type { StagePageContext } from "@/lib/stage-page-context"
 import { isHtmlPage, matchPage, type Page } from "@/lib/deck"
 
 export type StageSlideProps = {
@@ -48,7 +46,9 @@ export function StageSlide({
             isCapture={isCapture}
           />
         ),
-        twoColumn: (twoColumn) => <TwoColumnSlide page={twoColumn} />,
+        twoColumn: (twoColumn) => (
+          <TwoColumnSlide page={twoColumn} context={context} />
+        ),
         overview: (overview) => (
           <OverviewSlide page={overview} context={context} />
         ),
@@ -67,10 +67,14 @@ export function StageSlide({
           </div>
         ),
       })}
+      {/* 頁尾畫在片段之外，預覽（Shadow DOM）與匯出（light DOM）才會一致 */}
       {isHtmlPage(page) && context.showPageNumber ? (
-        <footer className="stage-page-number">
-          {formatPagePosition(context.position)}
-        </footer>
+        <div className="editorial-html-footer">
+          <EditorialFooter
+            deckTitle={context.deckTitle}
+            position={context.position}
+          />
+        </div>
       ) : null}
     </div>
   )

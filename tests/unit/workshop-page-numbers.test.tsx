@@ -94,11 +94,11 @@ describe("WorkshopToolbar showPageNumbers toggle", () => {
     expect(checkbox).toHaveAttribute("aria-disabled", "true")
   })
 
-  it("explains that HTML pages opt in to page numbers individually", () => {
+  it("explains that HTML pages opt in to the Deck Title footer individually", () => {
     const checkbox = renderToolbar()
 
     expect(checkbox).toHaveAccessibleDescription(
-      "HTML pages show a page number only when set on the page."
+      "HTML pages show a footer with the Deck Title and page number only when set on the page."
     )
   })
 })
@@ -123,6 +123,26 @@ describe("PageNumberSelect", () => {
     render(<PageNumberSelect deck={week} pageIndex={0} onChange={() => {}} />)
 
     expect(screen.getByText("Default (Hide)")).toBeInTheDocument()
+  })
+
+  it("tells the author that an HTML Page's footer also carries the Deck Title", () => {
+    const week = sampleWeek(true)
+    render(<PageNumberSelect deck={week} pageIndex={0} onChange={() => {}} />)
+
+    expect(
+      screen.getByRole("combobox", { name: "Page number" })
+    ).toHaveAccessibleDescription(
+      "On an HTML page, Show draws the footer: the Deck Title and page number. Keep the bottom of the HTML clear."
+    )
+  })
+
+  it("adds no footer note for a Structured Layout page", () => {
+    const week = sampleWeek(true)
+    render(<PageNumberSelect deck={week} pageIndex={1} onChange={() => {}} />)
+
+    expect(
+      screen.getByRole("combobox", { name: "Page number" })
+    ).not.toHaveAccessibleDescription()
   })
 
   it("changes page.showPageNumber when selected", async () => {
@@ -195,7 +215,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     ).toBeInTheDocument()
   })
 
-  it("does not render page number select for a two-column page", () => {
+  it("renders page number select for a two-column page", () => {
     const week: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },
       pages: [
@@ -228,7 +248,7 @@ describe("PageEditorForm and EditorialPageEditorChrome integration", () => {
     )
 
     expect(
-      screen.queryByRole("combobox", { name: "Page number" })
-    ).not.toBeInTheDocument()
+      screen.getByRole("combobox", { name: "Page number" })
+    ).toBeInTheDocument()
   })
 })

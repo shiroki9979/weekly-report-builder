@@ -25,7 +25,7 @@
 - 若來源週次包含 Evidence-backed Decision，clone 會保留 metric label 與格式，baseline／candidate 重設為 `null`，並清除 verdict 與 interpretations
 - 若來源週次包含 Next Actions，clone 會保留 Rows／Columns 選擇與 Commitment 數量，清除每個 Commitment 的 title／outcome／checkpoint
 - 若來源週次包含 Trend & Target，clone 會保留帶日期的所有觀測、目標、指標格式與 Measurement Context，清除 Title、Interpretation 與 notes。新週不會自動加週或移除舊週；在編輯頁手動增減端點後填入新結果
-- `period` 自動設為該週週一至週五；Deck Theme 與 Deck Title 沿用來源，可在建立後修改
+- `period` 自動設為該週週一至週五；Deck Theme 與 Deck Title 沿用來源，可在建立後修改。要換主題（例如改用 `ledger`）時，照常 Create week 後在工具列 **Theme** 選單切換並 Save；之後的週報沿用最新一份的主題
 - 新週不複製上一週的 `showPageNumbers` 與 Editorial 頁的 `showPageNumber`，Editorial 頁碼回到預設顯示；HTML Page 逐頁開啟，沿用上一週該頁的 `showPageNumber`
 
 ## 常見問題

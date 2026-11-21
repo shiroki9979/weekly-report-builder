@@ -270,6 +270,37 @@ describe("createDeckFromTemplate", () => {
     expect(() => parseDeck(cloned)).not.toThrow()
   })
 
+  it("clears a two-column Boundary Note and page-number override", () => {
+    const previous = parseDeck({
+      pages: [
+        {
+          id: "p01",
+          layout: "two-column",
+          title: "Eval Gate",
+          boundary: "Fictional sample only",
+          showPageNumber: false,
+          items: [
+            { heading: "A", body: "1" },
+            { heading: "B", body: "2" },
+            { heading: "C", body: "3" },
+          ],
+          panel: {
+            kind: "table",
+            title: "Grid",
+            columns: ["A"],
+            rows: [{ cells: ["1"] }],
+          },
+        },
+      ],
+    })
+
+    const cloned = createDeckFromTemplate(previous)
+
+    expect(cloned.pages[0]).toMatchObject({ layout: "two-column", title: "" })
+    expect(cloned.pages[0].boundary).toBeUndefined()
+    expect(cloned.pages[0].showPageNumber).toBeUndefined()
+  })
+
   it("resets Editorial page numbers to the deck default", () => {
     const previous: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },

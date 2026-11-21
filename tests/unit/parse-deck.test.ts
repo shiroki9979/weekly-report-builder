@@ -50,7 +50,7 @@ describe("parseDeck", () => {
     }
   )
 
-  it.each(["unknown", "", null, 1, false])(
+  it.each(["unknown", "Ledger", "evidence-ledger", "", null, 1, false])(
     "rejects supplied invalid theme %j",
     (theme) => {
       expect(() =>
@@ -86,6 +86,20 @@ describe("parseDeck", () => {
     expect(JSON.parse(serializeDeck(deck))).toMatchObject({
       theme: "observatory",
       title: "Harbor Forecast",
+    })
+  })
+
+  it("round-trips a Ledger Deck", () => {
+    const deck = parseDeck({
+      theme: "ledger",
+      title: "Weekly Series",
+      pages: [
+        { id: "p01", layout: "html", title: "Opening", htmlFile: "p01.html" },
+      ],
+    })
+    expect(JSON.parse(serializeDeck(deck))).toMatchObject({
+      theme: "ledger",
+      title: "Weekly Series",
     })
   })
 
@@ -184,6 +198,29 @@ describe("parseDeck", () => {
       throw new Error("expected html page")
     }
     expect(htmlPage.htmlFile).toBe("p02.html")
+  })
+
+  it("keeps a Boundary Note on a two-column page", () => {
+    const week = parseDeck(
+      twoColumnWeekWithPanel({
+        kind: "table",
+        title: "Grid",
+        columns: ["A"],
+        rows: [{ cells: ["1"] }],
+      })
+    )
+    const withBoundary = parseDeck({
+      ...week,
+      pages: [{ ...week.pages[0], boundary: "Fictional sample only" }],
+    })
+
+    expect(withBoundary.pages[0]).toHaveProperty(
+      "boundary",
+      "Fictional sample only"
+    )
+    expect(
+      parseDeck(JSON.parse(serializeDeck(withBoundary))).pages[0]
+    ).toHaveProperty("boundary", "Fictional sample only")
   })
 
   it("parses interleaved html pages among two-column pages", () => {

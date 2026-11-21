@@ -1,4 +1,9 @@
-import { expect, test } from "@playwright/test"
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page as BrowserPage,
+} from "@playwright/test"
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
@@ -9,9 +14,11 @@ import {
   isEvidenceDecisionPage,
   isNextActionsPage,
   isTrendTargetPage,
+  periodLabel,
   type Deck,
   type Page,
   type DeckTheme,
+  DECK_THEMES,
 } from "../../src/lib/deck"
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
@@ -104,7 +111,59 @@ function themeFixture(theme: DeckTheme): Deck {
   }
 }
 
-for (const theme of ["default", "observatory"] as const) {
+// Record 讓新增主題時型別檢查強制寫下它在每個主題相關檢查的預期，測試清單直接讀 DECK_THEMES
+type ThemeExpectation = {
+  paddedPageNumbers: boolean
+  ink: { accent: string; mute: string; line: string }
+  legend: string[]
+  leadBackground: string
+  // Overview 頁匯出時是否嵌入自架的 Instrument Sans
+  embedsInstrumentSans: boolean
+  // --mono 是否自架 IBM Plex Mono（用到 var(--mono) 時才嵌入）
+  hostsIbmPlexMono: boolean
+  // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono
+  monoFrame: boolean
+}
+
+const DEFAULT_LEGEND = [
+  "rgb(46, 117, 182)",
+  "rgb(126, 176, 214)",
+  "rgb(161, 65, 136)",
+]
+
+const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
+  default: {
+    paddedPageNumbers: false,
+    ink: { accent: "#2e75b6", mute: "#5c5c5c", line: "#d0d7de" },
+    legend: DEFAULT_LEGEND,
+    leadBackground: "rgb(238, 244, 250)",
+    embedsInstrumentSans: false,
+    hostsIbmPlexMono: false,
+    monoFrame: false,
+  },
+  observatory: {
+    paddedPageNumbers: true,
+    ink: { accent: "#287b78", mute: "#5a6e7e", line: "#d6dee4" },
+    legend: ["rgb(40, 123, 120)", "rgb(31, 95, 92)", "rgb(161, 65, 136)"],
+    leadBackground: "rgba(0, 0, 0, 0)",
+    embedsInstrumentSans: true,
+    hostsIbmPlexMono: true,
+    monoFrame: true,
+  },
+  // ledger 沿用 default 的色彩與構圖，只換 --line、--accent-wash 與外框等寬字
+  ledger: {
+    paddedPageNumbers: false,
+    ink: { accent: "#2e75b6", mute: "#5c5c5c", line: "#c7d9e9" },
+    legend: DEFAULT_LEGEND,
+    leadBackground: "rgb(219, 232, 244)",
+    embedsInstrumentSans: false,
+    hostsIbmPlexMono: true,
+    monoFrame: true,
+  },
+}
+
+for (const theme of DECK_THEMES) {
+  const expected = THEME_EXPECTATIONS[theme]
   test(`renders six existing layouts at capture size with ${theme} roles`, async ({
     page,
     request,
@@ -121,9 +180,32 @@ for (const theme of ["default", "observatory"] as const) {
         stage.getByRole("heading", { name: entry.title, exact: true })
       ).toBeVisible()
       await expect(stage).toHaveAttribute("data-theme", theme)
+      // Two-column 也走 Editorial Frame：翻頁時日期列與頁尾不因版型忽有忽無
+      await expect(stage.locator(".editorial-period")).toHaveText(
+        periodLabel(deck.period)
+      )
+      await expect(stage.locator(".editorial-deck-title")).toHaveText(
+        deck.title!
+      )
+      const total = deck.pages.length
+      await expect(
+        stage.locator(
+          expected.paddedPageNumbers
+            ? ".editorial-number-padded"
+            : ".editorial-number-default"
+        )
+      ).toHaveText(
+        expected.paddedPageNumbers
+          ? `0${index + 1} / 0${total}`
+          : `${index + 1} / ${total}`
+      )
       await fitAtCaptureSize(page)
       await copyPng(page, `${theme}-${entry.layout}-${index}.png`)
       if (index === 0) {
+        await expect(stage.locator(".editorial-lead")).toHaveCSS(
+          "background-color",
+          expected.leadBackground
+        )
         const ratios = await stage
           .locator(".editorial-status")
           .evaluateAll((elements) => {
@@ -168,10 +250,7 @@ for (const theme of ["default", "observatory"] as const) {
         for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5)
       }
       if (index === 3) {
-        const expectedInk =
-          theme === "default"
-            ? { accent: "#2e75b6", mute: "#5c5c5c", line: "#d0d7de" }
-            : { accent: "#287b78", mute: "#5a6e7e", line: "#d6dee4" }
+        const expectedInk = expected.ink
         for (const [mark, attribute, expected] of [
           ["line", "stroke", expectedInk.accent],
           ["point", "fill", expectedInk.accent],
@@ -192,11 +271,7 @@ for (const theme of ["default", "observatory"] as const) {
           .evaluateAll((nodes) =>
             nodes.map((node) => getComputedStyle(node).backgroundColor)
           )
-        expect(colors).toEqual(
-          theme === "default"
-            ? ["rgb(46, 117, 182)", "rgb(126, 176, 214)", "rgb(161, 65, 136)"]
-            : ["rgb(40, 123, 120)", "rgb(31, 95, 92)", "rgb(161, 65, 136)"]
-        )
+        expect(colors).toEqual(expected.legend)
       }
     }
   })
@@ -206,44 +281,49 @@ for (const theme of ["default", "observatory"] as const) {
     request,
   }) => {
     const deck = themeFixture(theme)
-    const heights: number[] = []
-    for (const [title, showPageNumbers] of [
-      ["Harbor Forecast", true],
-      [undefined, true],
-      ["Harbor Forecast", false],
-      [undefined, false],
-    ] as const) {
-      expect(
-        (
-          await request.put("/api/decks/footer-review", {
-            data: { ...deck, title, showPageNumbers, pages: [deck.pages[0]] },
-          })
-        ).ok()
-      ).toBe(true)
-      await page.goto("/?deck=footer-review")
-      await fitAtCaptureSize(page)
-      heights.push(
-        await page
+    // Overview 與 Two-column 各代表一種構圖，兩者都要不受頁尾空槽影響
+    for (const framed of [deck.pages[0], deck.pages[4]]) {
+      const heights: number[] = []
+      for (const [title, showPageNumbers] of [
+        ["Harbor Forecast", true],
+        [undefined, true],
+        ["Harbor Forecast", false],
+        [undefined, false],
+      ] as const) {
+        expect(
+          (
+            await request.put("/api/decks/footer-review", {
+              data: { ...deck, title, showPageNumbers, pages: [framed] },
+            })
+          ).ok()
+        ).toBe(true)
+        await page.goto("/?deck=footer-review")
+        await fitAtCaptureSize(page)
+        heights.push(
+          await page
+            .getByTestId("stage-frame")
+            .locator(".editorial-body")
+            .evaluate((element) => element.getBoundingClientRect().height)
+        )
+        const index = page
           .getByTestId("stage-frame")
-          .locator(".editorial-body")
-          .evaluate((element) => element.getBoundingClientRect().height)
+          .locator(".editorial-page-index")
+        if (expected.paddedPageNumbers && showPageNumbers) {
+          await expect(index).toBeVisible()
+          await expect(index).toHaveText("§ 01")
+          await expect(
+            page.getByTestId("stage-frame").locator(".editorial-number-padded")
+          ).toHaveText("01 / 01")
+        } else await expect(index).not.toBeVisible()
+        if (!showPageNumbers)
+          await expect(
+            page.getByTestId("stage-frame").locator(".editorial-page-label")
+          ).toHaveCount(0)
+      }
+      expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(
+        0.1
       )
-      const index = page
-        .getByTestId("stage-frame")
-        .locator(".editorial-page-index")
-      if (theme === "observatory" && showPageNumbers) {
-        await expect(index).toBeVisible()
-        await expect(index).toHaveText("§ 01")
-        await expect(
-          page.getByTestId("stage-frame").locator(".editorial-number-padded")
-        ).toHaveText("01 / 01")
-      } else await expect(index).not.toBeVisible()
-      if (!showPageNumbers)
-        await expect(
-          page.getByTestId("stage-frame").locator(".editorial-page-label")
-        ).toHaveCount(0)
     }
-    expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(0.1)
   })
 
   test(`embeds only fonts in use in ${theme} capture`, async ({
@@ -271,21 +351,240 @@ for (const theme of ["default", "observatory"] as const) {
           (match) => match[0]
         )
       })
-    const customFaces = faces.filter((face) =>
-      /Instrument Sans|IBM Plex Mono/.test(face)
+    const embeds = (family: RegExp) =>
+      faces.some((face) => family.test(face) && /data:.*base64/.test(face))
+    // Overview 的 workstream、status 與頁尾用到 --mono；只有外框改用它的主題才嵌入等寬字
+    expect({
+      instrumentSans: embeds(/Instrument Sans/),
+      ibmPlexMono: embeds(/IBM Plex Mono/),
+    }).toEqual({
+      instrumentSans: expected.embedsInstrumentSans,
+      ibmPlexMono: expected.hostsIbmPlexMono && expected.monoFrame,
+    })
+  })
+
+  test(`sets only the Editorial Frame furniture in --mono under ${theme}`, async ({
+    page,
+    request,
+  }) => {
+    const deck = themeFixture(theme)
+    const overview = {
+      ...deck.pages[0],
+      boundary: "Fictional sample of one promote cycle.",
+    }
+    expect(
+      (
+        await request.put("/api/decks/mono-frame", {
+          data: { ...deck, pages: [overview] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=mono-frame")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage.locator(".editorial-boundary")).toBeVisible()
+    await expect(stage.locator(".editorial-page-label")).toBeVisible()
+    const furniture = [
+      ".editorial-eyebrow",
+      ".editorial-period",
+      ".editorial-workstream",
+      ".editorial-status",
+      ".editorial-deck-title",
+      ".editorial-page-label",
+      ".editorial-boundary",
+    ]
+    const content = [
+      ".editorial-headline",
+      ".editorial-figure",
+      ".editorial-result",
+      ".editorial-impact",
+    ]
+    // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+    await expect
+      .poll(() =>
+        stage.evaluate(
+          (root, selectors) => {
+            const normalize = (value: string) =>
+              value.replace(/["'\s]/g, "").toLowerCase()
+            const mono = normalize(
+              getComputedStyle(root).getPropertyValue("--mono")
+            )
+            return Object.fromEntries(
+              selectors.map((selector) => {
+                const elements = [...root.querySelectorAll(selector)]
+                if (elements.length === 0) return [selector, "missing"]
+                return [
+                  selector,
+                  elements.every(
+                    (element) =>
+                      normalize(getComputedStyle(element).fontFamily) === mono
+                  ),
+                ]
+              })
+            )
+          },
+          [...furniture, ...content]
+        )
+      )
+      .toEqual(
+        Object.fromEntries([
+          ...furniture.map((selector) => [selector, expected.monoFrame]),
+          ...content.map((selector) => [selector, false]),
+        ])
+      )
+  })
+}
+
+const MONO_HTML =
+  '<div style="padding:5%"><p id="html-body">Pilot timeline 試行時程</p><p id="html-mono" style="font-family:var(--mono)">2026-11-20 · 12 runs</p></div>'
+const PLAIN_HTML =
+  '<div style="padding:5%"><p id="html-body">Pilot timeline 試行時程</p><p id="html-mono">2026-11-20 · 12 runs</p></div>'
+
+async function putHtmlFontDeck(
+  request: APIRequestContext,
+  theme: DeckTheme,
+  html = MONO_HTML
+) {
+  const id = `${theme}-html-font`
+  const dir = path.join(e2eDecksDir(), id)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(path.join(dir, "fonts.html"), html)
+  expect(
+    (
+      await request.put(`/api/decks/${id}`, {
+        data: {
+          theme,
+          pages: [
+            {
+              id: "html",
+              layout: "html",
+              title: "Font inheritance",
+              htmlFile: "fonts.html",
+            },
+          ],
+        },
+      })
+    ).ok()
+  ).toBe(true)
+}
+
+// HTML Page 匯出走離屏 capture host 的 light DOM，必須從那裡取 SVG 才代表實際 PNG
+function htmlPageCaptureFaces(
+  page: BrowserPage,
+  deckId: string
+): Promise<string[]> {
+  return page.evaluate(async (deckId) => {
+    const deckModule = "/src/lib/deck.ts"
+    const adapterModule = "/src/lib/browser-capture-adapter.tsx"
+    const imageModule = "/node_modules/.vite/deps/html-to-image.js"
+    const { parseDeck } = await import(deckModule)
+    const { browserCaptureAdapter } = await import(adapterModule)
+    const { toSvg } = await import(imageModule)
+    const deck = parseDeck(await (await fetch(`/decks/${deckId}.json`)).json())
+    const prepared = await browserCaptureAdapter.prepare(
+      deckId,
+      deck,
+      deck.pages[0]
     )
-    if (theme === "observatory") {
-      expect(
-        customFaces.some(
-          (face) => /Instrument Sans/.test(face) && /data:.*base64/.test(face)
+    if ("kind" in prepared) throw new Error(prepared.message)
+    try {
+      const root = [
+        ...document.querySelectorAll("[data-stage-capture-root]"),
+      ].find((element) => element.closest('[aria-hidden="true"]'))
+      if (!root?.querySelector("#html-mono"))
+        throw new Error("Capture host has no HTML Page")
+      const encoded = await toSvg(root)
+      const svg = decodeURIComponent(encoded.slice(encoded.indexOf(",") + 1))
+      return [...svg.matchAll(/@font-face\s*\{[^}]+\}/g)].map(
+        (match) => match[0]
+      )
+    } finally {
+      prepared.dispose()
+    }
+  }, deckId)
+}
+
+// --mono 是 HTML Page 契約的一部分；新增主題時不能漏定義
+for (const theme of DECK_THEMES) {
+  test(`defines the --mono role under the ${theme} theme`, async ({
+    page,
+    request,
+  }) => {
+    const deck = themeFixture(theme)
+    expect(
+      (
+        await request.put("/api/decks/mono-review", {
+          data: { ...deck, pages: [deck.pages[0]] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=mono-review")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    // dev server 的 CSS 由模組非同步注入，寫入 Deck 後也可能重新載入；輪詢到樣式生效為止
+    await expect
+      .poll(() =>
+        stage.evaluate((element) =>
+          getComputedStyle(element).getPropertyValue("--mono").trim()
         )
-      ).toBe(true)
-      expect(
-        customFaces.some(
-          (face) => /IBM Plex Mono/.test(face) && /data:.*base64/.test(face)
-        )
-      ).toBe(true)
-    } else expect(customFaces).toEqual([])
+      )
+      .not.toBe("")
+  })
+
+  test(`HTML Page text without a font-family inherits the ${theme} body font`, async ({
+    page,
+    request,
+  }) => {
+    await putHtmlFontDeck(request, theme)
+    await page.goto(`/?deck=${theme}-html-font`)
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage.locator("#html-mono")).toBeVisible()
+    await expect
+      .poll(() =>
+        stage.locator("#html-body").evaluate((element) => {
+          const stageRoot = (element.getRootNode() as ShadowRoot).host.closest(
+            ".stage-root"
+          )!
+          const theme = getComputedStyle(stageRoot).fontFamily
+          return {
+            inherits: getComputedStyle(element).fontFamily === theme,
+            // 確認 Stage 樣式已生效，避免兩邊都還是文件預設字型而空洞通過
+            themed: theme !== getComputedStyle(document.body).fontFamily,
+          }
+        })
+      )
+      .toEqual({ inherits: true, themed: true })
+  })
+
+  test(`embeds IBM Plex Mono for var(--mono) in a ${theme} HTML Page capture only when the theme hosts it`, async ({
+    page,
+    request,
+  }) => {
+    await putHtmlFontDeck(request, theme)
+    await page.goto(`/?deck=${theme}-html-font`)
+    await expect(
+      page.getByTestId("stage-frame").locator("#html-mono")
+    ).toBeVisible()
+    const plexMono = (
+      await htmlPageCaptureFaces(page, `${theme}-html-font`)
+    ).filter((face) => /IBM Plex Mono/.test(face) && /data:.*base64/.test(face))
+    if (THEME_EXPECTATIONS[theme].hostsIbmPlexMono)
+      expect(plexMono).not.toEqual([])
+    else expect(plexMono).toEqual([])
+  })
+
+  test(`leaves IBM Plex Mono out of a ${theme} HTML Page capture that uses no monospace`, async ({
+    page,
+    request,
+  }) => {
+    await putHtmlFontDeck(request, theme, PLAIN_HTML)
+    await page.goto(`/?deck=${theme}-html-font`)
+    await expect(
+      page.getByTestId("stage-frame").locator("#html-mono")
+    ).toBeVisible()
+    const plexMono = (
+      await htmlPageCaptureFaces(page, `${theme}-html-font`)
+    ).filter((face) => /IBM Plex Mono/.test(face))
+    expect(plexMono).toEqual([])
   })
 }
 
@@ -299,7 +598,7 @@ test("HTML Page role and legacy tokens follow the theme while literal colours re
     path.join(dir, "sample.html"),
     '<div style="padding:5%"><p id="theme-legacy" style="color:var(--blue)">Legacy accent</p><p id="theme-role" style="color:var(--accent)">Role accent</p><p id="theme-literal" style="color:#a14188">Authored colour</p></div>'
   )
-  for (const theme of ["default", "observatory"] as const) {
+  for (const theme of DECK_THEMES) {
     expect(
       (
         await request.put("/api/decks/html-theme", {
@@ -318,8 +617,7 @@ test("HTML Page role and legacy tokens follow the theme while literal colours re
       ).ok()
     ).toBe(true)
     await page.goto("/?deck=html-theme")
-    const expected =
-      theme === "default" ? "rgb(46, 117, 182)" : "rgb(40, 123, 120)"
+    const expected = THEME_EXPECTATIONS[theme].legend[0]
     await expect(page.locator("#theme-legacy")).toHaveCSS("color", expected)
     await expect(page.locator("#theme-role")).toHaveCSS("color", expected)
     await expect(page.locator("#theme-literal")).toHaveCSS(

@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import type { Deck } from "@/lib/deck"
+import { isHtmlPage, type Deck } from "@/lib/deck"
 import { defaultPageNumberVisibility } from "@/lib/stage-page-context"
 import { setPageShowPageNumber } from "@/lib/deck-editor"
 
@@ -18,7 +18,7 @@ type PageNumberSelectProps = {
   onChange: (update: (deck: Deck) => Deck) => void
 }
 
-// Select 只收字串；頁面欄位以 undefined 表示沿用週層級預設
+// Select 只收字串；頁面欄位以 undefined 表示沿用 Deck 層級預設
 const OVERRIDE_BY_CHOICE = {
   default: undefined,
   show: true,
@@ -44,7 +44,7 @@ function visibilityLabel(visible: boolean): string {
   return visible ? "Show" : "Hide"
 }
 
-// HTML Page 的預設與週層級設定不同，Default 須標出實際結果，作者才知道會不會疊頁碼
+// HTML Page 的預設與 Deck 層級設定不同，Default 須標出實際結果，作者才知道會不會疊頁碼
 function choiceLabel(choice: PageNumberChoice, defaultVisible: boolean) {
   const override = OVERRIDE_BY_CHOICE[choice]
   return override === undefined
@@ -60,6 +60,8 @@ export function PageNumberSelect({
 }: PageNumberSelectProps) {
   const page = deck.pages[pageIndex]
   const defaultVisible = defaultPageNumberVisibility(deck, page)
+  // HTML Page 的開關連 Deck Title 一起畫，且片段須讓出底部；只在這類頁面提示，避免干擾其他版型
+  const footerHint = page && isHtmlPage(page)
 
   return (
     <div className={cn("space-y-2", disabled && "opacity-50")}>
@@ -85,7 +87,13 @@ export function PageNumberSelect({
           )
         }}
       >
-        <SelectTrigger id="page-number-visibility" className="w-full">
+        <SelectTrigger
+          id="page-number-visibility"
+          className="w-full"
+          aria-describedby={
+            footerHint ? "page-number-visibility-hint" : undefined
+          }
+        >
           <SelectValue>
             {(value: string | null) =>
               choiceLabel(
@@ -103,6 +111,15 @@ export function PageNumberSelect({
           ))}
         </SelectContent>
       </Select>
+      {footerHint ? (
+        <p
+          id="page-number-visibility-hint"
+          className="text-xs text-muted-foreground"
+        >
+          On an HTML page, Show draws the footer: the Deck Title and page
+          number. Keep the bottom of the HTML clear.
+        </p>
+      ) : null}
     </div>
   )
 }

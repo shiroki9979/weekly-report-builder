@@ -19,13 +19,13 @@ decks/<id>/<htmlFile>
 
 ## Deck（根物件）
 
-| 欄位              | 型別                         | 必填 | 說明                                                                                           |
-| ----------------- | ---------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
-| `theme`           | `"default" \| "observatory"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
-| `title`           | `string`                     | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 頁尾                      |
-| `period`          | `object`                     | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
-| `pages`           | `Page[]`                     | 是   | 至少一頁                                                                                       |
-| `showPageNumbers` | `boolean`                    | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值，`two-column` 不渲染頁碼    |
+| 欄位              | 型別                                     | 必填 | 說明                                                                                           |
+| ----------------- | ---------------------------------------- | ---- | ---------------------------------------------------------------------------------------------- |
+| `theme`           | `"default" \| "observatory" \| "ledger"` | 否   | Deck Theme；未提供時呈現 `default`，其他值拒絕整份 Deck                                        |
+| `title`           | `string`                                 | 否   | Deck Title；去除前後空白，空白標題視為未提供，顯示於 Editorial Frame 與 HTML Page 頁尾         |
+| `period`          | `object`                                 | 否   | 期間 `{ start, end }`，兩者皆為非空字串；週次為週一到週五。未提供時 Editorial Frame 不顯示期間 |
+| `pages`           | `Page[]`                                 | 是   | 至少一頁                                                                                       |
+| `showPageNumbers` | `boolean`                                | 否   | Editorial 的全 Deck 頁碼預設；未提供時為顯示。HTML Page 不繼承此值                             |
 
 舊格式把期間放在頂層 `start`／`end`。Parser 仍接受並轉成 `period`，存檔後改寫為新格式；同時提供兩種格式時拒絕。
 
@@ -40,11 +40,13 @@ decks/<id>/<htmlFile>
 
 Workshop 的 Theme 與 Deck Title 控制項修改目前的 Editing Session。Save 保留原有表示：省略的 `theme` 不會補成 `default`，明確寫入的 `default` 仍保留。Deck Template 與 Weekly Series 均沿用主題與 Deck Title；單頁 `title` 仍是投影片主標，與 Deck Title 分開。
 
-`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。
+`default` 保留既有藍色與版面留白。`observatory` 使用 Instrument Sans 與 IBM Plex Mono 的自架拉丁字型；CJK 依序使用系統 Noto Sans TC、PingFang TC、Microsoft JhengHei。`ledger`（2026-11-20，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）沿用 `default` 的色彩、字型與構圖，只換較深的 `--line`、`--accent-wash`、配合底色壓暗的 `--ok-ink`，並讓 eyebrow、Frame Label、workstream、status、頁尾與 Boundary Note 改用 IBM Plex Mono；Frame Label 維持 ISO 日期。PNG 嵌入該頁用到的拉丁字型，CJK 字形仍隨機器而異。詳見 [Ledger Deck Theme](../specs/ledger-theme.md)。
 
-Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
+Stage 以語意 token 提供 `--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`，以及等寬字型角色 `--mono`；舊 `--blue*` 名稱是對應 accent token 的相容別名。HTML Page 引用這些角色時跟隨 Deck Theme；寫死的色碼不被改寫。HTML Page 內文不指定 `font-family` 時繼承主題的內文字型，等寬字用 `var(--mono)`：`default` 為系統等寬字，`observatory` 與 `ledger` 為 IBM Plex Mono。Chart 未提供系列 `color` 時，依序循環使用 `--chart-1` 至 `--chart-5`，明確指定的顏色維持原值。
 
 Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任一側仍保留同高空間。Observatory 頁碼補零，標頭也在顯示頁碼時出現 `§ nn` 索引。
+
+HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editorial Frame 相同的頁尾：左側 Deck Title、右側頁碼，Deck 沒有 Deck Title 時只畫頁碼。關閉時整組頁尾都不畫。片段須讓出底部安全區，見 [HTML Page 規格](../specs/html-page-layout.md#頁尾與安全區)。
 
 ## Page（discriminated union）
 
@@ -57,13 +59,13 @@ Editorial Frame 頁尾左側顯示 Deck Title、右側顯示頁碼；缺少任�
 | `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                                            |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                                          |
 | `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                                       |
-| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不疊頁碼，需設為 `true` 才顯示。`two-column` 與 `cover` 忽略此欄                                  |
+| `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不畫頁尾，需設為 `true` 才顯示。`cover` 忽略此欄                                                  |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
 ### Boundary Note
 
-`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover、HTML Page 與 Two-column 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
+`boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover 與 HTML Page 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
 
 空白或省略 Boundary Note 不影響 Content-complete；內容過長導致 Stage 溢出時仍阻擋 Copy，batch 略過該頁。Deck Template 與 Weekly Series 會清除此欄位；既有版型的其他保留規則不變。
 
@@ -117,7 +119,7 @@ Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點
 
 ### `layout: "two-column"`
 
-傳統雙欄版面（左欄三點 + 右側 panel）。
+傳統雙欄版面（左欄三點 + 右側 panel）。共用 Editorial Frame 與選填 Boundary Note：headline 為 `title`，eyebrow 留空，頁碼跟隨 `showPageNumbers` 與單頁 `showPageNumber`。`fields` panel 不渲染，因此沒有 Page Position。
 
 | 欄位    | 型別          | 必填 | 說明              |
 | ------- | ------------- | ---- | ----------------- |

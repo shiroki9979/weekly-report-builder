@@ -1,0 +1,286 @@
+{
+  "theme": "ledger",
+  "title": "Demo · Ledger",
+  "period": {
+    "start": "2026-01-05",
+    "end": "2026-01-09"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "layout": "cover",
+      "title": "Tidewater data platform weekly",
+      "subtitle": "One week of the fictional nightly batch migration: what ran, what slipped, and what the cutover rehearsal still needs.",
+      "byline": "Tidewater data platform team (fictional)",
+      "notes": "A fictional Weekly Series Deck under the Ledger theme. Every figure is demo content."
+    },
+    {
+      "id": "overview",
+      "layout": "overview",
+      "title": "Ingest runs under an hour; the backfill is a day late",
+      "lead": {
+        "workstream": "Nightly ingest",
+        "figure": "94 → 61 min",
+        "result": "Parallel table loads cut the nightly window by a third.",
+        "impact": "Morning reports are ready before the 07:00 review.",
+        "status": {
+          "label": "On track",
+          "tone": "positive"
+        }
+      },
+      "supporting": [
+        {
+          "workstream": "History backfill",
+          "figure": "18 / 24 months",
+          "result": "Two monthly batches reran after a schema fix.",
+          "impact": "The last six months finish one day later than planned.",
+          "status": {
+            "label": "One day late",
+            "tone": "caution"
+          }
+        },
+        {
+          "workstream": "Schema validation",
+          "figure": "412 tables",
+          "result": "Every table matched its contract after three fixes.",
+          "impact": "The same checks rerun before the cutover.",
+          "status": {
+            "label": "Repeatable",
+            "tone": "neutral"
+          }
+        }
+      ],
+      "boundary": "Fictional run log for one week of the Tidewater nightly batch."
+    },
+    {
+      "id": "decision",
+      "layout": "evidence-decision",
+      "title": "Keep parallel table loads for the nightly ingest",
+      "verdict": "Keep parallel loads. The window shrank by a third with no failed table; the slipped backfill is a schema issue, not a load issue.",
+      "metrics": [
+        {
+          "label": "Nightly ingest window",
+          "baselineValue": 94,
+          "candidateValue": 61,
+          "unit": "min",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 0
+        },
+        {
+          "label": "Failed tables per night",
+          "baselineValue": 7,
+          "candidateValue": 0,
+          "unit": "tables",
+          "unitPosition": "after",
+          "unitSpacing": "space",
+          "precision": 0
+        }
+      ],
+      "interpretations": [
+        "Five nights in a row finished before 03:00 with parallel loads.",
+        "The seven baseline failures were lock timeouts that serial loads no longer hide."
+      ],
+      "boundary": "Fictional comparison: the week before against this week, five nights each."
+    },
+    {
+      "id": "comparison",
+      "layout": "side-by-side",
+      "title": "Backfill in monthly batches rather than one pass",
+      "columns": [
+        {
+          "label": "Monthly batches",
+          "points": [
+            "A failed month reruns on its own",
+            "Progress reads as months done",
+            "Needs a checkpoint table"
+          ]
+        },
+        {
+          "label": "Single pass",
+          "points": [
+            "No checkpoint state to keep",
+            "A failure restarts all 24 months",
+            "Progress is hard to report"
+          ]
+        }
+      ],
+      "chosen": 0,
+      "tradeoff": {
+        "why": "Two months already reran this week; a single pass would have restarted the whole history.",
+        "cost": "The checkpoint table must stay in step with schema changes."
+      },
+      "boundary": "Fictional backfill plan; month counts are demo figures."
+    },
+    {
+      "id": "trend",
+      "layout": "trend-target",
+      "title": "The nightly window fell for eight weeks and sits just above target",
+      "metric": {
+        "label": "Nightly ingest window",
+        "unit": "min",
+        "unitPosition": "after",
+        "unitSpacing": "space",
+        "precision": 0
+      },
+      "cadence": "week",
+      "start": "2025-11-10",
+      "observations": [
+        {
+          "state": "measured",
+          "value": 94
+        },
+        {
+          "state": "measured",
+          "value": 92
+        },
+        {
+          "state": "measured",
+          "value": 88
+        },
+        {
+          "state": "measured",
+          "value": 83
+        },
+        {
+          "state": "measured",
+          "value": 79
+        },
+        {
+          "state": "missing"
+        },
+        {
+          "state": "measured",
+          "value": 70
+        },
+        {
+          "state": "measured",
+          "value": 66
+        },
+        {
+          "state": "measured",
+          "value": 61
+        }
+      ],
+      "target": 60,
+      "direction": "at-most",
+      "interpretation": "Parallel loads brought the fictional window from 94 to 61 minutes. The holiday week has no run, and the latest week is one minute above the 60-minute ceiling.",
+      "measurementContext": "Fictional log: median nightly window for each Monday-to-Friday week, in minutes."
+    },
+    {
+      "id": "tables",
+      "layout": "two-column",
+      "title": "Schema validation passed after three contract fixes",
+      "items": [
+        {
+          "heading": "Contracts first",
+          "body": "Each table is checked against its written contract before any row moves."
+        },
+        {
+          "heading": "Fix at the source",
+          "body": "Three tables changed upstream; the contracts now follow the new columns."
+        },
+        {
+          "heading": "Rerun before cutover",
+          "body": "The same 412 checks run again on the rehearsal copy on Friday."
+        }
+      ],
+      "panel": {
+        "kind": "table",
+        "title": "Validation by table group",
+        "columns": ["Group", "Tables", "Result"],
+        "rows": [
+          {
+            "cells": ["Orders", "148", "Pass"]
+          },
+          {
+            "cells": ["Inventory", "96", "Pass after 2 fixes"],
+            "emphasis": [2]
+          },
+          {
+            "cells": ["Billing", "121", "Pass after 1 fix"],
+            "emphasis": [2]
+          },
+          {
+            "cells": ["Reference", "47", "Pass"]
+          }
+        ]
+      },
+      "boundary": "Fictional table groups and counts."
+    },
+    {
+      "id": "load",
+      "layout": "full-width-panel",
+      "title": "Ingest and backfill share the nightly window",
+      "panel": {
+        "kind": "chart",
+        "title": "Minutes per night (fictional)",
+        "categories": ["01-05", "01-06", "01-07", "01-08", "01-09"],
+        "series": [
+          {
+            "name": "Ingest",
+            "values": [63, 60, 61, 59, 62]
+          },
+          {
+            "name": "Backfill",
+            "values": [0, 0, 48, 52, 50]
+          }
+        ]
+      },
+      "boundary": "Series colours come from the theme's chart roles."
+    },
+    {
+      "id": "schedule",
+      "layout": "html",
+      "title": "Batch schedule · 2026-01-05 — 2026-01-09",
+      "htmlFile": "schedule.html",
+      "notes": "A hand-written HTML Page. It uses only Stage colour roles and var(--mono), leaves the body font to the theme, and keeps the bottom 8cqw clear for the app-drawn footer.",
+      "showPageNumber": true
+    },
+    {
+      "id": "actions",
+      "layout": "next-actions",
+      "title": "Finish the backfill, then rehearse the cutover",
+      "variant": "rows",
+      "commitments": [
+        {
+          "title": "Finish the last six backfill months",
+          "outcome": "All 24 months are loaded and checked on the rehearsal copy.",
+          "checkpoint": "Checkpoint table shows 24 of 24 months by Wednesday."
+        },
+        {
+          "title": "Run the cutover rehearsal",
+          "outcome": "Reads move to the new store on a copy and back without data loss.",
+          "checkpoint": "Rehearsal log with both switch times posted on Friday."
+        },
+        {
+          "title": "Rerun schema validation on the rehearsal copy",
+          "outcome": "The 412 contract checks pass on the copy that the rehearsal uses.",
+          "checkpoint": "Validation summary attached to the rehearsal log."
+        }
+      ],
+      "boundary": "Fictional commitments for the demo narrative."
+    },
+    {
+      "id": "closing",
+      "layout": "closing",
+      "title": "Rehearse the cutover once the backfill is complete",
+      "eyebrow": "Next week",
+      "takeaways": [
+        {
+          "ref": "Wed",
+          "text": "Finish the last six backfill months"
+        },
+        {
+          "ref": "Fri",
+          "text": "Run the cutover rehearsal on a copy"
+        },
+        {
+          "ref": "03",
+          "text": "Bring the nightly window under 60 minutes"
+        }
+      ],
+      "closingLine": "Tidewater data platform team · data@example.invalid · fictional demo content"
+    }
+  ]
+}

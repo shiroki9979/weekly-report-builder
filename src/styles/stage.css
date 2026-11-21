@@ -33,6 +33,10 @@
   --warn: #c47b16;
   --warn-ink: #8a5508;
   --paper: #ffffff;
+  /* default 版型沒用到等寬字；只給 HTML Page 用，CJK 退回與內文相同的系統字型，不自架字型 */
+  --mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    "PingFang TC", "Microsoft JhengHei", monospace;
 
   box-sizing: border-box;
   width: 100%;
@@ -62,24 +66,6 @@
   font-size: 0.875rem;
   text-align: center;
   padding: 1.5rem;
-}
-
-/* 外框與 Editorial Frame 相同，兩種版型混排時翻頁的上下左右邊界不跳動 */
-.stage-slide {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 4.4% 5% 5%;
-}
-
-/* 主標到內文的距離對齊 Editorial 標題到本文（分隔線上下 1.8% + 2.8%），明顯大於項目間距，層次才分得開 */
-.stage-slide h1 {
-  font-size: clamp(18px, 3.6cqw, 52px);
-  font-weight: 700;
-  color: var(--blue);
-  letter-spacing: 0.01em;
-  margin: 0 0 4.6%;
-  line-height: 1.15;
 }
 
 .stage-cols {
@@ -334,19 +320,6 @@
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-/* HTML 全幅沒有文流 footer，頁碼疊在右下，不改片段本身 */
-.stage-page-number {
-  position: absolute;
-  right: 5%;
-  bottom: 5%;
-  z-index: 1;
-  margin: 0;
-  font-size: clamp(8px, 1cqw, 13px);
-  letter-spacing: 0.06em;
-  color: var(--mute);
-  pointer-events: none;
 }
 
 /* 列索引預設隱藏，由主題樣式表決定是否呈現；它不參與資料欄索引。 */

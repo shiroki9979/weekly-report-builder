@@ -18,6 +18,7 @@ import { DECK_THEMES, isDeckTheme, type DeckTheme } from "@/lib/deck"
 const DECK_THEME_LABELS: Record<DeckTheme, string> = {
   default: "Default",
   observatory: "Observatory",
+  ledger: "Ledger",
 }
 
 type DeckPickerProps = {
@@ -209,7 +210,7 @@ function PageNumbersToggle({
 }) {
   const disabled = pageNumbers.disabled || !pageNumbers.onChange
 
-  // HTML Page 的片段可能自帶頁碼，不跟隨週層級設定；在此註明，避免作者以為勾選後每頁都會疊頁碼
+  // HTML Page 的片段可能自帶頁尾，不跟隨 Deck 層級設定；在此註明，避免作者以為勾選後每頁都會疊上 Deck Title 與頁碼
   return (
     <div
       className={cn("space-y-1", disabled && "cursor-not-allowed opacity-50")}
@@ -237,7 +238,8 @@ function PageNumbersToggle({
         id="deck-show-page-numbers-hint"
         className="text-xs text-muted-foreground"
       >
-        HTML pages show a page number only when set on the page.
+        HTML pages show a footer with the Deck Title and page number only when
+        set on the page.
       </p>
     </div>
   )

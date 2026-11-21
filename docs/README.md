@@ -61,6 +61,7 @@
 | [Editorial Layout Family production adoption](specs/editorial-layout-family.md)       | Editorial Layout Family 的 production 規格                                                                                                                           |
 | [Trend & Target and Next Actions Rows](specs/trend-target-and-next-actions-rows.md)   | 生產版型、觀測狀態與週次沿用規格（[#42](https://github.com/shiroki9979/weekly-report-builder/issues/42)）                                                            |
 | [Deck Theme and the Observatory layouts](specs/deck-theme-and-observatory-layouts.md) | Deck Theme、Cover／Closing／Side-by-side Comparison／Full-width Panel 與 Boundary Note 規格（[#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)） |
+| [Ledger Deck Theme](specs/ledger-theme.md)                                            | Weekly Series 用的 `ledger` 主題：色票、IBM Plex Mono、外框等寬字範圍與 Demo（[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)）                |
 
 ## Decisions（ADR）
 

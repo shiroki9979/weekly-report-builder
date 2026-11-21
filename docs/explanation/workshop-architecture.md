@@ -55,7 +55,7 @@ Editing Session 持有開啟中的 Deck、Metric Input、選取的 Page ID 與�
 
 `createStagePageContext` 是 Preview、Copy 與 batch 共用的介面：回傳 Deck ID、Frame Label、hidden、Page Position、頁碼可見性，以及有效 Deck Theme 和 Deck Title。頁碼政策集中在 `stage-page-context.ts`；renderer 不再從 `"Hidden"` 或空字串推測狀態。預覽與 capture 都把同一 context 的 theme 傳入 `StageFrame`，由根節點的 `data-theme` 選擇樣式。
 
-`stage.css` 定義 default 語意角色與舊 `--blue*` 相容別名；`observatory-theme.css` 覆寫角色、宣告 OFL 拉丁字型並提供外框裝飾。既有版型維持構圖，不依主題名稱分支。Trend SVG 在主題改變時讀取 CSS 角色並寫入字面 SVG 顏色，因 `html-to-image` 深複製 SVG 時不處理其子元素的 computed style；色票仍由 CSS 單獨持有。
+`stage.css` 定義 default 語意角色與舊 `--blue*` 相容別名；`observatory-theme.css` 與 `ledger-theme.css` 覆寫角色並提供外框裝飾；自架 OFL 拉丁字型由 `observatory-theme.css`（Instrument Sans）與兩者共用的 `ibm-plex-mono.css` 宣告。既有版型維持構圖，不依主題名稱分支。Trend SVG 在主題改變時讀取 CSS 角色並寫入字面 SVG 顏色，因 `html-to-image` 深複製 SVG 時不處理其子元素的 computed style；色票仍由 CSS 單獨持有。
 
 Theme 與 Deck Title 經既有 Editing Session 編輯，保存、建立 Deck Template 與 Weekly Series 共用 Deck model。匯出快照包含這些欄位，操作中切換主題不改變已開始的 Copy 或 batch。共用 overflow 量測已等待字型載入，PNG 只嵌入該頁實際使用的自架字型。
 
@@ -63,11 +63,11 @@ Theme 與 Deck Title 經既有 Editing Session 編輯，保存、建立 Deck Tem
 
 工坊支援下列頁面版面：
 
-- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。間距見下方「Two-column 間距」。不渲染頁碼。
-- `overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、週次範圍、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
+- `two-column`：標準雙欄（左欄固定 3 點 + 右側 panel；Panel kinds：`chart` | `table` | `flow` | `checklist`，`fields` 已 spec 未實作）。Workshop 可新增空白 Two-column 頁、刪除目前選取頁（不可刪最後一頁）並以上下移動排序；選取以 Page ID 保存。共用 Editorial Frame（headline、Frame Label、Boundary Note、Deck Title、頁碼；eyebrow 留空）。間距見下方「Two-column 間距」。
+- `overview`：Editorial Layout。共用 Editorial Frame（eyebrow、headline、Frame Label、頁碼）。作者編輯一個 Lead Outcome 與 1–3 個 Supporting Outcomes，並可 Make lead。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
 - `evidence-decision`：Editorial Layout。裁決條 + 1–2 個 Comparison Metric 與 1–2 則 interpretation。Metric Input 由 Editing Session 持有；非法非空輸入擋 Save／Copy，batch 略過該頁。
 - `next-actions`：Editorial Layout。2–4 個 Commitment；顯示編號由順序派生。空白 Draft Page 可 Save；Copy 與 batch export 仍走 Export Readiness。
-- `html`：16:9 全幅 HTML 逃生口。整頁由週資料夾獨立 `.html` 片段鋪滿，不渲染三點與 panel。工坊僅編輯相對檔名路徑、標題、講稿與 hidden，不提供線上 HTML 編輯器。HTML Page 不套用 Structured Layout 的 completeness 或 overflow gate。
+- `html`：16:9 全幅 HTML 逃生口。整頁由週資料夾獨立 `.html` 片段鋪滿，不渲染三點與 panel。工坊僅編輯相對檔名路徑、標題、講稿與 hidden，不提供線上 HTML 編輯器。HTML Page 不套用 Structured Layout 的 completeness 或 overflow gate。逐頁開啟 `showPageNumber` 時，Stage 在片段之外畫出與 Editorial Frame 相同的頁尾（Deck Title 與頁碼），片段須讓出底部安全區。
 
 新 layout 以新 `layout` 字串擴充；未知 layout 在 stage 顯示警告，且不可匯出。
 
@@ -77,8 +77,7 @@ Draft Structured Layout 可 Save，但 Copy 與 batch export 不輸出。Canonic
 
 左欄的圓點與主標共用同一條起始邊，項目標題與內文在圓點右側，整個項目不超出標題範圍。關係只由版面決定，不看文案或語言。預覽與 PNG 共用 `src/styles/stage.css`。
 
-- `.stage-slide` 內距與 Editorial Frame 相同：上 `4.4%`、左右 `5%`、下 `3.2%`。兩種版型混排時，翻頁的邊界不會跳動。主標與右側 panel 都落在左右內距裡，所以標題、左欄、右欄共用同一條格線。
-- 主標下方留 `4.6%`，等於 Editorial 標題到本文的距離（分隔線上下 `1.8%` + `2.8%`），明顯大於項目之間的間距。
+- 外框、主標、分隔線與頁尾都由 Editorial Frame 提供，和其他 Editorial 版型混排時翻頁的邊界不會跳動。主標與右側 panel 都落在左右內距裡，所以標題、左欄、右欄共用同一條格線。
 - `.stage-item` 是兩欄 grid：圓點欄 `0.55em`、間距 `0.65em`。圓點從主標的起始邊開始，項目標題與內文因此比主標內縮 `1.2em`；不使用負邊距，圓點不會落進左側 `5%` 內距。
 
 ## 語言邊界

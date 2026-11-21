@@ -1,6 +1,6 @@
 import {
+  isEditorialFramePage,
   isHtmlPage,
-  matchPage,
   isSupportedStagePage,
   periodLabel,
   type Deck,
@@ -57,21 +57,14 @@ export function formatPagePosition(
   return position ? `${position.index} / ${position.total}` : null
 }
 
-// 經 matchPage 分派：新增版型時編譯器會要求決定它是否保留頁碼位置
+// 主題以 CSS 切換補零版本（§ 03、03 / 10），補零規則只在這裡定一次
+export function padPageNumber(value: number): string {
+  return value.toString().padStart(2, "0")
+}
+
+// 頁碼位置就是頁尾：Editorial Frame 自帶，HTML Page 由 Stage 疊上；Cover 與未知版型沒有
 function hasPageNumberSlot(page: Page): boolean {
-  return matchPage(page, {
-    cover: () => false,
-    closing: () => true,
-    sideBySide: () => true,
-    fullWidthPanel: () => true,
-    html: () => true,
-    overview: () => true,
-    evidenceDecision: () => true,
-    nextActions: () => true,
-    trendTarget: () => true,
-    twoColumn: () => false,
-    unknown: () => false,
-  })
+  return isEditorialFramePage(page) || isHtmlPage(page)
 }
 
 /**
