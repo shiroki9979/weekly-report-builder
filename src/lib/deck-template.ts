@@ -1,11 +1,15 @@
 import {
+  isEditorialFramePage,
   matchPage,
   nextActionsVariant,
   type DeckPeriod,
   type Outcome,
   type Panel,
   type Deck,
+  type EditorialFramePage,
+  type EditorialPageChrome,
   type Page,
+  type PageChrome,
 } from "./deck.ts"
 import { templatePageNumberOverride } from "./stage-page-context.ts"
 import { blankCommitment } from "./next-actions-editor.ts"
@@ -72,10 +76,26 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: Page): Page {
-  return {
-    ...clearPageContent(page),
-    showPageNumber: templatePageNumberOverride(page),
-  }
+  return { ...clearPageContent(page), ...templateChrome(page) }
+}
+
+// chrome 依來源頁決定、與版型專屬內容分開處理：新版型只要納入 Editorial Frame 就自動套用，不必逐一接線
+function templateChrome(page: Page): PageChrome {
+  return isEditorialFramePage(page)
+    ? editorialFrameTemplateChrome(page)
+    : pageTemplateChrome(page)
+}
+
+// 講稿屬於當週內容不沿用；頁碼覆寫依現行規則回到 Deck 預設（HTML Page 例外，見 templatePageNumberOverride）
+function pageTemplateChrome(page: Page): PageChrome {
+  return { notes: undefined, showPageNumber: templatePageNumberOverride(page) }
+}
+
+// Boundary Note 描述的是當週主張的成立範圍，換一週就不再成立
+function editorialFrameTemplateChrome(
+  page: EditorialFramePage
+): EditorialPageChrome {
+  return { ...pageTemplateChrome(page), boundary: undefined }
 }
 
 function clearPageContent(page: Page): Page {
@@ -85,8 +105,6 @@ function clearPageContent(page: Page): Page {
       ...fullWidth,
       title: "",
       panel: clearPanel(fullWidth.panel),
-      boundary: undefined,
-      notes: undefined,
     }),
     sideBySide: (comparison) => ({
       ...comparison,
@@ -97,17 +115,13 @@ function clearPageContent(page: Page): Page {
       ],
       chosen: undefined,
       tradeoff: undefined,
-      boundary: undefined,
-      notes: undefined,
     }),
-    cover: (cover) => ({ ...cover, title: "", subtitle: "", notes: undefined }),
+    cover: (cover) => ({ ...cover, title: "", subtitle: "" }),
     closing: (closing) => ({
       ...closing,
       title: "",
       eyebrow: "",
       takeaways: [],
-      boundary: undefined,
-      notes: undefined,
     }),
     html: (htmlPage) => ({
       id: htmlPage.id,
@@ -115,7 +129,6 @@ function clearPageContent(page: Page): Page {
       title: "",
       htmlFile: htmlPage.htmlFile,
       hidden: htmlPage.hidden,
-      notes: undefined,
     }),
     overview: (overview) => ({
       id: overview.id,
@@ -124,7 +137,6 @@ function clearPageContent(page: Page): Page {
       lead: clearOutcome(overview.lead),
       supporting: overview.supporting.map(clearOutcome),
       hidden: overview.hidden,
-      notes: undefined,
     }),
     evidenceDecision: (decision) => ({
       id: decision.id,
@@ -138,7 +150,6 @@ function clearPageContent(page: Page): Page {
       })),
       interpretations: decision.interpretations.map(() => ""),
       hidden: decision.hidden,
-      notes: undefined,
     }),
     nextActions: (actions) => ({
       id: actions.id,
@@ -147,14 +158,11 @@ function clearPageContent(page: Page): Page {
       title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
       hidden: actions.hidden,
-      notes: undefined,
     }),
     trendTarget: (trend) => ({
       ...trend,
-      boundary: undefined,
       title: "",
       interpretation: "",
-      notes: undefined,
     }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
@@ -163,12 +171,10 @@ function clearPageContent(page: Page): Page {
       items: twoColumn.items.map(() => ({ heading: "", body: "" })),
       panel: clearPanel(twoColumn.panel),
       hidden: twoColumn.hidden,
-      notes: undefined,
     }),
     unknown: (unknown) => ({
       ...unknown,
       title: "",
-      notes: undefined,
     }),
   })
 }
