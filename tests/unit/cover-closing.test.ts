@@ -287,7 +287,7 @@ describe("Cover and Closing contracts", () => {
     })
     expect(template.pages[1]).toMatchObject({
       title: "",
-      eyebrow: "",
+      eyebrow: "Next",
       takeaways: [],
       closingLine: "ops@example.test",
     })

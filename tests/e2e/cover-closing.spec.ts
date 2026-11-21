@@ -399,7 +399,7 @@ test("authors, reloads, and reuses Cover and Closing through the Weekly Series",
   expect(reused.pages[2]).toMatchObject({
     layout: "closing",
     title: "",
-    eyebrow: "",
+    eyebrow: "Next review",
     takeaways: [],
     closingLine: "harbor@example.test",
   })
