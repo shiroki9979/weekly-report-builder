@@ -231,10 +231,11 @@ function savedClosing() {
   return JSON.parse(screen.getByTestId("deck-json").textContent ?? "").pages[0]
 }
 
-// 共用 chrome 的 Eyebrow 欄位由 #78 取代；在那之前 Closing 欄位仍須能編輯，且清空後不寫出空 eyebrow
-it("authors and clears a Closing Eyebrow through the form", async () => {
+// Closing 不再有專屬 Eyebrow，只剩共用 chrome 的那一個，清空後也不寫出空 eyebrow
+it("authors and clears a Closing Eyebrow through the shared chrome field", async () => {
   const user = userEvent.setup()
   render(<ClosingHarness />)
+  expect(screen.getAllByRole("textbox", { name: "Eyebrow" })).toHaveLength(1)
   const eyebrow = screen.getByRole("textbox", { name: "Eyebrow" })
 
   await user.type(eyebrow, "Next week")

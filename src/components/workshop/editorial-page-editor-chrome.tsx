@@ -6,10 +6,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import { isCoverPage, isEditorialFramePage } from "@/lib/deck"
+import {
+  isCoverPage,
+  isEditorialFramePage,
+  type EditorialFramePage,
+} from "@/lib/deck"
 import type { ExportIssue } from "@/lib/export-readiness"
+import { resolveEyebrow } from "@/lib/eyebrow"
 import {
   setPageBoundary,
+  setPageEyebrow,
   setPageHidden,
   setPageNotes,
   setPageTitle,
@@ -53,6 +59,21 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
+        {isEditorialFramePage(page) ? (
+          <div className="space-y-2">
+            <Label htmlFor="page-eyebrow">Eyebrow</Label>
+            <Input
+              id="page-eyebrow"
+              value={page.eyebrow ?? ""}
+              placeholder={eyebrowPlaceholder(page)}
+              onChange={(event) =>
+                onChange((currentDeck) =>
+                  setPageEyebrow(currentDeck, pageIndex, event.target.value)
+                )
+              }
+            />
+          </div>
+        ) : null}
         {children}
         {isEditorialFramePage(page) ? (
           <div className="space-y-2">
@@ -103,5 +124,15 @@ export function EditorialPageEditorChrome({
         </div>
       </fieldset>
     </form>
+  )
+}
+
+// 與 Stage 呼叫同一個解析函式，留空時 placeholder 就是 Stage 會顯示的詞；
+// Two-column 沒有預設詞，改提示留空是合法狀態
+const NO_DEFAULT_EYEBROW_HINT = "Optional; no default eyebrow"
+
+function eyebrowPlaceholder(page: EditorialFramePage): string {
+  return (
+    resolveEyebrow({ ...page, eyebrow: undefined }) || NO_DEFAULT_EYEBROW_HINT
   )
 }
