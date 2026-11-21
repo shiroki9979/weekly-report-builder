@@ -1,7 +1,7 @@
 # Author Editorial Layouts
 
 建立日期：2026-09-10  
-最後更新：2026-11-20
+最後更新：2026-11-21
 
 ---
 
@@ -18,7 +18,7 @@
 ## 編輯
 
 - **Cover**：填入開場 Title，可選填 Subtitle 與 Byline。Deck 有期間時會顯示 Frame Label。Cover 計入 Page Position，但永遠不顯示頁碼；只有標題也可完成內容。建立 Deck Template 時保留 Byline，清空 Title 與 Subtitle。
-- **Closing**：填入 Title，可加 0–4 個 Takeaway；每筆文字必填，Reference 可留空。使用 Add takeaway／Move up／Move down／Remove 維護順序。Eyebrow 預設顯示 Closing，可改為其他職能標籤；Closing line 緊接 Takeaways 顯示聯絡或下一步，不貼齊頁底。建立 Deck Template 時保留 Closing line，清空其他 Closing 內容。
+- **Closing**：填入 Title，可加 0–4 個 Takeaway；每筆文字必填，Reference 可留空。使用 Add takeaway／Move up／Move down／Remove 維護順序。Eyebrow 預設顯示 Closing，可改為其他職能標籤；Closing line 緊接 Takeaways 顯示聯絡或下一步，不貼齊頁底。建立 Deck Template 時保留 Closing line 與 Eyebrow，清空其他 Closing 內容。
 - **Side-by-side Comparison**：填入 Title、兩欄 Label 與各 1–4 個 Point。以 Add point／Move up／Move down／Remove 維護順序；可選定其中一欄為 Chosen，或保留開放比較。啟用 Tradeoff 時 Why 必填，Cost 可留空；不啟用 Tradeoff 也可匯出。Deck Template 保留各欄點數並清空文字、Chosen 與 Tradeoff。
 - **Full-width Panel**：選擇 Table／Chart／Flow／Checklist，使用與 Two-column 相同的 panel 編輯器；頁面 Title 與 panel 內容須填妥，Panel title 可以留空。Table 的 Reference column 可選 None 或欄名，參照內容靠右且不換行；刪除該欄會清除設定，刪除之前的欄會調整索引。Observatory 的表格列索引只是顯示，不會改變資料欄編號。Deck Template 保留 panel 結構與參照欄，清空文案。
 - **Overview**：一個 Lead Outcome 與 1–3 個 Supporting Outcomes。Supporting 可 Add／Move／Remove／Make lead。
