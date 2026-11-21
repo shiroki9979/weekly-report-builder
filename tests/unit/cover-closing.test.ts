@@ -34,7 +34,7 @@ const titledCoverAndClosing = parseDeck({
   ],
 })
 
-// 規格（docs/specs/deck-theme-and-observatory-layouts.md Boundary Note 段落，Two-column 由 #67 加入）列出的 Editorial Frame 版型；
+// 規格（docs/reference/deck-json-format.md Boundary Note 段落，Two-column 由 #67 加入）列出的 Editorial Frame 版型；
 // 刻意不用 isEditorialFramePage，避免斷言與受測實作同構
 const EDITORIAL_FRAME_LAYOUTS = [
   "two-column",
