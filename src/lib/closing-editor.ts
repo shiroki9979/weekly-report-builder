@@ -14,7 +14,7 @@ const updateClosing = typedPageUpdater(isClosingPage, "a Closing page")
 export function setClosingFields(
   deck: Deck,
   pageIndex: number,
-  fields: Partial<Pick<ClosingPage, "eyebrow" | "closingLine">>
+  fields: Partial<Pick<ClosingPage, "closingLine">>
 ): Deck {
   return updateClosing(deck, pageIndex, (page) => ({ ...page, ...fields }))
 }

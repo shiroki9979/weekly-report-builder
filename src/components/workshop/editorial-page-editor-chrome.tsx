@@ -6,10 +6,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import { isCoverPage, isEditorialFramePage } from "@/lib/deck"
+import {
+  isCoverPage,
+  isEditorialFramePage,
+  type EditorialFramePage,
+} from "@/lib/deck"
 import type { ExportIssue } from "@/lib/export-readiness"
+import { resolveEyebrow } from "@/lib/eyebrow"
 import {
   setPageBoundary,
+  setPageEyebrow,
   setPageHidden,
   setPageNotes,
   setPageTitle,
@@ -53,21 +59,18 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
+        {/* Eyebrow 在版型欄位之上、Boundary Note 在其下，對應 Stage 由上而下的順序，
+            兩者夾著 children 無法併成同一個條件區塊 */}
+        {isEditorialFramePage(page) ? (
+          <EyebrowField page={page} pageIndex={pageIndex} onChange={onChange} />
+        ) : null}
         {children}
         {isEditorialFramePage(page) ? (
-          <div className="space-y-2">
-            <Label htmlFor="page-boundary">Boundary Note</Label>
-            <Textarea
-              id="page-boundary"
-              value={page.boundary ?? ""}
-              placeholder="Scope, verification, or limit"
-              onChange={(event) =>
-                onChange((currentDeck) =>
-                  setPageBoundary(currentDeck, pageIndex, event.target.value)
-                )
-              }
-            />
-          </div>
+          <BoundaryNoteField
+            page={page}
+            pageIndex={pageIndex}
+            onChange={onChange}
+          />
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="speaker-notes">Speaker notes</Label>
@@ -103,5 +106,60 @@ export function EditorialPageEditorChrome({
         </div>
       </fieldset>
     </form>
+  )
+}
+
+type EditorialFrameFieldProps = Pick<
+  PageEditorProps<EditorialFramePage>,
+  "page" | "pageIndex" | "onChange"
+>
+
+function EyebrowField({ page, pageIndex, onChange }: EditorialFrameFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="page-eyebrow">Eyebrow</Label>
+      <Input
+        id="page-eyebrow"
+        value={page.eyebrow ?? ""}
+        placeholder={eyebrowPlaceholder(page)}
+        onChange={(event) =>
+          onChange((currentDeck) =>
+            setPageEyebrow(currentDeck, pageIndex, event.target.value)
+          )
+        }
+      />
+    </div>
+  )
+}
+
+function BoundaryNoteField({
+  page,
+  pageIndex,
+  onChange,
+}: EditorialFrameFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="page-boundary">Boundary Note</Label>
+      <Textarea
+        id="page-boundary"
+        value={page.boundary ?? ""}
+        placeholder="Scope, verification, or limit"
+        onChange={(event) =>
+          onChange((currentDeck) =>
+            setPageBoundary(currentDeck, pageIndex, event.target.value)
+          )
+        }
+      />
+    </div>
+  )
+}
+
+// 與 Stage 呼叫同一個解析函式，留空時 placeholder 就是 Stage 會顯示的詞；
+// Two-column 沒有預設詞，改提示留空是合法狀態
+const NO_DEFAULT_EYEBROW_HINT = "Optional; no default eyebrow"
+
+function eyebrowPlaceholder(page: EditorialFramePage): string {
+  return (
+    resolveEyebrow({ ...page, eyebrow: undefined }) || NO_DEFAULT_EYEBROW_HINT
   )
 }

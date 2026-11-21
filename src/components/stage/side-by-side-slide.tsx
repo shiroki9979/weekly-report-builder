@@ -7,12 +7,7 @@ type Props = { page: SideBySidePage; context: StagePageContext }
 
 export function SideBySideSlide({ page, context }: Props) {
   return (
-    <EditorialFrame
-      eyebrow="Comparison"
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       <div className="editorial-comparison">
         <div className="editorial-comparison-columns">
           {page.columns.map((column, index) => (

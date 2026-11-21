@@ -1,7 +1,7 @@
 # Deck JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-11-08
+最後更新：2026-11-21
 
 ---
 
@@ -63,6 +63,25 @@ HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editoria
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
 
+### Eyebrow
+
+`eyebrow?: string` 是 Editorial Frame 頁面可選的短標籤，位於 headline 上方，標示這一頁的溝通任務（[#74](https://github.com/shiroki9979/weekly-report-builder/issues/74)），適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Stage 顯示去除前後空白後的作者值；空白或省略時顯示版型預設詞：
+
+| `layout`            | 預設 Eyebrow               |
+| ------------------- | -------------------------- |
+| `overview`          | `Overview`                 |
+| `evidence-decision` | `Evidence-backed Decision` |
+| `next-actions`      | `Next Actions`             |
+| `trend-target`      | `Trend & Target`           |
+| `side-by-side`      | `Comparison`               |
+| `full-width-panel`  | `Panel`                    |
+| `closing`           | `Closing`                  |
+| `two-column`        | （空）                     |
+
+Two-column 沒有預設詞；未填時 eyebrow 列保留一行空白高度，headline 位置不變。Parser 把空白或只含空白字元的值視為省略，存檔不寫出空的 `eyebrow`；Cover 與 HTML Page 上的此欄位會被移除。先前 Closing 專屬的 `eyebrow` 照常解析，不需遷移。
+
+Eyebrow 不影響 Content-complete 與 Export Readiness，也不設長度上限；長文字換行、不截斷，導致 Stage 溢出時仍阻擋 Copy，batch 略過該頁。Deck Template 與 Weekly Series 保留每頁的 Eyebrow；新建頁面不帶 Eyebrow。
+
 ### Boundary Note
 
 `boundary?: string` 是 Editorial Frame 頁面可選的一行條件說明，適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Parser 在 Cover 與 HTML Page 會移除此欄位。Boundary Note 顯示於正文之下、頁尾之上，以細線分隔；長文字可換行，不會截斷。
@@ -86,11 +105,10 @@ Deck 收尾頁；共用 `title` 為必要內容，takeaways 可為空陣列。
 
 | 欄位          | 型別                               | 必填 | 說明                                                     |
 | ------------- | ---------------------------------- | ---- | -------------------------------------------------------- |
-| `eyebrow`     | `string`                           | 否   | 空白或省略時呈現 `Closing`                               |
 | `takeaways`   | `{ ref?: string; text: string }[]` | 是   | 0–4 筆；每筆 text 都須非空白才能匯出，ref 為自由文字參照 |
 | `closingLine` | `string`                           | 否   | 聯絡或下一步說明，緊接 takeaways 呈現，不固定在頁底      |
 
-Parser 拒絕超過四筆 takeaways；未填文字仍可儲存為草稿。Deck Template 保留 closingLine，清空 title、eyebrow 與 takeaways，並清除 Boundary Note。
+Parser 拒絕超過四筆 takeaways；未填文字仍可儲存為草稿。Deck Template 保留 closingLine 與 Eyebrow，清空 title 與 takeaways，並清除 Boundary Note。
 
 ### `layout: "side-by-side"`
 
@@ -119,7 +137,7 @@ Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點
 
 ### `layout: "two-column"`
 
-傳統雙欄版面（左欄三點 + 右側 panel）。共用 Editorial Frame 與選填 Boundary Note：headline 為 `title`，eyebrow 留空，頁碼跟隨 `showPageNumbers` 與單頁 `showPageNumber`。`fields` panel 不渲染，因此沒有 Page Position。
+傳統雙欄版面（左欄三點 + 右側 panel）。共用 Editorial Frame 與選填 Boundary Note：headline 為 `title`，頁碼跟隨 `showPageNumbers` 與單頁 `showPageNumber`。`fields` panel 不渲染，因此沒有 Page Position。
 
 | 欄位    | 型別          | 必填 | 說明              |
 | ------- | ------------- | ---- | ----------------- |
@@ -136,7 +154,7 @@ Deck Template 清空標題、兩欄 label 與 points 的文字，保留各欄點
 
 ### `layout: "overview"`
 
-結論先行的總覽。Eyebrow 由 renderer 固定為 `Overview`，不寫入 JSON。
+結論先行的總覽。預設 Eyebrow 為 `Overview`，可用 [`eyebrow`](#eyebrow) 覆寫。
 
 | 欄位         | 型別        | 必填 | 說明                       |
 | ------------ | ----------- | ---- | -------------------------- |
@@ -166,7 +184,7 @@ Clone 時保留 workstream 與 collection 長度，清除 figure／result／impa
 
 ### `layout: "evidence-decision"`
 
-Evidence-backed Decision。Eyebrow 固定為 `Evidence-backed Decision`。Baseline／Candidate 標籤由 renderer 產生。
+Evidence-backed Decision。預設 Eyebrow 為 `Evidence-backed Decision`。Baseline／Candidate 標籤由 renderer 產生。
 
 | 欄位              | 型別                 | 必填 | 說明     |
 | ----------------- | -------------------- | ---- | -------- |
@@ -192,7 +210,7 @@ Clone 時保留 label／unit／format，baseline／candidate 重設為 `null`，
 
 ### `layout: "next-actions"`
 
-Next Actions。Eyebrow 固定為 `Next Actions`。Commitment 編號由陣列順序派生，不寫入 JSON。
+Next Actions。預設 Eyebrow 為 `Next Actions`。Commitment 編號由陣列順序派生，不寫入 JSON。
 
 | 欄位          | 型別                    | 必填 | 說明                                            |
 | ------------- | ----------------------- | ---- | ----------------------------------------------- |

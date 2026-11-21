@@ -18,19 +18,6 @@ export function ClosingEditorForm(props: PageEditorProps<ClosingPage>) {
   const invalidPaths = issuePathsFor(page)
   return (
     <EditorialPageEditorChrome {...props} invalidPaths={invalidPaths}>
-      <div className="space-y-2">
-        <Label htmlFor="closing-eyebrow">Eyebrow</Label>
-        <Input
-          id="closing-eyebrow"
-          value={page.eyebrow}
-          placeholder="Closing"
-          onChange={(event) =>
-            onChange((deck) =>
-              setClosingFields(deck, pageIndex, { eyebrow: event.target.value })
-            )
-          }
-        />
-      </div>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">Takeaways</p>
         <Button

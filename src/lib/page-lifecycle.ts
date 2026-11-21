@@ -203,7 +203,6 @@ export function createBlankClosingPage(id: string): ClosingPage {
     id,
     layout: "closing",
     title: "",
-    eyebrow: "",
     takeaways: [],
     closingLine: "",
   }

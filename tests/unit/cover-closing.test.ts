@@ -9,6 +9,7 @@ import {
 import { createStagePageContext } from "@/lib/stage-page-context"
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
+import { serializeDeck } from "@/lib/decks-io"
 
 function readDemoWeek(): { pages: Page[] } {
   return JSON.parse(
@@ -98,11 +99,8 @@ describe("Cover and Closing contracts", () => {
   it("fills omitted Closing text with empty strings", () => {
     const deck = parseDeck({ pages: [closing] })
 
-    expect(deck.pages[0]).toMatchObject({
-      eyebrow: "",
-      closingLine: "",
-      takeaways: [],
-    })
+    expect(deck.pages[0]).toMatchObject({ closingLine: "", takeaways: [] })
+    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
   })
 
   it("keeps a Boundary Note on a Closing page", () => {
@@ -115,6 +113,63 @@ describe("Cover and Closing contracts", () => {
     const deck = parseDeck({ pages: [{ ...closing, boundary: "  " }] })
 
     expect(deck.pages[0]).not.toHaveProperty("boundary")
+  })
+
+  it("keeps an Eyebrow only on Editorial Frame layouts", () => {
+    const demo = readDemoWeek()
+
+    const deck = parseDeck({
+      pages: demo.pages.map((page) => ({ ...page, eyebrow: "Risks" })),
+    })
+
+    for (const page of deck.pages) {
+      if (EDITORIAL_FRAME_LAYOUTS.includes(page.layout))
+        expect(page).toHaveProperty("eyebrow", "Risks")
+      else expect(page).not.toHaveProperty("eyebrow")
+    }
+  })
+
+  it("saves no eyebrow when the authored Eyebrow is only whitespace", () => {
+    const deck = parseDeck({ pages: [{ ...closing, eyebrow: "  " }] })
+
+    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
+    expect(JSON.parse(serializeDeck(deck)).pages[0]).not.toHaveProperty(
+      "eyebrow"
+    )
+  })
+
+  // 舊 Closing JSON 的 eyebrow 寫在 title 之後；存檔時維持原位，才不會為了升級產生無意義 diff
+  it("saves a Closing eyebrow from before #74 where it was written", () => {
+    const legacy = {
+      id: "last",
+      layout: "closing",
+      title: "Continue the pilot",
+      eyebrow: "Next week",
+      takeaways: [{ text: "Keep measuring" }],
+      closingLine: "ops@example.test",
+    }
+
+    const saved = JSON.parse(serializeDeck(parseDeck({ pages: [legacy] })))
+
+    expect(saved.pages[0]).toMatchObject(legacy)
+    expect(Object.keys(saved.pages[0]).slice(0, 4)).toEqual([
+      "id",
+      "layout",
+      "title",
+      "eyebrow",
+    ])
+  })
+
+  it("keeps demo Editorial Frame pages export-ready without an Eyebrow", () => {
+    const demo = parseDeck(readDemoWeek())
+
+    for (const page of demo.pages) {
+      if (!EDITORIAL_FRAME_LAYOUTS.includes(page.layout)) continue
+      const withoutEyebrow = { ...page, eyebrow: undefined } as Page
+      expect(
+        assessExportEligibility(withoutEyebrow, { status: "fit" }).issues
+      ).toEqual([])
+    }
   })
 
   it("rejects more than four Closing takeaways", () => {
@@ -232,7 +287,7 @@ describe("Cover and Closing contracts", () => {
     })
     expect(template.pages[1]).toMatchObject({
       title: "",
-      eyebrow: "",
+      eyebrow: "Next",
       takeaways: [],
       closingLine: "ops@example.test",
     })

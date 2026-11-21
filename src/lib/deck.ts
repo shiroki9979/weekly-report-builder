@@ -100,7 +100,11 @@ export type PageChrome = {
   showPageNumber?: boolean
 }
 
-export type EditorialPageChrome = PageChrome & { boundary?: string }
+// Eyebrow 是作者覆寫；省略時由 renderer 依版型給預設詞（見 eyebrow.ts）
+export type EditorialPageChrome = PageChrome & {
+  eyebrow?: string
+  boundary?: string
+}
 
 export type TwoColumnPage = EditorialPageChrome & {
   id: string
@@ -238,7 +242,6 @@ export type ClosingPage = EditorialPageChrome & {
   id: string
   layout: "closing"
   title: string
-  eyebrow: string
   takeaways: { ref?: string; text: string }[]
   closingLine: string
 }
@@ -388,6 +391,8 @@ export type EditorialFramePage =
   | ClosingPage
   | SideBySidePage
   | FullWidthPanelPage
+
+export type EditorialFrameLayout = EditorialFramePage["layout"]
 
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
@@ -1244,7 +1249,6 @@ function parseClosingPage(
   field: string
 ): ClosingPage {
   return withChrome(chrome, "closing", {
-    eyebrow: readOptionalString(value.eyebrow, `${field}.eyebrow`),
     takeaways: readEntries(
       value.takeaways,
       `${field}.takeaways`,
@@ -1374,12 +1378,39 @@ function parsePage(value: unknown, index: number): Page {
   }
 
   const parsed = PAGE_PARSERS[layout](page, chrome, field)
-  if (isEditorialFramePage(parsed) && page.boundary !== undefined) {
-    const boundary = readString(page.boundary, `${field}.boundary`)
-    // 只有空白的 Boundary Note 會畫出沒有文字的分隔線，與省略同義
-    if (boundary.trim() !== "") parsed.boundary = boundary
-  }
-  return parsed
+  // Cover 與 HTML Page 不在 Editorial Frame 內，chrome 欄位直接捨棄
+  return isEditorialFramePage(parsed)
+    ? withEditorialFrameChrome(parsed, page, field)
+    : parsed
+}
+
+// 空白的 chrome 欄位與省略同義：空 Boundary Note 會畫出沒有文字的分隔線，空 Eyebrow 會蓋掉版型預設詞
+function withEditorialFrameChrome(
+  parsed: EditorialFramePage,
+  value: Record<string, unknown>,
+  field: string
+): EditorialFramePage {
+  const eyebrow = readOptionalChromeText(value.eyebrow, `${field}.eyebrow`)
+  const boundary = readOptionalChromeText(value.boundary, `${field}.boundary`)
+  const { id, layout, title, ...rest } = parsed
+  // eyebrow 緊接在 title 之後，舊 Closing JSON 存檔時欄位順序不變
+  return {
+    id,
+    layout,
+    title,
+    ...(eyebrow === undefined ? {} : { eyebrow }),
+    ...rest,
+    ...(boundary === undefined ? {} : { boundary }),
+  } as EditorialFramePage
+}
+
+function readOptionalChromeText(
+  value: unknown,
+  field: string
+): string | undefined {
+  if (value === undefined) return undefined
+  const text = readString(value, field)
+  return text.trim() === "" ? undefined : text
 }
 
 export function parseDeck(value: unknown): Deck {

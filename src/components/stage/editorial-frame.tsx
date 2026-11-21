@@ -1,25 +1,27 @@
 import type { ReactNode } from "react"
 
 import { EditorialFooter } from "@/components/stage/editorial-footer"
+import type { EditorialFramePage } from "@/lib/deck"
+import { resolveEyebrow } from "@/lib/eyebrow"
 import { padPageNumber, type StagePageContext } from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {
-  eyebrow?: string
-  headline: string
+  page: EditorialFramePage
   context: StagePageContext
-  boundary?: string
   children: ReactNode
 }
 
-/** 結論先入眼；期間與頁碼只做定位，不搶職能層級 */
+/**
+ * 結論先入眼；期間與頁碼只做定位，不搶職能層級。
+ * chrome 由 Frame 直接從頁面讀取，各版型只提供本文，新增 chrome 欄位時才不必逐版型接線。
+ */
 export function EditorialFrame({
-  eyebrow,
-  headline,
+  page,
   context,
-  boundary,
   children,
 }: EditorialFrameProps) {
   const position = context.showPageNumber ? context.position : null
+  const eyebrow = resolveEyebrow(page)
 
   return (
     <article className="editorial-page">
@@ -38,11 +40,13 @@ export function EditorialFrame({
             <p className="editorial-period">{context.frameLabel}</p>
           ) : null}
         </div>
-        <h1 className="editorial-headline">{headline}</h1>
+        <h1 className="editorial-headline">{page.title}</h1>
       </header>
       <hr className="editorial-rule" />
       <div className="editorial-body">{children}</div>
-      {boundary ? <p className="editorial-boundary">{boundary}</p> : null}
+      {page.boundary ? (
+        <p className="editorial-boundary">{page.boundary}</p>
+      ) : null}
       <EditorialFooter deckTitle={context.deckTitle} position={position} />
     </article>
   )
