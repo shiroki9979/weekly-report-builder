@@ -86,4 +86,43 @@ describe("Eyebrow field in the shared Editorial page editor chrome", () => {
       )
     }
   )
+
+  it("authors a Two-column Eyebrow into the preview and drops it from the Deck once cleared", async () => {
+    const user = userEvent.setup()
+    render(<Workshop initialDeck={blankDeck("two-column")} />)
+    const field = screen.getByRole("textbox", { name: "Eyebrow" })
+    const preview = screen.getByRole("region", { name: "Preview" })
+
+    await user.type(field, "Risks")
+
+    expect(preview).toHaveTextContent("Risks")
+    expect(savedPage()).toHaveProperty("eyebrow", "Risks")
+
+    await user.clear(field)
+
+    expect(preview).not.toHaveTextContent("Risks")
+    expect(savedPage()).not.toHaveProperty("eyebrow")
+  })
+
+  it("disables the Eyebrow while the editor is read-only", () => {
+    const deck = blankDeck("overview")
+    render(
+      <Workshop
+        readOnly
+        initialDeck={{ pages: [{ ...deck.pages[0], eyebrow: "Platform" }] }}
+      />
+    )
+
+    const field = screen.getByRole("textbox", { name: "Eyebrow" })
+    expect(field).toBeDisabled()
+    expect(field).toHaveValue("Platform")
+  })
+
+  it("leaves the Eyebrow out of the Cover form", () => {
+    render(<Workshop initialDeck={blankDeck("cover")} />)
+
+    expect(
+      screen.queryByRole("textbox", { name: "Eyebrow" })
+    ).not.toBeInTheDocument()
+  })
 })
