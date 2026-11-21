@@ -29,7 +29,7 @@
 
 ## Eyebrow
 
-所有 Editorial Frame 頁的共用編輯區都有 **Eyebrow**，位於 Title 下方，用來改寫 headline 上方的職能標籤。placeholder 是留空時 Stage 會顯示的版型預設詞（如 Overview、Comparison、Closing）；清空即回到預設詞，只含空白也視同未填。Two-column 沒有預設詞，placeholder 提示可留空，留空時保留一行空白。Cover 沒有 Eyebrow。Eyebrow 不影響內容完整性；建立 Deck Template 或下一週時保留。
+所有 Editorial Frame 頁的共用編輯區都有 **Eyebrow**，位於 Title 下方，用來改寫 headline 上方標示這一頁溝通任務的短標籤。placeholder 是留空時 Stage 會顯示的版型預設詞（如 Overview、Comparison、Closing）；清空即回到預設詞，只含空白也視同未填。Two-column 沒有預設詞，placeholder 提示可留空，留空時保留一行空白。Cover 沒有 Eyebrow。Eyebrow 不影響內容完整性；建立 Deck Template 或下一週時保留。
 
 ## Boundary Note
 
