@@ -91,11 +91,16 @@ function pageTemplateChrome(page: Page): PageChrome {
   return { notes: undefined, showPageNumber: templatePageNumberOverride(page) }
 }
 
-// Boundary Note 描述的是當週主張的成立範圍，換一週就不再成立
+// Boundary Note 描述的是當週主張的成立範圍，換一週就不再成立；
+// Eyebrow 寫的是這一頁的溝通任務，沿用頁面結構時一併保留
 function editorialFrameTemplateChrome(
   page: EditorialFramePage
 ): EditorialPageChrome {
-  return { ...pageTemplateChrome(page), boundary: undefined }
+  return {
+    ...pageTemplateChrome(page),
+    ...(page.eyebrow === undefined ? {} : { eyebrow: page.eyebrow }),
+    boundary: undefined,
+  }
 }
 
 function clearPageContent(page: Page): Page {
@@ -117,12 +122,7 @@ function clearPageContent(page: Page): Page {
       tradeoff: undefined,
     }),
     cover: (cover) => ({ ...cover, title: "", subtitle: "" }),
-    closing: (closing) => ({
-      ...closing,
-      title: "",
-      eyebrow: "",
-      takeaways: [],
-    }),
+    closing: (closing) => ({ ...closing, title: "", takeaways: [] }),
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",

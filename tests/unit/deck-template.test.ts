@@ -373,6 +373,27 @@ describe("createDeckFromTemplate", () => {
     }
   )
 
+  // Eyebrow 寫的是這一頁的溝通任務，換一週仍成立，與 Boundary Note 相反
+  it.each(editorialFrameCases)(
+    "keeps the %s Eyebrow while clearing its Boundary Note",
+    (layout, blankPage) => {
+      const previous: Deck = {
+        pages: [
+          { ...blankPage, eyebrow: "Risks", boundary: "Fictional sample only" },
+        ],
+      }
+
+      const [page] = createDeckFromTemplate(previous).pages
+      if (!isEditorialFramePage(page)) {
+        throw new Error(`expected an Editorial Frame page, got ${page.layout}`)
+      }
+
+      expect(page.layout).toBe(layout)
+      expect(page.eyebrow).toBe("Risks")
+      expect(page.boundary).toBeUndefined()
+    }
+  )
+
   it("resets Editorial page numbers to the deck default", () => {
     const previous: Deck = {
       period: { start: "2026-08-24", end: "2026-08-28" },

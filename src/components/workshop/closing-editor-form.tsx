@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { canAddEntry, CARDINALITY, type ClosingPage } from "@/lib/deck"
+import { setPageEyebrow } from "@/lib/deck-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
   addTakeaway,
@@ -22,11 +23,11 @@ export function ClosingEditorForm(props: PageEditorProps<ClosingPage>) {
         <Label htmlFor="closing-eyebrow">Eyebrow</Label>
         <Input
           id="closing-eyebrow"
-          value={page.eyebrow}
+          value={page.eyebrow ?? ""}
           placeholder="Closing"
           onChange={(event) =>
             onChange((deck) =>
-              setClosingFields(deck, pageIndex, { eyebrow: event.target.value })
+              setPageEyebrow(deck, pageIndex, event.target.value)
             )
           }
         />
