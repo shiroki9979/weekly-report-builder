@@ -108,6 +108,18 @@ export function setPageBoundary(
   }))
 }
 
+// 空白即省略，Stage 才會退回版型預設詞，存檔也不寫出空 eyebrow
+export function setPageEyebrow(
+  deck: Deck,
+  pageIndex: number,
+  eyebrow: string
+): Deck {
+  return updateEditorialPage(deck, pageIndex, (page) => ({
+    ...page,
+    eyebrow: absentWhenBlank(eyebrow),
+  }))
+}
+
 export function setPageNotes(
   deck: Deck,
   pageIndex: number,

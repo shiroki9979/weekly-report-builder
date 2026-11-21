@@ -15,6 +15,7 @@ import {
   removeTakeaway,
 } from "@/lib/closing-editor"
 import type { Deck } from "@/lib/deck"
+import { serializeDeck } from "@/lib/decks-io"
 
 describe("Cover and Closing editor modules", () => {
   it("edits a Cover subtitle and byline without changing the source Deck", () => {
@@ -41,14 +42,13 @@ describe("Cover and Closing editor modules", () => {
     })
     expect(deck.pages[0]).toMatchObject({ subtitle: "", byline: "" })
   })
-  it("edits Closing labels while retaining its takeaways", () => {
+  it("edits the Closing line while retaining its takeaways", () => {
     const deck: Deck = {
       pages: [
         {
           id: "closing",
           layout: "closing",
           title: "Keep the pilot",
-          eyebrow: "",
           closingLine: "",
           takeaways: [{ text: "Review the forecast", ref: "03" }],
         },
@@ -56,12 +56,10 @@ describe("Cover and Closing editor modules", () => {
     }
 
     const edited = setClosingFields(deck, 0, {
-      eyebrow: "Next",
       closingLine: "Review on Friday",
     })
 
     expect(edited.pages[0]).toMatchObject({
-      eyebrow: "Next",
       closingLine: "Review on Friday",
       takeaways: [{ text: "Review the forecast", ref: "03" }],
     })
@@ -73,7 +71,6 @@ describe("Cover and Closing editor modules", () => {
           id: "closing",
           layout: "closing",
           title: "Next",
-          eyebrow: "",
           closingLine: "",
           takeaways: [],
         },
@@ -96,7 +93,6 @@ describe("Cover and Closing editor modules", () => {
           id: "closing",
           layout: "closing",
           title: "Next",
-          eyebrow: "",
           closingLine: "",
           takeaways: [{ text: "First" }, { text: "Second" }],
         },
@@ -121,7 +117,6 @@ describe("Cover and Closing editor modules", () => {
           id: "closing",
           layout: "closing",
           title: "Next",
-          eyebrow: "",
           closingLine: "",
           takeaways: [
             { text: "First", ref: "02" },
@@ -148,7 +143,6 @@ describe("Cover and Closing editor modules", () => {
           id: "closing",
           layout: "closing",
           title: "Next",
-          eyebrow: "",
           closingLine: "",
           takeaways: [{ text: "First" }],
         },
@@ -213,7 +207,6 @@ function ClosingHarness() {
         id: "closing",
         layout: "closing",
         title: "Next",
-        eyebrow: "",
         closingLine: "",
         takeaways: [],
       },
@@ -222,14 +215,36 @@ function ClosingHarness() {
   const page = deck.pages[0]
   if (!isClosingPage(page)) throw new Error("Expected Closing")
   return (
-    <ClosingEditorForm
-      deck={deck}
-      pageIndex={0}
-      page={page}
-      onChange={setDeck}
-    />
+    <>
+      <ClosingEditorForm
+        deck={deck}
+        pageIndex={0}
+        page={page}
+        onChange={setDeck}
+      />
+      <pre data-testid="deck-json">{serializeDeck(deck)}</pre>
+    </>
   )
 }
+
+function savedClosing() {
+  return JSON.parse(screen.getByTestId("deck-json").textContent ?? "").pages[0]
+}
+
+// 共用 chrome 的 Eyebrow 欄位由 #78 取代；在那之前 Closing 欄位仍須能編輯，且清空後不寫出空 eyebrow
+it("authors and clears a Closing Eyebrow through the form", async () => {
+  const user = userEvent.setup()
+  render(<ClosingHarness />)
+  const eyebrow = screen.getByRole("textbox", { name: "Eyebrow" })
+
+  await user.type(eyebrow, "Next week")
+  expect(eyebrow).toHaveValue("Next week")
+  expect(savedClosing()).toHaveProperty("eyebrow", "Next week")
+
+  await user.clear(eyebrow)
+  expect(eyebrow).toHaveValue("")
+  expect(savedClosing()).not.toHaveProperty("eyebrow")
+})
 
 it("authors a Closing takeaway and Boundary Note through the form", async () => {
   const user = userEvent.setup()
