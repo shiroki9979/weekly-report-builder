@@ -8,14 +8,9 @@ type TwoColumnSlideProps = {
   context: StagePageContext
 }
 
-// 通用版型沒有單一溝通任務，不給 eyebrow 而不寫死一個詞（#67）
 export function TwoColumnSlide({ page, context }: TwoColumnSlideProps) {
   return (
-    <EditorialFrame
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       <div className="stage-cols">
         <div className="stage-items">
           {page.items.map((item, index) => (

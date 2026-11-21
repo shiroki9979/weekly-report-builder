@@ -6,12 +6,7 @@ type Props = { page: ClosingPage; context: StagePageContext }
 
 export function ClosingSlide({ page, context }: Props) {
   return (
-    <EditorialFrame
-      eyebrow={page.eyebrow.trim() || "Closing"}
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       <div className="editorial-closing">
         {page.takeaways.length > 0 ? (
           <ul className="editorial-takeaways">

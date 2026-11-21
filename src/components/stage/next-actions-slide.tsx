@@ -20,12 +20,7 @@ export function NextActionsSlide({ page, context }: NextActionsSlideProps) {
   } as CSSProperties
 
   return (
-    <EditorialFrame
-      eyebrow="Next Actions"
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       {rows && (
         <div className="editorial-action-row-headings" aria-hidden="true">
           <span />
