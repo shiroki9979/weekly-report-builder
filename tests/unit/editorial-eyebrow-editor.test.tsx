@@ -5,15 +5,15 @@ import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
-import type { Deck } from "@/lib/deck"
+import type { Deck, EditorialFrameLayout } from "@/lib/deck"
 import { serializeDeck } from "@/lib/decks-io"
-import type { EditorialFrameLayout } from "@/lib/eyebrow"
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import {
   unusedComparisonMetricControls,
   unusedTrendControls,
 } from "./support/editor-controls"
+import { ADDABLE_EDITORIAL_FRAME_LAYOUTS } from "./support/editorial-frame-layouts"
 
 // 預期值照 #74 表格寫死，不讀預設詞清單，避免同構斷言；
 // 以 Record 鍵住每個 Editorial Frame 版型，新增版型卻沒補案例時型別檢查會失敗
@@ -70,6 +70,12 @@ function savedPage() {
 }
 
 describe("Eyebrow field in the shared Editorial page editor chrome", () => {
+  it("covers every Editorial Frame layout an author can add", () => {
+    expect(Object.keys(EXPECTED_PLACEHOLDERS).sort()).toEqual(
+      ADDABLE_EDITORIAL_FRAME_LAYOUTS
+    )
+  })
+
   it.each(Object.entries(EXPECTED_PLACEHOLDERS))(
     "shows the %s placeholder that the Stage falls back to",
     (layout, placeholder) => {

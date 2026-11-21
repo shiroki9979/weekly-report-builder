@@ -2,10 +2,9 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import { DECK_THEMES, parseDeck, type EditorialFramePage } from "@/lib/deck"
+import { DECK_THEMES, parseDeck, type EditorialFrameLayout } from "@/lib/deck"
 import { createStagePageContext } from "@/lib/stage-page-context"
-
-type EditorialFrameLayout = EditorialFramePage["layout"]
+import { ADDABLE_EDITORIAL_FRAME_LAYOUTS } from "./support/editorial-frame-layouts"
 
 type ChromeCase = {
   // 版型專屬內容只求能通過 parseDeck；chrome（title、boundary、eyebrow）由測試統一補上
@@ -193,6 +192,10 @@ function eyebrowText(container: HTMLElement): string {
 const LAYOUTS = Object.keys(CASES) as EditorialFrameLayout[]
 
 describe("Editorial Frame chrome on the Stage", () => {
+  it("covers every Editorial Frame layout an author can add", () => {
+    expect(Object.keys(CASES).sort()).toEqual(ADDABLE_EDITORIAL_FRAME_LAYOUTS)
+  })
+
   describe.each(DECK_THEMES)("in the %s theme", (theme) => {
     it.each(LAYOUTS)(
       "draws %s with its eyebrow, headline, Boundary Note, Frame Label, and footer",

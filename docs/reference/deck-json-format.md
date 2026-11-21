@@ -65,7 +65,7 @@ Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍
 
 ### Eyebrow
 
-`eyebrow?: string` 是 Editorial Frame 頁面可選的 headline 上方職能標籤（[#74](https://github.com/shiroki9979/weekly-report-builder/issues/74)），適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Stage 顯示去除前後空白後的作者值；空白或省略時顯示版型預設詞：
+`eyebrow?: string` 是 Editorial Frame 頁面可選的短標籤，位於 headline 上方，標示這一頁的溝通任務（[#74](https://github.com/shiroki9979/weekly-report-builder/issues/74)），適用於 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target、Closing、Side-by-side Comparison 與 Full-width Panel。Stage 顯示去除前後空白後的作者值；空白或省略時顯示版型預設詞：
 
 | `layout`            | 預設 Eyebrow               |
 | ------------------- | -------------------------- |

@@ -4,8 +4,6 @@ import { describe, expect, it } from "vitest"
 
 import { createDeckFromTemplate } from "@/lib/deck-template"
 import {
-  ADDABLE_LAYOUTS,
-  createBlankAddablePage,
   createBlankClosingPage,
   createBlankEvidenceDecisionPage,
   createBlankFullWidthPanelPage,
@@ -19,10 +17,10 @@ import {
   isEditorialFramePage,
   parseDeck,
   type Deck,
+  type EditorialFrameLayout,
   type EditorialFramePage,
 } from "@/lib/deck"
-
-type EditorialFrameLayout = EditorialFramePage["layout"]
+import { ADDABLE_EDITORIAL_FRAME_LAYOUTS } from "./support/editorial-frame-layouts"
 
 // 以版型為 key 的對照表：新增 Editorial Frame 版型而沒補 fixture 時，型別檢查會失敗
 const EDITORIAL_FRAME_FIXTURES: {
@@ -335,14 +333,9 @@ describe("createDeckFromTemplate", () => {
     expect(cloned.pages[0].showPageNumber).toBeUndefined()
   })
 
-  // tests/ 不在 npm run typecheck 範圍內，對照表的型別涵蓋只在編輯器生效；以新增選單的版型清單在執行期補上同樣的保證
   it("covers every Editorial Frame layout an author can add", () => {
-    const addableEditorialLayouts = ADDABLE_LAYOUTS.filter((layout) =>
-      isEditorialFramePage(createBlankAddablePage("p01", layout, "table"))
-    )
-
     expect(Object.keys(EDITORIAL_FRAME_FIXTURES).sort()).toEqual(
-      [...addableEditorialLayouts].sort()
+      ADDABLE_EDITORIAL_FRAME_LAYOUTS
     )
   })
 

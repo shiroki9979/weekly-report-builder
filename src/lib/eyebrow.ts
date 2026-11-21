@@ -1,6 +1,4 @@
-import type { EditorialFramePage } from "./deck.ts"
-
-export type EditorialFrameLayout = EditorialFramePage["layout"]
+import type { EditorialFrameLayout, EditorialFramePage } from "./deck.ts"
 
 // 唯一的預設詞來源，Stage 與工坊共用才不會顯示不同的詞；
 // 以 Record 鍵住每個 Editorial Frame 版型，新增版型漏登記時型別檢查即失敗。

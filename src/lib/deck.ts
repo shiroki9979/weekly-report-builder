@@ -392,6 +392,8 @@ export type EditorialFramePage =
   | SideBySidePage
   | FullWidthPanelPage
 
+export type EditorialFrameLayout = EditorialFramePage["layout"]
+
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
   return (
     isTwoColumnPage(page) ||
