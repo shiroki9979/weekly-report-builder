@@ -236,6 +236,7 @@
       "id": "p07",
       "layout": "two-column",
       "title": "One shared gate, a live pilot, a quiet on-call week.",
+      "eyebrow": "Workstreams",
       "items": [
         {
           "heading": "Platform: one changelog gate",

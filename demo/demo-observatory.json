@@ -167,6 +167,7 @@
       "id": "pipeline",
       "layout": "two-column",
       "title": "Where the cache sits in the export path",
+      "eyebrow": "Architecture",
       "items": [
         {
           "heading": "Render once per page",
