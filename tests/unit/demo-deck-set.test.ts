@@ -154,6 +154,33 @@ describe("Demo Deck Set", () => {
     }
   })
 
+  // Demo 要同時示範 Eyebrow 的兩種模式：Two-column 與 Closing 由作者填寫，其他版型退回預設詞（#79）
+  it("authors an Eyebrow only on its Two-column and Closing pages", () => {
+    for (const { id, deck } of demoDecks) {
+      const authored = deck.pages.flatMap((page) =>
+        "eyebrow" in page && page.eyebrow?.trim() ? [page.layout] : []
+      )
+
+      expect({ id, authored: authored.sort() }).toEqual({
+        id,
+        authored: ["closing", "two-column"],
+      })
+    }
+  })
+
+  it("keeps the existing Closing Eyebrow overrides", () => {
+    const closingEyebrows = demoDecks.map(({ id, deck }) => ({
+      id,
+      eyebrow: deck.pages.find((page) => page.layout === "closing")?.eyebrow,
+    }))
+
+    expect(closingEyebrows).toEqual([
+      { id: "demo-default", eyebrow: "Next week" },
+      { id: "demo-ledger", eyebrow: "Next week" },
+      { id: "demo-observatory", eyebrow: "Next" },
+    ])
+  })
+
   it("turns on the app-drawn footer on every HTML Page", () => {
     for (const { id, deck } of demoDecks) {
       for (const page of deck.pages.filter(isHtmlPage)) {

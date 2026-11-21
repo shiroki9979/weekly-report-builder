@@ -171,6 +171,7 @@
       "id": "tables",
       "layout": "two-column",
       "title": "Schema validation passed after three contract fixes",
+      "eyebrow": "Data quality",
       "items": [
         {
           "heading": "Contracts first",
