@@ -59,36 +59,18 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
+        {/* Eyebrow 在版型欄位之上、Boundary Note 在其下，對應 Stage 由上而下的順序，
+            兩者夾著 children 無法併成同一個條件區塊 */}
         {isEditorialFramePage(page) ? (
-          <div className="space-y-2">
-            <Label htmlFor="page-eyebrow">Eyebrow</Label>
-            <Input
-              id="page-eyebrow"
-              value={page.eyebrow ?? ""}
-              placeholder={eyebrowPlaceholder(page)}
-              onChange={(event) =>
-                onChange((currentDeck) =>
-                  setPageEyebrow(currentDeck, pageIndex, event.target.value)
-                )
-              }
-            />
-          </div>
+          <EyebrowField page={page} pageIndex={pageIndex} onChange={onChange} />
         ) : null}
         {children}
         {isEditorialFramePage(page) ? (
-          <div className="space-y-2">
-            <Label htmlFor="page-boundary">Boundary Note</Label>
-            <Textarea
-              id="page-boundary"
-              value={page.boundary ?? ""}
-              placeholder="Scope, verification, or limit"
-              onChange={(event) =>
-                onChange((currentDeck) =>
-                  setPageBoundary(currentDeck, pageIndex, event.target.value)
-                )
-              }
-            />
-          </div>
+          <BoundaryNoteField
+            page={page}
+            pageIndex={pageIndex}
+            onChange={onChange}
+          />
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="speaker-notes">Speaker notes</Label>
@@ -124,6 +106,51 @@ export function EditorialPageEditorChrome({
         </div>
       </fieldset>
     </form>
+  )
+}
+
+type EditorialFrameFieldProps = Pick<
+  PageEditorProps<EditorialFramePage>,
+  "page" | "pageIndex" | "onChange"
+>
+
+function EyebrowField({ page, pageIndex, onChange }: EditorialFrameFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="page-eyebrow">Eyebrow</Label>
+      <Input
+        id="page-eyebrow"
+        value={page.eyebrow ?? ""}
+        placeholder={eyebrowPlaceholder(page)}
+        onChange={(event) =>
+          onChange((currentDeck) =>
+            setPageEyebrow(currentDeck, pageIndex, event.target.value)
+          )
+        }
+      />
+    </div>
+  )
+}
+
+function BoundaryNoteField({
+  page,
+  pageIndex,
+  onChange,
+}: EditorialFrameFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="page-boundary">Boundary Note</Label>
+      <Textarea
+        id="page-boundary"
+        value={page.boundary ?? ""}
+        placeholder="Scope, verification, or limit"
+        onChange={(event) =>
+          onChange((currentDeck) =>
+            setPageBoundary(currentDeck, pageIndex, event.target.value)
+          )
+        }
+      />
+    </div>
   )
 }
 
