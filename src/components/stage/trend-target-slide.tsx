@@ -555,12 +555,7 @@ function TrendSummary({ page }: { page: TrendTargetPage }) {
 export function TrendTargetSlide({ page, context }: Props) {
   const comparison = exactComparison(page)
   return (
-    <EditorialFrame
-      eyebrow="Trend & Target"
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       <div className="editorial-trend">
         <TrendChart page={page} />
         <TrendSummary page={page} />

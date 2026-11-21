@@ -2,7 +2,24 @@ import { render } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { EditorialFrame } from "@/components/stage/editorial-frame"
+import type { FullWidthPanelPage, TwoColumnPage } from "@/lib/deck"
 import type { StagePageContext } from "@/lib/stage-page-context"
+
+// Frame 只讀 chrome，本文由 children 提供，版型內容給最小值即可
+const PANEL_PAGE: FullWidthPanelPage = {
+  id: "panel",
+  layout: "full-width-panel",
+  title: "Headline",
+  panel: { kind: "checklist", title: "", items: [] },
+}
+
+const TWO_COLUMN_PAGE: TwoColumnPage = {
+  id: "two-column",
+  layout: "two-column",
+  title: "Headline",
+  items: [],
+  panel: { kind: "table", title: "", columns: [], rows: [] },
+}
 
 function renderFrame(showPageNumber: boolean) {
   const context: StagePageContext = {
@@ -14,7 +31,7 @@ function renderFrame(showPageNumber: boolean) {
     showPageNumber,
   }
   return render(
-    <EditorialFrame eyebrow="Overview" headline="Headline" context={context}>
+    <EditorialFrame page={PANEL_PAGE} context={context}>
       <p>Body</p>
     </EditorialFrame>
   )
@@ -24,8 +41,7 @@ describe("EditorialFrame page number row", () => {
   it("shows Deck Title even when page numbers are hidden", () => {
     const { container } = render(
       <EditorialFrame
-        eyebrow="Overview"
-        headline="Headline"
+        page={PANEL_PAGE}
         context={{
           documentId: "harbor",
           theme: "observatory",
@@ -65,11 +81,11 @@ describe("EditorialFrame page number row", () => {
 })
 
 describe("EditorialFrame eyebrow row", () => {
-  // 沒有溝通任務的頁面不給 eyebrow；這一行仍須佔位，標題與本文才不會隨主題的 § nn 上下跳動
+  // 沒有 eyebrow 的頁面（Two-column 預設為空）這一行仍須佔位，標題與本文才不會隨主題的 § nn 上下跳動
   it("keeps a blank eyebrow row when the page has no eyebrow", () => {
     const { container } = render(
       <EditorialFrame
-        headline="Headline"
+        page={TWO_COLUMN_PAGE}
         context={{
           documentId: "harbor",
           theme: "observatory",

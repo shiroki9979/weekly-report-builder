@@ -11,12 +11,7 @@ export function FullWidthPanelSlide({
   context: StagePageContext
 }) {
   return (
-    <EditorialFrame
-      eyebrow="Panel"
-      headline={page.title}
-      context={context}
-      boundary={page.boundary}
-    >
+    <EditorialFrame page={page} context={context}>
       <div className="editorial-full-width-panel">
         <StagePanel panel={page.panel} fullWidth />
       </div>
