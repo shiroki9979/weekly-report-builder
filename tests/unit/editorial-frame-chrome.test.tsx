@@ -2,10 +2,8 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
-import { DECK_THEMES, parseDeck, type EditorialFramePage } from "@/lib/deck"
+import { DECK_THEMES, parseDeck, type EditorialFrameLayout } from "@/lib/deck"
 import { createStagePageContext } from "@/lib/stage-page-context"
-
-type EditorialFrameLayout = EditorialFramePage["layout"]
 
 type ChromeCase = {
   // 版型專屬內容只求能通過 parseDeck；chrome（title、boundary、eyebrow）由測試統一補上

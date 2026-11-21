@@ -19,10 +19,9 @@ import {
   isEditorialFramePage,
   parseDeck,
   type Deck,
+  type EditorialFrameLayout,
   type EditorialFramePage,
 } from "@/lib/deck"
-
-type EditorialFrameLayout = EditorialFramePage["layout"]
 
 // 以版型為 key 的對照表：新增 Editorial Frame 版型而沒補 fixture 時，型別檢查會失敗
 const EDITORIAL_FRAME_FIXTURES: {

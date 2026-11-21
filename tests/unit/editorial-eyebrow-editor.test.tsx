@@ -5,9 +5,8 @@ import { describe, expect, it } from "vitest"
 
 import { StageSlide } from "@/components/stage/stage-slide"
 import { PageEditorForm } from "@/components/workshop/page-editor-form"
-import type { Deck } from "@/lib/deck"
+import type { Deck, EditorialFrameLayout } from "@/lib/deck"
 import { serializeDeck } from "@/lib/decks-io"
-import type { EditorialFrameLayout } from "@/lib/eyebrow"
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createStagePageContext } from "@/lib/stage-page-context"
 import {
