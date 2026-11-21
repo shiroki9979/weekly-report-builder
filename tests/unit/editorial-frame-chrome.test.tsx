@@ -228,19 +228,30 @@ describe("Editorial Frame chrome on the Stage", () => {
     expect(header?.lastElementChild).toHaveTextContent(HEADLINE)
   })
 
-  it("shows the authored Closing eyebrow", () => {
+  it.each(LAYOUTS)("shows the authored eyebrow on %s", (layout) => {
+    const { container } = renderChrome(layout, {
+      chrome: { eyebrow: "  Risks  " },
+    })
+
+    expect(eyebrowText(container)).toBe("Risks")
+  })
+
+  describe.each(["", " \t "])("with the eyebrow %j", (blank) => {
+    it.each(LAYOUTS)("falls back to the %s default", (layout) => {
+      const { container } = renderChrome(layout, {
+        chrome: { eyebrow: blank },
+      })
+
+      expect(eyebrowText(container)).toBe(CASES[layout].defaultEyebrow)
+    })
+  })
+
+  // Closing 在 #74 之前就有自己的 eyebrow 欄位，既有 Deck JSON 不必遷移
+  it("shows the eyebrow of a Closing page saved before #74", () => {
     const { container } = renderChrome("closing", {
       chrome: { eyebrow: "Next week" },
     })
 
     expect(eyebrowText(container)).toBe("Next week")
-  })
-
-  it("falls back to Closing when the authored eyebrow is only whitespace", () => {
-    const { container } = renderChrome("closing", {
-      chrome: { eyebrow: "   " },
-    })
-
-    expect(eyebrowText(container)).toBe("Closing")
   })
 })

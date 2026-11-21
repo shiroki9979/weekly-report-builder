@@ -1,4 +1,4 @@
-import { isClosingPage, type EditorialFramePage } from "./deck.ts"
+import type { EditorialFramePage } from "./deck.ts"
 
 export type EditorialFrameLayout = EditorialFramePage["layout"]
 
@@ -18,10 +18,5 @@ export const DEFAULT_EYEBROWS: Record<EditorialFrameLayout, string> = {
 
 // 只含空白的作者值視同未填，免得誤輸入的空白蓋掉預設詞
 export function resolveEyebrow(page: EditorialFramePage): string {
-  return authoredEyebrow(page) || DEFAULT_EYEBROWS[page.layout]
-}
-
-// 目前只有 Closing 的 schema 帶作者 Eyebrow；其他版型升格為共用 chrome 後再一併讀取
-function authoredEyebrow(page: EditorialFramePage): string {
-  return isClosingPage(page) ? page.eyebrow.trim() : ""
+  return page.eyebrow?.trim() || DEFAULT_EYEBROWS[page.layout]
 }
