@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label"
 import { EditorialPageEditorChrome } from "@/components/workshop/editorial-page-editor-chrome"
 import type { PageEditorProps } from "@/components/workshop/page-editor-props"
 import { canAddEntry, CARDINALITY, type ClosingPage } from "@/lib/deck"
-import { setPageEyebrow } from "@/lib/deck-editor"
 import { issuePathsFor } from "@/lib/export-readiness"
 import {
   addTakeaway,
@@ -19,19 +18,6 @@ export function ClosingEditorForm(props: PageEditorProps<ClosingPage>) {
   const invalidPaths = issuePathsFor(page)
   return (
     <EditorialPageEditorChrome {...props} invalidPaths={invalidPaths}>
-      <div className="space-y-2">
-        <Label htmlFor="closing-eyebrow">Eyebrow</Label>
-        <Input
-          id="closing-eyebrow"
-          value={page.eyebrow ?? ""}
-          placeholder="Closing"
-          onChange={(event) =>
-            onChange((deck) =>
-              setPageEyebrow(deck, pageIndex, event.target.value)
-            )
-          }
-        />
-      </div>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">Takeaways</p>
         <Button
