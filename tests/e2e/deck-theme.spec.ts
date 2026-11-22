@@ -126,6 +126,8 @@ type ThemeExpectation = {
   monoFrame: boolean
   // 跨版型共用的 item index（補零等寬索引）是否顯示；ledger 刻意不帶入補零編號
   itemIndex: boolean
+  // Two-column 項目的標記與標題色彩角色；主題只換 Stage Element 的處理，不重排構圖
+  twoColumnItem: { marker: "dot" | "index"; heading: "--blue" | "--ink" }
 }
 
 const DEFAULT_LEGEND = [
@@ -144,6 +146,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     hostsIbmPlexMono: false,
     monoFrame: false,
     itemIndex: false,
+    twoColumnItem: { marker: "dot", heading: "--blue" },
   },
   observatory: {
     paddedPageNumbers: true,
@@ -154,6 +157,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     hostsIbmPlexMono: true,
     monoFrame: true,
     itemIndex: true,
+    twoColumnItem: { marker: "index", heading: "--ink" },
   },
   // ledger 沿用 default 的色彩與構圖，只換 --line、--accent-wash 與外框等寬字
   ledger: {
@@ -165,6 +169,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     hostsIbmPlexMono: true,
     monoFrame: true,
     itemIndex: false,
+    twoColumnItem: { marker: "dot", heading: "--blue" },
   },
 }
 
@@ -416,6 +421,78 @@ for (const theme of DECK_THEMES) {
         })
       )
       .toEqual({ mono: true, mute: true })
+  })
+
+  test(`marks Two-column items with the ${theme} item treatment`, async ({
+    page,
+    request,
+  }) => {
+    expect(
+      (
+        await request.put("/api/decks/two-column-items", {
+          data: { ...demo, theme, pages: [demoPage(isTwoColumnPage)] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=two-column-items")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    const items = stage.locator(".stage-item")
+    await expect(items).toHaveCount(3)
+    const indexes = items.locator(".editorial-item-index")
+    // 索引只是視覺處理：三個項目平行無序，輔助技術不該讀到編號
+    await expect(indexes).toHaveText(["01", "02", "03"])
+    for (const index of await indexes.all())
+      await expect(index).toHaveAttribute("aria-hidden", "true")
+    const first = items.first()
+    const showsIndex = expected.twoColumnItem.marker === "index"
+    await expect(first.locator(".editorial-item-index")).toBeVisible({
+      visible: showsIndex,
+    })
+    await expect(first.locator(".stage-dot")).toBeVisible({
+      visible: !showsIndex,
+    })
+    // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+    await expect
+      .poll(() =>
+        first.evaluate(
+          (item, { heading, showsIndex }) => {
+            const root = item.closest(".stage-root")!
+            const normalize = (value: string) =>
+              value.replace(/["'\s]/g, "").toLowerCase()
+            // 以探針元素解析色彩角色，避免 hex 與 rgb 寫法不同而誤判
+            const resolve = (role: string) => {
+              const probe = document.createElement("span")
+              probe.style.color = `var(${role})`
+              root.append(probe)
+              const color = getComputedStyle(probe).color
+              probe.remove()
+              return color
+            }
+            const headingMatches =
+              getComputedStyle(item.querySelector("h3")!).color ===
+              resolve(heading)
+            if (!showsIndex) return { heading: headingMatches }
+            // 外觀與 Side-by-side point 的索引是同一組規則
+            const index = getComputedStyle(
+              item.querySelector(".editorial-item-index")!
+            )
+            return {
+              heading: headingMatches,
+              indexMono:
+                normalize(index.fontFamily) ===
+                normalize(getComputedStyle(root).getPropertyValue("--mono")),
+              indexMute: index.color === resolve("--mute"),
+            }
+          },
+          { heading: expected.twoColumnItem.heading, showsIndex }
+        )
+      )
+      .toEqual(
+        showsIndex
+          ? { heading: true, indexMono: true, indexMute: true }
+          : { heading: true }
+      )
   })
 
   test(`sets only the Editorial Frame furniture in --mono under ${theme}`, async ({

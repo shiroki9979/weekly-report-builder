@@ -152,6 +152,20 @@
   gap: 0.78125cqw;
 }
 
+/* Two-column 的標記欄改成與 Side-by-side point 同寬的索引欄；字級不動，只換標記與標題色彩角色 */
+.stage-root[data-theme="observatory"] .stage-item {
+  grid-template-columns: 2.1875cqw minmax(0, 1fr);
+  gap: 0.78125cqw;
+}
+
+.stage-root[data-theme="observatory"] .stage-dot {
+  display: none;
+}
+
+.stage-root[data-theme="observatory"] .stage-item h3 {
+  color: var(--ink);
+}
+
 /* 共用 item index 的外觀只在這裡定義一次，各版型只負責留出索引欄 */
 .stage-root[data-theme="observatory"] .editorial-item-index {
   display: block;
