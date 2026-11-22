@@ -382,8 +382,11 @@ export function isFullWidthPanelPage(page: Page): page is FullWidthPanelPage {
   return page.layout === "full-width-panel" && "panel" in page
 }
 
+// 每格只收字面值 true／false：回傳 boolean 的條件式會讓該版型從聯集消失，執行期卻仍可能判定為成員
+type MembershipEntry<P> = ((page: P) => true) | ((page: P) => false)
+
 // 經 matchPage 分派，每個版型都必須在這裡表態是否在 Editorial Frame 內：新增版型漏列時編譯失敗。
-// 聯集型別與執行期判斷都由這張表派生，parse／template chrome、頁碼位置與 Export Readiness 不會各自漂移
+// 聯集型別與執行期判斷都由這張表派生，parse／template chrome、Page Position 與 Export Readiness 不會各自漂移
 const EDITORIAL_FRAME_MEMBERSHIP = {
   html: () => false,
   twoColumn: () => true,
@@ -396,7 +399,7 @@ const EDITORIAL_FRAME_MEMBERSHIP = {
   sideBySide: () => true,
   fullWidthPanel: () => true,
   unknown: () => false,
-} satisfies PageMatchers<boolean>
+} satisfies { [K in PageKind]: MembershipEntry<PageByKind[K]> }
 
 type EditorialFrameKind = {
   [K in PageKind]: ReturnType<
@@ -457,7 +460,7 @@ type PageByKind = {
   unknown: Page
 }
 
-type PageKind = keyof PageByKind
+export type PageKind = keyof PageByKind
 
 type PageMatchers<T> = { [K in PageKind]: (page: PageByKind[K]) => T }
 
