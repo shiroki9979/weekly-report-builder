@@ -146,13 +146,24 @@
   font-weight: inherit;
 }
 
-.stage-root[data-theme="observatory"] .editorial-comparison-points li {
+/* 兩個版型共用同一條索引欄，寬度與間距只寫一次，日後調整時兩邊不會各自漂移 */
+.stage-root[data-theme="observatory"] .editorial-comparison-points li,
+.stage-root[data-theme="observatory"] .stage-item {
   display: grid;
   grid-template-columns: 2.1875cqw minmax(0, 1fr);
   gap: 0.78125cqw;
 }
 
-.stage-root[data-theme="observatory"] .editorial-comparison-index {
+.stage-root[data-theme="observatory"] .stage-dot {
+  display: none;
+}
+
+.stage-root[data-theme="observatory"] .stage-item h3 {
+  color: var(--ink);
+}
+
+/* 共用 item index 的外觀只在這裡定義一次，各版型只負責留出索引欄 */
+.stage-root[data-theme="observatory"] .editorial-item-index {
   display: block;
   padding-top: 0.46875cqw;
   color: var(--mute);

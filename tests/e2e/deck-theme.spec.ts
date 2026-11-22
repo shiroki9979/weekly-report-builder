@@ -2,6 +2,7 @@ import {
   expect,
   test,
   type APIRequestContext,
+  type Locator,
   type Page as BrowserPage,
 } from "@playwright/test"
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs"
@@ -14,6 +15,7 @@ import {
   isEvidenceDecisionPage,
   isNextActionsPage,
   isTrendTargetPage,
+  isSideBySidePage,
   periodLabel,
   type Deck,
   type Page,
@@ -123,6 +125,11 @@ type ThemeExpectation = {
   hostsIbmPlexMono: boolean
   // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono
   monoFrame: boolean
+  // 跨版型共用的 item index（補零等寬索引）是否取代項目標記；ledger 刻意不帶入補零編號。
+  // Side-by-side 與 Two-column 都讀這一項，不另記 Two-column 的標記種類
+  itemIndex: boolean
+  // Two-column 項目標題的色彩角色；主題只換 Stage Element 的處理，不重排構圖
+  twoColumnHeading: "--blue" | "--ink"
 }
 
 const DEFAULT_LEGEND = [
@@ -140,6 +147,8 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: false,
     hostsIbmPlexMono: false,
     monoFrame: false,
+    itemIndex: false,
+    twoColumnHeading: "--blue",
   },
   observatory: {
     paddedPageNumbers: true,
@@ -149,6 +158,8 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: true,
     hostsIbmPlexMono: true,
     monoFrame: true,
+    itemIndex: true,
+    twoColumnHeading: "--ink",
   },
   // ledger 沿用 default 的色彩與構圖，只換 --line、--accent-wash 與外框等寬字
   ledger: {
@@ -159,7 +170,76 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: false,
     hostsIbmPlexMono: true,
     monoFrame: true,
+    itemIndex: false,
+    twoColumnHeading: "--blue",
   },
+}
+
+// 預期值寫成 Stage 的角色或 CSS 長度，由瀏覽器解析後再比對：
+// hex 與 rgb、字型清單的引號與空白、cqw 與 px 寫法不同都不該誤判
+type StyleProbe = {
+  mono?: true
+  color?: string
+  fontSize?: string
+  paddingTop?: string
+}
+
+function matchStageStyle(
+  target: Locator,
+  probe: StyleProbe
+): Promise<Record<string, boolean>[]> {
+  return target.evaluateAll(
+    (elements, probe) =>
+      elements.map((element) => {
+        const root = element.closest(".stage-root")!
+        const normalize = (value: string) =>
+          value.replace(/["'\s]/g, "").toLowerCase()
+        // 探針放在元素旁邊，var() 與 cqw 才會對到元素所在的同一組角色與 container
+        const resolve = (
+          property: "color" | "fontSize" | "paddingTop",
+          value: string
+        ) => {
+          const span = document.createElement("span")
+          span.style[property] = value
+          element.parentElement!.append(span)
+          const resolved = getComputedStyle(span)[property]
+          span.remove()
+          return resolved
+        }
+        const style = getComputedStyle(element)
+        const matches: Record<string, boolean> = {}
+        if (probe.mono)
+          matches.mono =
+            normalize(style.fontFamily) ===
+            normalize(getComputedStyle(root).getPropertyValue("--mono"))
+        if (probe.color)
+          matches.color =
+            style.color === resolve("color", `var(${probe.color})`)
+        if (probe.fontSize)
+          matches.fontSize =
+            style.fontSize === resolve("fontSize", probe.fontSize)
+        if (probe.paddingTop)
+          matches.paddingTop =
+            style.paddingTop === resolve("paddingTop", probe.paddingTop)
+        return matches
+      }),
+    probe
+  )
+}
+
+// 顯示 item index 的主題共用同一組外觀；Side-by-side 與 Two-column 都以此釘住
+const ITEM_INDEX_LOOK: StyleProbe = {
+  mono: true,
+  color: "--mute",
+  fontSize: "0.9375cqw",
+  paddingTop: "0.46875cqw",
+}
+
+async function expectItemIndexLook(index: Locator) {
+  // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+  await expect
+    .poll(() => matchStageStyle(index, ITEM_INDEX_LOOK))
+    .toEqual([{ mono: true, color: true, fontSize: true, paddingTop: true }])
 }
 
 for (const theme of DECK_THEMES) {
@@ -363,6 +443,72 @@ for (const theme of DECK_THEMES) {
     })
   })
 
+  test(`shows the shared item index on Side-by-side points only where ${theme} enables it`, async ({
+    page,
+    request,
+  }) => {
+    expect(
+      (
+        await request.put("/api/decks/item-index", {
+          data: { ...demo, theme, pages: [demoPage(isSideBySidePage)] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=item-index")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    const index = stage
+      .locator(".editorial-comparison-points li > .editorial-item-index")
+      .first()
+    await expect(index).toHaveText("01")
+    await expect(index).toHaveAttribute("aria-hidden", "true")
+    if (!expected.itemIndex) {
+      await expect(index).toBeHidden()
+      return
+    }
+    await expect(index).toBeVisible()
+    await expectItemIndexLook(index)
+  })
+
+  test(`marks Two-column items with the ${theme} item treatment`, async ({
+    page,
+    request,
+  }) => {
+    expect(
+      (
+        await request.put("/api/decks/two-column-items", {
+          data: { ...demo, theme, pages: [demoPage(isTwoColumnPage)] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=two-column-items")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    const items = stage.locator(".stage-item")
+    await expect(items).toHaveCount(3)
+    const indexes = items.locator(".editorial-item-index")
+    // 索引只是視覺處理：三個項目平行無序，輔助技術不該讀到編號
+    await expect(indexes).toHaveText(["01", "02", "03"])
+    for (const index of await indexes.all())
+      await expect(index).toHaveAttribute("aria-hidden", "true")
+    const first = items.first()
+    const index = first.locator(".editorial-item-index")
+    await expect(index).toBeVisible({ visible: expected.itemIndex })
+    await expect(first.locator(".stage-dot")).toBeVisible({
+      visible: !expected.itemIndex,
+    })
+    // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+    await expect
+      .poll(() =>
+        matchStageStyle(first.locator("h3"), {
+          color: expected.twoColumnHeading,
+        })
+      )
+      .toEqual([{ color: true }])
+    // 外觀與 Side-by-side point 的索引是同一組規則
+    if (expected.itemIndex) await expectItemIndexLook(index)
+  })
+
   test(`sets only the Editorial Frame furniture in --mono under ${theme}`, async ({
     page,
     request,
@@ -400,29 +546,17 @@ for (const theme of DECK_THEMES) {
     ]
     // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
     await expect
-      .poll(() =>
-        stage.evaluate(
-          (root, selectors) => {
-            const normalize = (value: string) =>
-              value.replace(/["'\s]/g, "").toLowerCase()
-            const mono = normalize(
-              getComputedStyle(root).getPropertyValue("--mono")
-            )
-            return Object.fromEntries(
-              selectors.map((selector) => {
-                const elements = [...root.querySelectorAll(selector)]
-                if (elements.length === 0) return [selector, "missing"]
-                return [
-                  selector,
-                  elements.every(
-                    (element) =>
-                      normalize(getComputedStyle(element).fontFamily) === mono
-                  ),
-                ]
+      .poll(async () =>
+        Object.fromEntries(
+          await Promise.all(
+            [...furniture, ...content].map(async (selector) => {
+              const matches = await matchStageStyle(stage.locator(selector), {
+                mono: true,
               })
-            )
-          },
-          [...furniture, ...content]
+              if (matches.length === 0) return [selector, "missing"]
+              return [selector, matches.every(({ mono }) => mono)]
+            })
+          )
         )
       )
       .toEqual(
