@@ -29,7 +29,7 @@
 | 3   | 以 Page ID 為範圍的頁面編輯                     | Strong                                      | in-process          | 2026-09-27；2026-11-09 升級 | 候選                                                                                                                                            |
 | 7   | Deck lifecycle module：hook 裡的規則搬回 lib    | Strong                                      | in-process          | 2026-11-09                  | 候選；第二次審查的次選，建議與 8 同做                                                                                                           |
 | 12  | 頁尾成為 Stage page context 的一個事實          | Strong                                      | in-process          | 2026-11-22                  | [#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)（needs-triage）；第三次審查的首選                                         |
-| 13  | 編譯器看得見的 Editorial Frame 成員資格         | Strong（第一步）；Worth exploring（第二步） | in-process          | 2026-11-22                  | [#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)（needs-triage）；第三次審查的次選                                         |
+| 13  | 編譯器看得見的 Editorial Frame 成員資格         | Strong（第一步）；Worth exploring（第二步） | in-process          | 2026-11-22                  | [#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)：第一步已實作，第二步仍為候選                                             |
 | 8   | Location history adapter                        | Worth exploring                             | ports & adapters    | 2026-11-09                  | 候選                                                                                                                                            |
 | 9   | Trend SVG ink 解析移到 capture adapter          | Worth exploring                             | mock                | 2026-11-09                  | 候選                                                                                                                                            |
 | 10  | Trend chart geometry 成為 pure module           | Worth exploring                             | in-process          | 2026-11-09                  | 候選                                                                                                                                            |
@@ -232,7 +232,10 @@
   - ADR-0002〈後果〉說 `Record<DeckTheme, …>` 會讓漏掉主題的測試失敗；這成立只是因為那些 spec 迭代 `DECK_THEMES`，不是因為有型別檢查。
 - **收益**：leverage 最大的 layout 事實受編譯器檢查；測試能依 `layout` narrowing；Record 檢查從 IDE 進入 CI；6 的「登錄表派生聯集」先落地。
 - **代價**：第二步需要處理存檔：目前直接 `JSON.stringify`（`decks-io.ts:7`、`decks-client.ts:42`），unknown page 要有 serializer 才能原樣 round-trip（`parse-deck.test.ts:295`）。
-- **狀態**：[#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)（needs-triage）。第一步 Strong，第二步 Worth exploring。
+- **狀態**：[#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)。第一步 Strong，第二步 Worth exploring。
+  - 第一步已實作：`EDITORIAL_FRAME_MEMBERSHIP` 以 `PageMatchers` 為鍵，每個 `matchPage` 分支都必須表態；`EditorialFramePage` 聯集與 `isEditorialFramePage` 都由這張表派生，OR 鏈刪除。`tsconfig.test.json` 把 `tests/` 納入 `tsc -b`，`tsconfig.node.json` 補上 `vitest.config.ts` 與 `playwright.config.ts`；61 個錯誤已清除，測試改用 guard narrowing。
+  - 聯集已由表派生，`Record<EditorialFrameLayout, …>` 又進了 `tsc -b`，`editorial-frame-layouts.ts` 與 3 個 runtime guard 在第一步就刪除，不必等第二步。
+  - 第二步仍待處理：`UnknownPage` 仍與 layout literal 重疊；`matchPage` 自己的 if 鏈仍不受窮舉檢查（新增 `PageMatchers` key 而漏寫分支會落到 `unknown`）；`isStructuredPage` 仍是 `isCoverPage || isEditorialFramePage`，非 Frame、非 Cover 的新 Structured Layout 不會被要求表態。
 - **2026-11-22 補遺**：
   - 型別檢查連 `tests/e2e` 一起跑（關閉 `noUnusedLocals`／`noUnusedParameters`）：22 個檔案共 61 個錯誤，與上方 `tests/unit` 的 60 個一致，多出的是 e2e（例如 `tests/e2e/trend-target.spec.ts:135` 的 `getScreenCTM`）。
   - 六則測試註解宣稱「漏列時型別檢查會失敗」，實際不會：`deck-template.test.ts:25`、`editorial-frame-chrome.test.tsx:16`、`editorial-eyebrow-editor.test.tsx:19`、`demo-deck-set.test.ts:33,40`、`e2e/deck-theme.spec.ts:114`。
@@ -400,7 +403,7 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
 不屬於加深候選，但值得處理：
 
 - `src/lib/preview-page.ts` 的 `getPreviewPage` 沒有任何呼叫端。
-- `tests/` 不在任何 tsconfig 的 `include`，`pnpm typecheck` 不檢查測試碼的型別。（2026-11-09 具體後果：`tests/unit/support/editor-controls.ts` 的 `unusedTrendControls` 有 7 個 key，`TrendEditorControls` 有 8 個，少 `setCadence`，照樣編譯通過。2026-11-22：納入候選 13，以暫存 tsconfig 量得 60 個型別錯誤。）
+- `tests/` 不在任何 tsconfig 的 `include`，`pnpm typecheck` 不檢查測試碼的型別。（2026-11-09 具體後果：`tests/unit/support/editor-controls.ts` 的 `unusedTrendControls` 有 7 個 key，`TrendEditorControls` 有 8 個，少 `setCadence`，照樣編譯通過。2026-11-22：納入候選 13，以暫存 tsconfig 量得 60 個型別錯誤；已由 13 的第一步解決，`tsconfig.test.json` 納入 `tsc -b`。）
 - `tsconfig.node.json`（`vite.config.ts`、`server/`、`scripts/`）沒有開 `strict`。
 - 2026-11-09 新增：
   - `588c2c2` 揭露的不成文契約：Export Readiness 的「fits」量測依賴每個 layout body 的 CSS 不縮到 content 以下；目前只存在於 commit message（寫下的位置見 6）。2026-11-22：`editorial-layouts.css:573-575` 已有註解，opt-in 清單的問題見 15。
@@ -413,7 +416,7 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
   - `editorial-frame-chrome.test.tsx` 以 `describe.each(DECK_THEMES)` 把同一組 DOM 斷言跑 3 次；jsdom 不套 CSS，markup 也不依主題分支（2026-11-22 補遺：已在 jsdom 驗證，見 16）。
   - `stage-page-context.ts:60` 說補零規則只定一次，但 `table-panel.tsx:48`、`side-by-side-slide.tsx:35`、`next-actions-slide.tsx:13` 各自補零（補遺；相關 #87）。
   - `documentId` 的範圍比 2026-11-09 記錄的更廣：還有 `StagePageContext.documentId`（`stage-page-context.ts:15`）與 `html-slide.tsx:9`（補遺）。
-  - `tsconfig.node.json` 也不涵蓋 `vitest.config.ts` 與 `playwright.config.ts`（補遺）。
+  - `tsconfig.node.json` 也不涵蓋 `vitest.config.ts` 與 `playwright.config.ts`（補遺；已由 13 的第一步補上）。
   - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。
 
 ## 相關文件
