@@ -15,10 +15,12 @@ import {
 } from "@/lib/page-lifecycle"
 import {
   isEditorialFramePage,
+  isTwoColumnPage,
   parseDeck,
   type Deck,
   type EditorialFrameLayout,
   type EditorialFramePage,
+  type TwoColumnPage,
 } from "@/lib/deck"
 import { ADDABLE_EDITORIAL_FRAME_LAYOUTS } from "./support/editorial-frame-layouts"
 
@@ -45,6 +47,14 @@ const fixturePath = resolve(
 
 function loadFixtureDeck() {
   return parseDeck(JSON.parse(readFileSync(fixturePath, "utf-8")))
+}
+
+// fixture 全是 Two-column 頁；在這裡收窄一次，後續斷言才能直接讀 items 與 panel
+function twoColumnPages(deck: Deck): TwoColumnPage[] {
+  return deck.pages.map((page) => {
+    if (!isTwoColumnPage(page)) throw new Error("expected two-column pages")
+    return page
+  })
 }
 
 const template = parseDeck({
@@ -128,20 +138,22 @@ describe("createDeckFromTemplate", () => {
   it("keeps the fixture's structure with cleared copy", () => {
     const previous = loadFixtureDeck()
     const cloned = createDeckFromTemplate(previous)
+    const previousPages = twoColumnPages(previous)
+    const clonedPages = twoColumnPages(cloned)
 
-    expect(cloned.pages).toHaveLength(previous.pages.length)
+    expect(clonedPages).toHaveLength(previousPages.length)
 
-    expect(cloned.pages.map((page) => page.id)).toEqual(
-      previous.pages.map((page) => page.id)
+    expect(clonedPages.map((page) => page.id)).toEqual(
+      previousPages.map((page) => page.id)
     )
-    expect(cloned.pages.map((page) => page.panel.kind)).toEqual(
-      previous.pages.map((page) => page.panel.kind)
+    expect(clonedPages.map((page) => page.panel.kind)).toEqual(
+      previousPages.map((page) => page.panel.kind)
     )
-    expect(cloned.pages.map((page) => page.hidden)).toEqual(
-      previous.pages.map((page) => page.hidden)
+    expect(clonedPages.map((page) => page.hidden)).toEqual(
+      previousPages.map((page) => page.hidden)
     )
 
-    for (const page of cloned.pages) {
+    for (const page of clonedPages) {
       expect(page.title).toBe("")
       expect(page.notes).toBeUndefined()
       expect(page.items).toHaveLength(3)
@@ -151,7 +163,7 @@ describe("createDeckFromTemplate", () => {
       }
     }
 
-    const chartPanel = cloned.pages[0].panel
+    const chartPanel = clonedPages[0].panel
     if (chartPanel.kind !== "chart") {
       throw new Error("expected chart panel")
     }
@@ -161,7 +173,7 @@ describe("createDeckFromTemplate", () => {
     expect(chartPanel.series[0].name).toBe("")
     expect(chartPanel.series[0].values).toEqual([0, 0, 0])
 
-    const flowPanel = cloned.pages[1].panel
+    const flowPanel = clonedPages[1].panel
     if (flowPanel.kind !== "flow") {
       throw new Error("expected flow panel")
     }
@@ -172,7 +184,7 @@ describe("createDeckFromTemplate", () => {
       variant: "default",
     })
 
-    const checklistPanel = cloned.pages[2].panel
+    const checklistPanel = clonedPages[2].panel
     if (checklistPanel.kind !== "checklist") {
       throw new Error("expected checklist panel")
     }
@@ -181,7 +193,7 @@ describe("createDeckFromTemplate", () => {
       { label: "", checked: undefined },
     ])
 
-    const tablePanel = cloned.pages[3].panel
+    const tablePanel = clonedPages[3].panel
     if (tablePanel.kind !== "table") {
       throw new Error("expected table panel")
     }
@@ -328,9 +340,10 @@ describe("createDeckFromTemplate", () => {
 
     const cloned = createDeckFromTemplate(previous)
 
-    expect(cloned.pages[0]).toMatchObject({ layout: "two-column", title: "" })
-    expect(cloned.pages[0].boundary).toBeUndefined()
-    expect(cloned.pages[0].showPageNumber).toBeUndefined()
+    const [page] = twoColumnPages(cloned)
+    expect(page.title).toBe("")
+    expect(page.boundary).toBeUndefined()
+    expect(page.showPageNumber).toBeUndefined()
   })
 
   it("covers every Editorial Frame layout an author can add", () => {

@@ -11,7 +11,7 @@ import {
   setOverviewSupportingField,
   setOverviewSupportingStatus,
 } from "@/lib/overview-editor"
-import type { Deck, OverviewPage } from "@/lib/deck"
+import { isOverviewPage, type Deck, type OverviewPage } from "@/lib/deck"
 
 function weekWith(page: OverviewPage): Deck {
   return {
@@ -22,7 +22,7 @@ function weekWith(page: OverviewPage): Deck {
 
 function overview(week: Deck): OverviewPage {
   const page = week.pages[0]
-  if (page.layout !== "overview") {
+  if (!isOverviewPage(page)) {
     throw new Error("expected overview")
   }
   return page

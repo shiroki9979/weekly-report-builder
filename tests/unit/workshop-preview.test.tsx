@@ -20,6 +20,7 @@ const week: Deck = {
 function renderPreview() {
   render(
     <WorkshopPreview
+      documentId="2026-08-24"
       deck={week}
       selectedPageIndex={0}
       onSelectPage={() => {}}

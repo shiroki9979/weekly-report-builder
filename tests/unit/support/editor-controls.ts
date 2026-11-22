@@ -15,6 +15,7 @@ export const unusedTrendControls: TrendEditorControls = {
   read: () => "",
   write: () => {},
   setObservationState: () => {},
+  setCadence: () => {},
   changeEndpoint: () => {},
   confirmRedate: () => {},
   cancelRedate: () => {},

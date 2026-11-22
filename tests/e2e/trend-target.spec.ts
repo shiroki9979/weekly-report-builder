@@ -126,10 +126,11 @@ test("keeps the target line visible when every observation meets it exactly", as
   const plot = page
     .getByTestId("stage-frame")
     .locator(".editorial-trend-chart svg")
-  const sample = await plot.evaluate((svg) => {
+  const sample = await plot.evaluate((element) => {
+    const svg = element as SVGSVGElement
     const target = svg.querySelector(".editorial-trend-target")
     if (!target) throw new Error("Target line is missing")
-    const point = (svg as SVGSVGElement).createSVGPoint()
+    const point = svg.createSVGPoint()
     point.x = Number(target.getAttribute("x1")) + 16
     point.y = Number(target.getAttribute("y1"))
     const screenPoint = point.matrixTransform(svg.getScreenCTM()!)

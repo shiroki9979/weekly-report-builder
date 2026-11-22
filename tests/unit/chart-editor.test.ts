@@ -11,7 +11,7 @@ import {
   setChartSeriesName,
   setChartSeriesValue,
 } from "@/lib/deck-editor"
-import { parseDeck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck } from "@/lib/deck"
 
 const fixturePath = resolve(import.meta.dirname, "../fixtures/chart-week.json")
 
@@ -20,11 +20,11 @@ function loadChartWeek() {
 }
 
 function chartPanel(week: ReturnType<typeof loadChartWeek>) {
-  const panel = week.pages[0].panel
-  if (panel.kind !== "chart") {
+  const page = week.pages[0]
+  if (!isTwoColumnPage(page) || page.panel.kind !== "chart") {
     throw new Error("expected chart panel")
   }
-  return panel
+  return page.panel
 }
 
 describe("chart week-editor", () => {
