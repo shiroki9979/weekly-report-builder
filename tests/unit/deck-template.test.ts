@@ -22,7 +22,6 @@ import {
   type EditorialFramePage,
   type TwoColumnPage,
 } from "@/lib/deck"
-import { ADDABLE_EDITORIAL_FRAME_LAYOUTS } from "./support/editorial-frame-layouts"
 
 // 以版型為 key 的對照表：新增 Editorial Frame 版型而沒補 fixture 時，型別檢查會失敗
 const EDITORIAL_FRAME_FIXTURES: {
@@ -344,12 +343,6 @@ describe("createDeckFromTemplate", () => {
     expect(page.title).toBe("")
     expect(page.boundary).toBeUndefined()
     expect(page.showPageNumber).toBeUndefined()
-  })
-
-  it("covers every Editorial Frame layout an author can add", () => {
-    expect(Object.keys(EDITORIAL_FRAME_FIXTURES).sort()).toEqual(
-      ADDABLE_EDITORIAL_FRAME_LAYOUTS
-    )
   })
 
   it.each(editorialFrameCases)(
