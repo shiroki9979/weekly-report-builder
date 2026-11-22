@@ -233,12 +233,12 @@
 - **收益**：leverage 最大的 layout 事實受編譯器檢查；測試能依 `layout` narrowing；Record 檢查從 IDE 進入 CI；6 的「登錄表派生聯集」先落地。
 - **代價**：第二步需要處理存檔：目前直接 `JSON.stringify`（`decks-io.ts:7`、`decks-client.ts:42`），unknown page 要有 serializer 才能原樣 round-trip（`parse-deck.test.ts:295`）。
 - **狀態**：[#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)。第一步 Strong，第二步 Worth exploring。
-  - 第一步已實作：`EDITORIAL_FRAME_MEMBERSHIP` 以 `PageMatchers` 為鍵，每個 `matchPage` 分支都必須表態；`EditorialFramePage` 聯集與 `isEditorialFramePage` 都由這張表派生，OR 鏈刪除。`tsconfig.test.json` 把 `tests/` 納入 `tsc -b`，`tsconfig.node.json` 補上 `vitest.config.ts` 與 `playwright.config.ts`；61 個錯誤已清除，測試改用 guard narrowing。
-  - 聯集已由表派生，`Record<EditorialFrameLayout, …>` 又進了 `tsc -b`，`editorial-frame-layouts.ts` 與 3 個 runtime guard 在第一步就刪除，不必等第二步。
-  - 第二步仍待處理：`UnknownPage` 仍與 layout literal 重疊；`matchPage` 自己的 if 鏈仍不受窮舉檢查（新增 `PageMatchers` key 而漏寫分支會落到 `unknown`）；`isStructuredPage` 仍是 `isCoverPage || isEditorialFramePage`，非 Frame、非 Cover 的新 Structured Layout 不會被要求表態。
+  - 第一步已實作：`EDITORIAL_FRAME_MEMBERSHIP` 以 `PageMatchers` 為鍵，每個 `matchPage` 分支都必須表態，且每格只收字面值 `true`／`false`（回傳 `boolean` 的條件式會讓型別與執行期分歧）；`EditorialFramePage` 聯集與 `isEditorialFramePage` 都由這張表派生，OR 鏈刪除。`tsconfig.test.json` 把 `tests/` 納入 `tsc -b`，`tsconfig.node.json` 補上 `vitest.config.ts` 與 `playwright.config.ts`；61 個錯誤已清除，測試改用 guard narrowing。
+  - `editorial-frame-layouts.ts` 與 3 個 runtime guard 在第一步就刪除：聯集已由表派生，`Record<EditorialFrameLayout, …>` 也進了 `tsc -b`。它們原本還順帶擋下一種型別擋不到的情況：`PageMatchers` 新增 key 卻漏寫 `matchPage` 分支，頁面落到 `unknown`、被判成非成員。這部分改由 `tests/unit/match-page.test.ts` 直接檢查：樣本表以 `PageKind` 為 key，執行期確認每個分支都收到自己的頁面。
+  - 第二步仍待處理：`UnknownPage` 仍與 layout literal 重疊；`matchPage` 自己的 if 鏈仍不受編譯器窮舉檢查（漏寫分支目前由 `match-page.test.ts` 在執行期擋下）；新增 layout 若只加進 `Page` 與 `PAGE_PARSERS`、沒加進 `PageByKind`，仍不會被要求表態；`isStructuredPage` 仍是 `isCoverPage || isEditorialFramePage`，非 Frame、非 Cover 的新 Structured Layout 不會被要求表態。
 - **2026-11-22 補遺**：
   - 型別檢查連 `tests/e2e` 一起跑（關閉 `noUnusedLocals`／`noUnusedParameters`）：22 個檔案共 61 個錯誤，與上方 `tests/unit` 的 60 個一致，多出的是 e2e（例如 `tests/e2e/trend-target.spec.ts:135` 的 `getScreenCTM`）。
-  - 六則測試註解宣稱「漏列時型別檢查會失敗」，實際不會：`deck-template.test.ts:25`、`editorial-frame-chrome.test.tsx:16`、`editorial-eyebrow-editor.test.tsx:19`、`demo-deck-set.test.ts:33,40`、`e2e/deck-theme.spec.ts:114`。
+  - 六則測試註解宣稱「漏列時型別檢查會失敗」，實際不會：`deck-template.test.ts:25`、`editorial-frame-chrome.test.tsx:16`、`editorial-eyebrow-editor.test.tsx:19`、`demo-deck-set.test.ts:33,40`、`e2e/deck-theme.spec.ts:114`。（第一步之後成立：`tsc -b` 已涵蓋 `tests/`。）
   - 沒有任何 runtime guard 的表：`EVERY_LAYOUT: Record<SlideLayout, …>`（`demo-deck-set.test.ts:41`），新的 Structured Layout 不會被要求出現在 Demo Deck Set；`cover-closing.test.ts:39-48` 另有一份手寫的 Editorial Frame 版型清單。
 
 ### 14. 一個 Editorial Frame chrome module
