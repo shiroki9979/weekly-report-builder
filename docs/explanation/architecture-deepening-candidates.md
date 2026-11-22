@@ -12,6 +12,8 @@
 > **第二次審查（2026-11-09）**：審查 `dev @ de71911`。候選 1、2、4 已完成；本次範圍是 2026-10 之後新增的四個 Structured Layout（Cover、Closing、Side-by-side Comparison、Full-width Panel）、Deck Theme（[ADR-0002](../adr/0002-deck-theme.md)），以及六週熱點（`deck.ts` 13 次、`use-editing-session.ts` 9 次、`trend-target.test.tsx` 10 次）。結果：候選 3、6 的證據已到齊並升為 Strong，候選 5 的伺服端殘餘原地未動，另新增候選 7～11。各候選下方標「2026-11-09 更新」的段落是本次的快照。
 >
 > **第三次審查（2026-11-22）**：審查 `dev @ 2b34d68`，範圍是 2026-11-09 之後的 44 個 commit：Eyebrow 成為共用 Editorial Frame chrome（#74～#79）、Two-column 納入 Editorial Frame（#67、#70、#71）、HTML Page 頁尾（#68）、`ledger` Deck Theme 與 `--mono` 角色（#66、#69）。結果：候選 3～11 都未實作，其中 3、6、7 問題持平，5、8、9、10 未動，11 的觸發條件已成立；另新增候選 12～16，各開一張 issue（#82～#86，issue 內文稱 C1～C5）。各候選下方標「2026-11-22 更新」的段落是本次的快照。
+>
+> **第三次審查補遺（2026-11-22）**：同日另一份平行審查的獨有證據併入候選 13～16 與〈其他發現〉，標「2026-11-22 補遺」；那份審查開的 #89～#94 已以 duplicate 關閉，併入 #82～#86。
 
 用語：module、interface、implementation、seam、adapter、depth、leverage、locality 沿用 agent 的 `codebase-design` 詞彙。**Deep** module 是小 interface 後面藏大量行為；**shallow** module 的 interface 幾乎和 implementation 一樣複雜。領域名詞依 [GLOSSARY.md](../../GLOSSARY.md)。
 
@@ -231,6 +233,10 @@
 - **收益**：leverage 最大的 layout 事實受編譯器檢查；測試能依 `layout` narrowing；Record 檢查從 IDE 進入 CI；6 的「登錄表派生聯集」先落地。
 - **代價**：第二步需要處理存檔：目前直接 `JSON.stringify`（`decks-io.ts:7`、`decks-client.ts:42`），unknown page 要有 serializer 才能原樣 round-trip（`parse-deck.test.ts:295`）。
 - **狀態**：[#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)（needs-triage）。第一步 Strong，第二步 Worth exploring。
+- **2026-11-22 補遺**：
+  - 型別檢查連 `tests/e2e` 一起跑（關閉 `noUnusedLocals`／`noUnusedParameters`）：22 個檔案共 61 個錯誤，與上方 `tests/unit` 的 60 個一致，多出的是 e2e（例如 `tests/e2e/trend-target.spec.ts:135` 的 `getScreenCTM`）。
+  - 六則測試註解宣稱「漏列時型別檢查會失敗」，實際不會：`deck-template.test.ts:25`、`editorial-frame-chrome.test.tsx:16`、`editorial-eyebrow-editor.test.tsx:19`、`demo-deck-set.test.ts:33,40`、`e2e/deck-theme.spec.ts:114`。
+  - 沒有任何 runtime guard 的表：`EVERY_LAYOUT: Record<SlideLayout, …>`（`demo-deck-set.test.ts:41`），新的 Structured Layout 不會被要求出現在 Demo Deck Set；`cover-closing.test.ts:39-48` 另有一份手寫的 Editorial Frame 版型清單。
 
 ### 14. 一個 Editorial Frame chrome module
 
@@ -247,6 +253,11 @@
 - **收益**：locality，新增 chrome 欄位只改一處；chrome 的 template 與 readiness 規則只測一次；6 的每 layout module 變小。
 - **既有決定**：與 6 互補：chrome 歸 Editorial Frame，本文歸各 layout。
 - **狀態**：[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)（needs-triage）。待決：Cover 的 title 是否歸這個 module（Cover 不在 Editorial Frame，但 headline 規則相同）。
+- **2026-11-22 補遺**：
+  - Deck Template 分歧已實測：在頁面加一個未列名的 chrome key 後套 `createDeckFromTemplate`，closing、side-by-side、full-width-panel、trend-target 保留它，two-column、overview、evidence-decision、next-actions 丟掉它。
+  - 存檔欄位順序漂移已實測：parse → `setPageEyebrow` → save 寫出 `…, notes, eyebrow`；再 parse → save 寫出 `title, eyebrow, …`。沒有編輯的第二次存檔產生 diff，正是 `dfb96dd` 修過的行為。
+  - 同一條空白規則在本文欄位造成可見缺陷（jsdom 渲染驗證）：只有空白的 `closingLine` 畫出有上框線、沒有文字的 `.editorial-closing-line`（`deck.ts:1387` 註解替 Boundary Note 擋下的同一種缺陷）；只有空白的 `byline` 畫出「Presented by」標籤；只有空白的 tradeoff `cost` 畫出沒有內容的「Cost」。Export Readiness 不檢查這些選填欄位，所以會進 PNG（PNG 一步為靜態推論）。根源是缺席有兩種表示：`readOptionalString`（`deck.ts:626-629`）保留空白並以 `""` 表示缺席，chrome 用 `undefined`。本文欄位不屬於 chrome，可留給 6 或另開。
+  - 同一類修正已有三次：`dfb96dd`、`e03d9f8`（11-08）、`d4e4a23`（11-21）。
 
 ### 15. Overflow 保護成為 Editorial Frame 預設
 
@@ -259,6 +270,10 @@
   - 第 576 行已對所有帶 Boundary Note 的頁面套用這條規則；demo 的 Overview、Evidence-backed Decision、Next Actions 頁帶 Boundary Note，已經在跑。Trend & Target（以 `ResizeObserver` 量 plot box）尚未驗證。
 - **收益**：不成文契約寫進預設；CSS 清單與 e2e 副本刪除。
 - **狀態**：[#85](https://github.com/shiroki9979/weekly-report-builder/issues/85)（needs-triage）。依賴類別 local-substitutable（Playwright fixture）。
+- **2026-11-22 補遺**：預設 `min-content` 只擋「本文蓋住頁尾」（`588c2c2` 那一類），還有另一類沒擋。
+  - `f875fbe`（11-20）：四個 demo 頁把 Boundary Note 與頁尾推進底部保留帶 2～26 px，Export Readiness 仍回報 fit。內容仍在 1280 × 720 內，而 `overflow-measurement.ts:70-102` 只比對 capture root 的邊界。修法是縮短 demo 文案，並加一個只檢查 Demo Deck Set 的 e2e；[PR #72](https://github.com/shiroki9979/weekly-report-builder/pull/72) 的合併風險與 `demo-deck-set.spec.ts:159-160` 的註解都寫明作者的 Deck 仍沒有把關。
+  - 保留帶的用途是讓 PNG 貼進團隊簡報範本時不壓到範本頁尾（`editorial-layouts.css:3`）；`demo-deck-set.spec.ts:208` 以 `720 - 64` 重寫 `--editorial-frame-padding`；HTML Page 的頁尾 overlay 需要同樣留白，但 HTML Page 不量測。
+  - 做法補充：範圍可擴大為「Editorial Frame 擁有放得進外框的規則」，量測比對外框基準線而不只是 capture root（經 export gate 既有的 measure adapter，單元測試可餵 fake 量測）。這會改變 GLOSSARY 的 Overflowing Page（現為「超出 1280 × 720 capture Stage」）；HTML Page 是否量測頁尾屬 export gate 政策，待決。
 
 ### 16. Frame chrome 字型成為 Deck Theme 角色
 
@@ -268,6 +283,12 @@
 - **收益**：`ledger` 成為 token-only；新增 chrome 欄位不必碰主題檔；下一個 Deck Theme 只寫 token。
 - **既有決定**：ADR-0002 規定 token 角色「只能新增」，新增角色依其修訂規則原地修訂即可；`--mono`（#69）是前例，不衝突。
 - **狀態**：[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)（needs-triage）。待決：`default` 主題的角色值要沿用內文字型，確認不改變現有外觀；角色只管字型，或一併涵蓋 chrome 的字級與字距。
+- **2026-11-22 補遺**：
+  - 兩份主題清單其實已經不同：observatory 的第二條規則（`observatory-theme.css:94-96`）另含 `.editorial-takeaway-ref` 與 `.editorial-closing-line`，ledger 沒有。e2e 的 furniture 清單（`deck-theme.spec.ts:386-394`，另含 `.editorial-deck-title`、`.editorial-page-label`）是第三份，`deck-json-format.md:43` 的文字描述是第四份。
+  - `cover-closing`、`side-by-side`、`full-width-panel` 三個 e2e 寫死 `["default", "observatory"]` 並以 `theme === "observatory"` 分支，從不在 ledger 下跑；ledger 的等寬字會改變文字寬度，影響這些 spec 檢查的 fit。
+  - `stage-frame.tsx:5-9` 手動 import 主題樣式表，`deck.ts:307` 的註解卻說新增主題時型別檢查會提示補樣式表。
+  - ADR-0002:54 說 `editorial-footer-overlap.spec` 以 `Record<DeckTheme, …>` 宣告預期值，實際沒有；`Record<DeckTheme, …>` 只出現在 `deck-theme.spec.ts` 與 `demo-deck-set.test.ts`。
+  - 〈其他發現〉的 `describe.each(DECK_THEMES)` 一條已驗證：預設主題下的 DOM 同樣含 observatory 的標記（Closing 的 eyebrow 文字為 `§ 01 Closing`，頁尾文字為 `Deck1 / 101 / 01`），測試以 `eyebrowText()`（`editorial-frame-chrome.test.tsx:171-190`）與 `stage-slide.test.tsx:384` 的 regex 濾掉。
 
 ## 已完成候選
 
@@ -342,7 +363,7 @@ Copy 與 batch export 共用同一條單頁流程。
 
 deletion test 判定以下 module earns its keep，之後的審查不必再提：
 
-- `matchPage`（`deck.ts`）：matcher 物件型別讓 5 個呼叫端在新增 layout 時編譯失敗；刪掉就失去窮舉保護。（2026-11-09：呼叫端已有 7 個，全部 exhaustive。）
+- `matchPage`（`deck.ts`）：matcher 物件型別讓 5 個呼叫端在新增 layout 時編譯失敗；刪掉就失去窮舉保護。（2026-11-09：呼叫端已有 7 個，全部 exhaustive。）（2026-11-22 補遺：`c93c83f` 後剩 5 個；2026-11-09 記的 7 個在 `de71911` 時實為 6 個。）
 - `typedPageUpdater`（`update-deck-page.ts`）：取代 4 個 editor module 各自的型別檢查與錯誤訊息。
 - `CARDINALITY` 與 `canAddEntry`、`canRemoveEntry`、`assert*`：parser、reducer、表單按鈕與錯誤訊息的單複數共用同一份數量規則。
 - `deck-id.ts`：Deck ID 格式由 dev server 路由、`decks-io.ts`、`decks-store.ts`、`html-page.ts` 共用；週一日期規則另由 `calendar-date.ts` 供週報流程與 Trend & Target 使用。
@@ -389,7 +410,11 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
   - `speaker-notes-cue.tsx` 保留 controlled／uncontrolled 雙模式（37-38），只有一個呼叫端。
   - 每個新 layout 的 e2e spec 376～577 行，是單一 layout 最大的成本；`5ce4adf` 已把四份各約 41 行的 capture 檢查抽到 `tests/e2e/stage-capture.ts`。
 - 2026-11-22 新增：
-  - `editorial-frame-chrome.test.tsx` 以 `describe.each(DECK_THEMES)` 把同一組 DOM 斷言跑 3 次；jsdom 不套 CSS，markup 也不依主題分支（靜態推論）。
+  - `editorial-frame-chrome.test.tsx` 以 `describe.each(DECK_THEMES)` 把同一組 DOM 斷言跑 3 次；jsdom 不套 CSS，markup 也不依主題分支（2026-11-22 補遺：已在 jsdom 驗證，見 16）。
+  - `stage-page-context.ts:60` 說補零規則只定一次，但 `table-panel.tsx:48`、`side-by-side-slide.tsx:35`、`next-actions-slide.tsx:13` 各自補零（補遺；相關 #87）。
+  - `documentId` 的範圍比 2026-11-09 記錄的更廣：還有 `StagePageContext.documentId`（`stage-page-context.ts:15`）與 `html-slide.tsx:9`（補遺）。
+  - `tsconfig.node.json` 也不涵蓋 `vitest.config.ts` 與 `playwright.config.ts`（補遺）。
+  - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。
 
 ## 相關文件
 
