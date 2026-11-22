@@ -747,7 +747,8 @@
   overflow-wrap: anywhere;
 }
 
-.editorial-comparison-index {
+/* 補零索引是跨版型共用的角色，預設不顯示；只有主題樣式表決定是否帶入 */
+.editorial-item-index {
   display: none;
 }
 

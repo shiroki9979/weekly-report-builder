@@ -28,10 +28,7 @@ export function SideBySideSlide({ page, context }: Props) {
               <ol className="editorial-comparison-points">
                 {column.points.map((point, pointIndex) => (
                   <li key={pointIndex}>
-                    <span
-                      className="editorial-comparison-index"
-                      aria-hidden="true"
-                    >
+                    <span className="editorial-item-index" aria-hidden="true">
                       {String(pointIndex + 1).padStart(2, "0")}
                     </span>
                     <span>{point}</span>

@@ -152,7 +152,8 @@
   gap: 0.78125cqw;
 }
 
-.stage-root[data-theme="observatory"] .editorial-comparison-index {
+/* 共用 item index 的外觀只在這裡定義一次，各版型只負責留出索引欄 */
+.stage-root[data-theme="observatory"] .editorial-item-index {
   display: block;
   padding-top: 0.46875cqw;
   color: var(--mute);

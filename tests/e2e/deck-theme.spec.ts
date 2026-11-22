@@ -14,6 +14,7 @@ import {
   isEvidenceDecisionPage,
   isNextActionsPage,
   isTrendTargetPage,
+  isSideBySidePage,
   periodLabel,
   type Deck,
   type Page,
@@ -123,6 +124,8 @@ type ThemeExpectation = {
   hostsIbmPlexMono: boolean
   // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono
   monoFrame: boolean
+  // 跨版型共用的 item index（補零等寬索引）是否顯示；ledger 刻意不帶入補零編號
+  itemIndex: boolean
 }
 
 const DEFAULT_LEGEND = [
@@ -140,6 +143,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: false,
     hostsIbmPlexMono: false,
     monoFrame: false,
+    itemIndex: false,
   },
   observatory: {
     paddedPageNumbers: true,
@@ -149,6 +153,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: true,
     hostsIbmPlexMono: true,
     monoFrame: true,
+    itemIndex: true,
   },
   // ledger 沿用 default 的色彩與構圖，只換 --line、--accent-wash 與外框等寬字
   ledger: {
@@ -159,6 +164,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     embedsInstrumentSans: false,
     hostsIbmPlexMono: true,
     monoFrame: true,
+    itemIndex: false,
   },
 }
 
@@ -361,6 +367,55 @@ for (const theme of DECK_THEMES) {
       instrumentSans: expected.embedsInstrumentSans,
       ibmPlexMono: expected.hostsIbmPlexMono && expected.monoFrame,
     })
+  })
+
+  test(`shows the shared item index on Side-by-side points only where ${theme} enables it`, async ({
+    page,
+    request,
+  }) => {
+    expect(
+      (
+        await request.put("/api/decks/item-index", {
+          data: { ...demo, theme, pages: [demoPage(isSideBySidePage)] },
+        })
+      ).ok()
+    ).toBe(true)
+    await page.goto("/?deck=item-index")
+    const stage = page.getByTestId("stage-frame")
+    await expect(stage).toHaveAttribute("data-theme", theme)
+    const index = stage
+      .locator(".editorial-comparison-points li > .editorial-item-index")
+      .first()
+    await expect(index).toHaveText("01")
+    await expect(index).toHaveAttribute("aria-hidden", "true")
+    if (!expected.itemIndex) {
+      await expect(index).toBeHidden()
+      return
+    }
+    await expect(index).toBeVisible()
+    // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+    await expect
+      .poll(() =>
+        index.evaluate((element) => {
+          const root = element.closest(".stage-root")!
+          const normalize = (value: string) =>
+            value.replace(/["'\s]/g, "").toLowerCase()
+          // 以探針元素解析 var(--mute)，避免 hex 與 rgb 寫法不同而誤判
+          const probe = document.createElement("span")
+          probe.style.color = "var(--mute)"
+          root.append(probe)
+          const mute = getComputedStyle(probe).color
+          probe.remove()
+          const style = getComputedStyle(element)
+          return {
+            mono:
+              normalize(style.fontFamily) ===
+              normalize(getComputedStyle(root).getPropertyValue("--mono")),
+            mute: style.color === mute,
+          }
+        })
+      )
+      .toEqual({ mono: true, mute: true })
   })
 
   test(`sets only the Editorial Frame furniture in --mono under ${theme}`, async ({
