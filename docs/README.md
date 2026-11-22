@@ -3,7 +3,7 @@
 本專案技術文件依 [Diátaxis](https://diataxis.fr/) 分為四象限，各象限僅服務單一閱讀目的，彼此以連結交叉引用，避免混雜教學、操作、規格與架構論述。
 
 建立日期：2026-08-31  
-最後更新：2026-11-21
+最後更新：2026-11-22
 
 ## Tutorials（入門教學）
 
@@ -48,7 +48,7 @@
 | [Layout 家族原型](explanation/layout-prototype.md)                    | 歷史 800 × 450 驗證與 production adoption 指標                            |
 | [Slide 設計研究](explanation/slide-design-research.md)                | 口頭報告與自行閱讀的設計原則、來源與 layout 評估依據                      |
 | [Trend / Rows 原型決策](explanation/trend-target-layout-prototype.md) | 四視圖 A/D 決策、封存來源與生產驗證紀錄                                   |
-| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 2026-09-27 審查找出的 module 加深候選與證據                               |
+| [架構加深候選](explanation/architecture-deepening-candidates.md)      | 歷次審查（2026-09-27 起）的 module 加深候選、證據與追蹤 issue             |
 | [Stage 設計哲學](explanation/stage-design-philosophy.md)              | Editorial Observatory：Deck Theme、layout 與 Stage Element 的上游美學依據 |
 | [Stage 主題原型](explanation/stage-theme-prototype.md)                | 三變體驗證與採用 Observatory 的決定                                       |
 
