@@ -1,7 +1,7 @@
 # ADR-0002：Deck Theme 為固定清單，token 角色名稱是跨主題契約
 
 建立日期：2026-11-07  
-修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)；Two-column 納入 Editorial Frame，[#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)）；2026-11-21（已退役的規格連結改指 reference 與 issue）  
+修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)；Two-column 納入 Editorial Frame，[#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)）；2026-11-21（已退役的規格連結改指 reference 與 issue）；2026-11-22（定義「構圖」與主題對 Stage Element 的處理，[#73](https://github.com/shiroki9979/weekly-report-builder/issues/73)）  
 狀態：Accepted
 
 ## 背景
@@ -44,6 +44,7 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target 在 `observatory` 下只改讀主題 token 與 Editorial Frame 的外框處理；構圖不動。想改構圖另開 Layout Variant。
 
 - 2026-11-20 修訂：Two-column 在所有主題下都納入 Editorial Frame（Frame Label、headline、Boundary Note、頁尾），見 [#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)。這屬於外框處理，不是構圖變更：項目欄與 panel 的格線、項目樣式與 panel 都不動，因此不需要 Layout Variant。
+- 2026-11-22 修訂：「構圖」指 Stage body 內區塊的格線、位置、數量與順序，例如 Two-column 的項目欄與 panel 欄。主題對 Stage Element 本身的處理（標記、字型、字級、色彩角色）由主題樣式表負責，不算重排，也不需要 Layout Variant；`observatory` 的 Lead Outcome 細線框就是先例。依此，`observatory` 下 Two-column 項目的圓點換成與 Side-by-side point 相同的補零等寬索引，項目標題改用 `--ink`；`default` 保持 PPT 相容的圓點，`ledger` 依其「沿用 `default` 構圖、不帶入補零編號」的前提不動。索引只是視覺處理，不表示項目有順序。見 [#73](https://github.com/shiroki9979/weekly-report-builder/issues/73)。
 
 ## 後果
 
