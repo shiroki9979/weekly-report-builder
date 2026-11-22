@@ -223,7 +223,7 @@ describe("useStageExport", () => {
     }
     render(<ExportTestComponent week={week} exportRef={exportRef} />)
 
-    let downloadPromise: Promise<void> | undefined
+    let downloadPromise: Promise<unknown> | undefined
     act(() => {
       downloadPromise = exportRef.current?.downloadVisiblePages()
     })

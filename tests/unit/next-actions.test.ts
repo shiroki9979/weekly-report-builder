@@ -10,16 +10,16 @@ import {
 } from "@/lib/next-actions-editor"
 import { createBlankNextActionsPage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
-import { parseDeck } from "@/lib/deck"
+import { isNextActionsPage, parseDeck } from "@/lib/deck"
 import type { NextActionsPage, Deck } from "@/lib/deck"
 
 function weekWith(page: NextActionsPage): Deck {
-  return { start: "2026-08-24", end: "2026-08-28", pages: [page] }
+  return { period: { start: "2026-08-24", end: "2026-08-28" }, pages: [page] }
 }
 
 function actions(week: Deck): NextActionsPage {
   const page = week.pages[0]
-  if (page.layout !== "next-actions") {
+  if (!isNextActionsPage(page)) {
     throw new Error("expected next-actions")
   }
   return page
@@ -219,7 +219,7 @@ describe("next-actions clone and readiness", () => {
     })
     const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
-    if (page.layout !== "next-actions") {
+    if (!isNextActionsPage(page)) {
       throw new Error("expected next-actions")
     }
     expect(page.title).toBe("")

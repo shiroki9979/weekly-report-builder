@@ -6,7 +6,7 @@ import {
   removeTableColumn,
   removeTableRow,
 } from "@/lib/deck-editor"
-import { parseDeck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck } from "@/lib/deck"
 
 function tableWeek() {
   return parseDeck({
@@ -33,11 +33,11 @@ function tableWeek() {
 }
 
 function tablePanel(week: ReturnType<typeof tableWeek>) {
-  const panel = week.pages[0].panel
-  if (panel.kind !== "table") {
+  const page = week.pages[0]
+  if (!isTwoColumnPage(page) || page.panel.kind !== "table") {
     throw new Error("expected table panel")
   }
-  return panel
+  return page.panel
 }
 
 describe("table row and column mutations", () => {

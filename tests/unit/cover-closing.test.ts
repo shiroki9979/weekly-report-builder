@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { parseDeck, isStructuredPage, type Page } from "@/lib/deck"
+import {
+  parseDeck,
+  isClosingPage,
+  isStructuredPage,
+  type Page,
+} from "@/lib/deck"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -291,7 +296,9 @@ describe("Cover and Closing contracts", () => {
       takeaways: [],
       closingLine: "ops@example.test",
     })
-    expect(template.pages[1].boundary).toBeUndefined()
+    const closing = template.pages[1]
+    if (!isClosingPage(closing)) throw new Error("expected closing page")
+    expect(closing.boundary).toBeUndefined()
     expect(template.pages.every((page) => page.notes === undefined)).toBe(true)
   })
 
@@ -307,6 +314,10 @@ describe("Cover and Closing contracts", () => {
       ),
     })
 
-    expect(reused.pages.every((page) => page.boundary === undefined)).toBe(true)
+    expect(
+      reused.pages.every(
+        (page) => !("boundary" in page) || page.boundary === undefined
+      )
+    ).toBe(true)
   })
 })

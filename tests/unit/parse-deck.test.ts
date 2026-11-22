@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { parseDeck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck } from "@/lib/deck"
 import { serializeDeck } from "@/lib/decks-io"
 
 const twoColumnFixturePath = resolve(
@@ -176,6 +176,9 @@ describe("parseDeck", () => {
 
     const page = week.pages[0]
     expect(page.layout).toBe("two-column")
+    if (!isTwoColumnPage(page)) {
+      throw new Error("expected two-column page")
+    }
     expect(page.title).toBe("Eval Gate")
     expect(page.items).toHaveLength(3)
     expect(page.items[0].heading).toBe("Metrics follow the task")

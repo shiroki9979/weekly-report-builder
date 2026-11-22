@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { copyImageToClipboard } from "@/lib/clipboard-image"
+import {
+  copyImageToClipboard,
+  type ClipboardImageWriter,
+} from "@/lib/clipboard-image"
 
 describe("copyImageToClipboard", () => {
   const createItem = (blob: Blob) =>
@@ -10,7 +13,7 @@ describe("copyImageToClipboard", () => {
     }) as unknown as ClipboardItem
 
   it("writes a PNG blob through the clipboard seam", async () => {
-    const write = vi.fn(async () => undefined)
+    const write = vi.fn<ClipboardImageWriter["write"]>(async () => undefined)
     const blob = new Blob(["png"], { type: "image/png" })
 
     await copyImageToClipboard(blob, { write }, createItem)

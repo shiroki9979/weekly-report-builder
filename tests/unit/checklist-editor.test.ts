@@ -9,7 +9,7 @@ import {
   setChecklistItemLabel,
   setChecklistPanelTitle,
 } from "@/lib/deck-editor"
-import { parseDeck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck } from "@/lib/deck"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -21,11 +21,11 @@ function loadChecklistWeek() {
 }
 
 function checklistPanel(week: ReturnType<typeof loadChecklistWeek>) {
-  const panel = week.pages[0].panel
-  if (panel.kind !== "checklist") {
+  const page = week.pages[0]
+  if (!isTwoColumnPage(page) || page.panel.kind !== "checklist") {
     throw new Error("expected checklist panel")
   }
-  return panel
+  return page.panel
 }
 
 describe("checklist week-editor", () => {

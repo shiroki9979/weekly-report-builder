@@ -23,7 +23,7 @@ import {
   setDecisionMetricFormat,
   setDecisionMetricLabel,
 } from "@/lib/evidence-decision-editor"
-import type { Deck } from "@/lib/deck"
+import { isEvidenceDecisionPage, type Deck } from "@/lib/deck"
 
 function week(ids: string[]): Deck {
   return {
@@ -276,7 +276,7 @@ describe("Editing Session", () => {
       editSessionContent(session, (current) => ({
         ...current,
         pages: current.pages.map((page) =>
-          page.layout === "evidence-decision"
+          isEvidenceDecisionPage(page)
             ? { ...page, metrics: page.metrics.slice(1) }
             : page
         ),
@@ -288,8 +288,7 @@ describe("Editing Session", () => {
   it("rejects cloned metric swaps so Metric Input stays with its metric", () => {
     const document = week(["p01"])
     const page = document.pages[0]
-    if (page.layout !== "evidence-decision")
-      throw new Error("Unexpected layout")
+    if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
     page.metrics[0].label = "First"
     page.metrics[1].label = "Second"
     let session = createEditingSession(document, "2026-08-24")
@@ -304,7 +303,7 @@ describe("Editing Session", () => {
       editSessionContent(session, (current) => ({
         ...current,
         pages: current.pages.map((page) =>
-          page.layout === "evidence-decision"
+          isEvidenceDecisionPage(page)
             ? {
                 ...page,
                 metrics: [{ ...page.metrics[1] }, { ...page.metrics[0] }],
@@ -326,8 +325,7 @@ describe("Editing Session", () => {
   it("rejects a prepended metric so existing Metric Input keeps its owner", () => {
     const document = week(["p01"])
     const page = document.pages[0]
-    if (page.layout !== "evidence-decision")
-      throw new Error("Unexpected layout")
+    if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
     page.metrics = [{ ...page.metrics[0], label: "Original" }]
     let session = createEditingSession(document, "2026-08-24")
     session = writeMetricInput(
@@ -341,8 +339,7 @@ describe("Editing Session", () => {
       editSessionContent(session, (current) => {
         const next = structuredClone(current)
         const page = next.pages[0]
-        if (page.layout !== "evidence-decision")
-          throw new Error("Unexpected layout")
+        if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
         page.metrics.unshift(blankMetric())
         return next
       })
@@ -360,8 +357,7 @@ describe("Editing Session", () => {
   it("rejects an in-place metric insertion without changing the open week", () => {
     const document = week(["p01"])
     const page = document.pages[0]
-    if (page.layout !== "evidence-decision")
-      throw new Error("Unexpected layout")
+    if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
     page.metrics = [page.metrics[0]]
     let session = createEditingSession(document, "2026-08-24")
     session = writeMetricInput(
@@ -374,8 +370,7 @@ describe("Editing Session", () => {
     expect(() =>
       editSessionContent(session, (current) => {
         const page = current.pages[0]
-        if (page.layout !== "evidence-decision")
-          throw new Error("Unexpected layout")
+        if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
         page.metrics.unshift(blankMetric())
         return current
       })
@@ -395,8 +390,7 @@ describe("Editing Session", () => {
   it("appends a metric without changing existing Metric Input", () => {
     const document = week(["p01"])
     const page = document.pages[0]
-    if (page.layout !== "evidence-decision")
-      throw new Error("Unexpected layout")
+    if (!isEvidenceDecisionPage(page)) throw new Error("Unexpected layout")
     page.metrics = page.metrics.slice(0, 1)
     let session = createEditingSession(document, "2026-08-24")
     session = editSessionContent(session, (current) =>

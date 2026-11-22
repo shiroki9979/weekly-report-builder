@@ -9,6 +9,8 @@ import { trendEndDate } from "@/lib/trend-target"
 
 import {
   DECK_THEMES,
+  isClosingPage,
+  isEditorialFramePage,
   isFullWidthPanelPage,
   isHtmlPage,
   isNextActionsPage,
@@ -158,7 +160,7 @@ describe("Demo Deck Set", () => {
   it("authors an Eyebrow only on its Two-column and Closing pages", () => {
     for (const { id, deck } of demoDecks) {
       const authored = deck.pages.flatMap((page) =>
-        "eyebrow" in page && page.eyebrow?.trim() ? [page.layout] : []
+        isEditorialFramePage(page) && page.eyebrow?.trim() ? [page.layout] : []
       )
 
       expect({ id, authored: authored.sort() }).toEqual({
@@ -171,7 +173,7 @@ describe("Demo Deck Set", () => {
   it("keeps the existing Closing Eyebrow overrides", () => {
     const closingEyebrows = demoDecks.map(({ id, deck }) => ({
       id,
-      eyebrow: deck.pages.find((page) => page.layout === "closing")?.eyebrow,
+      eyebrow: deck.pages.find(isClosingPage)?.eyebrow,
     }))
 
     expect(closingEyebrows).toEqual([

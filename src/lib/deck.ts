@@ -382,29 +382,39 @@ export function isFullWidthPanelPage(page: Page): page is FullWidthPanelPage {
   return page.layout === "full-width-panel" && "panel" in page
 }
 
-export type EditorialFramePage =
-  | TwoColumnPage
-  | OverviewPage
-  | EvidenceDecisionPage
-  | NextActionsPage
-  | TrendTargetPage
-  | ClosingPage
-  | SideBySidePage
-  | FullWidthPanelPage
+// 每格只收字面值 true／false：回傳 boolean 的條件式會讓該版型從聯集消失，執行期卻仍可能判定為成員
+type MembershipEntry<P> = ((page: P) => true) | ((page: P) => false)
+
+// 經 matchPage 分派，每個版型都必須在這裡表態是否在 Editorial Frame 內：新增版型漏列時編譯失敗。
+// 聯集型別與執行期判斷都由這張表派生，parse／template chrome、Page Position 與 Export Readiness 不會各自漂移
+const EDITORIAL_FRAME_MEMBERSHIP = {
+  html: () => false,
+  twoColumn: () => true,
+  overview: () => true,
+  evidenceDecision: () => true,
+  nextActions: () => true,
+  trendTarget: () => true,
+  cover: () => false,
+  closing: () => true,
+  sideBySide: () => true,
+  fullWidthPanel: () => true,
+  unknown: () => false,
+} satisfies { [K in PageKind]: MembershipEntry<PageByKind[K]> }
+
+type EditorialFrameKind = {
+  [K in PageKind]: ReturnType<
+    (typeof EDITORIAL_FRAME_MEMBERSHIP)[K]
+  > extends true
+    ? K
+    : never
+}[PageKind]
+
+export type EditorialFramePage = PageByKind[EditorialFrameKind]
 
 export type EditorialFrameLayout = EditorialFramePage["layout"]
 
 export function isEditorialFramePage(page: Page): page is EditorialFramePage {
-  return (
-    isTwoColumnPage(page) ||
-    isOverviewPage(page) ||
-    isEvidenceDecisionPage(page) ||
-    isNextActionsPage(page) ||
-    isTrendTargetPage(page) ||
-    isClosingPage(page) ||
-    isSideBySidePage(page) ||
-    isFullWidthPanelPage(page)
-  )
+  return matchPage(page, EDITORIAL_FRAME_MEMBERSHIP)
 }
 
 export function isStructuredPage(page: Page): page is StructuredPage {
@@ -435,19 +445,24 @@ export function isSupportedStagePage(page: Page): boolean {
   })
 }
 
-type PageMatchers<T> = {
-  html: (page: HtmlPage) => T
-  twoColumn: (page: TwoColumnPage) => T
-  overview: (page: OverviewPage) => T
-  evidenceDecision: (page: EvidenceDecisionPage) => T
-  nextActions: (page: NextActionsPage) => T
-  trendTarget: (page: TrendTargetPage) => T
-  cover: (page: CoverPage) => T
-  closing: (page: ClosingPage) => T
-  sideBySide: (page: SideBySidePage) => T
-  fullWidthPanel: (page: FullWidthPanelPage) => T
-  unknown: (page: Page) => T
+// matchPage 每個分支收到的頁面；PageMatchers 與 Editorial Frame 成員表共用這組 key
+type PageByKind = {
+  html: HtmlPage
+  twoColumn: TwoColumnPage
+  overview: OverviewPage
+  evidenceDecision: EvidenceDecisionPage
+  nextActions: NextActionsPage
+  trendTarget: TrendTargetPage
+  cover: CoverPage
+  closing: ClosingPage
+  sideBySide: SideBySidePage
+  fullWidthPanel: FullWidthPanelPage
+  unknown: Page
 }
+
+export type PageKind = keyof PageByKind
+
+type PageMatchers<T> = { [K in PageKind]: (page: PageByKind[K]) => T }
 
 // 已解析頁面的 layout 分支只在這裡打開一次，preview／editor／clone／readiness 共用同一組 identity
 export function matchPage<T>(page: Page, matchers: PageMatchers<T>): T {

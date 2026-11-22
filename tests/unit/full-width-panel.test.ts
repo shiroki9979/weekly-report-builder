@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { isStructuredPage, parseDeck } from "@/lib/deck"
+import {
+  isFullWidthPanelPage,
+  isStructuredPage,
+  parseDeck,
+  type Deck,
+  type FullWidthPanelPage,
+} from "@/lib/deck"
 import {
   assessContentReadiness,
   assessExportEligibility,
@@ -7,6 +13,14 @@ import {
 import { createStagePageContext } from "@/lib/stage-page-context"
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
+
+function firstPanelPage(deck: Deck): FullWidthPanelPage {
+  const page = deck.pages[0]
+  if (!isFullWidthPanelPage(page)) {
+    throw new Error("expected full-width-panel page")
+  }
+  return page
+}
 
 const tablePage = {
   id: "checks",
@@ -22,16 +36,18 @@ const tablePage = {
 
 describe("Full-width Panel", () => {
   it("parses a supported editorial page and normalizes its panel", () => {
-    const page = parseDeck({
-      pages: [
-        {
-          ...tablePage,
-          boundary: "Fictional sample",
-          extra: true,
-          panel: { ...tablePage.panel, extra: true },
-        },
-      ],
-    }).pages[0]
+    const page = firstPanelPage(
+      parseDeck({
+        pages: [
+          {
+            ...tablePage,
+            boundary: "Fictional sample",
+            extra: true,
+            panel: { ...tablePage.panel, extra: true },
+          },
+        ],
+      })
+    )
 
     expect(isStructuredPage(page)).toBe(true)
     expect(page).toMatchObject({ ...tablePage, boundary: "Fictional sample" })
@@ -43,7 +59,7 @@ describe("Full-width Panel", () => {
     const withReference = (referenceColumn: unknown) => ({
       pages: [{ ...tablePage, panel: { ...tablePage.panel, referenceColumn } }],
     })
-    expect(parseDeck(withReference(2)).pages[0].panel).toMatchObject({
+    expect(firstPanelPage(parseDeck(withReference(2))).panel).toMatchObject({
       referenceColumn: 2,
     })
     for (const index of [-1, 3, 0.5, "2", null]) {
@@ -129,7 +145,7 @@ describe("Full-width Panel", () => {
         referenceColumn: 2,
       },
     })
-    expect(template.pages[0].boundary).toBeUndefined()
+    expect(firstPanelPage(template).boundary).toBeUndefined()
     expect(template.pages[0].notes).toBeUndefined()
     expect(parseDeck(template).pages[0].layout).toBe("full-width-panel")
   })

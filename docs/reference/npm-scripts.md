@@ -19,7 +19,7 @@
 | `pnpm lint:md:fix`  | `markdownlint-cli2 --fix` 自動修復可修正的 Markdown 規則違規                                                                                                                                          |
 | `pnpm format`       | Prettier 格式化程式碼、JSON、CSS、Markdown、YAML 與根目錄 HTML（`index.html`）                                                                                                                        |
 | `pnpm format:check` | 檢查 Prettier 格式，不修改檔案                                                                                                                                                                        |
-| `pnpm typecheck`    | `tsc --noEmit`                                                                                                                                                                                        |
+| `pnpm typecheck`    | `tsc -b --noEmit`：檢查 `src/`、`tests/`、`server/`、`scripts/` 與設定檔的型別                                                                                                                        |
 | `pnpm test`         | Vitest 單次執行                                                                                                                                                                                       |
 | `pnpm test:watch`   | Vitest watch 模式                                                                                                                                                                                     |
 | `pnpm test:e2e`     | Playwright；使用隔離的測試 decks 目錄（`DECKS_DIR`），不寫入 runtime `decks/`                                                                                                                         |

@@ -116,7 +116,7 @@ it("edits a full-width table and clears its reference when the selected column i
     "Verified"
   )
   await user.click(screen.getByRole("combobox", { name: "Reference column" }))
-  await user.click(screen.getByRole("option", { name: "Page", exact: true }))
+  await user.click(screen.getByRole("option", { name: "Page" }))
   expect(
     screen.getByRole("combobox", { name: "Reference column" })
   ).toHaveTextContent("Page")

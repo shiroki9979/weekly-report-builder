@@ -9,7 +9,7 @@ import {
   setFlowStepCaption,
   setFlowStepLabel,
 } from "@/lib/deck-editor"
-import { parseDeck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck } from "@/lib/deck"
 
 const fixturePath = resolve(import.meta.dirname, "../fixtures/flow-week.json")
 
@@ -18,11 +18,11 @@ function loadFlowWeek() {
 }
 
 function flowPanel(week: ReturnType<typeof loadFlowWeek>) {
-  const panel = week.pages[0].panel
-  if (panel.kind !== "flow") {
+  const page = week.pages[0]
+  if (!isTwoColumnPage(page) || page.panel.kind !== "flow") {
     throw new Error("expected flow panel")
   }
-  return panel
+  return page.panel
 }
 
 describe("flow week-editor", () => {

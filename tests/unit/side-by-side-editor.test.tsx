@@ -82,8 +82,10 @@ describe("Side-by-side Comparison editor", () => {
     })
     edited = setComparisonChosen(edited, 0, undefined)
     edited = setComparisonTradeoff(edited, 0, undefined)
-    expect(edited.pages[0].chosen).toBeUndefined()
-    expect(edited.pages[0].tradeoff).toBeUndefined()
+    const page = edited.pages[0]
+    if (!isSideBySidePage(page)) throw new Error("Expected comparison")
+    expect(page.chosen).toBeUndefined()
+    expect(page.tradeoff).toBeUndefined()
   })
 })
 
@@ -104,12 +106,8 @@ function Harness() {
 it("authors points, a chosen column, and optional tradeoff through the form", async () => {
   const user = userEvent.setup()
   render(<Harness />)
-  const first = within(
-    screen.getByRole("group", { name: "Column 1", exact: true })
-  )
-  const second = within(
-    screen.getByRole("group", { name: "Column 2", exact: true })
-  )
+  const first = within(screen.getByRole("group", { name: "Column 1" }))
+  const second = within(screen.getByRole("group", { name: "Column 2" }))
   await user.clear(first.getByRole("textbox", { name: "Column label" }))
   await user.type(
     first.getByRole("textbox", { name: "Column label" }),

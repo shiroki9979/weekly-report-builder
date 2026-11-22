@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { parseDeck, isStructuredPage } from "@/lib/deck"
+import {
+  parseDeck,
+  isSideBySidePage,
+  isStructuredPage,
+  type Deck,
+  type SideBySidePage,
+} from "@/lib/deck"
 
 import {
   assessContentReadiness,
@@ -9,6 +15,12 @@ import { createStagePageContext } from "@/lib/stage-page-context"
 
 import { createBlankAddablePage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
+
+function firstComparison(deck: Deck): SideBySidePage {
+  const page = deck.pages[0]
+  if (!isSideBySidePage(page)) throw new Error("expected side-by-side page")
+  return page
+}
 
 const comparison = {
   id: "compare",
@@ -44,7 +56,7 @@ describe("Side-by-side Comparison", () => {
       boundary: "Fictional pilot only",
     })
     expect(deck.pages[0]).not.toHaveProperty("extra")
-    expect(deck.pages[0].tradeoff).not.toHaveProperty("extra")
+    expect(firstComparison(deck).tradeoff).not.toHaveProperty("extra")
   })
 
   it("accepts an open comparison without chosen or tradeoff", () => {
@@ -129,10 +141,11 @@ describe("Side-by-side Comparison", () => {
         { label: "", points: [""] },
       ],
     })
-    expect(template.pages[0].chosen).toBeUndefined()
-    expect(template.pages[0].tradeoff).toBeUndefined()
-    expect(template.pages[0].boundary).toBeUndefined()
-    expect(template.pages[0].notes).toBeUndefined()
+    const page = firstComparison(template)
+    expect(page.chosen).toBeUndefined()
+    expect(page.tradeoff).toBeUndefined()
+    expect(page.boundary).toBeUndefined()
+    expect(page.notes).toBeUndefined()
     expect(parseDeck(template).pages[0]).toMatchObject({
       layout: "side-by-side",
     })

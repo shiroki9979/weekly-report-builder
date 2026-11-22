@@ -23,7 +23,7 @@ import {
   createBlankOverviewPage,
   createBlankTwoColumnPage,
 } from "@/lib/page-lifecycle"
-import { parseDeck, type Deck } from "@/lib/deck"
+import { isTwoColumnPage, parseDeck, type Deck } from "@/lib/deck"
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -48,7 +48,9 @@ describe("deck-editor", () => {
     const withHeading = setPageItem(week, 0, 1, "heading", "Manual promote")
     const withBody = setPageItem(withHeading, 0, 1, "body", "Updated body copy")
 
-    expect(withBody.pages[0].items[1]).toEqual({
+    const page = withBody.pages[0]
+    if (!isTwoColumnPage(page)) throw new Error("expected two-column page")
+    expect(page.items[1]).toEqual({
       heading: "Manual promote",
       body: "Updated body copy",
     })
@@ -59,11 +61,12 @@ describe("deck-editor", () => {
     const withTitle = setTablePanelTitle(week, 0, "Loaded model (edited)")
     const withCell = setTablePanelCell(withTitle, 0, 0, 1, "Unpinned")
 
-    const panel = withCell.pages[0].panel
-    if (panel.kind !== "table") {
+    const page = withCell.pages[0]
+    if (!isTwoColumnPage(page) || page.panel.kind !== "table") {
       throw new Error("expected table panel")
     }
 
+    const panel = page.panel
     expect(panel.title).toBe("Loaded model (edited)")
     expect(panel.rows[0].cells[1]).toBe("Unpinned")
   })

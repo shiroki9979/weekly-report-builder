@@ -10,16 +10,16 @@ import {
 import { assessContentReadiness } from "@/lib/export-readiness"
 import { createBlankEvidenceDecisionPage } from "@/lib/page-lifecycle"
 import { createDeckFromTemplate } from "@/lib/deck-template"
-import { parseDeck } from "@/lib/deck"
+import { isEvidenceDecisionPage, parseDeck } from "@/lib/deck"
 import type { EvidenceDecisionPage, Deck } from "@/lib/deck"
 
 function weekWith(page: EvidenceDecisionPage): Deck {
-  return { start: "2026-08-24", end: "2026-08-28", pages: [page] }
+  return { period: { start: "2026-08-24", end: "2026-08-28" }, pages: [page] }
 }
 
 function decision(week: Deck): EvidenceDecisionPage {
   const page = week.pages[0]
-  if (page.layout !== "evidence-decision") {
+  if (!isEvidenceDecisionPage(page)) {
     throw new Error("expected evidence-decision")
   }
   return page
@@ -211,7 +211,7 @@ describe("evidence-decision clone and readiness", () => {
     })
     const cloned = createDeckFromTemplate(previous)
     const page = cloned.pages[0]
-    if (page.layout !== "evidence-decision") {
+    if (!isEvidenceDecisionPage(page)) {
       throw new Error("expected evidence-decision")
     }
     expect(page.title).toBe("")
