@@ -2,7 +2,7 @@
 
 建立日期：2026-11-07
 
-最後更新：2026-11-07
+最後更新：2026-11-22
 
 狀態：Advisory；所有 Deck Theme、Structured Layout 與 Stage Element 的上游依據，不是規格
 
@@ -36,16 +36,16 @@
 
 哲學是通用的；以下是它落在本專案時必須同時滿足的條件。規格若與這些條件衝突，以規格的決定為準並回頭修訂本文。
 
-| 約束                   | 內容                                                                                                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 畫布                   | canonical capture Stage 1280 × 720 CSS 像素，PNG 以 `pixelRatio: 2` 輸出；Overflowing Page 不可匯出，哲學不能以「稍微超出」換取構圖。                                                       |
-| 自行閱讀               | 單張 PNG 離開講者仍可讀；必要條件寫在 Boundary Note，不只放在 speaker notes。                                                                                                               |
-| 對比                   | 關鍵文字對鄰接背景至少 4.5:1；狀態不可只靠顏色，須有文字標籤。                                                                                                                              |
-| 狀態語意               | 每個 Deck Theme 都必須定義 Status Signal 的三種 tone（positive、caution、neutral）的墨色與淡洗；Overview 等既有版型依賴它們。                                                               |
-| 字型                   | CJK 一律系統字型（Noto Sans TC、PingFang TC、Microsoft JhengHei 的順序），不內建。拉丁展示字型與等寬記號字型由主題決定；若使用，須自架 OFL 字型並驗證 PNG 嵌字。                            |
-| 團隊簡報範本           | `default` 主題維持現行藍色與底部留白，讓 PNG 能貼進團隊 PPT 範本；本文件的色彩段落描述的是新主題，不改 `default` 的色票。                                                                   |
-| Token 角色             | 主題以語意角色提供色彩：paper、ink、mute、line、accent、accent-deep、accent-soft、accent-wash、ok／ok-ink／ok-wash、warn／warn-ink。角色名稱是 HTML Page 的契約，命名與相容別名由規格決定。 |
-| 既有 Structured Layout | 只接主題 token，不重排；構圖的改動另開 Layout Variant。                                                                                                                                     |
+| 約束                   | 內容                                                                                                                                                                                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 畫布                   | canonical capture Stage 1280 × 720 CSS 像素，PNG 以 `pixelRatio: 2` 輸出；Overflowing Page 不可匯出，哲學不能以「稍微超出」換取構圖。                                                                                                                                                                                 |
+| 自行閱讀               | 單張 PNG 離開講者仍可讀；必要條件寫在 Boundary Note，不只放在 speaker notes。                                                                                                                                                                                                                                         |
+| 對比                   | 關鍵文字對鄰接背景至少 4.5:1；狀態不可只靠顏色，須有文字標籤。                                                                                                                                                                                                                                                        |
+| 狀態語意               | 每個 Deck Theme 都必須定義 Status Signal 的三種 tone（positive、caution、neutral）的墨色與淡洗；Overview 等既有版型依賴它們。                                                                                                                                                                                         |
+| 字型                   | CJK 一律系統字型（Noto Sans TC、PingFang TC、Microsoft JhengHei 的順序），不內建。拉丁展示字型與等寬記號字型由主題決定；若使用，須自架 OFL 字型並驗證 PNG 嵌字。                                                                                                                                                      |
+| 團隊簡報範本           | `default` 主題維持現行藍色與底部留白，讓 PNG 能貼進團隊 PPT 範本；本文件的色彩段落描述的是新主題，不改 `default` 的色票。                                                                                                                                                                                             |
+| Token 角色             | 主題以語意角色提供色彩：paper、ink、mute、line、accent、accent-deep、accent-soft、accent-wash、ok／ok-ink／ok-wash、warn／warn-ink。角色名稱是 HTML Page 的契約，命名與相容別名由規格決定。                                                                                                                           |
+| 既有 Structured Layout | 構圖（Stage body 內區塊的格線、位置、數量與順序）不隨主題重排，改構圖另開 Layout Variant；主題對 Stage Element 本身的處理（標記、字型、字級、色彩角色）由主題樣式表負責，不算重排。見 [ADR-0002](../adr/0002-deck-theme.md) 2026-11-22 修訂與 [#73](https://github.com/shiroki9979/weekly-report-builder/issues/73)。 |
 
 ## 字型角色
 

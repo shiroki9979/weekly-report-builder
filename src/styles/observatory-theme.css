@@ -146,14 +146,10 @@
   font-weight: inherit;
 }
 
-.stage-root[data-theme="observatory"] .editorial-comparison-points li {
-  display: grid;
-  grid-template-columns: 2.1875cqw minmax(0, 1fr);
-  gap: 0.78125cqw;
-}
-
-/* Two-column 的標記欄改成與 Side-by-side point 同寬的索引欄；字級不動，只換標記與標題色彩角色 */
+/* 兩個版型共用同一條索引欄，寬度與間距只寫一次，日後調整時兩邊不會各自漂移 */
+.stage-root[data-theme="observatory"] .editorial-comparison-points li,
 .stage-root[data-theme="observatory"] .stage-item {
+  display: grid;
   grid-template-columns: 2.1875cqw minmax(0, 1fr);
   gap: 0.78125cqw;
 }

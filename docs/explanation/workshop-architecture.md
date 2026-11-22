@@ -79,7 +79,7 @@ Draft Structured Layout 可 Save，但 Copy 與 batch export 不輸出。Canonic
 
 - 外框、主標、分隔線與頁尾都由 Editorial Frame 提供，和其他 Editorial 版型混排時翻頁的邊界不會跳動。主標與右側 panel 都落在左右內距裡，所以標題、左欄、右欄共用同一條格線。
 - `.stage-item` 是兩欄 grid：標記欄加內文欄。不使用負邊距，標記從主標的起始邊開始，不會落進左側 `5%` 內距。
-- `default`、`ledger`：標記是藍點，圓點欄 `0.55em`、間距 `0.65em`，項目標題與內文因此比主標內縮 `1.2em`；項目標題用 `--blue`。
+- `default`、`ledger`：標記是藍點，圓點欄 `0.55em`、間距 `0.65em`，項目標題與內文因此比主標內縮 `1.2em`；項目標題用 `--blue`。索引元素照樣渲染，但 `src/styles/editorial-layouts.css` 預設把 `.editorial-item-index` 隱藏，只有主題樣式表能讓它顯示。
 - `observatory`：藍點隱藏，改用共用的 `.editorial-item-index` 補零等寬索引（`01`／`02`／`03`，`aria-hidden`），與 Side-by-side point 的索引同一組樣式。標記欄改成索引欄 `2.1875cqw`、間距 `0.78125cqw`；項目標題改用 `--ink`。索引只是視覺處理，三個項目仍是平行、無序的。
 - 字級在所有主題都不變（項目標題 `2cqw`、內文 `1.7cqw`）；依 ADR-0002 2026-11-22 修訂，主題對 Stage Element 的處理不算重排。
 
