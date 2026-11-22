@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-11-21
+Last updated: 2026-11-22
 
 Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
 
@@ -51,7 +51,7 @@ The three Structured Layouts—Overview, Evidence-backed Decision, and Next Acti
 _Avoid_: Prototype layouts, three layouts
 
 **Two-column Layout**:
-The existing general-purpose Structured Layout that presents three narrative items beside a panel. It coexists with the Editorial Layout Family.
+The existing general-purpose Structured Layout that presents three parallel narrative items beside a panel; the items carry no order or priority. It coexists with the Editorial Layout Family.
 _Avoid_: Legacy layout, deprecated layout
 
 **Trend & Target**:
