@@ -2,7 +2,7 @@
 
 Created: 2026-09-09
 
-Last updated: 2026-11-22
+Last updated: 2026-11-23
 
 Weekly Report Builder is an authoring workspace for composing Decks of Pages, reviewing them on a presentation Stage, and exporting them for a shared deck. The weekly report is one workflow on top of it (see [ADR-0001](docs/adr/0001-decouple-weekly-report-from-slide-core.md)).
 
@@ -29,7 +29,7 @@ The weekly-report workflow: Decks named by their Monday, each with a Monday-to-F
 _Avoid_: Weeks, report history
 
 **Deck Template**:
-An existing Deck used to create a new one that keeps its layouts, order, structure, and Eyebrows but clears authored copy.
+An existing Deck used to create a new one that keeps its layouts, order, structure, and Eyebrows, keeps Hidden Pages hidden, and clears authored copy and speaker notes.
 _Avoid_: Clone, copy
 
 **Demo Deck Set**:
@@ -100,12 +100,16 @@ _Avoid_: Speaker notes, hidden metadata
 A priority action that pairs an intended outcome with a verification checkpoint.
 _Avoid_: Task, to-do
 
+**Headline**:
+The conclusion a Structured Layout page leads with: at the top of the Editorial Frame, or as a Cover's title. Export Readiness requires one; an HTML Page's title is only a workshop label and is not a Headline.
+_Avoid_: Title, central conclusion, heading
+
 **Editorial Frame**:
-The shared context around an editorial page: its Eyebrow, central conclusion, Frame Label, optional Boundary Note, Deck Title, and Page Position. It surrounds Editorial Layout Family pages, Trend & Target, Closing, Side-by-side Comparison, Full-width Panel, and Two-column Layout.
+The shared context around an editorial page: its Eyebrow, Headline, Frame Label, optional Boundary Note, Deck Title, and Page Position. It surrounds Editorial Layout Family pages, Trend & Target, Closing, Side-by-side Comparison, Full-width Panel, and Two-column Layout.
 _Avoid_: Header, wrapper
 
 **Eyebrow**:
-The short label above an Editorial Frame headline naming the page's communication job. An author may write one; otherwise the Structured Layout's default applies, and the Two-column Layout has none.
+The short label above an Editorial Frame Headline naming the page's communication job. An author may write one; otherwise the Structured Layout's default applies, and the Two-column Layout has none.
 _Avoid_: Kicker, subtitle, section label, tag
 
 ## Editorial layouts
@@ -135,11 +139,11 @@ A Layout Variant of Next Actions that presents ordered Commitments in full-width
 _Avoid_: Action table, task list
 
 **Cover**:
-A Structured Layout that opens a Deck with its title, an optional subtitle and byline, and the Frame Label when the Deck has a period.
+A Structured Layout that opens a Deck with a Headline (separate from the Deck Title), an optional subtitle and byline, and the Frame Label when the Deck has a period.
 _Avoid_: Title slide, hero
 
 **Closing**:
-A Structured Layout that ends a Deck with a headline, up to four takeaways, and an optional contact or next-step line.
+A Structured Layout that ends a Deck with a Headline, up to four takeaways, and an optional contact or next-step line.
 _Avoid_: Thank-you slide, Q&A slide
 
 **Side-by-side Comparison**:
