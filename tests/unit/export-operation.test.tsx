@@ -17,6 +17,7 @@ import {
 import {
   formatPagePosition,
   createStagePageContext,
+  getPagePosition,
 } from "@/lib/stage-page-context"
 import type { Deck, Page } from "@/lib/deck"
 import { deferred, until } from "./support/async"
@@ -129,7 +130,7 @@ describe("export operation lifecycle", () => {
       prepare.mockImplementation(async (documentId, document, page) => {
         const context = createStagePageContext(documentId, document, page.id)
         seen.push(
-          `${page.id}:${page.title}:${context.frameLabel}:${formatPagePosition(context.position)}`
+          `${page.id}:${page.title}:${context.frameLabel}:${formatPagePosition(getPagePosition(document.pages, page.id))}`
         )
         return preparedCapture(() => capture(page))
       })
@@ -204,9 +205,9 @@ describe("export operation lifecycle", () => {
       pages: [htmlPage("p01", "First"), htmlPage("p02", "Second")],
     }
     const seen: string[] = []
-    prepare.mockImplementation(async (documentId, document, page) => {
+    prepare.mockImplementation(async (_documentId, document, page) => {
       seen.push(
-        `${page.id}:${formatPagePosition(createStagePageContext(documentId, document, page.id).position)}`
+        `${page.id}:${formatPagePosition(getPagePosition(document.pages, page.id))}`
       )
       return preparedCapture(() => capture(page))
     })

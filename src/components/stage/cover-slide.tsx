@@ -1,3 +1,4 @@
+import { EditorialFooter } from "@/components/stage/editorial-footer"
 import type { CoverPage } from "@/lib/deck"
 import type { StagePageContext } from "@/lib/stage-page-context"
 
@@ -28,16 +29,7 @@ export function CoverSlide({ page, context }: Props) {
           </dl>
         ) : null}
       </div>
-      <footer
-        className="editorial-page-number"
-        aria-hidden={!context.deckTitle || undefined}
-      >
-        {context.deckTitle ? (
-          <span className="editorial-deck-title">{context.deckTitle}</span>
-        ) : (
-          " "
-        )}
-      </footer>
+      {context.footer ? <EditorialFooter {...context.footer} /> : null}
     </article>
   )
 }

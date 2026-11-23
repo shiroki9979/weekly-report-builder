@@ -1,6 +1,7 @@
 import {
   isEditorialFramePage,
   isHtmlPage,
+  isStructuredPage,
   isSupportedStagePage,
   periodLabel,
   type Deck,
@@ -10,15 +11,18 @@ import {
 
 export type PagePosition = { index: number; total: number }
 
+// position 只在這頁顯示頁碼時才有值；Editorial Frame 的 § nn 也讀它，兩者才不會各自判斷
+export type StageFooter = { deckTitle?: string; position: PagePosition | null }
+
 // documentId 與顯示文字分開傳；HTML Page 靠它組資源路徑，不可由 Frame Label 反推
 export type StagePageContext = {
   documentId: string
   theme: DeckTheme
-  deckTitle?: string
   frameLabel: string | null
   hidden: boolean
-  position: PagePosition | null
-  showPageNumber: boolean
+  // 頁尾畫不畫、放什麼都在這裡解析完，renderer 只照著畫。null 只出現在 HTML Page 與未知版型；
+  // Editorial Frame 與 Cover 靠頁尾那一列保留底部留白，手組 context 時不可給 null
+  footer: StageFooter | null
 }
 
 export function createStagePageContext(
@@ -32,12 +36,24 @@ export function createStagePageContext(
   return {
     documentId,
     theme: deck.theme ?? "default",
-    ...(deck.title ? { deckTitle: deck.title } : {}),
     frameLabel: deck.period ? periodLabel(deck.period) : null,
     hidden: page.hidden === true,
-    position: getPagePosition(deck.pages, pageId),
-    showPageNumber: isPageNumberVisible(deck, page),
+    footer: resolveFooter(deck, page),
   }
+}
+
+/**
+ * Editorial Frame 與 Cover 的頁尾是外框的一部分，一律畫出；頁碼關閉時只少了 Page Position。
+ * HTML Page 的頁尾是疊在片段上的 overlay，片段可能自帶頁尾，所以只在顯示頁碼時才整組畫出。
+ */
+function resolveFooter(deck: Deck, page: Page): StageFooter | null {
+  const position = isPageNumberVisible(deck, page)
+    ? getPagePosition(deck.pages, page.id)
+    : null
+  const footer = { ...(deck.title ? { deckTitle: deck.title } : {}), position }
+
+  if (isHtmlPage(page)) return position ? footer : null
+  return isStructuredPage(page) ? footer : null
 }
 
 export function getPagePosition(
@@ -62,8 +78,9 @@ export function padPageNumber(value: number): string {
   return value.toString().padStart(2, "0")
 }
 
-// 頁碼位置就是頁尾：Editorial Frame 自帶，HTML Page 由 Stage 疊上；Cover 與未知版型沒有
-function hasPageNumberSlot(page: Page): boolean {
+// 頁碼位置就是頁尾：Editorial Frame 自帶，HTML Page 由 Stage 疊上；Cover 與未知版型沒有。
+// Workshop 也問這裡，編輯器才不會另寫一份「哪些頁有頁碼選單」的規則
+export function hasPageNumberSlot(page: Page): boolean {
   return isEditorialFramePage(page) || isHtmlPage(page)
 }
 
@@ -85,7 +102,7 @@ export function defaultPageNumberVisibility(
  * 頁碼只畫在 Editorial 與 HTML。隱藏頁已有 Hidden 標記，不再疊一次。
  * 單頁設定優先於預設。
  */
-export function isPageNumberVisible(deck: Deck, page: Page): boolean {
+function isPageNumberVisible(deck: Deck, page: Page): boolean {
   if (page.hidden || !hasPageNumberSlot(page)) {
     return false
   }

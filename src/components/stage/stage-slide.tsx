@@ -68,12 +68,9 @@ export function StageSlide({
         ),
       })}
       {/* 頁尾畫在片段之外，預覽（Shadow DOM）與匯出（light DOM）才會一致 */}
-      {isHtmlPage(page) && context.showPageNumber ? (
+      {isHtmlPage(page) && context.footer ? (
         <div className="editorial-html-footer">
-          <EditorialFooter
-            deckTitle={context.deckTitle}
-            position={context.position}
-          />
+          <EditorialFooter {...context.footer} />
         </div>
       ) : null}
     </div>
