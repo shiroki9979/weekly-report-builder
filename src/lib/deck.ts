@@ -1,5 +1,9 @@
 import { validateHtmlFileName } from "./html-page.ts"
 import {
+  inEditorialFrameChromeOrder,
+  inPageChromeOrder,
+} from "./page-chrome.ts"
+import {
   isTrendCadence,
   isTrendDirection,
   trendDatingError,
@@ -419,6 +423,12 @@ export function isEditorialFramePage(page: Page): page is EditorialFramePage {
 
 export function isStructuredPage(page: Page): page is StructuredPage {
   return isCoverPage(page) || isEditorialFramePage(page)
+}
+
+// 新建或重建頁面後經這裡排回存檔順序（見 page-chrome.ts）；unknown 頁沿用原檔順序，才能原樣 round-trip
+export function inSavedKeyOrder(page: Page): Page {
+  if (isEditorialFramePage(page)) return inEditorialFrameChromeOrder(page)
+  return isKnownLayout(page.layout) ? inPageChromeOrder(page) : page
 }
 
 const SUPPORTED_TWO_COLUMN_PANEL_KINDS = new Set([
@@ -851,21 +861,12 @@ type ParsedPageChrome = PageChrome & {
   title: string
 }
 
-// 保持既有 JSON 欄位順序（id、layout、title、版面內容、顯示欄位），存檔時不產生無意義 diff
 function withChrome<L extends string, C extends object>(
   chrome: ParsedPageChrome,
   layout: L,
   content: C
 ): ParsedPageChrome & { layout: L } & C {
-  return {
-    id: chrome.id,
-    layout,
-    title: chrome.title,
-    ...content,
-    hidden: chrome.hidden,
-    notes: chrome.notes,
-    showPageNumber: chrome.showPageNumber,
-  }
+  return inPageChromeOrder({ ...chrome, layout, ...content })
 }
 
 const ENTRY: Noun = { noun: "entry", plural: "entries" }
@@ -1405,18 +1406,11 @@ function withEditorialFrameChrome(
   value: Record<string, unknown>,
   field: string
 ): EditorialFramePage {
-  const eyebrow = readOptionalChromeText(value.eyebrow, `${field}.eyebrow`)
-  const boundary = readOptionalChromeText(value.boundary, `${field}.boundary`)
-  const { id, layout, title, ...rest } = parsed
-  // eyebrow 緊接在 title 之後，舊 Closing JSON 存檔時欄位順序不變
-  return {
-    id,
-    layout,
-    title,
-    ...(eyebrow === undefined ? {} : { eyebrow }),
-    ...rest,
-    ...(boundary === undefined ? {} : { boundary }),
-  } as EditorialFramePage
+  return inEditorialFrameChromeOrder({
+    ...parsed,
+    eyebrow: readOptionalChromeText(value.eyebrow, `${field}.eyebrow`),
+    boundary: readOptionalChromeText(value.boundary, `${field}.boundary`),
+  })
 }
 
 function readOptionalChromeText(

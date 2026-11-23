@@ -1,4 +1,5 @@
 import {
+  inSavedKeyOrder,
   isEditorialFramePage,
   matchPage,
   nextActionsVariant,
@@ -76,7 +77,7 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: Page): Page {
-  return { ...clearPageContent(page), ...templateChrome(page) }
+  return inSavedKeyOrder({ ...clearPageContent(page), ...templateChrome(page) })
 }
 
 // chrome 依來源頁決定、與版型專屬內容分開處理：新版型只要納入 Editorial Frame 就自動套用，不必逐一接線

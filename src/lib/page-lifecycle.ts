@@ -16,7 +16,7 @@ import type {
   NextActionsPage,
   TrendTargetPage,
 } from "./deck"
-import { CARDINALITY } from "./deck"
+import { CARDINALITY, inSavedKeyOrder } from "./deck"
 import { blankMetric } from "./evidence-decision-editor"
 import { blankCommitment } from "./next-actions-editor"
 import { blankOutcome } from "./overview-editor"
@@ -260,7 +260,7 @@ export function createBlankAddablePage(
   layout: AddableLayout,
   panelKind: AddablePanelKind
 ): Page {
-  return BLANK_PAGE_FACTORIES[layout](id, panelKind)
+  return inSavedKeyOrder(BLANK_PAGE_FACTORIES[layout](id, panelKind))
 }
 
 function requirePageIndex(deck: Deck, pageId: string): number {

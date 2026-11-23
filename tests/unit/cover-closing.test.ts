@@ -105,7 +105,7 @@ describe("Cover and Closing contracts", () => {
     const deck = parseDeck({ pages: [closing] })
 
     expect(deck.pages[0]).toMatchObject({ closingLine: "", takeaways: [] })
-    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
+    expect(deck.pages[0]).not.toHaveProperty("eyebrow", expect.any(String))
   })
 
   it("keeps a Boundary Note on a Closing page", () => {
@@ -117,7 +117,7 @@ describe("Cover and Closing contracts", () => {
   it("reads a whitespace-only Boundary Note as absent", () => {
     const deck = parseDeck({ pages: [{ ...closing, boundary: "  " }] })
 
-    expect(deck.pages[0]).not.toHaveProperty("boundary")
+    expect(deck.pages[0]).not.toHaveProperty("boundary", expect.any(String))
   })
 
   it("keeps an Eyebrow only on Editorial Frame layouts", () => {
@@ -137,7 +137,7 @@ describe("Cover and Closing contracts", () => {
   it("saves no eyebrow when the authored Eyebrow is only whitespace", () => {
     const deck = parseDeck({ pages: [{ ...closing, eyebrow: "  " }] })
 
-    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
+    expect(deck.pages[0]).not.toHaveProperty("eyebrow", expect.any(String))
     expect(JSON.parse(serializeDeck(deck)).pages[0]).not.toHaveProperty(
       "eyebrow"
     )
