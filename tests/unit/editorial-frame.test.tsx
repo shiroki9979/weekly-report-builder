@@ -27,8 +27,7 @@ function renderFrame(showPageNumber: boolean) {
     theme: "default",
     frameLabel: "2026-08-24 — 2026-08-28",
     hidden: false,
-    position: { index: 2, total: 5 },
-    showPageNumber,
+    footer: { position: showPageNumber ? { index: 2, total: 5 } : null },
   }
   return render(
     <EditorialFrame page={PANEL_PAGE} context={context}>
@@ -45,11 +44,9 @@ describe("EditorialFrame page number row", () => {
         context={{
           documentId: "harbor",
           theme: "observatory",
-          deckTitle: "Harbor Forecast",
           frameLabel: null,
           hidden: false,
-          position: { index: 1, total: 1 },
-          showPageNumber: false,
+          footer: { deckTitle: "Harbor Forecast", position: null },
         }}
       >
         <p>Body</p>
@@ -68,6 +65,8 @@ describe("EditorialFrame page number row", () => {
     const footer = container.querySelector("footer")
     expect(footer).toHaveTextContent("2 / 5")
     expect(footer).not.toHaveAttribute("aria-hidden")
+    // 沒有 Deck Title 時頁尾只帶一般與補零兩種 Page Position，由主題決定顯示哪一個
+    expect(footer?.textContent?.replace(/0?2 \/ 0?5/g, "")).toBe("")
   })
 
   it("keeps an empty row when page numbers are hidden so the body keeps its bottom margin", () => {
@@ -91,8 +90,7 @@ describe("EditorialFrame eyebrow row", () => {
           theme: "observatory",
           frameLabel: null,
           hidden: false,
-          position: null,
-          showPageNumber: false,
+          footer: { position: null },
         }}
       >
         <p>Body</p>

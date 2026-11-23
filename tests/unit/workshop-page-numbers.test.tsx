@@ -19,6 +19,14 @@ const unusedLayoutControls: LayoutEditorControls = {
   trendTarget: unusedTrendControls,
 }
 
+const outcome = {
+  workstream: "",
+  figure: "",
+  result: "",
+  impact: "",
+  status: { label: "", tone: "neutral" as const },
+}
+
 function sampleWeek(showPageNumbers?: boolean): Deck {
   return {
     period: { start: "2026-08-24", end: "2026-08-28" },
@@ -34,7 +42,8 @@ function sampleWeek(showPageNumbers?: boolean): Deck {
         id: "p02",
         layout: "overview",
         title: "Overview",
-        agenda: [],
+        lead: outcome,
+        supporting: [outcome],
       },
     ],
   }

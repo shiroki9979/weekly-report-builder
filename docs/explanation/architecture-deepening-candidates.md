@@ -28,7 +28,6 @@
 | 6   | 每種 Structured Layout 一個 schema module       | Strong                                      | in-process          | 2026-09-27；2026-11-09 升級 | 候選；第二次審查的首選                                                                                                                                                                                                                                         |
 | 3   | 以 Page ID 為範圍的頁面編輯                     | Strong                                      | in-process          | 2026-09-27；2026-11-09 升級 | 候選                                                                                                                                                                                                                                                           |
 | 7   | Deck lifecycle module：hook 裡的規則搬回 lib    | Strong                                      | in-process          | 2026-11-09                  | 候選；第二次審查的次選，建議與 8 同做                                                                                                                                                                                                                          |
-| 12  | 頁尾成為 Stage page context 的一個事實          | Strong                                      | in-process          | 2026-11-22                  | [#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)（needs-triage）；第三次審查的首選                                                                                                                                                        |
 | 13  | 編譯器看得見的 Editorial Frame 成員資格         | Strong（第一步）；Worth exploring（第二步） | in-process          | 2026-11-22                  | 第一步已實作於 [PR #97](https://github.com/shiroki9979/weekly-report-builder/pull/97)（[#83](https://github.com/shiroki9979/weekly-report-builder/issues/83)）；第二步為 [#98](https://github.com/shiroki9979/weekly-report-builder/issues/98)（needs-triage） |
 | 8   | Location history adapter                        | Worth exploring                             | ports & adapters    | 2026-11-09                  | 候選                                                                                                                                                                                                                                                           |
 | 9   | Trend SVG ink 解析移到 capture adapter          | Worth exploring                             | mock                | 2026-11-09                  | 候選                                                                                                                                                                                                                                                           |
@@ -46,6 +45,7 @@
 | 1   | Editing Session module                            | Strong          | in-process | 已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)；[規格 #37](https://github.com/shiroki9979/weekly-report-builder/issues/37)、實作票 #38～#40 |
 | 2   | Export gate module                                | Strong          | mock       | 已實作於 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)；[規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、實作票 #32～#35 |
 | 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process | 已實作於 `2cb9a80`；2026-11-09 確認無字串哨兵殘留                                                                                                                            |
+| 12  | 頁尾成為 Stage page context 的一個事實            | Strong          | in-process | 已實作於 `6626d32`；[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)，行為不變                                                                          |
 
 初次審查建議先做 1（現已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；完成後削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 
@@ -202,22 +202,6 @@
 - **已確認不是問題**：theme 經單一 `data-theme` 屬性進 Stage（`stage-frame.tsx:21`，由 `workshop-preview.tsx:204` 與 `browser-capture-adapter.tsx:114` 餵入）；`editorial-layouts.css` 零硬編碼色票；`DECK_THEMES` 驅動 type、parser 與 toolbar label，新增主題受編譯器引導。
 - **2026-11-22 更新**：第三個 Deck Theme（`ledger`，#66）已加入，觸發條件成立。結構覆寫沒有變大：`ledger` 只有 token 加一條字型規則；observatory 的結構覆寫移到 100-182，內容未變。新出現的重複是等寬字 chrome selector 清單，轉為候選 16。A／B 二擇一留到第一個需要改構圖的主題出現時再決定。
 
-### 12. 頁尾成為 Stage page context 的一個事實
-
-- **相關 module**：`src/lib/stage-page-context.ts`、`src/components/stage/editorial-frame.tsx`、`src/components/stage/stage-slide.tsx`、`src/components/stage/cover-slide.tsx`、`src/components/stage/editorial-footer.tsx`、`src/components/workshop/editorial-page-editor-chrome.tsx`、`src/components/workshop/page-number-select.tsx`。
-- **問題**：候選 4 讓 renderer 只負責畫；#68 的 HTML Page 頁尾（`2e222d7`）之後，「畫不畫頁尾、頁尾放什麼」又由 renderer 各自決定，Cover 還手抄一份 `EditorialFooter` 的 markup。組合出的規則沒有寫在任何一處：Hidden Page 上 Editorial Frame 與 Cover 仍畫 Deck Title，HTML Page 什麼都不畫；HTML Page 的 Deck Title 跟著頁碼開關，Editorial Frame 不跟。
-- **做法**：`createStagePageContext` 直接回傳要畫的頁尾（或沒有頁尾），已依頁面種類、Hidden、Deck Title 與單頁覆寫解析完成，並提供 `§ nn` 索引所需的可見 Page Position。三個 renderer 只畫 `EditorialFooter`，Cover 刪掉副本；slot 判斷 export 給 Workshop。
-- **Deletion test**：`EditorialFooter` earns its keep，Cover 的副本就是刪掉它之後 markup 重新出現的樣子；`showPageNumber`／`position` 在 interface 上是 pass-through，之後轉為 implementation。
-- **證據**：
-  - 4 處決定頁尾：`isPageNumberVisible`（`stage-page-context.ts:65-93`）；`EditorialFrame` 以 `showPageNumber ? position : null` 決定位置，但一律傳 Deck Title（`editorial-frame.tsx:23,50`）；`StageSlide` 只在 `isHtmlPage && showPageNumber` 時疊頁尾（`stage-slide.tsx:71-78`）；`CoverSlide` 手抄 markup（`cover-slide.tsx:31-40`）。
-  - Workshop 以 `!isCoverPage(page)` 重述 slot 規則（`editorial-page-editor-chrome.tsx:87`）；Stage 端的 `hasPageNumberSlot` 是私有的。
-  - `context.position` 與 `context.showPageNumber` 只有上述 2 個 src 消費者。
-  - 本期 6 個 commit 動過頁尾：`6190cea`、`2e222d7`、`ce332ae`、`5d79c99`、`c93c83f`、`f875fbe`。
-  - 沒有單元測試斷言 Cover 的 Deck Title；`stage-slide.test.tsx:332-490` 的 6 個 HTML 頁尾測試為了檢查政策而 stub `fetch`。
-- **收益**：locality，頁尾政策收進一個 module；政策成為 context 的表格測試（頁面種類 × Hidden × 單頁覆寫 × Deck Title），HTML 頁尾測試收斂為一個 render 測試；Cover 的副本刪除。
-- **既有決定**：preview 與 capture 仍共用同一個工廠（`workshop-preview.tsx:198`、`browser-capture-adapter.tsx:108`），Export gate 契約不變。
-- **狀態**：[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)（needs-triage）。待決：上述兩條隱含規則是刻意的還是要統一；Cover 是否應有 Page Position。
-
 ### 13. 編譯器看得見的 Editorial Frame 成員資格
 
 - **相關 module**：`src/lib/deck.ts`（`UnknownPage`、`Page`、`EditorialFramePage`、`isEditorialFramePage`、`matchPage`）、`src/lib/stage-page-context.ts`、`src/lib/eyebrow.ts`、`tests/unit/support/editorial-frame-layouts.ts`、`tsconfig.app.json`、`tsconfig.node.json`。
@@ -361,6 +345,26 @@ Copy 與 batch export 共用同一條單頁流程。
 - **收益**：字串哨兵退場；HTML Page 的路徑不再取自顯示字串；locality，頁碼規則集中一處；renderer 不再各自判斷；測試斷言事實而非顯示字串。
 - **既有決定**：規格〈Stage context Module〉已把這裡指定為 Preview、Copy、batch 共用的 seam；本候選只加深它。
 - **狀態**：已實作於 `2cb9a80`（centralize typed page context and numbering policy）。2026-11-09 確認：`StagePageContext` 為 7 個型別事實（`documentId`、`theme`、`deckTitle?`、`frameLabel`、`hidden`、`position`、`showPageNumber`），12 個消費檔，無字串哨兵；`PageNavigator` 已改用 `getPagePosition`。殘尾：`PagePicker` 仍以 `String(index)` 選頁（`page-picker.tsx:32,57`），見〈其他發現〉。
+
+### 12. 頁尾成為 Stage page context 的一個事實
+
+- **相關 module**：`src/lib/stage-page-context.ts`、`src/components/stage/editorial-frame.tsx`、`src/components/stage/stage-slide.tsx`、`src/components/stage/cover-slide.tsx`、`src/components/stage/editorial-footer.tsx`、`src/components/workshop/editorial-page-editor-chrome.tsx`、`src/components/workshop/page-number-select.tsx`。
+- **問題**：候選 4 讓 renderer 只負責畫；#68 的 HTML Page 頁尾（`2e222d7`）之後，「畫不畫頁尾、頁尾放什麼」又由 renderer 各自決定，Cover 還手抄一份 `EditorialFooter` 的 markup。組合出的規則沒有寫在任何一處：Hidden Page 上 Editorial Frame 與 Cover 仍畫 Deck Title，HTML Page 什麼都不畫；HTML Page 的 Deck Title 跟著頁碼開關，Editorial Frame 不跟。
+- **做法**：`createStagePageContext` 直接回傳要畫的頁尾（或沒有頁尾），已依頁面種類、Hidden、Deck Title 與單頁覆寫解析完成，並提供 `§ nn` 索引所需的可見 Page Position。三個 renderer 只畫 `EditorialFooter`，Cover 刪掉副本；slot 判斷 export 給 Workshop。
+- **Deletion test**：`EditorialFooter` earns its keep，Cover 的副本就是刪掉它之後 markup 重新出現的樣子；`showPageNumber`／`position` 在 interface 上是 pass-through，之後轉為 implementation。
+- **證據**：
+  - 4 處決定頁尾：`isPageNumberVisible`（`stage-page-context.ts:65-93`）；`EditorialFrame` 以 `showPageNumber ? position : null` 決定位置，但一律傳 Deck Title（`editorial-frame.tsx:23,50`）；`StageSlide` 只在 `isHtmlPage && showPageNumber` 時疊頁尾（`stage-slide.tsx:71-78`）；`CoverSlide` 手抄 markup（`cover-slide.tsx:31-40`）。
+  - Workshop 以 `!isCoverPage(page)` 重述 slot 規則（`editorial-page-editor-chrome.tsx:87`）；Stage 端的 `hasPageNumberSlot` 是私有的。
+  - `context.position` 與 `context.showPageNumber` 只有上述 2 個 src 消費者。
+  - 本期 6 個 commit 動過頁尾：`6190cea`、`2e222d7`、`ce332ae`、`5d79c99`、`c93c83f`、`f875fbe`。
+  - 沒有單元測試斷言 Cover 的 Deck Title；`stage-slide.test.tsx:332-490` 的 6 個 HTML 頁尾測試為了檢查政策而 stub `fetch`。
+- **收益**：locality，頁尾政策收進一個 module；政策成為 context 的表格測試（頁面種類 × Hidden × 單頁覆寫 × Deck Title），HTML 頁尾測試收斂為一個 render 測試；Cover 的副本刪除。
+- **既有決定**：preview 與 capture 仍共用同一個工廠（`workshop-preview.tsx:198`、`browser-capture-adapter.tsx:108`），Export gate 契約不變。
+- **狀態**：已實作於 `6626d32`（[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)），行為不變。兩條隱含規則經查是刻意的，已寫在 [HTML Page](../reference/html-page.md) 與 [Deck JSON 格式](../reference/deck-json-format.md)；Cover 計入 Page Position 但不顯示，同樣已有文件。
+  - `StagePageContext` 以 `footer: { deckTitle?, position } | null` 取代 `deckTitle`、`position`、`showPageNumber`；`resolveFooter` 一處寫下規則：Editorial Frame 與 Cover 一律有頁尾，頁碼關閉時只少 Page Position；HTML Page 只在顯示頁碼時才有頁尾。
+  - 三個 renderer 都只畫 `EditorialFooter {...context.footer}`，Cover 的副本刪除；`§ nn` 讀 `footer.position`。`isPageNumberVisible` 轉為私有，`hasPageNumberSlot` export 給 `editorial-page-editor-chrome.tsx`。`page-editor-form.tsx:138` 是 HTML Page 的表單，一律有頁碼位置，不需判斷。
+  - 政策成為 `stage-page-context.test.ts` 的表格測試；HTML 頁尾測試收斂為一個 render 測試，Cover 補上第一個 Deck Title render 測試。
+  - 仍可另議：Hidden 的 Editorial 頁畫 Deck Title，開了頁尾的 Hidden HTML Page 什麼都不畫；統一會改變 #68 的文件化行為。
 
 ## 考慮過但判定保留
 

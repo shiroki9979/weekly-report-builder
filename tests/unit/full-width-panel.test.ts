@@ -94,9 +94,8 @@ describe("Full-width Panel", () => {
       expect(assessExportEligibility(deck.pages[0], { status: "fit" })).toEqual(
         { eligible: true, issues: [] }
       )
-      expect(createStagePageContext("harbor", deck, "checks")).toMatchObject({
+      expect(createStagePageContext("harbor", deck, "checks").footer).toEqual({
         position: { index: 1, total: 1 },
-        showPageNumber: true,
       })
     }
     const incomplete = parseDeck({
