@@ -123,7 +123,7 @@ type ThemeExpectation = {
   embedsInstrumentSans: boolean
   // --mono 是否自架 IBM Plex Mono（用到 var(--mono) 時才嵌入）
   hostsIbmPlexMono: boolean
-  // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono
+  // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono；否則沿用內文字型
   monoFrame: boolean
   // 跨版型共用的 item index（補零等寬索引）是否取代項目標記；ledger 刻意不帶入補零編號。
   // Side-by-side 與 Two-column 都讀這一項，不另記 Two-column 的標記種類
@@ -179,6 +179,8 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
 // hex 與 rgb、字型清單的引號與空白、cqw 與 px 寫法不同都不該誤判
 type StyleProbe = {
   mono?: true
+  // 與 .stage-root 的內文字型相同
+  body?: true
   color?: string
   fontSize?: string
   paddingTop?: string
@@ -212,6 +214,10 @@ function matchStageStyle(
           matches.mono =
             normalize(style.fontFamily) ===
             normalize(getComputedStyle(root).getPropertyValue("--mono"))
+        if (probe.body)
+          matches.body =
+            normalize(style.fontFamily) ===
+            normalize(getComputedStyle(root).fontFamily)
         if (probe.color)
           matches.color =
             style.color === resolve("color", `var(${probe.color})`)
@@ -509,7 +515,7 @@ for (const theme of DECK_THEMES) {
     if (expected.itemIndex) await expectItemIndexLook(index)
   })
 
-  test(`sets only the Editorial Frame furniture in --mono under ${theme}`, async ({
+  test(`sets only the Editorial Frame furniture in --mono under ${theme} and keeps the rest in the body font`, async ({
     page,
     request,
   }) => {
@@ -552,17 +558,27 @@ for (const theme of DECK_THEMES) {
             [...furniture, ...content].map(async (selector) => {
               const matches = await matchStageStyle(stage.locator(selector), {
                 mono: true,
+                body: true,
               })
               if (matches.length === 0) return [selector, "missing"]
-              return [selector, matches.every(({ mono }) => mono)]
+              // 只比「不是 --mono」時，退成瀏覽器預設字型也會通過；改為要求明確落在兩者之一
+              const fonts = new Set(
+                matches.map(({ mono, body }) =>
+                  mono ? "mono" : body ? "body" : "other"
+                )
+              )
+              return [selector, [...fonts].join("+")]
             })
           )
         )
       )
       .toEqual(
         Object.fromEntries([
-          ...furniture.map((selector) => [selector, expected.monoFrame]),
-          ...content.map((selector) => [selector, false]),
+          ...furniture.map((selector) => [
+            selector,
+            expected.monoFrame ? "mono" : "body",
+          ]),
+          ...content.map((selector) => [selector, "body"]),
         ])
       )
   })
