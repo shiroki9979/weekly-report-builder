@@ -9,8 +9,6 @@
 - **README / agent docs**: English unless the user asks otherwise.
 - **Agent replies to the user** (chat, not files): Traditional Chinese (zh-TW). Claude Code reads this from `language` in `.claude/settings.json`.
 
-See `.cursor/rules/language.mdc`.
-
 ## Agent skills
 
 ### Issue tracker
