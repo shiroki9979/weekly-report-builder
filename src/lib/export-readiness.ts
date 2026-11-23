@@ -537,12 +537,9 @@ export type ReadinessContext = {
 // issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示；Headline 屬於 chrome，先於本文
 export function assessContentReadiness(
   page: StructuredPage,
-  { metricInput = {}, asOf }: ReadinessContext = {}
+  context: ReadinessContext = {}
 ): ExportIssue[] {
-  return [
-    ...headlineIssues(page),
-    ...assessPageContent(page, { metricInput, asOf }),
-  ]
+  return [...headlineIssues(page), ...assessPageContent(page, context)]
 }
 
 function assessPageContent(

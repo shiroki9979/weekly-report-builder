@@ -17,12 +17,8 @@ import {
   setTablePanelTitle,
   setDeckShowPageNumbers,
   setDeckTitle,
-  setPageBoundary,
 } from "@/lib/deck-editor"
-import {
-  createBlankOverviewPage,
-  createBlankTwoColumnPage,
-} from "@/lib/page-lifecycle"
+import { createBlankTwoColumnPage } from "@/lib/page-lifecycle"
 import { isTwoColumnPage, parseDeck, type Deck } from "@/lib/deck"
 
 const fixturePath = resolve(
@@ -196,15 +192,5 @@ describe("optional Deck text", () => {
     const next = setDeckTitle(deck, "Harbor ")
 
     expect(next.title).toBe("Harbor ")
-  })
-
-  it("treats a whitespace-only Boundary Note as absent", () => {
-    const deck: Deck = {
-      pages: [{ ...createBlankOverviewPage("p01"), boundary: "Sample only" }],
-    }
-
-    const next = setPageBoundary(deck, 0, " \t ")
-
-    expect(next.pages[0]).toMatchObject({ boundary: undefined })
   })
 })

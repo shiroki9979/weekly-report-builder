@@ -128,14 +128,11 @@ describe("Side-by-side Comparison", () => {
           ],
           chosen: 1,
           tradeoff: { why: "No state" },
-          boundary: "Pilot",
-          notes: "Discussion",
         },
       ],
     })
     const template = createDeckFromTemplate(source)
     expect(template.pages[0]).toMatchObject({
-      title: "",
       columns: [
         { label: "", points: ["", ""] },
         { label: "", points: [""] },
@@ -144,8 +141,6 @@ describe("Side-by-side Comparison", () => {
     const page = firstComparison(template)
     expect(page.chosen).toBeUndefined()
     expect(page.tradeoff).toBeUndefined()
-    expect(page.boundary).toBeUndefined()
-    expect(page.notes).toBeUndefined()
     expect(parseDeck(template).pages[0]).toMatchObject({
       layout: "side-by-side",
     })

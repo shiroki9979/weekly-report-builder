@@ -114,12 +114,6 @@ describe("Cover and Closing contracts", () => {
     expect(deck.pages[0]).toHaveProperty("boundary", "Scope")
   })
 
-  it("reads a whitespace-only Boundary Note as absent", () => {
-    const deck = parseDeck({ pages: [{ ...closing, boundary: "  " }] })
-
-    expect(deck.pages[0]).not.toHaveProperty("boundary", expect.any(String))
-  })
-
   it("keeps an Eyebrow only on Editorial Frame layouts", () => {
     const demo = readDemoWeek()
 
@@ -134,16 +128,6 @@ describe("Cover and Closing contracts", () => {
     }
   })
 
-  it("saves no eyebrow when the authored Eyebrow is only whitespace", () => {
-    const deck = parseDeck({ pages: [{ ...closing, eyebrow: "  " }] })
-
-    expect(deck.pages[0]).not.toHaveProperty("eyebrow", expect.any(String))
-    expect(JSON.parse(serializeDeck(deck)).pages[0]).not.toHaveProperty(
-      "eyebrow"
-    )
-  })
-
-  // 舊 Closing JSON 的 eyebrow 寫在 title 之後；存檔時維持原位，才不會為了升級產生無意義 diff
   it("saves a Closing eyebrow from before #74 where it was written", () => {
     const legacy = {
       id: "last",

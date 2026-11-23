@@ -220,7 +220,7 @@
 
 ### 13. 編譯器看得見的 Editorial Frame 成員資格
 
-- **相關 module**：`src/lib/deck.ts`（`UnknownPage`、`Page`、`EditorialFramePage`、`isEditorialFramePage`、`matchPage`）、`src/lib/stage-page-context.ts`、`src/lib/eyebrow.ts`、`tests/unit/support/editorial-frame-layouts.ts`、`tsconfig.app.json`、`tsconfig.node.json`。
+- **相關 module**：`src/lib/deck.ts`（`UnknownPage`、`Page`、`EditorialFramePage`、`isEditorialFramePage`、`matchPage`）、`src/lib/stage-page-context.ts`、`src/lib/page-chrome.ts`（原 `src/lib/eyebrow.ts`）、`tests/unit/support/editorial-frame-layouts.ts`、`tsconfig.app.json`、`tsconfig.node.json`。
 - **問題**：「哪些 Structured Layout 屬於 Editorial Frame」由聯集加 8 個結構 guard 的手寫 OR 鏈表示（`deck.ts:385-408`）。TS 不檢查 `page is EditorialFramePage` 這個宣稱，src 也沒有 runtime 清單。這條鏈是被最多 module 依賴的 layout 事實：parse chrome、template chrome、頁碼 slot、`isStructuredPage`（再餵給 Export Readiness、export gate、Editing Session 的 save gate、readiness summary）、編輯器的 Eyebrow／Boundary Note 欄位。新 layout 漏加進鏈仍會編譯通過：parse 時 Eyebrow 與 Boundary Note 靜默丟失、沒有頁碼 slot、Export Readiness 判定不能匯出（靜態推論）。
 - **根因**：`UnknownPage`（`deck.ts:270-275`，`layout: string` 加 index signature）與每個 layout literal 重疊，`Page` 不是 discriminated union。所以 guard 只能寫成結構判斷，成員資格無法由 const 清單派生，`matchPage` 也是不受窮舉檢查的 if 鏈。6 的 2026-11-09 更新列出了不受檢查的手寫清單，但沒有點出這個根因。
 - **做法**：第一步，讓每個 layout 都必須明確決定成員資格（例如像以前的 `hasPageNumberSlot` 一樣經 `matchPage` 派生），並把 `tests/` 納入 typecheck。第二步，unknown layout 移出已知 literal，`Page`、`StructuredPage`、`EditorialFramePage` 與 runtime 的 Editorial Frame layout 清單由同一張 const 清單派生（比照 `DECK_THEMES`），`matchPage` 成為窮舉 switch。
@@ -343,7 +343,7 @@ Copy 與 batch export 共用同一條單頁流程。
 
 ### 14. 一個 Editorial Frame chrome module
 
-- **相關 module**：`src/lib/deck-template.ts`、`src/lib/export-readiness.ts`、`src/lib/deck.ts`（`EditorialPageChrome`、`parsePageChrome`、`withEditorialFrameChrome`）、`src/lib/deck-editor.ts`、`src/lib/eyebrow.ts`、`src/components/workshop/editorial-page-editor-chrome.tsx`。
+- **相關 module**：`src/lib/deck-template.ts`、`src/lib/export-readiness.ts`、`src/lib/deck.ts`（`EditorialPageChrome`、`parsePageChrome`、`withEditorialFrameChrome`）、`src/lib/deck-editor.ts`、`src/lib/page-chrome.ts`（原 `src/lib/eyebrow.ts`）、`src/components/workshop/editorial-page-editor-chrome.tsx`。
 - **問題**：#76 把 Eyebrow 與 Boundary Note 的 Deck Template 清除收成共用步驟，#75 讓 Editorial Frame 從頁面讀取 chrome；但 headline、Hidden、Title 必填與「空白視為缺席」仍按 layout 重寫。6 個 `clearPage` arm 以 `...page` 沿用、5 個重建頁面，所以沒列進共用步驟的選填 chrome 欄位，會在 Full-width Panel、Side-by-side Comparison、Closing、Trend & Target 保留，在 Overview、Evidence-backed Decision、Next Actions、Two-column 丟失（靜態推論）。
 - **做法**：一個 module 持有 Editorial Frame chrome 的欄位清單、空白規則、預設 Eyebrow、每個欄位的 Deck Template 政策、headline 的 readiness 規則與 setter；每個 layout 的 clear 與 assess 只處理本文；`eyebrow.ts` 併入。
 - **Deletion test**：刪掉 11 個 title 清除與 8 個 Title 檢查，複雜度收進一個步驟，不會散回 N 個呼叫端。
@@ -372,11 +372,12 @@ Copy 與 batch export 共用同一條單頁流程。
     - 修法是固定每個 chrome 欄位的位置，缺席時仍保留 key（值為 `undefined`），parser、Deck Template、空白頁工廠都經同一個組裝函式。
   - 本文欄位的空白缺陷（`closingLine`、`byline`、tradeoff `cost`）移到 #101。
 - **2026-11-23 實作**：
-  - `src/lib/page-chrome.ts` 持有存檔欄位順序（`inPageChromeOrder`、`inEditorialFrameChromeOrder`，由 `deck.ts` 的 `inSavedKeyOrder` 依成員分派）、Deck Template 政策（`pageTemplateChrome`、`editorialFrameTemplateChrome`，回傳型別要求列出每個 chrome 欄位）、`headlineIssues`、預設 Eyebrow 與 `resolveEyebrow`；`eyebrow.ts` 刪除。module 只 import `deck.ts` 的型別。
+  - `src/lib/page-chrome.ts` 持有存檔欄位順序（`PAGE_CHROME_SLOTS`、`EDITORIAL_FRAME_CHROME_SLOTS` 以欄位為 key，新增 chrome 欄位漏排位置即編譯失敗；由 `deck.ts` 的 `inSavedKeyOrder` 依成員分派）、Deck Template 政策（`pageTemplateChrome`、`editorialFrameTemplateChrome`，回傳型別要求列出每個 chrome 欄位）、`headlineIssues`、預設 Eyebrow 與 `resolveEyebrow`；`eyebrow.ts` 刪除。module 只 import `deck.ts` 的型別。
   - `clearPageContent` 的 arm 只清本文：11 個 `title: ""` 與 5 個手抄的 `hidden` 刪除。8 個 assess 函式不再檢查 title，Cover 沒有自己的內容規則。
   - `src/lib/optional-text.ts` 的 `isBlank`／`absentWhenBlank` 取代 `deck-editor.ts` 的 `absentWhenBlank`、`export-readiness.ts` 的 `isBlank`、parser 的 `trim() === ""` 與 speaker notes cue 的同一判斷。只含空白的講稿改為缺席。Deck Title parser 的 trim 行為未動。
   - 實作時另外發現：新增頁先寫講稿再設 Hidden，存檔後 `notes` 與 `hidden` 也會換位置，已一併修正。
-  - 測試：`tests/unit/page-chrome.test.ts` 以三個入口測存檔、重新載入、再存檔的位元組相同，以 `PageKind` 表格測 Deck Template 政策，以每個 Structured Layout 測 Headline。`deck-template.test.ts` 的逐版型 Eyebrow／Boundary Note／頁碼檢查與 `cover-closing.test.ts` 的 Cover／Closing title 檢查刪除；各版型「依 schema 順序列出 issue」的測試保留，因為它們斷言的是整份輸出順序。
+  - 測試：`tests/unit/page-chrome.test.ts` 以三個入口測存檔、重新載入、再存檔的位元組相同，以 `PageKind` 表格測 Deck Template 政策，以每個 Structured Layout 測 Headline，以每個選填 chrome 文字欄位測空白規則。刪除的重複斷言：`deck-template.test.ts` 的逐版型 Eyebrow／Boundary Note／頁碼檢查、`cover-closing.test.ts` 的 Cover／Closing title 與空白 Eyebrow／Boundary Note、`side-by-side.test.ts` 的 template title／Boundary Note／講稿、`deck-editor.test.ts` 的空白 Boundary Note。各版型「依 schema 順序列出 issue」的測試保留，因為它們斷言的是整份輸出順序。
+  - 未收緊的地方：`clearPageContent` 的 arm 以寬型別 `PageContent` 回傳，漏寫本文必填欄位不會編譯失敗。這與基準相同：`UnknownPage` 的 `layout: string` 加 index signature 讓舊的 `matchPage<Page>` 也接受缺欄位的 arm（以 `a253207` 刪掉 Overview arm 的 `lead` 實測，`tsc` 通過）。要等 13 的第二步讓 `Page` 成為真正的 discriminated union 才能逐 arm 檢查。
 
 ## 考慮過但判定保留
 

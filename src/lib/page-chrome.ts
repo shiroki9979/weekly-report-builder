@@ -10,10 +10,9 @@ import { absentWhenBlank, isBlank } from "./optional-text.ts"
 // 只依賴型別：deck.ts 的 parser 會呼叫這裡，執行期再 import deck.ts 就成了循環；
 // Editorial Frame 成員由呼叫端判斷，傳入已縮小型別的頁面
 
-type ChromeCarrier = PageChrome & { id: string; layout: string; title: string }
-
 type PageChromeFields = PageChrome & { title: string }
 type EditorialFrameChromeFields = PageChromeFields & EditorialPageChrome
+type ChromeCarrier = PageChromeFields & { id: string; layout: string }
 
 // 每個 chrome 欄位都得出現（值可為 undefined）：新增 chrome 欄位時漏寫它的 Deck Template 政策即編譯失敗
 type EveryField<T> = { [F in keyof Required<T>]: T[F] }
@@ -22,41 +21,61 @@ type EveryField<T> = { [F in keyof Required<T>]: T[F] }
 export type DelegatedTemplateChrome = { showPageNumber: boolean | undefined }
 
 // 每個 chrome 欄位固定一個存檔位置，缺席時仍保留 key（值為 undefined，JSON.stringify 會略過）；
-// setter 以 spread 覆寫時位置不變，存檔、重新載入、再存檔才不會換位置
-export function inPageChromeOrder<P extends ChromeCarrier>(page: P): P {
-  const { id, layout, title, hidden, notes, showPageNumber, ...content } = page
-  return { id, layout, title, ...content, hidden, notes, showPageNumber } as P
-}
+// setter 以 spread 覆寫時位置不變，存檔、重新載入、再存檔才不會換位置。
+// 以欄位為 key：新增 chrome 欄位卻沒排位置，會被當成本文、位置隨建構方式漂移，所以讓它編譯失敗
+type Slot = "beforeContent" | "afterContent"
 
-// Eyebrow 緊接在 headline 之後、Boundary Note 收在最後，對應 Stage 由上而下的順序
-export function inEditorialFrameChromeOrder<
-  P extends ChromeCarrier & EditorialPageChrome,
->(page: P): P {
-  const {
-    id,
-    layout,
-    title,
-    eyebrow,
-    hidden,
-    notes,
-    showPageNumber,
-    boundary,
-    ...content
-  } = page
+const PAGE_CHROME_SLOTS = {
+  title: "beforeContent",
+  hidden: "afterContent",
+  notes: "afterContent",
+  showPageNumber: "afterContent",
+} as const satisfies Record<keyof PageChromeFields, Slot>
+
+// Eyebrow 緊接在 Headline 之後、Boundary Note 收在最後，對應 Stage 由上而下的順序
+const EDITORIAL_FRAME_CHROME_SLOTS = {
+  ...PAGE_CHROME_SLOTS,
+  eyebrow: "beforeContent",
+  boundary: "afterContent",
+} as const satisfies Record<keyof EditorialFrameChromeFields, Slot>
+
+function inSlotOrder<P extends ChromeCarrier>(
+  page: P,
+  slots: Record<string, Slot>
+): P {
+  const fields = page as Record<string, unknown>
+  const chromeIn = (slot: Slot) =>
+    Object.fromEntries(
+      Object.keys(slots)
+        .filter((field) => slots[field] === slot)
+        .map((field) => [field, fields[field]])
+    )
+  const content = Object.fromEntries(
+    Object.entries(fields).filter(
+      ([field]) =>
+        field !== "id" && field !== "layout" && !Object.hasOwn(slots, field)
+    )
+  )
   return {
-    id,
-    layout,
-    title,
-    eyebrow,
+    id: page.id,
+    layout: page.layout,
+    ...chromeIn("beforeContent"),
     ...content,
-    hidden,
-    notes,
-    showPageNumber,
-    boundary,
+    ...chromeIn("afterContent"),
   } as P
 }
 
-// Deck Template 對每一頁 chrome 的處理，HTML Page 與 unknown 頁也適用
+export function inPageChromeOrder<P extends ChromeCarrier>(page: P): P {
+  return inSlotOrder(page, PAGE_CHROME_SLOTS)
+}
+
+export function inEditorialFrameChromeOrder<
+  P extends ChromeCarrier & EditorialPageChrome,
+>(page: P): P {
+  return inSlotOrder(page, EDITORIAL_FRAME_CHROME_SLOTS)
+}
+
+// 這組欄位每一頁都有，HTML Page 與 unknown 頁換週時也照同一份政策，不另寫例外
 export function pageTemplateChrome(
   page: PageChromeFields,
   delegated: DelegatedTemplateChrome
@@ -111,7 +130,7 @@ export function defaultEyebrow(layout: EditorialFrameLayout): string {
   return DEFAULT_EYEBROWS[layout]
 }
 
-// 作者沒寫（或只寫了空白）時退回版型預設詞
+// 只含空白的作者值視同未填，免得誤輸入的空白蓋掉預設詞
 export function resolveEyebrow(page: EditorialFramePage): string {
   return absentWhenBlank(page.eyebrow)?.trim() ?? defaultEyebrow(page.layout)
 }

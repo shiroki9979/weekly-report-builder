@@ -51,7 +51,7 @@ function editEveryChromeField(deck: Deck): Deck {
 
 describe("saved chrome key order", () => {
   it.each(ADDABLE_LAYOUTS)(
-    "an added %s page saves the same after its chrome is edited and the Deck reloads",
+    "keeps an added %s page's saved key order after its chrome is edited and the Deck reloads",
     (layout) => {
       const added: Deck = {
         pages: [createBlankAddablePage("p01", layout, "table")],
@@ -63,7 +63,7 @@ describe("saved chrome key order", () => {
   )
 
   it.each(demoDecks.map(({ id, deck }) => [id, deck] as const))(
-    "a Deck created from %s saves the same after it reloads",
+    "keeps the saved key order of a Deck created from %s after it reloads",
     (_id, template) => {
       const saved = serializeDeck(createDeckFromTemplate(template))
 
@@ -72,7 +72,7 @@ describe("saved chrome key order", () => {
   )
 
   it.each(demoDecks.map(({ id, deck }) => [id, deck] as const))(
-    "a loaded %s saves the same after its chrome is edited and it reloads",
+    "keeps a loaded %s Deck's saved key order after its chrome is edited and it reloads",
     (_id, loaded) => {
       const saved = serializeDeck(editEveryChromeField(loaded))
 
@@ -200,7 +200,7 @@ const TEMPLATE_CHROME_CASES: Record<
   },
 }
 
-function fieldsOf(page: Page, expected: Record<string, unknown>) {
+function pickExpectedFields(page: Page, expected: Record<string, unknown>) {
   const fields = page as Record<string, unknown>
   return Object.fromEntries(
     Object.keys(expected).map((key) => [key, fields[key]])
@@ -213,7 +213,7 @@ describe("Deck Template chrome", () => {
     (_kind, { page, expected }) => {
       const [created] = createDeckFromTemplate({ pages: [page] }).pages
 
-      expect(fieldsOf(created, expected)).toEqual(expected)
+      expect(pickExpectedFields(created, expected)).toEqual(expected)
     }
   )
 })
