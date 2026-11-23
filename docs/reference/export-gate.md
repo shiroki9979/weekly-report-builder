@@ -1,20 +1,21 @@
 # Export gate
 
 建立日期：2026-11-21  
-最後更新：2026-11-21
+最後更新：2026-11-23
 
 ---
 
 Copy（目前頁）與 batch export（全部未隱藏頁）共用同一個單頁 Export gate，判斷一頁能否輸出 PNG、不能時回報什麼原因。Schema 合法與可匯出是兩件事：parser 接受空白草稿，可匯出與否由本頁的規則決定。各版型欄位見 [Deck JSON 格式](deck-json-format.md)，HTML Page 的載入與掛載見 [HTML Page](html-page.md)。
 
-| 模組                                  | 職責                                                |
-| ------------------------------------- | --------------------------------------------------- |
-| `src/lib/export-readiness.ts`         | `assessContentReadiness`、`assessExportEligibility` |
-| `src/lib/overflow-measurement.ts`     | 1280 × 720 capture Stage 的 overflow 量測           |
-| `src/lib/export-page-gate.ts`         | 單頁 gate：支援度、內容、量測、PNG 產生的順序與逾時 |
-| `src/lib/capture-limits.ts`           | HTML 載入與 capture 準備的時間上限                  |
-| `src/lib/browser-capture-adapter.tsx` | 離屏 capture host、HTML 載入訊號與清理              |
-| `src/lib/deck-export.ts`              | batch 的頁面選取、輸出與結果計數                    |
+| 模組                                  | 職責                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/lib/export-readiness.ts`         | `assessContentReadiness`、`assessExportEligibility`                            |
+| `src/lib/page-chrome.ts`              | `headlineIssues`：每個 Structured Layout 的 Headline 必填，排在本文 issue 之前 |
+| `src/lib/overflow-measurement.ts`     | 1280 × 720 capture Stage 的 overflow 量測                                      |
+| `src/lib/export-page-gate.ts`         | 單頁 gate：支援度、內容、量測、PNG 產生的順序與逾時                            |
+| `src/lib/capture-limits.ts`           | HTML 載入與 capture 準備的時間上限                                             |
+| `src/lib/browser-capture-adapter.tsx` | 離屏 capture host、HTML 載入訊號與清理                                         |
+| `src/lib/deck-export.ts`              | batch 的頁面選取、輸出與結果計數                                               |
 
 ## 判斷順序
 
