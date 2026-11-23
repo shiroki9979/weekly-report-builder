@@ -1,5 +1,11 @@
-import type { EditorialPageChrome, PageChrome } from "./deck.ts"
+import type {
+  EditorialFrameLayout,
+  EditorialFramePage,
+  EditorialPageChrome,
+  PageChrome,
+} from "./deck.ts"
 import type { ExportIssue } from "./export-readiness.ts"
+import { absentWhenBlank, isBlank } from "./optional-text.ts"
 
 // 只依賴型別：deck.ts 的 parser 會呼叫這裡，執行期再 import deck.ts 就成了循環；
 // Editorial Frame 成員由呼叫端判斷，傳入已縮小型別的頁面
@@ -82,7 +88,30 @@ export function editorialFrameTemplateChrome(
 // Headline 是每個 Structured Layout 頁面唯一必填的 chrome；排在問題清單第一位，對應它在頁面最上方。
 // HTML Page 的 title 只是工坊標籤，呼叫端不會拿 HTML Page 來問
 export function headlineIssues(page: { title: string }): ExportIssue[] {
-  return page.title.trim() === ""
+  return isBlank(page.title)
     ? [{ code: "missing-content", path: "title", message: "Title is required" }]
     : []
+}
+
+// 唯一的預設詞來源，Stage 與工坊共用才不會顯示不同的詞；
+// 以 Record 鍵住每個 Editorial Frame 版型，新增版型漏登記時型別檢查即失敗。
+// Two-column 是通用版型，沒有固定的溝通任務，留空讓作者自行寫出（#74）。
+const DEFAULT_EYEBROWS: Record<EditorialFrameLayout, string> = {
+  overview: "Overview",
+  "evidence-decision": "Evidence-backed Decision",
+  "next-actions": "Next Actions",
+  "trend-target": "Trend & Target",
+  "side-by-side": "Comparison",
+  "full-width-panel": "Panel",
+  closing: "Closing",
+  "two-column": "",
+}
+
+export function defaultEyebrow(layout: EditorialFrameLayout): string {
+  return DEFAULT_EYEBROWS[layout]
+}
+
+// 作者沒寫（或只寫了空白）時退回版型預設詞
+export function resolveEyebrow(page: EditorialFramePage): string {
+  return absentWhenBlank(page.eyebrow)?.trim() ?? defaultEyebrow(page.layout)
 }

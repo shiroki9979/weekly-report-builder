@@ -1,4 +1,5 @@
 import { validateHtmlFileName } from "./html-page.ts"
+import { absentWhenBlank } from "./optional-text.ts"
 import {
   inEditorialFrameChromeOrder,
   inPageChromeOrder,
@@ -104,7 +105,7 @@ export type PageChrome = {
   showPageNumber?: boolean
 }
 
-// Eyebrow 是作者覆寫；省略時由 renderer 依版型給預設詞（見 eyebrow.ts）
+// Eyebrow 是作者覆寫；省略時由 renderer 依版型給預設詞（見 page-chrome.ts）
 export type EditorialPageChrome = PageChrome & {
   eyebrow?: string
   boundary?: string
@@ -1366,7 +1367,10 @@ function parsePageChrome(
     id: readNonEmptyString(value.id, `${field}.id`),
     title: readString(value.title, `${field}.title`),
     hidden: typeof value.hidden === "boolean" ? value.hidden : undefined,
-    notes: typeof value.notes === "string" ? value.notes : undefined,
+    notes:
+      typeof value.notes === "string"
+        ? absentWhenBlank(value.notes)
+        : undefined,
     showPageNumber:
       typeof value.showPageNumber === "boolean"
         ? value.showPageNumber
@@ -1417,9 +1421,9 @@ function readOptionalChromeText(
   value: unknown,
   field: string
 ): string | undefined {
-  if (value === undefined) return undefined
-  const text = readString(value, field)
-  return text.trim() === "" ? undefined : text
+  return value === undefined
+    ? undefined
+    : absentWhenBlank(readString(value, field))
 }
 
 export function parseDeck(value: unknown): Deck {

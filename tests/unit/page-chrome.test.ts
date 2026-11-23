@@ -262,3 +262,41 @@ describe("Headline readiness", () => {
     expect(assessment).toEqual({ eligible: true, issues: [] })
   })
 })
+
+// 只有空白的選填 chrome 文字與省略同義：存檔不寫出它，Stage 也不會畫出空的 Eyebrow 或分隔線
+const OPTIONAL_CHROME_TEXT = {
+  eyebrow: setPageEyebrow,
+  boundary: setPageBoundary,
+  notes: setPageNotes,
+} satisfies Record<string, (deck: Deck, index: number, text: string) => Deck>
+
+describe("blank optional chrome text", () => {
+  const closing = createBlankAddablePage("p01", "closing", "table")
+
+  it.each(Object.entries(OPTIONAL_CHROME_TEXT))(
+    "saves no %s when the author types only whitespace",
+    (field, setText) => {
+      const deck = setText({ pages: [closing] }, 0, "   ")
+
+      expect(JSON.parse(serializeDeck(deck)).pages[0]).not.toHaveProperty(field)
+    }
+  )
+
+  it.each(Object.keys(OPTIONAL_CHROME_TEXT))(
+    "reads a whitespace-only %s as absent",
+    (field) => {
+      const deck = parseDeck({ pages: [{ ...closing, [field]: " \n " }] })
+
+      expect(deck.pages[0]).not.toHaveProperty(field, expect.any(String))
+    }
+  )
+
+  it.each(Object.entries(OPTIONAL_CHROME_TEXT))(
+    "keeps the %s exactly as typed once it has text",
+    (field, setText) => {
+      const deck = setText({ pages: [closing] }, 0, " Risks ")
+
+      expect(deck.pages[0]).toHaveProperty(field, " Risks ")
+    }
+  )
+})

@@ -24,6 +24,7 @@ import {
   type OverviewPage,
 } from "./deck"
 import { errorMessage } from "./error-message"
+import { isBlank } from "./optional-text"
 import { headlineIssues } from "./page-chrome"
 import {
   isTrendDirection,
@@ -81,10 +82,6 @@ function missing(path: string, message: string): ExportIssue {
 
 function invalid(path: string, message: string): ExportIssue {
   return { code: "invalid-content", path, message }
-}
-
-function isBlank(value: string): boolean {
-  return value.trim() === ""
 }
 
 function assessTable(panel: TablePanel): ExportIssue[] {
