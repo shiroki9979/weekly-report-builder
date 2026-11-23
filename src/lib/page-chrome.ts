@@ -1,4 +1,5 @@
 import type { EditorialPageChrome, PageChrome } from "./deck.ts"
+import type { ExportIssue } from "./export-readiness.ts"
 
 // 只依賴型別：deck.ts 的 parser 會呼叫這裡，執行期再 import deck.ts 就成了循環；
 // Editorial Frame 成員由呼叫端判斷，傳入已縮小型別的頁面
@@ -76,4 +77,12 @@ export function editorialFrameTemplateChrome(
     // Boundary Note 描述的是當週主張的成立範圍，換一週就不再成立
     boundary: undefined,
   }
+}
+
+// Headline 是每個 Structured Layout 頁面唯一必填的 chrome；排在問題清單第一位，對應它在頁面最上方。
+// HTML Page 的 title 只是工坊標籤，呼叫端不會拿 HTML Page 來問
+export function headlineIssues(page: { title: string }): ExportIssue[] {
+  return page.title.trim() === ""
+    ? [{ code: "missing-content", path: "title", message: "Title is required" }]
+    : []
 }

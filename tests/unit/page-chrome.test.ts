@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   isEditorialFramePage,
+  isStructuredPage,
   parseDeck,
   type Deck,
   type Page,
@@ -17,6 +18,10 @@ import {
 } from "@/lib/deck-editor"
 import { createDeckFromTemplate } from "@/lib/deck-template"
 import { serializeDeck } from "@/lib/decks-io"
+import {
+  assessContentReadiness,
+  assessExportEligibility,
+} from "@/lib/export-readiness"
 import {
   ADDABLE_LAYOUTS,
   createBlankAddablePage,
@@ -211,4 +216,49 @@ describe("Deck Template chrome", () => {
       expect(fieldsOf(created, expected)).toEqual(expected)
     }
   )
+})
+
+function blankStructuredPage(layout: AddableLayout) {
+  const page = createBlankAddablePage("p01", layout, "table")
+  if (!isStructuredPage(page)) throw new Error(`${layout} is not structured`)
+  return page
+}
+
+describe("Headline readiness", () => {
+  it.each(ADDABLE_LAYOUTS)(
+    "reports a missing %s Headline before any other content",
+    (layout) => {
+      const issues = assessContentReadiness({
+        ...blankStructuredPage(layout),
+        title: "  ",
+      })
+
+      expect(issues[0]).toEqual({
+        code: "missing-content",
+        path: "title",
+        message: "Title is required",
+      })
+    }
+  )
+
+  it.each(ADDABLE_LAYOUTS)(
+    "reports nothing about a written %s Headline",
+    (layout) => {
+      const issues = assessContentReadiness({
+        ...blankStructuredPage(layout),
+        title: "The pilot holds",
+      })
+
+      expect(issues.map((issue) => issue.path)).not.toContain("title")
+    }
+  )
+
+  it("does not require an HTML Page title, which is only a workshop label", () => {
+    const assessment = assessExportEligibility(
+      { id: "p01", layout: "html", title: "", htmlFile: "p01.html" },
+      { status: "fit" }
+    )
+
+    expect(assessment).toEqual({ eligible: true, issues: [] })
+  })
 })

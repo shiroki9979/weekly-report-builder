@@ -7,7 +7,6 @@ import {
   isSupportedStagePage,
   matchPage,
   type ChartPanel,
-  type CoverPage,
   type ClosingPage,
   type SideBySidePage,
   type ChecklistPanel,
@@ -25,6 +24,7 @@ import {
   type OverviewPage,
 } from "./deck"
 import { errorMessage } from "./error-message"
+import { headlineIssues } from "./page-chrome"
 import {
   isTrendDirection,
   trendBounds,
@@ -209,14 +209,8 @@ function assessChecklist(panel: ChecklistPanel): ExportIssue[] {
   )
 }
 
-function assessCover(page: CoverPage): ExportIssue[] {
-  return isBlank(page.title) ? [missing("title", "Title is required")] : []
-}
-
 function assessClosing(page: ClosingPage): ExportIssue[] {
-  const issues = isBlank(page.title)
-    ? [missing("title", "Title is required")]
-    : []
+  const issues: ExportIssue[] = []
   page.takeaways.forEach((takeaway, index) => {
     if (isBlank(takeaway.text))
       issues.push(
@@ -227,9 +221,7 @@ function assessClosing(page: ClosingPage): ExportIssue[] {
 }
 
 function assessSideBySide(page: SideBySidePage): ExportIssue[] {
-  const issues = isBlank(page.title)
-    ? [missing("title", "Title is required")]
-    : []
+  const issues: ExportIssue[] = []
   page.columns.forEach((column, columnIndex) => {
     const path = `columns[${columnIndex}]`
     if (isBlank(column.label))
@@ -252,10 +244,6 @@ function assessSideBySide(page: SideBySidePage): ExportIssue[] {
 function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
   const issues: ExportIssue[] = []
 
-  if (isBlank(page.title)) {
-    issues.push(missing("title", "Title is required"))
-  }
-
   page.items.forEach((item, index) => {
     if (isBlank(item.heading)) {
       issues.push(
@@ -275,10 +263,7 @@ function assessTwoColumn(page: TwoColumnPage): ExportIssue[] {
 }
 
 function assessFullWidthPanel(page: FullWidthPanelPage): ExportIssue[] {
-  return [
-    ...(isBlank(page.title) ? [missing("title", "Title is required")] : []),
-    ...assessPanelContent(page.panel),
-  ]
+  return assessPanelContent(page.panel)
 }
 
 function assessPanelContent(panel: Panel): ExportIssue[] {
@@ -317,10 +302,6 @@ function requireOutcomeText(outcome: Outcome, prefix: string): ExportIssue[] {
 
 function assessOverview(page: OverviewPage): ExportIssue[] {
   const issues: ExportIssue[] = []
-
-  if (isBlank(page.title)) {
-    issues.push(missing("title", "Title is required"))
-  }
 
   issues.push(...requireOutcomeText(page.lead, "lead"))
   page.supporting.forEach((outcome, index) => {
@@ -365,9 +346,6 @@ function assessEvidenceDecision(
 ): ExportIssue[] {
   const issues: ExportIssue[] = []
 
-  if (isBlank(page.title)) {
-    issues.push(missing("title", "Title is required"))
-  }
   if (isBlank(page.verdict)) {
     issues.push(missing("verdict", "Verdict is required"))
   }
@@ -402,10 +380,6 @@ function assessEvidenceDecision(
 
 function assessNextActions(page: NextActionsPage): ExportIssue[] {
   const issues: ExportIssue[] = []
-
-  if (isBlank(page.title)) {
-    issues.push(missing("title", "Title is required"))
-  }
 
   page.commitments.forEach((commitment, index) => {
     if (isBlank(commitment.title)) {
@@ -446,7 +420,6 @@ function assessTrendTarget(
 
 function trendTextIssues(page: TrendTargetPage): ExportIssue[] {
   const fields = [
-    ["title", page.title, "Title"],
     ["metric.label", page.metric.label, "Metric label"],
     ["interpretation", page.interpretation, "Interpretation"],
     ["measurementContext", page.measurementContext, "Measurement Context"],
@@ -564,13 +537,23 @@ export type ReadinessContext = {
   asOf?: string
 }
 
-// issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示
+// issue 依各版面 schema 宣告序逐欄產生，呼叫端可直接依序顯示；Headline 屬於 chrome，先於本文
 export function assessContentReadiness(
   page: StructuredPage,
   { metricInput = {}, asOf }: ReadinessContext = {}
 ): ExportIssue[] {
+  return [
+    ...headlineIssues(page),
+    ...assessPageContent(page, { metricInput, asOf }),
+  ]
+}
+
+function assessPageContent(
+  page: StructuredPage,
+  { metricInput = {}, asOf }: ReadinessContext
+): ExportIssue[] {
   return matchPage(page, {
-    cover: assessCover,
+    cover: () => [],
     closing: assessClosing,
     sideBySide: assessSideBySide,
     fullWidthPanel: assessFullWidthPanel,

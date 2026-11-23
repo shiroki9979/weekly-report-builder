@@ -218,18 +218,6 @@ describe("Cover and Closing contracts", () => {
     }
   })
 
-  it("requires a visible title on Cover and Closing", () => {
-    for (const page of titledCoverAndClosing.pages.map(structured)) {
-      expect(assessContentReadiness({ ...page, title: " " })).toEqual([
-        {
-          code: "missing-content",
-          path: "title",
-          message: "Title is required",
-        },
-      ])
-    }
-  })
-
   it("requires text on every Closing takeaway", () => {
     const last = parseDeck({
       pages: [{ ...closing, takeaways: [{ ref: "02", text: " " }] }],
