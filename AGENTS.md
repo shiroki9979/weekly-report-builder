@@ -7,6 +7,7 @@
 - **16:9 stage**: no shadcn; `stage.css` roles, `editorial-layouts.css` for Editorial Layouts, and `observatory-theme.css` for the Observatory Deck Theme; slide content comes from `decks/*.json` and may be any language.
 - **Code comments**: Traditional Chinese (why, not what).
 - **README / agent docs**: English unless the user asks otherwise.
+- **Agent replies to the user** (chat, not files): Traditional Chinese (zh-TW). Claude Code reads this from `language` in `.claude/settings.json`.
 
 See `.cursor/rules/language.mdc`.
 
