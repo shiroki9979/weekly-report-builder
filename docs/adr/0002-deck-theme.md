@@ -25,7 +25,7 @@ Stage 目前只有一套視覺語言：`stage.css` 的 `--blue*` token 對齊團
 
 - 主題提供的 token 是角色：`--paper`、`--ink`、`--mute`、`--line`、`--accent`、`--accent-deep`、`--accent-soft`、`--accent-wash`、`--ok`、`--ok-ink`、`--ok-wash`、`--warn`、`--warn-ink`。
 - 2026-11-20 修訂：新增字型角色 `--mono`（等寬字堆疊），每個主題都必須定義。HTML Page 的等寬字一律用 `var(--mono)`，才能跟著主題換字型；內文字型不設角色，靠 `.stage-root` 繼承。依本節「只能新增」的規則原地修訂，不另開 ADR。
-- 2026-11-23 修訂：新增 Editorial Frame 外框字型角色 `--frame-font`。哪些外框元素讀這個角色（eyebrow、Frame Label、workstream、status、頁尾、Boundary Note）只寫在 `editorial-layouts.css`，主題只提供值：`default` 設為 `initial`，`var()` 在計算值時失效，外框沿用內文字型；`observatory` 與 `ledger` 設為 `var(--mono)`。角色只管字型：沒有主題改動這些元素的字級或字距。主題對單一版型本文元素的字型處理（例如 `observatory` 的 Closing takeaway ref 與 closing line）屬於下節的 Stage Element 處理，不併入這個角色。依本節「只能新增」的規則原地修訂。
+- 2026-11-23 修訂：新增字型角色 `--frame-font`。讀這個角色的元素（Editorial Frame 的 Eyebrow、Frame Label、Boundary Note 與頁尾，以及 Overview Outcome 的 workstream 與 Status Signal）只列在 `editorial-layouts.css`，主題只提供值：`default` 設為 `initial`，`var()` 在計算值時失效，外框沿用內文字型；`observatory` 與 `ledger` 設為 `var(--mono)`。角色只管字型：沒有主題改動這些元素的字級或字距。這個角色只給上述元素讀，HTML Page 的等寬字仍用 `var(--mono)`。主題對單一版型本文元素的字型處理（例如 `observatory` 的 Closing takeaway ref 與 closing line）屬於下節的 Stage Element 處理，不併入這個角色。依本節「只能新增」的規則原地修訂。
 - 既有 `--blue`、`--blue-deep`、`--blue-soft`、`--blue-wash` 保留，定義為對應 accent 角色的別名。[HTML Page](../reference/html-page.md#色彩與字型) 允許片段引用這些名稱，別名讓既有片段不必改就跟著主題走。
 - 角色名稱是 HTML Page 的契約：新增主題不得改名或刪除既有角色，只能新增。
 
@@ -50,7 +50,7 @@ Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target
 ## 後果
 
 - Deck JSON 多一個欄位；`docs/reference/deck-json-format.md` 同步更新。
-- 新主題的對比與 tone 由主題樣式表負責，Playwright 依 `DECK_THEMES` 在每個主題下各跑一次 layout fixture。
+- 新主題的對比與 tone 由主題樣式表負責，Playwright 依 `DECK_THEMES` 在每個主題下各跑一次 layout fixture；目前有三個版型 spec 例外，見本節最後一項。
 - HTML Page 作者若要跟隨主題，用角色名稱或既有 `--blue*` 別名即可；寫死色碼的片段不受影響也不跟隨。
 - 追蹤規格：issue [#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)（Observatory）、[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)（Ledger）。
 - 新增主題時：`DECK_THEMES` 是唯一清單。`deck-theme.spec` 以 `Record<DeckTheme, …>` 宣告各主題的預期值，`demo-deck-set.test.ts` 要求每個主題都有一份 Demo Deck，Workshop 的主題選單標籤也是 `Record<DeckTheme, …>`，漏掉這幾項會讓型別檢查或測試失敗；`editorial-footer-overlap.spec` 迴圈 `DECK_THEMES`，新主題自動納入。型別檢查不會提示的兩處：主題樣式表要在 `stage-frame.tsx` 手動 import；`cover-closing`、`side-by-side`、`full-width-panel` 三個 e2e 目前只跑 `default` 與 `observatory`，見 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)。（2026-11-23 修訂：原文誤稱 `editorial-footer-overlap.spec` 也以 `Record` 宣告預期值。）

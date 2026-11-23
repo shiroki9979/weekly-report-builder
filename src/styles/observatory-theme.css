@@ -84,7 +84,7 @@
   color: var(--accent);
 }
 
-/* Closing 本文的 Stage Element 處理，不是外框；ledger 沿用 default 構圖，不帶入 */
+/* Closing 本文的 Stage Element 處理，不屬於 --frame-font；ledger 不帶入 observatory 的 Stage Element 處理 */
 .stage-root[data-theme="observatory"] .editorial-takeaway-ref,
 .stage-root[data-theme="observatory"] .editorial-closing-line {
   font-family: var(--mono);

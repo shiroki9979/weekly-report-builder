@@ -304,7 +304,7 @@ export type DeckPeriod = {
   end: string
 }
 
-// 型別、parser 與 Workshop 選單共用這份清單；新增主題時型別檢查只會提示補選單標籤，樣式表要在 stage-frame.tsx 手動 import
+// 型別、parser 與 Workshop 選單共用這份清單；新增主題時型別檢查會提示補選單標籤與測試預期值，樣式表不受檢查，要在 stage-frame.tsx 手動 import
 export const DECK_THEMES = ["default", "observatory", "ledger"] as const
 
 export type DeckTheme = (typeof DECK_THEMES)[number]

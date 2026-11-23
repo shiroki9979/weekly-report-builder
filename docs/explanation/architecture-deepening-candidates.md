@@ -362,11 +362,11 @@ Copy 與 batch export 共用同一條單頁流程。
   - ADR-0002:54 說 `editorial-footer-overlap.spec` 以 `Record<DeckTheme, …>` 宣告預期值，實際沒有；`Record<DeckTheme, …>` 只出現在 `deck-theme.spec.ts` 與 `demo-deck-set.test.ts`。
   - 〈其他發現〉的 `describe.each(DECK_THEMES)` 一條已驗證：預設主題下的 DOM 同樣含 observatory 的標記（Closing 的 eyebrow 文字為 `§ 01 Closing`，頁尾文字為 `Deck1 / 101 / 01`），測試以 `eyebrowText()`（`editorial-frame-chrome.test.tsx:171-190`）與 `stage-slide.test.tsx:384` 的 regex 濾掉。
 - **2026-11-23 實作**：
-  - 角色為 `--frame-font`。`editorial-layouts.css` 列出讀它的 6 個 selector；`ledger-theme.css` 只剩 token，`observatory-theme.css` 的外框清單刪除。ADR-0002 原地修訂。
+  - 角色為 `--frame-font`。`editorial-layouts.css` 列出讀它的 6 個 selector（Editorial Frame 外框，加上 Overview Outcome 的 workstream 與 Status Signal）；`ledger-theme.css` 只剩 token，`observatory-theme.css` 的外框清單刪除。ADR-0002 原地修訂。
   - 兩項待決：`default` 設為 `initial`，`var()` 在計算值時失效，外框退回繼承內文字型，內文字型不必另設角色。角色只管字型，因為沒有主題改動這 6 個元素的字級或字距。
-  - `.editorial-takeaway-ref` 與 `.editorial-closing-line` 是 Closing 本文，不是外框，留在 `observatory-theme.css` 作為 Stage Element 處理。`ledger` 依「沿用 `default` 構圖」的前提不帶入，外觀不變。
+  - `.editorial-takeaway-ref` 與 `.editorial-closing-line` 是 Closing 本文，不是外框，留在 `observatory-theme.css` 作為 Stage Element 處理。`ledger` 不帶入 observatory 的 Stage Element 處理（見 `ledger-theme.css` 檔頭），外觀不變。
   - 驗證：3 份 Demo Deck × 3 個主題共 96 頁、4,173 個 Stage 元素的計算字型，與實作前逐一相同。`deck-theme.spec.ts` 的 furniture 測試改為要求每個元素落在 `--mono` 或內文字型；原本只斷言「不是 `--mono`」，外框退成瀏覽器預設字型也會通過。這份 e2e 清單是行為規格，不是要刪除的副本。
-  - 補遺的四項中，`deck.ts:307` 的註解與 ADR-0002:54 已修正；三個 e2e 的主題覆蓋另開 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)；`describe.each(DECK_THEMES)` 一條屬於 #93 的變體標記角色，不在本候選範圍。
+  - 補遺五項：清單分歧由本次實作消除；`deck.ts:307` 的註解與 ADR-0002:54 已修正；三個 e2e 的主題覆蓋另開 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)；`describe.each(DECK_THEMES)` 一條屬於 #93 的變體標記角色，不在本候選範圍。
 
 ## 考慮過但判定保留
 
@@ -423,7 +423,7 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
   - `stage-page-context.ts:60` 說補零規則只定一次，但 `table-panel.tsx:48`、`side-by-side-slide.tsx:35`、`next-actions-slide.tsx:13` 各自補零（補遺；相關 #87）。
   - `documentId` 的範圍比 2026-11-09 記錄的更廣：還有 `StagePageContext.documentId`（`stage-page-context.ts:15`）與 `html-slide.tsx:9`（補遺）。
   - `tsconfig.node.json` 也不涵蓋 `vitest.config.ts` 與 `playwright.config.ts`（補遺；已由 13 的第一步補上）。
-  - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。
+  - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。2026-11-23 已修正（#86）。
 
 ## 相關文件
 

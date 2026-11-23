@@ -4,7 +4,8 @@
   --editorial-frame-padding: 4.4% 5% 5%;
 }
 
-/* 外框字型清單只寫在這裡；主題只提供 --frame-font 的值，新增外框欄位不必改主題檔 */
+/* 讀 --frame-font 的元素只列在這裡：Editorial Frame 外框，加上 Overview Outcome 的 workstream 與 Status Signal。
+   主題只提供值，新增欄位不必改主題檔 */
 .editorial-eyebrow,
 .editorial-period,
 .editorial-workstream,

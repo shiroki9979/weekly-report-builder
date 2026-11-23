@@ -123,8 +123,8 @@ type ThemeExpectation = {
   embedsInstrumentSans: boolean
   // --mono 是否自架 IBM Plex Mono（用到 var(--mono) 時才嵌入）
   hostsIbmPlexMono: boolean
-  // eyebrow、Frame Label、workstream、status、頁尾、Boundary Note 是否改用 --mono；否則沿用內文字型
-  monoFrame: boolean
+  // --frame-font 的值：Editorial Frame 外框與 Overview 的 workstream、Status Signal 用 --mono 或內文字型
+  frameFont: "mono" | "body"
   // 跨版型共用的 item index（補零等寬索引）是否取代項目標記；ledger 刻意不帶入補零編號。
   // Side-by-side 與 Two-column 都讀這一項，不另記 Two-column 的標記種類
   itemIndex: boolean
@@ -146,7 +146,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     leadBackground: "rgb(238, 244, 250)",
     embedsInstrumentSans: false,
     hostsIbmPlexMono: false,
-    monoFrame: false,
+    frameFont: "body",
     itemIndex: false,
     twoColumnHeading: "--blue",
   },
@@ -157,7 +157,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     leadBackground: "rgba(0, 0, 0, 0)",
     embedsInstrumentSans: true,
     hostsIbmPlexMono: true,
-    monoFrame: true,
+    frameFont: "mono",
     itemIndex: true,
     twoColumnHeading: "--ink",
   },
@@ -169,7 +169,7 @@ const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     leadBackground: "rgb(219, 232, 244)",
     embedsInstrumentSans: false,
     hostsIbmPlexMono: true,
-    monoFrame: true,
+    frameFont: "mono",
     itemIndex: false,
     twoColumnHeading: "--blue",
   },
@@ -445,7 +445,7 @@ for (const theme of DECK_THEMES) {
       ibmPlexMono: embeds(/IBM Plex Mono/),
     }).toEqual({
       instrumentSans: expected.embedsInstrumentSans,
-      ibmPlexMono: expected.hostsIbmPlexMono && expected.monoFrame,
+      ibmPlexMono: expected.hostsIbmPlexMono && expected.frameFont === "mono",
     })
   })
 
@@ -515,7 +515,7 @@ for (const theme of DECK_THEMES) {
     if (expected.itemIndex) await expectItemIndexLook(index)
   })
 
-  test(`sets only the Editorial Frame furniture in --mono under ${theme} and keeps the rest in the body font`, async ({
+  test(`sets the Editorial Frame furniture in the ${theme} frame font and the rest in the body font`, async ({
     page,
     request,
   }) => {
@@ -561,7 +561,7 @@ for (const theme of DECK_THEMES) {
                 body: true,
               })
               if (matches.length === 0) return [selector, "missing"]
-              // 只比「不是 --mono」時，退成瀏覽器預設字型也會通過；改為要求明確落在兩者之一
+              // 只比「不是 --mono」的話，退成瀏覽器預設字型也會通過，所以要求每個元素明確落在兩者之一
               const fonts = new Set(
                 matches.map(({ mono, body }) =>
                   mono ? "mono" : body ? "body" : "other"
@@ -574,10 +574,7 @@ for (const theme of DECK_THEMES) {
       )
       .toEqual(
         Object.fromEntries([
-          ...furniture.map((selector) => [
-            selector,
-            expected.monoFrame ? "mono" : "body",
-          ]),
+          ...furniture.map((selector) => [selector, expected.frameFont]),
           ...content.map((selector) => [selector, "body"]),
         ])
       )
