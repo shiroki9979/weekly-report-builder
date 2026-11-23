@@ -35,17 +35,10 @@
   --chart-4: var(--ink);
   --chart-5: var(--mute);
   --mono: "IBM Plex Mono", "Noto Sans TC", monospace;
+  --frame-font: var(--mono);
   font-family:
     "Instrument Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
     sans-serif;
-}
-
-.stage-root[data-theme="observatory"] .editorial-eyebrow,
-.stage-root[data-theme="observatory"] .editorial-period,
-.stage-root[data-theme="observatory"] .editorial-workstream,
-.stage-root[data-theme="observatory"] .editorial-status,
-.stage-root[data-theme="observatory"] .editorial-page-number {
-  font-family: var(--mono);
 }
 
 .stage-root[data-theme="observatory"] .editorial-page-index {
@@ -91,7 +84,7 @@
   color: var(--accent);
 }
 
-.stage-root[data-theme="observatory"] .editorial-boundary,
+/* Closing 本文的 Stage Element 處理，不是外框；ledger 沿用 default 構圖，不帶入 */
 .stage-root[data-theme="observatory"] .editorial-takeaway-ref,
 .stage-root[data-theme="observatory"] .editorial-closing-line {
   font-family: var(--mono);

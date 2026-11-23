@@ -4,6 +4,16 @@
   --editorial-frame-padding: 4.4% 5% 5%;
 }
 
+/* 外框字型清單只寫在這裡；主題只提供 --frame-font 的值，新增外框欄位不必改主題檔 */
+.editorial-eyebrow,
+.editorial-period,
+.editorial-workstream,
+.editorial-status,
+.editorial-page-number,
+.editorial-boundary {
+  font-family: var(--frame-font);
+}
+
 .editorial-page {
   display: flex;
   flex-direction: column;
