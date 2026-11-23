@@ -1,7 +1,13 @@
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { isEditorialFramePage, parseDeck, type Deck } from "@/lib/deck"
+import {
+  isEditorialFramePage,
+  parseDeck,
+  type Deck,
+  type Page,
+  type PageKind,
+} from "@/lib/deck"
 import {
   setPageBoundary,
   setPageEyebrow,
@@ -11,7 +17,11 @@ import {
 } from "@/lib/deck-editor"
 import { createDeckFromTemplate } from "@/lib/deck-template"
 import { serializeDeck } from "@/lib/decks-io"
-import { ADDABLE_LAYOUTS, createBlankAddablePage } from "@/lib/page-lifecycle"
+import {
+  ADDABLE_LAYOUTS,
+  createBlankAddablePage,
+  type AddableLayout,
+} from "@/lib/page-lifecycle"
 import { readDemoDecks } from "../demo-decks"
 
 const demoDecks = readDemoDecks(resolve(import.meta.dirname, "../../demo"))
@@ -84,4 +94,121 @@ describe("saved chrome key order", () => {
       "boundary",
     ])
   })
+})
+
+const AUTHORED_PAGE_CHROME = {
+  title: "The pilot holds",
+  notes: "Say this aloud",
+  hidden: true,
+  showPageNumber: false,
+}
+
+const AUTHORED_FRAME_CHROME = {
+  ...AUTHORED_PAGE_CHROME,
+  eyebrow: "Risks",
+  boundary: "Fictional sample only",
+}
+
+// Headline、講稿與 Boundary Note 屬於當週內容；Eyebrow 與隱藏狀態屬於頁面結構；頁碼回到 Deck 預設
+const PAGE_CHROME_FROM_TEMPLATE = {
+  title: "",
+  notes: undefined,
+  hidden: true,
+  showPageNumber: undefined,
+}
+
+const FRAME_CHROME_FROM_TEMPLATE = {
+  ...PAGE_CHROME_FROM_TEMPLATE,
+  eyebrow: "Risks",
+  boundary: undefined,
+}
+
+function authoredFramePage(layout: AddableLayout): Page {
+  return {
+    ...createBlankAddablePage("p01", layout, "table"),
+    ...AUTHORED_FRAME_CHROME,
+  }
+}
+
+// 以 PageKind 為 key：新增版型時型別檢查要求補上它的 Deck Template chrome 預期
+const TEMPLATE_CHROME_CASES: Record<
+  PageKind,
+  { page: Page; expected: Record<string, unknown> }
+> = {
+  html: {
+    page: {
+      id: "p01",
+      layout: "html",
+      htmlFile: "p01.html",
+      ...AUTHORED_PAGE_CHROME,
+    },
+    // HTML Page 逐頁選擇是否顯示頁碼，沒有 Deck 預設可回
+    expected: { ...PAGE_CHROME_FROM_TEMPLATE, showPageNumber: false },
+  },
+  cover: {
+    page: {
+      ...createBlankAddablePage("p01", "cover", "table"),
+      ...AUTHORED_PAGE_CHROME,
+    },
+    expected: PAGE_CHROME_FROM_TEMPLATE,
+  },
+  unknown: {
+    page: {
+      id: "p01",
+      layout: "future-layout",
+      plan: "Kept as written",
+      ...AUTHORED_PAGE_CHROME,
+    },
+    expected: { ...PAGE_CHROME_FROM_TEMPLATE, plan: "Kept as written" },
+  },
+  twoColumn: {
+    page: authoredFramePage("two-column"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  overview: {
+    page: authoredFramePage("overview"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  evidenceDecision: {
+    page: authoredFramePage("evidence-decision"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  nextActions: {
+    page: authoredFramePage("next-actions"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  trendTarget: {
+    page: authoredFramePage("trend-target"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  closing: {
+    page: authoredFramePage("closing"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  sideBySide: {
+    page: authoredFramePage("side-by-side"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+  fullWidthPanel: {
+    page: authoredFramePage("full-width-panel"),
+    expected: FRAME_CHROME_FROM_TEMPLATE,
+  },
+}
+
+function fieldsOf(page: Page, expected: Record<string, unknown>) {
+  const fields = page as Record<string, unknown>
+  return Object.fromEntries(
+    Object.keys(expected).map((key) => [key, fields[key]])
+  )
+}
+
+describe("Deck Template chrome", () => {
+  it.each(Object.entries(TEMPLATE_CHROME_CASES))(
+    "carries over a %s page's chrome by field",
+    (_kind, { page, expected }) => {
+      const [created] = createDeckFromTemplate({ pages: [page] }).pages
+
+      expect(fieldsOf(created, expected)).toEqual(expected)
+    }
+  )
 })

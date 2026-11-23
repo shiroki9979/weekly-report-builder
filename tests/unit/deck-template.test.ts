@@ -4,40 +4,11 @@ import { describe, expect, it } from "vitest"
 
 import { createDeckFromTemplate } from "@/lib/deck-template"
 import {
-  createBlankClosingPage,
-  createBlankEvidenceDecisionPage,
-  createBlankFullWidthPanelPage,
-  createBlankNextActionsPage,
-  createBlankOverviewPage,
-  createBlankSideBySidePage,
-  createBlankTrendTargetPage,
-  createBlankTwoColumnPage,
-} from "@/lib/page-lifecycle"
-import {
-  isEditorialFramePage,
   isTwoColumnPage,
   parseDeck,
   type Deck,
-  type EditorialFrameLayout,
-  type EditorialFramePage,
   type TwoColumnPage,
 } from "@/lib/deck"
-
-// 以版型為 key 的對照表：新增 Editorial Frame 版型而沒補 fixture 時，型別檢查會失敗
-const EDITORIAL_FRAME_FIXTURES: {
-  [L in EditorialFrameLayout]: Extract<EditorialFramePage, { layout: L }>
-} = {
-  "two-column": createBlankTwoColumnPage("p01", "table"),
-  overview: createBlankOverviewPage("p01"),
-  "evidence-decision": createBlankEvidenceDecisionPage("p01"),
-  "next-actions": createBlankNextActionsPage("p01"),
-  "trend-target": createBlankTrendTargetPage("p01"),
-  closing: createBlankClosingPage("p01"),
-  "side-by-side": createBlankSideBySidePage("p01"),
-  "full-width-panel": createBlankFullWidthPanelPage("p01", "chart"),
-}
-
-const editorialFrameCases = Object.entries(EDITORIAL_FRAME_FIXTURES)
 
 const fixturePath = resolve(
   import.meta.dirname,
@@ -311,99 +282,6 @@ describe("createDeckFromTemplate", () => {
       ],
     })
     expect(() => parseDeck(cloned)).not.toThrow()
-  })
-
-  it("clears a two-column Boundary Note and page-number override", () => {
-    const previous = parseDeck({
-      pages: [
-        {
-          id: "p01",
-          layout: "two-column",
-          title: "Eval Gate",
-          boundary: "Fictional sample only",
-          showPageNumber: false,
-          items: [
-            { heading: "A", body: "1" },
-            { heading: "B", body: "2" },
-            { heading: "C", body: "3" },
-          ],
-          panel: {
-            kind: "table",
-            title: "Grid",
-            columns: ["A"],
-            rows: [{ cells: ["1"] }],
-          },
-        },
-      ],
-    })
-
-    const cloned = createDeckFromTemplate(previous)
-
-    const [page] = twoColumnPages(cloned)
-    expect(page.title).toBe("")
-    expect(page.boundary).toBeUndefined()
-    expect(page.showPageNumber).toBeUndefined()
-  })
-
-  it.each(editorialFrameCases)(
-    "clears the %s Editorial Frame chrome a template must not carry over",
-    (layout, blankPage) => {
-      const previous: Deck = {
-        showPageNumbers: false,
-        pages: [
-          {
-            ...blankPage,
-            boundary: "Fictional sample only",
-            notes: "Say this aloud",
-            showPageNumber: true,
-          },
-        ],
-      }
-
-      const [page] = createDeckFromTemplate(previous).pages
-      if (!isEditorialFramePage(page)) {
-        throw new Error(`expected an Editorial Frame page, got ${page.layout}`)
-      }
-
-      expect(page.layout).toBe(layout)
-      expect(page.boundary).toBeUndefined()
-      expect(page.notes).toBeUndefined()
-      expect(page.showPageNumber).toBeUndefined()
-    }
-  )
-
-  // Eyebrow 寫的是這一頁的溝通任務，換一週仍成立，與 Boundary Note 相反
-  it.each(editorialFrameCases)(
-    "keeps the %s Eyebrow while clearing its Boundary Note",
-    (layout, blankPage) => {
-      const previous: Deck = {
-        pages: [
-          { ...blankPage, eyebrow: "Risks", boundary: "Fictional sample only" },
-        ],
-      }
-
-      const [page] = createDeckFromTemplate(previous).pages
-      if (!isEditorialFramePage(page)) {
-        throw new Error(`expected an Editorial Frame page, got ${page.layout}`)
-      }
-
-      expect(page.layout).toBe(layout)
-      expect(page.eyebrow).toBe("Risks")
-      expect(page.boundary).toBeUndefined()
-    }
-  )
-
-  it("resets Editorial page numbers to the deck default", () => {
-    const previous: Deck = {
-      period: { start: "2026-08-24", end: "2026-08-28" },
-      showPageNumbers: false,
-      pages: [{ ...createBlankNextActionsPage("p01"), showPageNumber: true }],
-    }
-
-    const cloned = createDeckFromTemplate(previous)
-
-    expect(cloned.showPageNumbers).toBeUndefined()
-    expect(cloned.pages[0].showPageNumber).toBeUndefined()
   })
 
   it("keeps an HTML Page's page-number choice because HTML Pages opt in per page", () => {

@@ -7,13 +7,17 @@ import {
   type Outcome,
   type Panel,
   type Deck,
-  type EditorialFramePage,
-  type EditorialPageChrome,
   type Page,
-  type PageChrome,
 } from "./deck.ts"
+import {
+  editorialFrameTemplateChrome,
+  pageTemplateChrome,
+} from "./page-chrome.ts"
 import { templatePageNumberOverride } from "./stage-page-context.ts"
 import { blankCommitment } from "./next-actions-editor.ts"
+
+// 版型專屬內容；chrome 欄位由 templateChrome 依政策補上，arm 寫了也會被覆寫
+type PageContent = { id: string; layout: string; [field: string]: unknown }
 
 function clearPanel(panel: Panel): Panel {
   switch (panel.kind) {
@@ -77,44 +81,29 @@ function clearOutcome(outcome: Outcome): Outcome {
 }
 
 function clearPage(page: Page): Page {
-  return inSavedKeyOrder({ ...clearPageContent(page), ...templateChrome(page) })
+  return inSavedKeyOrder({
+    ...clearPageContent(page),
+    ...templateChrome(page),
+  } as Page)
 }
 
-// chrome 依來源頁決定、與版型專屬內容分開處理：新版型只要納入 Editorial Frame 就自動套用，不必逐一接線
-function templateChrome(page: Page): PageChrome {
+// chrome 依欄位政策處理（見 page-chrome.ts），與版型專屬內容分開：新版型只要納入 Editorial Frame 就自動套用
+function templateChrome(page: Page) {
+  const delegated = { showPageNumber: templatePageNumberOverride(page) }
   return isEditorialFramePage(page)
-    ? editorialFrameTemplateChrome(page)
-    : pageTemplateChrome(page)
+    ? editorialFrameTemplateChrome(page, delegated)
+    : pageTemplateChrome(page, delegated)
 }
 
-// 講稿屬於當週內容不沿用；頁碼覆寫依現行規則回到 Deck 預設（HTML Page 例外，見 templatePageNumberOverride）
-function pageTemplateChrome(page: Page): PageChrome {
-  return { notes: undefined, showPageNumber: templatePageNumberOverride(page) }
-}
-
-// Boundary Note 描述的是當週主張的成立範圍，換一週就不再成立；
-// Eyebrow 寫的是這一頁的溝通任務，沿用頁面結構時一併保留
-function editorialFrameTemplateChrome(
-  page: EditorialFramePage
-): EditorialPageChrome {
-  return {
-    ...pageTemplateChrome(page),
-    ...(page.eyebrow === undefined ? {} : { eyebrow: page.eyebrow }),
-    boundary: undefined,
-  }
-}
-
-function clearPageContent(page: Page): Page {
+function clearPageContent(page: Page): PageContent {
   // 泛型只會從第一個分支推斷，不指定的話後面的 layout 會被收成 html
-  return matchPage<Page>(page, {
+  return matchPage<PageContent>(page, {
     fullWidthPanel: (fullWidth) => ({
       ...fullWidth,
-      title: "",
       panel: clearPanel(fullWidth.panel),
     }),
     sideBySide: (comparison) => ({
       ...comparison,
-      title: "",
       columns: [
         { label: "", points: comparison.columns[0].points.map(() => "") },
         { label: "", points: comparison.columns[1].points.map(() => "") },
@@ -122,27 +111,22 @@ function clearPageContent(page: Page): Page {
       chosen: undefined,
       tradeoff: undefined,
     }),
-    cover: (cover) => ({ ...cover, title: "", subtitle: "" }),
-    closing: (closing) => ({ ...closing, title: "", takeaways: [] }),
+    cover: (cover) => ({ ...cover, subtitle: "" }),
+    closing: (closing) => ({ ...closing, takeaways: [] }),
     html: (htmlPage) => ({
       id: htmlPage.id,
       layout: "html",
-      title: "",
       htmlFile: htmlPage.htmlFile,
-      hidden: htmlPage.hidden,
     }),
     overview: (overview) => ({
       id: overview.id,
       layout: "overview",
-      title: "",
       lead: clearOutcome(overview.lead),
       supporting: overview.supporting.map(clearOutcome),
-      hidden: overview.hidden,
     }),
     evidenceDecision: (decision) => ({
       id: decision.id,
       layout: "evidence-decision",
-      title: "",
       verdict: "",
       metrics: decision.metrics.map((metric) => ({
         ...metric,
@@ -150,33 +134,21 @@ function clearPageContent(page: Page): Page {
         candidateValue: null,
       })),
       interpretations: decision.interpretations.map(() => ""),
-      hidden: decision.hidden,
     }),
     nextActions: (actions) => ({
       id: actions.id,
       layout: "next-actions",
       variant: nextActionsVariant(actions),
-      title: "",
       commitments: actions.commitments.map(() => blankCommitment()),
-      hidden: actions.hidden,
     }),
-    trendTarget: (trend) => ({
-      ...trend,
-      title: "",
-      interpretation: "",
-    }),
+    trendTarget: (trend) => ({ ...trend, interpretation: "" }),
     twoColumn: (twoColumn) => ({
       id: twoColumn.id,
       layout: twoColumn.layout,
-      title: "",
       items: twoColumn.items.map(() => ({ heading: "", body: "" })),
       panel: clearPanel(twoColumn.panel),
-      hidden: twoColumn.hidden,
     }),
-    unknown: (unknown) => ({
-      ...unknown,
-      title: "",
-    }),
+    unknown: (unknown) => unknown,
   })
 }
 
