@@ -1,4 +1,5 @@
 import { moveEntry } from "@/lib/move-entry"
+import { absentWhenBlank } from "@/lib/optional-text"
 import { typedPageUpdater, updateDeckPage } from "@/lib/update-deck-page"
 import {
   assertCanRemoveEntry,
@@ -61,11 +62,6 @@ const updateChartPanel = panelUpdater("chart")
 const updateFlowPanel = panelUpdater("flow")
 const updateChecklistPanel = panelUpdater("checklist")
 
-// 選填文字只剩空白時視同未填，避免畫出空的頁尾或分隔線；保留原輸入讓打字中的尾端空白不被吃掉
-function absentWhenBlank(text: string): string | undefined {
-  return text.trim() === "" ? undefined : text
-}
-
 export function setPageTitle(
   deck: Deck,
   pageIndex: number,
@@ -127,7 +123,7 @@ export function setPageNotes(
 ): Deck {
   return updateDeckPage(deck, pageIndex, (page) => ({
     ...page,
-    notes: notes === "" ? undefined : notes,
+    notes: absentWhenBlank(notes),
   }))
 }
 

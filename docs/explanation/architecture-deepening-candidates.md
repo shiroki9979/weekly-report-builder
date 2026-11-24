@@ -1,7 +1,7 @@
 # 架構加深候選
 
 建立日期：2026-09-27  
-最後更新：2026-11-22
+最後更新：2026-11-23
 
 ---
 
@@ -33,19 +33,19 @@
 | 9   | Trend SVG ink 解析移到 capture adapter          | Worth exploring                             | mock                | 2026-11-09                  | 候選                                                                                                                                                                                                                                                           |
 | 10  | Trend chart geometry 成為 pure module           | Worth exploring                             | in-process          | 2026-11-09                  | 候選                                                                                                                                                                                                                                                           |
 | 5   | Deck store 成為真的 seam（伺服端殘餘）          | Worth exploring                             | ports & adapters    | 2026-09-27                  | client 端已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)（#39）；伺服端路由、錯誤原因與 preview server 仍為候選                                                                                                                |
-| 14  | 一個 Editorial Frame chrome module              | Worth exploring                             | in-process          | 2026-11-22                  | [#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)（needs-triage）                                                                                                                                                                          |
 | 15  | Overflow 保護成為 Editorial Frame 預設          | Worth exploring                             | local-substitutable | 2026-11-22                  | [#85](https://github.com/shiroki9979/weekly-report-builder/issues/85)（needs-triage）                                                                                                                                                                          |
 | 16  | Frame chrome 字型成為 Deck Theme 角色           | Worth exploring                             | in-process          | 2026-11-22                  | [#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)（needs-triage）；由 11 的觸發條件衍生                                                                                                                                                    |
 | 11  | Observatory 主題檔裡的 layout 結構覆寫（N × M） | Speculative                                 | in-process          | 2026-11-09                  | 候選；2026-11-22 觸發條件已成立，字型部分轉為 16，結構覆寫未變大，維持記錄                                                                                                                                                                                     |
 
 ### 已完成
 
-| #   | 候選                                              | 強度            | 依賴類別   | 狀態                                                                                                                                                                         |
-| --- | ------------------------------------------------- | --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Editing Session module                            | Strong          | in-process | 已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)；[規格 #37](https://github.com/shiroki9979/weekly-report-builder/issues/37)、實作票 #38～#40 |
-| 2   | Export gate module                                | Strong          | mock       | 已實作於 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)；[規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、實作票 #32～#35 |
-| 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process | 已實作於 `2cb9a80`；2026-11-09 確認無字串哨兵殘留                                                                                                                            |
-| 12  | 頁尾成為 Stage page context 的一個事實            | Strong          | in-process | 已實作於 `6626d32`；[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)，行為不變                                                                          |
+| #   | 候選                                              | 強度            | 依賴類別   | 狀態                                                                                                                                                                                                    |
+| --- | ------------------------------------------------- | --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Editing Session module                            | Strong          | in-process | 已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)；[規格 #37](https://github.com/shiroki9979/weekly-report-builder/issues/37)、實作票 #38～#40                            |
+| 2   | Export gate module                                | Strong          | mock       | 已實作於 [PR #36](https://github.com/shiroki9979/weekly-report-builder/pull/36)；[規格 #31](https://github.com/shiroki9979/weekly-report-builder/issues/31)、實作票 #32～#35                            |
+| 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process | 已實作於 `2cb9a80`；2026-11-09 確認無字串哨兵殘留                                                                                                                                                       |
+| 12  | 頁尾成為 Stage page context 的一個事實            | Strong          | in-process | 已實作於 `6626d32`；[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)，行為不變                                                                                                     |
+| 14  | 一個 Editorial Frame chrome module                | Worth exploring | in-process | 已實作（[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)），範圍擴大為 page chrome；本文欄位的空白缺陷轉為 [#101](https://github.com/shiroki9979/weekly-report-builder/issues/101) |
 
 初次審查建議先做 1（現已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；完成後削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 
@@ -204,7 +204,7 @@
 
 ### 13. 編譯器看得見的 Editorial Frame 成員資格
 
-- **相關 module**：`src/lib/deck.ts`（`UnknownPage`、`Page`、`EditorialFramePage`、`isEditorialFramePage`、`matchPage`）、`src/lib/stage-page-context.ts`、`src/lib/eyebrow.ts`、`tests/unit/support/editorial-frame-layouts.ts`、`tsconfig.app.json`、`tsconfig.node.json`。
+- **相關 module**：`src/lib/deck.ts`（`UnknownPage`、`Page`、`EditorialFramePage`、`isEditorialFramePage`、`matchPage`）、`src/lib/stage-page-context.ts`、`src/lib/page-chrome.ts`（原 `src/lib/eyebrow.ts`）、`tests/unit/support/editorial-frame-layouts.ts`、`tsconfig.app.json`、`tsconfig.node.json`。
 - **問題**：「哪些 Structured Layout 屬於 Editorial Frame」由聯集加 8 個結構 guard 的手寫 OR 鏈表示（`deck.ts:385-408`）。TS 不檢查 `page is EditorialFramePage` 這個宣稱，src 也沒有 runtime 清單。這條鏈是被最多 module 依賴的 layout 事實：parse chrome、template chrome、頁碼 slot、`isStructuredPage`（再餵給 Export Readiness、export gate、Editing Session 的 save gate、readiness summary）、編輯器的 Eyebrow／Boundary Note 欄位。新 layout 漏加進鏈仍會編譯通過：parse 時 Eyebrow 與 Boundary Note 靜默丟失、沒有頁碼 slot、Export Readiness 判定不能匯出（靜態推論）。
 - **根因**：`UnknownPage`（`deck.ts:270-275`，`layout: string` 加 index signature）與每個 layout literal 重疊，`Page` 不是 discriminated union。所以 guard 只能寫成結構判斷，成員資格無法由 const 清單派生，`matchPage` 也是不受窮舉檢查的 if 鏈。6 的 2026-11-09 更新列出了不受檢查的手寫清單，但沒有點出這個根因。
 - **做法**：第一步，讓每個 layout 都必須明確決定成員資格（例如像以前的 `hasPageNumberSlot` 一樣經 `matchPage` 派生），並把 `tests/` 納入 typecheck。第二步，unknown layout 移出已知 literal，`Page`、`StructuredPage`、`EditorialFramePage` 與 runtime 的 Editorial Frame layout 清單由同一張 const 清單派生（比照 `DECK_THEMES`），`matchPage` 成為窮舉 switch。
@@ -224,27 +224,6 @@
   - 型別檢查連 `tests/e2e` 一起跑（關閉 `noUnusedLocals`／`noUnusedParameters`）：22 個檔案共 61 個錯誤，與上方 `tests/unit` 的 60 個一致，多出的是 e2e（例如 `tests/e2e/trend-target.spec.ts:135` 的 `getScreenCTM`）。
   - 六則測試註解宣稱「漏列時型別檢查會失敗」，實際不會：`deck-template.test.ts:25`、`editorial-frame-chrome.test.tsx:16`、`editorial-eyebrow-editor.test.tsx:19`、`demo-deck-set.test.ts:33,40`、`e2e/deck-theme.spec.ts:114`。（第一步之後成立：`tsc -b` 已涵蓋 `tests/`。）
   - 沒有任何 runtime guard 的表：`EVERY_LAYOUT: Record<SlideLayout, …>`（`demo-deck-set.test.ts:41`），新的 Structured Layout 不會被要求出現在 Demo Deck Set；`cover-closing.test.ts:39-48` 另有一份手寫的 Editorial Frame 版型清單。
-
-### 14. 一個 Editorial Frame chrome module
-
-- **相關 module**：`src/lib/deck-template.ts`、`src/lib/export-readiness.ts`、`src/lib/deck.ts`（`EditorialPageChrome`、`parsePageChrome`、`withEditorialFrameChrome`）、`src/lib/deck-editor.ts`、`src/lib/eyebrow.ts`、`src/components/workshop/editorial-page-editor-chrome.tsx`。
-- **問題**：#76 把 Eyebrow 與 Boundary Note 的 Deck Template 清除收成共用步驟，#75 讓 Editorial Frame 從頁面讀取 chrome；但 headline、Hidden、Title 必填與「空白視為缺席」仍按 layout 重寫。6 個 `clearPage` arm 以 `...page` 沿用、5 個重建頁面，所以沒列進共用步驟的選填 chrome 欄位，會在 Full-width Panel、Side-by-side Comparison、Closing、Trend & Target 保留，在 Overview、Evidence-backed Decision、Next Actions、Two-column 丟失（靜態推論）。
-- **做法**：一個 module 持有 Editorial Frame chrome 的欄位清單、空白規則、預設 Eyebrow、每個欄位的 Deck Template 政策、headline 的 readiness 規則與 setter；每個 layout 的 clear 與 assess 只處理本文；`eyebrow.ts` 併入。
-- **Deletion test**：刪掉 11 個 title 清除與 8 個 Title 檢查，複雜度收進一個步驟，不會散回 N 個呼叫端。
-- **證據**：
-  - `deck-template.ts:111-177` 寫了 11 次 `title: ""`；5 個重建的 arm 手抄 `hidden`（131、139、152、160、173）。
-  - "Title is required" 在 `export-readiness.ts` 寫了 8 次（213-449）。
-  - 「空白視為缺席」在 chrome 上又寫 3 處：`readOptionalChromeText`（`deck.ts:1408`）、`absentWhenBlank`（`deck-editor.ts:65`）、`resolveEyebrow` 的 `trim() ||`（`eyebrow.ts:19`）；6 已記錄同一條規則在本文欄位的 5 處。
-  - 編輯器以假頁面取預設 Eyebrow：`resolveEyebrow({...page, eyebrow: undefined})`（`editorial-page-editor-chrome.tsx:157-165`）。
-  - 存檔 key 順序隨建構方式漂移：parser 以 `as` cast 把 eyebrow 排在 title 後（`deck.ts:1395-1404`），`setPageEyebrow` 的 spread 把它附加在末尾（`deck-editor.ts:116-121`）；重新載入再存檔會產生多餘 diff（靜態推論）。
-- **收益**：locality，新增 chrome 欄位只改一處；chrome 的 template 與 readiness 規則只測一次；6 的每 layout module 變小。
-- **既有決定**：與 6 互補：chrome 歸 Editorial Frame，本文歸各 layout。
-- **狀態**：[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)（needs-triage）。待決：Cover 的 title 是否歸這個 module（Cover 不在 Editorial Frame，但 headline 規則相同）。
-- **2026-11-22 補遺**：
-  - Deck Template 分歧已實測：在頁面加一個未列名的 chrome key 後套 `createDeckFromTemplate`，closing、side-by-side、full-width-panel、trend-target 保留它，two-column、overview、evidence-decision、next-actions 丟掉它。
-  - 存檔欄位順序漂移已實測：parse → `setPageEyebrow` → save 寫出 `…, notes, eyebrow`；再 parse → save 寫出 `title, eyebrow, …`。沒有編輯的第二次存檔產生 diff，正是 `dfb96dd` 修過的行為。
-  - 同一條空白規則在本文欄位造成可見缺陷（jsdom 渲染驗證）：只有空白的 `closingLine` 畫出有上框線、沒有文字的 `.editorial-closing-line`（`deck.ts:1387` 註解替 Boundary Note 擋下的同一種缺陷）；只有空白的 `byline` 畫出「Presented by」標籤；只有空白的 tradeoff `cost` 畫出沒有內容的「Cost」。Export Readiness 不檢查這些選填欄位，所以會進 PNG（PNG 一步為靜態推論）。根源是缺席有兩種表示：`readOptionalString`（`deck.ts:626-629`）保留空白並以 `""` 表示缺席，chrome 用 `undefined`。本文欄位不屬於 chrome，可留給 6 或另開。
-  - 同一類修正已有三次：`dfb96dd`、`e03d9f8`（11-08）、`d4e4a23`（11-21）。
 
 ### 15. Overflow 保護成為 Editorial Frame 預設
 
@@ -365,6 +344,44 @@ Copy 與 batch export 共用同一條單頁流程。
   - 三個 renderer 都只畫 `EditorialFooter {...context.footer}`，Cover 的副本刪除；`§ nn` 讀 `footer.position`。`isPageNumberVisible` 轉為私有，`hasPageNumberSlot` export 給 `editorial-page-editor-chrome.tsx`。`page-editor-form.tsx:138` 是 HTML Page 的表單，一律有頁碼位置，不需判斷。
   - 政策成為 `stage-page-context.test.ts` 的表格測試；HTML 頁尾測試收斂為一個 render 測試，Cover 補上第一個 Deck Title render 測試。
   - 仍可另議：Hidden 的 Editorial 頁畫 Deck Title，開了頁尾的 Hidden HTML Page 什麼都不畫；統一會改變 #68 的文件化行為。
+
+### 14. 一個 Editorial Frame chrome module
+
+- **相關 module**：`src/lib/deck-template.ts`、`src/lib/export-readiness.ts`、`src/lib/deck.ts`（`EditorialPageChrome`、`parsePageChrome`、`withEditorialFrameChrome`）、`src/lib/deck-editor.ts`、`src/lib/page-chrome.ts`（原 `src/lib/eyebrow.ts`）、`src/components/workshop/editorial-page-editor-chrome.tsx`。
+- **問題**：#76 把 Eyebrow 與 Boundary Note 的 Deck Template 清除收成共用步驟，#75 讓 Editorial Frame 從頁面讀取 chrome；但 headline、Hidden、Title 必填與「空白視為缺席」仍按 layout 重寫。6 個 `clearPage` arm 以 `...page` 沿用、5 個重建頁面，所以沒列進共用步驟的選填 chrome 欄位，會在 Full-width Panel、Side-by-side Comparison、Closing、Trend & Target 保留，在 Overview、Evidence-backed Decision、Next Actions、Two-column 丟失（靜態推論）。
+- **做法**：一個 module 持有 Editorial Frame chrome 的欄位清單、空白規則、預設 Eyebrow、每個欄位的 Deck Template 政策、headline 的 readiness 規則與 setter；每個 layout 的 clear 與 assess 只處理本文；`eyebrow.ts` 併入。
+- **Deletion test**：刪掉 11 個 title 清除與 8 個 Title 檢查，複雜度收進一個步驟，不會散回 N 個呼叫端。
+- **證據**：
+  - `deck-template.ts:111-177` 寫了 11 次 `title: ""`；5 個重建的 arm 手抄 `hidden`（131、139、152、160、173）。
+  - "Title is required" 在 `export-readiness.ts` 寫了 8 次（213-449）。
+  - 「空白視為缺席」在 chrome 上又寫 3 處：`readOptionalChromeText`（`deck.ts:1408`）、`absentWhenBlank`（`deck-editor.ts:65`）、`resolveEyebrow` 的 `trim() ||`（`eyebrow.ts:19`）；6 已記錄同一條規則在本文欄位的 5 處。
+  - 編輯器以假頁面取預設 Eyebrow：`resolveEyebrow({...page, eyebrow: undefined})`（`editorial-page-editor-chrome.tsx:157-165`）。
+  - 存檔 key 順序隨建構方式漂移：parser 以 `as` cast 把 eyebrow 排在 title 後（`deck.ts:1395-1404`），`setPageEyebrow` 的 spread 把它附加在末尾（`deck-editor.ts:116-121`）；重新載入再存檔會產生多餘 diff（靜態推論）。
+- **收益**：locality，新增 chrome 欄位只改一處；chrome 的 template 與 readiness 規則只測一次；6 的每 layout module 變小。
+- **既有決定**：與 6 互補：chrome 歸 Editorial Frame，本文歸各 layout。
+- **狀態**：已實作（[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)）。2026-11-23 grilling 的決議見 [#84 的留言](https://github.com/shiroki9979/weekly-report-builder/issues/84#issuecomment-7107406600)，實作結果見下方「2026-11-23 實作」。
+- **2026-11-22 補遺**：
+  - Deck Template 分歧已實測：在頁面加一個未列名的 chrome key 後套 `createDeckFromTemplate`，closing、side-by-side、full-width-panel、trend-target 保留它，two-column、overview、evidence-decision、next-actions 丟掉它。
+  - 存檔欄位順序漂移已實測：parse → `setPageEyebrow` → save 寫出 `…, notes, eyebrow`；再 parse → save 寫出 `title, eyebrow, …`。沒有編輯的第二次存檔產生 diff，正是 `dfb96dd` 修過的行為。
+  - 同一條空白規則在本文欄位造成可見缺陷（jsdom 渲染驗證）：只有空白的 `closingLine` 畫出有上框線、沒有文字的 `.editorial-closing-line`（`deck.ts:1387` 註解替 Boundary Note 擋下的同一種缺陷）；只有空白的 `byline` 畫出「Presented by」標籤；只有空白的 tradeoff `cost` 畫出沒有內容的「Cost」。Export Readiness 不檢查這些選填欄位，所以會進 PNG（PNG 一步為靜態推論）。根源是缺席有兩種表示：`readOptionalString`（`deck.ts:626-629`）保留空白並以 `""` 表示缺席，chrome 用 `undefined`。本文欄位不屬於 chrome，可留給 6 或另開。
+  - 同一類修正已有三次：`dfb96dd`、`e03d9f8`（11-08）、`d4e4a23`（11-21）。
+
+- **2026-11-23 更新**：grilling 定案，實作排在 #83 第二步與 6 之前。
+  - 範圍從 Editorial Frame 擴大為 page chrome，分三層：每一頁（title 文字欄位、講稿、Hidden、頁碼覆寫）、Structured Layout（Headline 必填）、Editorial Frame（Eyebrow、Boundary Note）。module 改名 `src/lib/page-chrome.ts`，`eyebrow.ts` 併入。原因是 title 的規則本來就不只屬於 Editorial Frame：Deck Template 清空每一頁的 title（含 HTML Page 與 unknown），Export Readiness 要求 Cover 與 8 個 Editorial Frame 版型都有 title。GLOSSARY 新增 **Headline**（`e976734`）。
+  - module 只持有規則，執行期不直接或間接 import `deck.ts`：parser 在 `deck.ts` 要呼叫它，setter 需要 `isEditorialFramePage`，兩者放在一起會形成執行期循環。setter 留在 `deck-editor.ts`；頁碼覆寫的 Deck Template 政策留在 `stage-page-context.ts`（候選 4），政策表只標委派。
+  - 「空白視為缺席」放在獨立的 `src/lib/optional-text.ts`，chrome、Deck Title 共用，[#101](https://github.com/shiroki9979/weekly-report-builder/issues/101) 之後也可用；講稿也改用這條規則。
+  - 存檔欄位順序的漂移比原先記錄的範圍大（vitest 實測）：
+    - Deck Template 的輸出本身就會漂移。從未編輯的 `demo/demo-default.json` 建立新 Deck，存檔、重新載入、再存檔，`two-column` 的 `eyebrow` 從最後移到 `title` 之後，`next-actions` 的 `variant,title` 變成 `title,variant`。
+    - 新增頁也會漂移：8 個 Editorial Frame 版型的空白頁加上 Eyebrow 後，存檔、重新載入、再存檔，`eyebrow` 從最後移到 `title` 之後。
+    - 修法是固定每個 chrome 欄位的位置，缺席時仍保留 key（值為 `undefined`），parser、Deck Template、空白頁工廠都經同一個組裝函式。
+  - 本文欄位的空白缺陷（`closingLine`、`byline`、tradeoff `cost`）移到 #101。
+- **2026-11-23 實作**：
+  - `src/lib/page-chrome.ts` 持有存檔欄位順序（`PAGE_CHROME_SLOTS`、`EDITORIAL_FRAME_CHROME_SLOTS` 以欄位為 key，新增 chrome 欄位漏排位置即編譯失敗；由 `deck.ts` 的 `inSavedKeyOrder` 依成員分派）、Deck Template 政策（`pageTemplateChrome`、`editorialFrameTemplateChrome`，回傳型別要求列出每個 chrome 欄位）、`headlineIssues`、預設 Eyebrow 與 `resolveEyebrow`；`eyebrow.ts` 刪除。module 只 import `deck.ts` 的型別。
+  - `clearPageContent` 的 arm 只清本文：11 個 `title: ""` 與 5 個手抄的 `hidden` 刪除。8 個 assess 函式不再檢查 title，Cover 沒有自己的內容規則。
+  - `src/lib/optional-text.ts` 的 `isBlank`／`absentWhenBlank` 取代 `deck-editor.ts` 的 `absentWhenBlank`、`export-readiness.ts` 的 `isBlank`、parser 的 `trim() === ""` 與 speaker notes cue 的同一判斷。只含空白的講稿改為缺席。Deck Title parser 的 trim 行為未動。
+  - 實作時另外發現：新增頁先寫講稿再設 Hidden，存檔後 `notes` 與 `hidden` 也會換位置，已一併修正。
+  - 測試：`tests/unit/page-chrome.test.ts` 以三個入口測存檔、重新載入、再存檔的位元組相同，以 `PageKind` 表格測 Deck Template 政策，以每個 Structured Layout 測 Headline，以每個選填 chrome 文字欄位測空白規則。刪除的重複斷言：`deck-template.test.ts` 的逐版型 Eyebrow／Boundary Note／頁碼檢查、`cover-closing.test.ts` 的 Cover／Closing title 與空白 Eyebrow／Boundary Note、`side-by-side.test.ts` 的 template title／Boundary Note／講稿、`deck-editor.test.ts` 的空白 Boundary Note。各版型「依 schema 順序列出 issue」的測試保留，因為它們斷言的是整份輸出順序。
+  - 未收緊的地方：`clearPageContent` 的 arm 以寬型別 `PageContent` 回傳，漏寫本文必填欄位不會編譯失敗。這與基準相同：`UnknownPage` 的 `layout: string` 加 index signature 讓舊的 `matchPage<Page>` 也接受缺欄位的 arm（以 `a253207` 刪掉 Overview arm 的 `lead` 實測，`tsc` 通過）。要等 13 的第二步讓 `Page` 成為真正的 discriminated union 才能逐 arm 檢查。
 
 ## 考慮過但判定保留
 
