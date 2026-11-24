@@ -78,6 +78,9 @@ for (const theme of DECK_THEMES) {
     }) => {
       test.slow()
       const expected = THEME_EXPECTATIONS[theme]
+      // 列索引欄排在資料欄前；顯示索引的主題，表頭在這一欄留空
+      const withRowIndex = (index: string, values: readonly string[]) =>
+        expected.itemIndex ? [index, ...values] : [...values]
       const content = tableCopy[language]
       const panels = [1, 5].map((count) => ({
         kind: "table",
@@ -122,13 +125,11 @@ for (const theme of DECK_THEMES) {
         await expect(rows).toHaveCount(index ? 5 : 1)
         const cells = rows.first().locator("td:visible,th:visible")
         expect(await cells.allTextContents()).toEqual(
-          expected.itemIndex ? ["01", ...content.cells] : [...content.cells]
+          withRowIndex("01", content.cells)
         )
         expect(
           await table.locator("thead th:visible").allTextContents()
-        ).toEqual(
-          expected.itemIndex ? ["", ...content.columns] : [...content.columns]
-        )
+        ).toEqual(withRowIndex("", content.columns))
         const reference = rows
           .first()
           .getByRole("cell", { name: "§ 03", exact: true })

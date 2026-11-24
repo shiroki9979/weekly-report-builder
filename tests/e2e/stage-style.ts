@@ -1,12 +1,32 @@
 import type { Locator } from "@playwright/test"
 
+// ADR-0002 的色彩角色與既有 --blue* 別名；寫錯角色名稱時 var() 會靜默失效，型別先擋下來
+export type StageColorRole =
+  | "--paper"
+  | "--ink"
+  | "--mute"
+  | "--line"
+  | "--accent"
+  | "--accent-deep"
+  | "--accent-soft"
+  | "--accent-wash"
+  | "--ok"
+  | "--ok-ink"
+  | "--ok-wash"
+  | "--warn"
+  | "--warn-ink"
+  | "--blue"
+  | "--blue-deep"
+  | "--blue-soft"
+  | "--blue-wash"
+
 // 預期值寫成 Stage 的角色或 CSS 長度，由瀏覽器解析後再比對：
 // hex 與 rgb、字型清單的引號與空白、cqw 與 px 寫法不同都不該誤判
 export type StyleProbe = {
   mono?: true
   // 與 .stage-root 的內文字型相同
   body?: true
-  color?: string
+  color?: StageColorRole
   fontSize?: string
   paddingTop?: string
 }

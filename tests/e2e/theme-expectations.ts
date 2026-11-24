@@ -1,5 +1,5 @@
 import type { DeckTheme } from "../../src/lib/deck"
-import type { FontRole } from "./stage-style"
+import type { FontRole, StageColorRole } from "./stage-style"
 
 // 各主題的事實只寫在這裡：Record 讓新增主題時型別檢查強制寫下預期，spec 改讀欄位而不以主題名稱分支
 export type ThemeExpectation = {
@@ -17,7 +17,7 @@ export type ThemeExpectation = {
   // Side-by-side point、Two-column 項目與 Full-width table 的列索引都讀這一項，不另記各自的標記種類
   itemIndex: boolean
   // Two-column 項目標題的色彩角色；主題只換 Stage Element 的處理，不重排構圖
-  twoColumnHeading: "--blue" | "--ink"
+  twoColumnHeading: Extract<StageColorRole, "--blue" | "--ink">
   // table reference 欄的字型；ledger 雖自架 Plex，reference 欄仍沿用內文字型，所以不能由 frameFont 或 hostsIbmPlexMono 推得
   referenceFont: FontRole
 }
@@ -66,4 +66,15 @@ export const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
     twoColumnHeading: "--blue",
     referenceFont: "body",
   },
+}
+
+// 頁尾的頁碼標籤；補零寫成字面值而不呼叫產品的 padPageNumber，預期才有獨立來源。fixture 都不到 10 頁
+export function pageLabel(
+  expected: ThemeExpectation,
+  position: number,
+  total: number
+): string {
+  return expected.paddedPageNumbers
+    ? `0${position} / 0${total}`
+    : `${position} / ${total}`
 }

@@ -4,7 +4,7 @@ import path from "node:path"
 import { DECK_THEMES } from "../../src/lib/deck"
 import { resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
-import { THEME_EXPECTATIONS } from "./theme-expectations"
+import { THEME_EXPECTATIONS, pageLabel } from "./theme-expectations"
 
 const copy = {
   en: {
@@ -53,6 +53,7 @@ for (const theme of DECK_THEMES) {
       request,
     }) => {
       test.slow()
+      const expected = THEME_EXPECTATIONS[theme]
       const content = copy[language]
       const pages = [
         {
@@ -118,10 +119,9 @@ for (const theme of DECK_THEMES) {
             stage.getByText(`0${index + 1} / 04`, { exact: true })
           ).toHaveCount(0)
         } else {
-          const label = THEME_EXPECTATIONS[theme].paddedPageNumbers
-            ? `0${index + 1} / 04`
-            : `${index + 1} / 4`
-          await expect(stage.getByText(label, { exact: true })).toBeVisible()
+          await expect(
+            stage.getByText(pageLabel(expected, index + 1, 4), { exact: true })
+          ).toBeVisible()
         }
         if (index === 2) await expect(stage.getByText(/Closing$/)).toBeVisible()
         if (index === 3) {

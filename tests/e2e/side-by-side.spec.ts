@@ -49,6 +49,7 @@ for (const theme of DECK_THEMES) {
       request,
     }) => {
       test.slow()
+      const expected = THEME_EXPECTATIONS[theme]
       const content = copy[language]
       const pages = [1, 4].map((count) => ({
         id: `compare-${count}`,
@@ -104,8 +105,7 @@ for (const theme of DECK_THEMES) {
           .getByRole("listitem")
           .first()
           .getByText("01", { exact: true })
-        if (THEME_EXPECTATIONS[theme].itemIndex)
-          await expect(pointNumber).toBeVisible()
+        if (expected.itemIndex) await expect(pointNumber).toBeVisible()
         else await expect(pointNumber).toBeHidden()
         const divider = await left.evaluate(
           (element) =>
