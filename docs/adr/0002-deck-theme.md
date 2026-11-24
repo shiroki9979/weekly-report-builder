@@ -1,7 +1,7 @@
 # ADR-0002：Deck Theme 為固定清單，token 角色名稱是跨主題契約
 
 建立日期：2026-11-07  
-修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)；Two-column 納入 Editorial Frame，[#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)）；2026-11-21（已退役的規格連結改指 reference 與 issue）；2026-11-22（定義「構圖」與主題對 Stage Element 的處理，[#73](https://github.com/shiroki9979/weekly-report-builder/issues/73)）；2026-11-23（新增 `--frame-font` 角色並修正〈後果〉的測試描述，[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）  
+修訂日期：2026-11-20（新增 `--mono` 角色，[#69](https://github.com/shiroki9979/weekly-report-builder/issues/69)；新增 `ledger` 主題，[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)；Two-column 納入 Editorial Frame，[#67](https://github.com/shiroki9979/weekly-report-builder/issues/67)）；2026-11-21（已退役的規格連結改指 reference 與 issue）；2026-11-22（定義「構圖」與主題對 Stage Element 的處理，[#73](https://github.com/shiroki9979/weekly-report-builder/issues/73)）；2026-11-23（新增 `--frame-font` 角色並修正〈後果〉的測試描述，[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）；2026-11-24（三個版型 e2e 改為迴圈 `DECK_THEMES`，主題預期值抽成共用表，[#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)）  
 狀態：Accepted
 
 ## 背景
@@ -50,7 +50,7 @@ Two-column、Overview、Evidence-backed Decision、Next Actions、Trend & Target
 ## 後果
 
 - Deck JSON 多一個欄位；`docs/reference/deck-json-format.md` 同步更新。
-- 新主題的對比與 tone 由主題樣式表負責，Playwright 依 `DECK_THEMES` 在每個主題下各跑一次 layout fixture；目前有三個版型 spec 例外，見本節最後一項。
+- 新主題的對比與 tone 由主題樣式表負責，Playwright 依 `DECK_THEMES` 在每個主題下各跑一次 layout fixture。
 - HTML Page 作者若要跟隨主題，用角色名稱或既有 `--blue*` 別名即可；寫死色碼的片段不受影響也不跟隨。
 - 追蹤規格：issue [#57](https://github.com/shiroki9979/weekly-report-builder/issues/57)（Observatory）、[#66](https://github.com/shiroki9979/weekly-report-builder/issues/66)（Ledger）。
-- 新增主題時：`DECK_THEMES` 是唯一清單。`deck-theme.spec` 以 `Record<DeckTheme, …>` 宣告各主題的預期值，`demo-deck-set.test.ts` 要求每個主題都有一份 Demo Deck，Workshop 的主題選單標籤也是 `Record<DeckTheme, …>`，漏掉這幾項會讓型別檢查或測試失敗；`editorial-footer-overlap.spec` 迴圈 `DECK_THEMES`，新主題自動納入。型別檢查不會提示的兩處：主題樣式表要在 `stage-frame.tsx` 手動 import；`cover-closing`、`side-by-side`、`full-width-panel` 三個 e2e 目前只跑 `default` 與 `observatory`，見 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)。（2026-11-23 修訂：原文誤稱 `editorial-footer-overlap.spec` 也以 `Record` 宣告預期值。）
+- 新增主題時：`DECK_THEMES` 是唯一清單。各主題的預期值只宣告在 `tests/e2e/theme-expectations.ts` 的 `Record<DeckTheme, …>`，`deck-theme`、`cover-closing`、`side-by-side`、`full-width-panel` 四個 e2e 讀它的欄位而不以主題名稱分支；`demo-deck-set.test.ts` 要求每個主題都有一份 Demo Deck，Workshop 的主題選單標籤也是 `Record<DeckTheme, …>`，漏掉這幾項會讓型別檢查或測試失敗；`editorial-footer-overlap` 與上述四個 e2e 迴圈 `DECK_THEMES`，新主題自動納入。型別檢查不會提示的一處：主題樣式表要在 `stage-frame.tsx` 手動 import。（2026-11-23 修訂：原文誤稱 `editorial-footer-overlap.spec` 也以 `Record` 宣告預期值。）

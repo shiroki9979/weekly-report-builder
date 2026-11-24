@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test"
+import { DECK_THEMES } from "../../src/lib/deck"
 import { resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
+import { THEME_EXPECTATIONS } from "./theme-expectations"
 
 test.beforeEach(() => resetE2eDecks())
 
@@ -40,7 +42,7 @@ const copy = {
   },
 } as const
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   for (const language of ["en", "zh", "mixed"] as const) {
     test(`${theme} Comparison fits and exports minimum and maximum ${language} content`, async ({
       page,
@@ -102,7 +104,8 @@ for (const theme of ["default", "observatory"] as const) {
           .getByRole("listitem")
           .first()
           .getByText("01", { exact: true })
-        if (theme === "observatory") await expect(pointNumber).toBeVisible()
+        if (THEME_EXPECTATIONS[theme].itemIndex)
+          await expect(pointNumber).toBeVisible()
         else await expect(pointNumber).toBeHidden()
         const divider = await left.evaluate(
           (element) =>
@@ -146,7 +149,7 @@ for (const theme of ["default", "observatory"] as const) {
   }
 }
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   test(`${theme} overflowing Comparison blocks Copy and is skipped by batch`, async ({
     page,
     request,
