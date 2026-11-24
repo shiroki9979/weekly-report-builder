@@ -37,6 +37,9 @@
   --mono:
     ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     "PingFang TC", "Microsoft JhengHei", monospace;
+  /* Editorial Frame 外框與 Overview Outcome 標籤的字型；default 沿用內文字型。initial 讓 var() 在計算值時失效，font-family 退回繼承，
+     內文字型因此不必另設角色。主題要讓外框換字型時只覆寫這個值 */
+  --frame-font: initial;
 
   box-sizing: border-box;
   width: 100%;

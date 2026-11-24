@@ -34,7 +34,6 @@
 | 10  | Trend chart geometry 成為 pure module           | Worth exploring                             | in-process          | 2026-11-09                  | 候選                                                                                                                                                                                                                                                           |
 | 5   | Deck store 成為真的 seam（伺服端殘餘）          | Worth exploring                             | ports & adapters    | 2026-09-27                  | client 端已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)（#39）；伺服端路由、錯誤原因與 preview server 仍為候選                                                                                                                |
 | 15  | Overflow 保護成為 Editorial Frame 預設          | Worth exploring                             | local-substitutable | 2026-11-22                  | [#85](https://github.com/shiroki9979/weekly-report-builder/issues/85)（needs-triage）                                                                                                                                                                          |
-| 16  | Frame chrome 字型成為 Deck Theme 角色           | Worth exploring                             | in-process          | 2026-11-22                  | [#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)（needs-triage）；由 11 的觸發條件衍生                                                                                                                                                    |
 | 11  | Observatory 主題檔裡的 layout 結構覆寫（N × M） | Speculative                                 | in-process          | 2026-11-09                  | 候選；2026-11-22 觸發條件已成立，字型部分轉為 16，結構覆寫未變大，維持記錄                                                                                                                                                                                     |
 
 ### 已完成
@@ -46,6 +45,7 @@
 | 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process | 已實作於 `2cb9a80`；2026-11-09 確認無字串哨兵殘留                                                                                                                                                       |
 | 12  | 頁尾成為 Stage page context 的一個事實            | Strong          | in-process | 已實作於 `6626d32`；[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)，行為不變                                                                                                     |
 | 14  | 一個 Editorial Frame chrome module                | Worth exploring | in-process | 已實作（[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)），範圍擴大為 page chrome；本文欄位的空白缺陷轉為 [#101](https://github.com/shiroki9979/weekly-report-builder/issues/101) |
+| 16  | Frame chrome 字型成為 Deck Theme 角色             | Worth exploring | in-process | 已實作（[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）；三個版型 e2e 的主題覆蓋另開 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)                    |
 
 初次審查建議先做 1（現已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；完成後削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 
@@ -241,21 +241,6 @@
   - 保留帶的用途是讓 PNG 貼進團隊簡報範本時不壓到範本頁尾（`editorial-layouts.css:3`）；`demo-deck-set.spec.ts:208` 以 `720 - 64` 重寫 `--editorial-frame-padding`；HTML Page 的頁尾 overlay 需要同樣留白，但 HTML Page 不量測。
   - 做法補充：範圍可擴大為「Editorial Frame 擁有放得進外框的規則」，量測比對外框基準線而不只是 capture root（經 export gate 既有的 measure adapter，單元測試可餵 fake 量測）。這會改變 GLOSSARY 的 Overflowing Page（現為「超出 1280 × 720 capture Stage」）；HTML Page 是否量測頁尾屬 export gate 政策，待決。
 
-### 16. Frame chrome 字型成為 Deck Theme 角色
-
-- **相關 module**：`src/styles/ledger-theme.css`、`src/styles/observatory-theme.css`、`src/styles/editorial-layouts.css`、[ADR-0002](../adr/0002-deck-theme.md)。
-- **問題**：11 的觸發條件已成立（#66 新增 `ledger`）。結構覆寫的 N × M 沒有變大，但「哪些 Editorial Frame chrome 用等寬字」這份清單寫了兩次：`ledger-theme.css:10-15` 與 `observatory-theme.css:43-47, 94` 列出同樣 6 個 selector（eyebrow、period、workstream、status、page-number、boundary）。新增 chrome 欄位若要用等寬字，必須改每個主題檔。
-- **做法**：新增一個 Editorial Frame chrome 字型角色，由 `editorial-layouts.css` 讀取，各主題只提供值。這是 11 方案 A 的最小一步。
-- **收益**：`ledger` 成為 token-only；新增 chrome 欄位不必碰主題檔；下一個 Deck Theme 只寫 token。
-- **既有決定**：ADR-0002 規定 token 角色「只能新增」，新增角色依其修訂規則原地修訂即可；`--mono`（#69）是前例，不衝突。
-- **狀態**：[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)（needs-triage）。待決：`default` 主題的角色值要沿用內文字型，確認不改變現有外觀；角色只管字型，或一併涵蓋 chrome 的字級與字距。
-- **2026-11-22 補遺**：
-  - 兩份主題清單其實已經不同：observatory 的第二條規則（`observatory-theme.css:94-96`）另含 `.editorial-takeaway-ref` 與 `.editorial-closing-line`，ledger 沒有。e2e 的 furniture 清單（`deck-theme.spec.ts:386-394`，另含 `.editorial-deck-title`、`.editorial-page-label`）是第三份，`deck-json-format.md:43` 的文字描述是第四份。
-  - `cover-closing`、`side-by-side`、`full-width-panel` 三個 e2e 寫死 `["default", "observatory"]` 並以 `theme === "observatory"` 分支，從不在 ledger 下跑；ledger 的等寬字會改變文字寬度，影響這些 spec 檢查的 fit。
-  - `stage-frame.tsx:5-9` 手動 import 主題樣式表，`deck.ts:307` 的註解卻說新增主題時型別檢查會提示補樣式表。
-  - ADR-0002:54 說 `editorial-footer-overlap.spec` 以 `Record<DeckTheme, …>` 宣告預期值，實際沒有；`Record<DeckTheme, …>` 只出現在 `deck-theme.spec.ts` 與 `demo-deck-set.test.ts`。
-  - 〈其他發現〉的 `describe.each(DECK_THEMES)` 一條已驗證：預設主題下的 DOM 同樣含 observatory 的標記（Closing 的 eyebrow 文字為 `§ 01 Closing`，頁尾文字為 `Deck1 / 101 / 01`），測試以 `eyebrowText()`（`editorial-frame-chrome.test.tsx:171-190`）與 `stage-slide.test.tsx:384` 的 regex 濾掉。
-
 ## 已完成候選
 
 ### 1. Editing Session module
@@ -383,6 +368,27 @@ Copy 與 batch export 共用同一條單頁流程。
   - 測試：`tests/unit/page-chrome.test.ts` 以三個入口測存檔、重新載入、再存檔的位元組相同，以 `PageKind` 表格測 Deck Template 政策，以每個 Structured Layout 測 Headline，以每個選填 chrome 文字欄位測空白規則。刪除的重複斷言：`deck-template.test.ts` 的逐版型 Eyebrow／Boundary Note／頁碼檢查、`cover-closing.test.ts` 的 Cover／Closing title 與空白 Eyebrow／Boundary Note、`side-by-side.test.ts` 的 template title／Boundary Note／講稿、`deck-editor.test.ts` 的空白 Boundary Note。各版型「依 schema 順序列出 issue」的測試保留，因為它們斷言的是整份輸出順序。
   - 未收緊的地方：`clearPageContent` 的 arm 以寬型別 `PageContent` 回傳，漏寫本文必填欄位不會編譯失敗。這與基準相同：`UnknownPage` 的 `layout: string` 加 index signature 讓舊的 `matchPage<Page>` 也接受缺欄位的 arm（以 `a253207` 刪掉 Overview arm 的 `lead` 實測，`tsc` 通過）。要等 13 的第二步讓 `Page` 成為真正的 discriminated union 才能逐 arm 檢查。
 
+### 16. Frame chrome 字型成為 Deck Theme 角色
+
+- **相關 module**：`src/styles/ledger-theme.css`、`src/styles/observatory-theme.css`、`src/styles/editorial-layouts.css`、[ADR-0002](../adr/0002-deck-theme.md)。
+- **問題**：11 的觸發條件已成立（#66 新增 `ledger`）。結構覆寫的 N × M 沒有變大，但「哪些 Editorial Frame chrome 用等寬字」這份清單寫了兩次：`ledger-theme.css:10-15` 與 `observatory-theme.css:43-47, 94` 列出同樣 6 個 selector（eyebrow、period、workstream、status、page-number、boundary）。新增 chrome 欄位若要用等寬字，必須改每個主題檔。
+- **做法**：新增一個 Editorial Frame chrome 字型角色，由 `editorial-layouts.css` 讀取，各主題只提供值。這是 11 方案 A 的最小一步。
+- **收益**：`ledger` 成為 token-only；新增 chrome 欄位不必碰主題檔；下一個 Deck Theme 只寫 token。
+- **既有決定**：ADR-0002 規定 token 角色「只能新增」，新增角色依其修訂規則原地修訂即可；`--mono`（#69）是前例，不衝突。
+- **狀態**：已實作（[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）。原待決：`default` 主題的角色值要沿用內文字型，確認不改變現有外觀；角色只管字型，或一併涵蓋 chrome 的字級與字距。
+- **2026-11-22 補遺**：
+  - 兩份主題清單其實已經不同：observatory 的第二條規則（`observatory-theme.css:94-96`）另含 `.editorial-takeaway-ref` 與 `.editorial-closing-line`，ledger 沒有。e2e 的 furniture 清單（`deck-theme.spec.ts:386-394`，另含 `.editorial-deck-title`、`.editorial-page-label`）是第三份，`deck-json-format.md:43` 的文字描述是第四份。
+  - `cover-closing`、`side-by-side`、`full-width-panel` 三個 e2e 寫死 `["default", "observatory"]` 並以 `theme === "observatory"` 分支，從不在 ledger 下跑；ledger 的等寬字會改變文字寬度，影響這些 spec 檢查的 fit。
+  - `stage-frame.tsx:5-9` 手動 import 主題樣式表，`deck.ts:307` 的註解卻說新增主題時型別檢查會提示補樣式表。
+  - ADR-0002:54 說 `editorial-footer-overlap.spec` 以 `Record<DeckTheme, …>` 宣告預期值，實際沒有；`Record<DeckTheme, …>` 只出現在 `deck-theme.spec.ts` 與 `demo-deck-set.test.ts`。
+  - 〈其他發現〉的 `describe.each(DECK_THEMES)` 一條已驗證：預設主題下的 DOM 同樣含 observatory 的標記（Closing 的 eyebrow 文字為 `§ 01 Closing`，頁尾文字為 `Deck1 / 101 / 01`），測試以 `eyebrowText()`（`editorial-frame-chrome.test.tsx:171-190`）與 `stage-slide.test.tsx:384` 的 regex 濾掉。
+- **2026-11-23 實作**：
+  - 角色為 `--frame-font`。`editorial-layouts.css` 列出讀它的 6 個 selector（Editorial Frame 外框，加上 Overview Outcome 的 workstream 與 Status Signal）；`ledger-theme.css` 只剩 token，`observatory-theme.css` 的外框清單刪除。ADR-0002 原地修訂。
+  - 兩項待決：`default` 設為 `initial`，`var()` 在計算值時失效，外框退回繼承內文字型，內文字型不必另設角色。角色只管字型，因為沒有主題改動這 6 個元素的字級或字距。
+  - `.editorial-takeaway-ref` 與 `.editorial-closing-line` 是 Closing 本文，不是外框，留在 `observatory-theme.css` 作為 Stage Element 處理。`ledger` 不帶入 observatory 的 Stage Element 處理（見 `ledger-theme.css` 檔頭），外觀不變。
+  - 驗證：3 份 Demo Deck × 3 個主題共 96 頁、4,173 個 Stage 元素的計算字型，與實作前逐一相同。`deck-theme.spec.ts` 的 furniture 測試改為要求每個元素落在 `--mono` 或內文字型；原本只斷言「不是 `--mono`」，外框退成瀏覽器預設字型也會通過。這份 e2e 清單是行為規格，不是要刪除的副本。
+  - 補遺五項：清單分歧由本次實作消除；`deck.ts:307` 的註解與 ADR-0002:54 已修正；三個 e2e 的主題覆蓋另開 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)；`describe.each(DECK_THEMES)` 一條屬於 #93 的變體標記角色，不在本候選範圍。
+
 ## 考慮過但判定保留
 
 deletion test 判定以下 module earns its keep，之後的審查不必再提：
@@ -438,7 +444,7 @@ deletion test 判定以下 module earns its keep，之後的審查不必再提�
   - `stage-page-context.ts:60` 說補零規則只定一次，但 `table-panel.tsx:48`、`side-by-side-slide.tsx:35`、`next-actions-slide.tsx:13` 各自補零（補遺；相關 #87）。
   - `documentId` 的範圍比 2026-11-09 記錄的更廣：還有 `StagePageContext.documentId`（`stage-page-context.ts:15`）與 `html-slide.tsx:9`（補遺）。
   - `tsconfig.node.json` 也不涵蓋 `vitest.config.ts` 與 `playwright.config.ts`（補遺；已由 13 的第一步補上）。
-  - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。
+  - ADR-0002:54 的〈後果〉描述與測試不符，`deck.ts:307` 的主題樣式表註解與實際不符（補遺，見 16）。2026-11-23 已修正（#86）。
 
 ## 相關文件
 

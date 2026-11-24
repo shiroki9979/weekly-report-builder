@@ -4,6 +4,17 @@
   --editorial-frame-padding: 4.4% 5% 5%;
 }
 
+/* 讀 --frame-font 的元素只列在這裡：Editorial Frame 外框，加上 Overview Outcome 的 workstream 與 Status Signal。
+   主題只提供值，新增欄位不必改主題檔 */
+.editorial-eyebrow,
+.editorial-period,
+.editorial-workstream,
+.editorial-status,
+.editorial-page-number,
+.editorial-boundary {
+  font-family: var(--frame-font);
+}
+
 .editorial-page {
   display: flex;
   flex-direction: column;
