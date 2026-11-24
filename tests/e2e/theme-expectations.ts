@@ -1,4 +1,5 @@
 import type { DeckTheme } from "../../src/lib/deck"
+import type { FontRole } from "./stage-style"
 
 // 各主題的事實只寫在這裡：Record 讓新增主題時型別檢查強制寫下預期，spec 改讀欄位而不以主題名稱分支
 export type ThemeExpectation = {
@@ -11,14 +12,14 @@ export type ThemeExpectation = {
   // --mono 是否自架 IBM Plex Mono（用到 var(--mono) 時才嵌入）
   hostsIbmPlexMono: boolean
   // --frame-font 的值：Editorial Frame 外框與 Overview 的 workstream、Status Signal 用 --mono 或內文字型
-  frameFont: "mono" | "body"
+  frameFont: FontRole
   // 跨版型共用的 item index（補零等寬索引）是否取代項目標記；ledger 刻意不帶入補零編號。
   // Side-by-side point、Two-column 項目與 Full-width table 的列索引都讀這一項，不另記各自的標記種類
   itemIndex: boolean
   // Two-column 項目標題的色彩角色；主題只換 Stage Element 的處理，不重排構圖
   twoColumnHeading: "--blue" | "--ink"
   // table reference 欄的字型；ledger 雖自架 Plex，reference 欄仍沿用內文字型，所以不能由 frameFont 或 hostsIbmPlexMono 推得
-  referenceFont: "mono" | "body"
+  referenceFont: FontRole
 }
 
 const DEFAULT_LEGEND = [

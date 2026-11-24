@@ -11,6 +11,9 @@ export type StyleProbe = {
   paddingTop?: string
 }
 
+// 主題事實裡的字型值直接當探針的鍵用；由 StyleProbe 推得，兩邊改名時型別檢查會一起抓到
+export type FontRole = keyof Pick<StyleProbe, "mono" | "body">
+
 export function matchStageStyle(
   target: Locator,
   probe: StyleProbe
