@@ -24,6 +24,8 @@ import {
 } from "../../src/lib/deck"
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
+import { matchStageStyle, type StyleProbe } from "./stage-style"
+import { THEME_EXPECTATIONS } from "./theme-expectations"
 
 const demo = parseDeck(
   JSON.parse(
@@ -111,126 +113,6 @@ function themeFixture(theme: DeckTheme): Deck {
       table,
     ].map((entry, index) => ({ ...entry, id: `p${index + 1}` })),
   }
-}
-
-// Record 讓新增主題時型別檢查強制寫下它在每個主題相關檢查的預期，測試清單直接讀 DECK_THEMES
-type ThemeExpectation = {
-  paddedPageNumbers: boolean
-  ink: { accent: string; mute: string; line: string }
-  legend: string[]
-  leadBackground: string
-  // Overview 頁匯出時是否嵌入自架的 Instrument Sans
-  embedsInstrumentSans: boolean
-  // --mono 是否自架 IBM Plex Mono（用到 var(--mono) 時才嵌入）
-  hostsIbmPlexMono: boolean
-  // --frame-font 的值：Editorial Frame 外框與 Overview 的 workstream、Status Signal 用 --mono 或內文字型
-  frameFont: "mono" | "body"
-  // 跨版型共用的 item index（補零等寬索引）是否取代項目標記；ledger 刻意不帶入補零編號。
-  // Side-by-side 與 Two-column 都讀這一項，不另記 Two-column 的標記種類
-  itemIndex: boolean
-  // Two-column 項目標題的色彩角色；主題只換 Stage Element 的處理，不重排構圖
-  twoColumnHeading: "--blue" | "--ink"
-}
-
-const DEFAULT_LEGEND = [
-  "rgb(46, 117, 182)",
-  "rgb(126, 176, 214)",
-  "rgb(161, 65, 136)",
-]
-
-const THEME_EXPECTATIONS: Record<DeckTheme, ThemeExpectation> = {
-  default: {
-    paddedPageNumbers: false,
-    ink: { accent: "#2e75b6", mute: "#5c5c5c", line: "#d0d7de" },
-    legend: DEFAULT_LEGEND,
-    leadBackground: "rgb(238, 244, 250)",
-    embedsInstrumentSans: false,
-    hostsIbmPlexMono: false,
-    frameFont: "body",
-    itemIndex: false,
-    twoColumnHeading: "--blue",
-  },
-  observatory: {
-    paddedPageNumbers: true,
-    ink: { accent: "#287b78", mute: "#5a6e7e", line: "#d6dee4" },
-    legend: ["rgb(40, 123, 120)", "rgb(31, 95, 92)", "rgb(161, 65, 136)"],
-    leadBackground: "rgba(0, 0, 0, 0)",
-    embedsInstrumentSans: true,
-    hostsIbmPlexMono: true,
-    frameFont: "mono",
-    itemIndex: true,
-    twoColumnHeading: "--ink",
-  },
-  // ledger 沿用 default 的色彩與構圖，只換 --line、--accent-wash 與外框等寬字
-  ledger: {
-    paddedPageNumbers: false,
-    ink: { accent: "#2e75b6", mute: "#5c5c5c", line: "#c7d9e9" },
-    legend: DEFAULT_LEGEND,
-    leadBackground: "rgb(219, 232, 244)",
-    embedsInstrumentSans: false,
-    hostsIbmPlexMono: true,
-    frameFont: "mono",
-    itemIndex: false,
-    twoColumnHeading: "--blue",
-  },
-}
-
-// 預期值寫成 Stage 的角色或 CSS 長度，由瀏覽器解析後再比對：
-// hex 與 rgb、字型清單的引號與空白、cqw 與 px 寫法不同都不該誤判
-type StyleProbe = {
-  mono?: true
-  // 與 .stage-root 的內文字型相同
-  body?: true
-  color?: string
-  fontSize?: string
-  paddingTop?: string
-}
-
-function matchStageStyle(
-  target: Locator,
-  probe: StyleProbe
-): Promise<Record<string, boolean>[]> {
-  return target.evaluateAll(
-    (elements, probe) =>
-      elements.map((element) => {
-        const root = element.closest(".stage-root")!
-        const normalize = (value: string) =>
-          value.replace(/["'\s]/g, "").toLowerCase()
-        // 探針放在元素旁邊，var() 與 cqw 才會對到元素所在的同一組角色與 container
-        const resolve = (
-          property: "color" | "fontSize" | "paddingTop",
-          value: string
-        ) => {
-          const span = document.createElement("span")
-          span.style[property] = value
-          element.parentElement!.append(span)
-          const resolved = getComputedStyle(span)[property]
-          span.remove()
-          return resolved
-        }
-        const style = getComputedStyle(element)
-        const matches: Record<string, boolean> = {}
-        if (probe.mono)
-          matches.mono =
-            normalize(style.fontFamily) ===
-            normalize(getComputedStyle(root).getPropertyValue("--mono"))
-        if (probe.body)
-          matches.body =
-            normalize(style.fontFamily) ===
-            normalize(getComputedStyle(root).fontFamily)
-        if (probe.color)
-          matches.color =
-            style.color === resolve("color", `var(${probe.color})`)
-        if (probe.fontSize)
-          matches.fontSize =
-            style.fontSize === resolve("fontSize", probe.fontSize)
-        if (probe.paddingTop)
-          matches.paddingTop =
-            style.paddingTop === resolve("paddingTop", probe.paddingTop)
-        return matches
-      }),
-    probe
-  )
 }
 
 // 顯示 item index 的主題共用同一組外觀；Side-by-side 與 Two-column 都以此釘住

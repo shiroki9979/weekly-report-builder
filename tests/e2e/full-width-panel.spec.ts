@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test"
+import { DECK_THEMES } from "../../src/lib/deck"
 import { resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
+import { matchStageStyle } from "./stage-style"
+import { THEME_EXPECTATIONS } from "./theme-expectations"
 
 test.beforeEach(() => resetE2eDecks())
 
@@ -67,13 +70,14 @@ const tableCopy = {
   },
 } as const
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   for (const language of ["en", "zh", "mixed"] as const) {
     test(`${theme} Full-width table exports sparse and dense ${language} content without changing reference indices`, async ({
       page,
       request,
     }) => {
       test.slow()
+      const expected = THEME_EXPECTATIONS[theme]
       const content = tableCopy[language]
       const panels = [1, 5].map((count) => ({
         kind: "table",
@@ -118,36 +122,31 @@ for (const theme of ["default", "observatory"] as const) {
         await expect(rows).toHaveCount(index ? 5 : 1)
         const cells = rows.first().locator("td:visible,th:visible")
         expect(await cells.allTextContents()).toEqual(
-          theme === "observatory"
-            ? ["01", ...content.cells]
-            : [...content.cells]
+          expected.itemIndex ? ["01", ...content.cells] : [...content.cells]
         )
         expect(
           await table.locator("thead th:visible").allTextContents()
         ).toEqual(
-          theme === "observatory"
-            ? ["", ...content.columns]
-            : [...content.columns]
+          expected.itemIndex ? ["", ...content.columns] : [...content.columns]
         )
         const reference = rows
           .first()
           .getByRole("cell", { name: "§ 03", exact: true })
         const style = await reference.evaluate((element) => {
           const style = getComputedStyle(element)
-          return {
-            align: style.textAlign,
-            wrap: style.whiteSpace,
-            color: style.color,
-            font: style.fontFamily,
-          }
+          return { align: style.textAlign, wrap: style.whiteSpace }
         })
         expect(style.align).toBe("right")
         expect(style.wrap).toBe("nowrap")
-        expect(style.color).toBe(
-          theme === "observatory" ? "rgb(40, 123, 120)" : "rgb(46, 117, 182)"
-        )
-        if (theme === "observatory")
-          expect(style.font).toContain("IBM Plex Mono")
+        // dev server 的 CSS 由模組非同步注入；輪詢到主題樣式生效為止
+        await expect
+          .poll(() =>
+            matchStageStyle(reference, {
+              color: "--accent",
+              [expected.referenceFont]: true,
+            })
+          )
+          .toEqual([{ color: true, [expected.referenceFont]: true }])
         await copyPng(page, `${theme}-${language}-table-${index ? 5 : 1}.png`)
       }
       const stored = await (
@@ -160,7 +159,7 @@ for (const theme of ["default", "observatory"] as const) {
   }
 }
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   test(`${theme} Full-width chart, flow and checklist export sparse and dense content`, async ({
     page,
     request,

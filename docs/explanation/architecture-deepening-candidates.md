@@ -1,7 +1,7 @@
 # 架構加深候選
 
 建立日期：2026-09-27  
-最後更新：2026-11-23
+最後更新：2026-11-24
 
 ---
 
@@ -45,7 +45,7 @@
 | 4   | Stage context 帶型別事實，頁碼政策收進同一 module | Worth exploring | in-process | 已實作於 `2cb9a80`；2026-11-09 確認無字串哨兵殘留                                                                                                                                                       |
 | 12  | 頁尾成為 Stage page context 的一個事實            | Strong          | in-process | 已實作於 `6626d32`；[#82](https://github.com/shiroki9979/weekly-report-builder/issues/82)，行為不變                                                                                                     |
 | 14  | 一個 Editorial Frame chrome module                | Worth exploring | in-process | 已實作（[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)），範圍擴大為 page chrome；本文欄位的空白缺陷轉為 [#101](https://github.com/shiroki9979/weekly-report-builder/issues/101) |
-| 16  | Frame chrome 字型成為 Deck Theme 角色             | Worth exploring | in-process | 已實作（[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）；三個版型 e2e 的主題覆蓋另開 [#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)                    |
+| 16  | Frame chrome 字型成為 Deck Theme 角色             | Worth exploring | in-process | 已實作（[#86](https://github.com/shiroki9979/weekly-report-builder/issues/86)）；三個版型 e2e 的主題覆蓋已實作（[#103](https://github.com/shiroki9979/weekly-report-builder/issues/103)）               |
 
 初次審查建議先做 1（現已實作於 [PR #41](https://github.com/shiroki9979/weekly-report-builder/pull/41)）：它是唯一反覆出 bug、orchestration 又沒有測試的地方；完成後削減第一熱點 `workshop-shell.tsx` 的接線，並替 3 鋪好同一個編輯 module。後續設計訪談選定 2，收斂結果記錄於該候選下方。
 

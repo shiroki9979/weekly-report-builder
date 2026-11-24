@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test"
 import { readFileSync } from "node:fs"
 import path from "node:path"
+import { DECK_THEMES } from "../../src/lib/deck"
 import { resetE2eDecks } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
+import { THEME_EXPECTATIONS } from "./theme-expectations"
 
 const copy = {
   en: {
@@ -44,7 +46,7 @@ const copy = {
 
 test.beforeEach(() => resetE2eDecks())
 
-for (const theme of ["default", "observatory"] as const) {
+for (const theme of DECK_THEMES) {
   for (const language of ["en", "zh", "mixed"] as const) {
     test(`${theme} Cover and Closing fit and export minimum and maximum ${language} content`, async ({
       page,
@@ -116,8 +118,9 @@ for (const theme of ["default", "observatory"] as const) {
             stage.getByText(`0${index + 1} / 04`, { exact: true })
           ).toHaveCount(0)
         } else {
-          const label =
-            theme === "default" ? `${index + 1} / 4` : `0${index + 1} / 04`
+          const label = THEME_EXPECTATIONS[theme].paddedPageNumbers
+            ? `0${index + 1} / 04`
+            : `${index + 1} / 4`
           await expect(stage.getByText(label, { exact: true })).toBeVisible()
         }
         if (index === 2) await expect(stage.getByText(/Closing$/)).toBeVisible()
