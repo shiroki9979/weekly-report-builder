@@ -77,8 +77,7 @@ function renderTrend(
         documentId: DOCUMENT_ID,
         frameLabel,
         hidden: false,
-        position: null,
-        showPageNumber: false,
+        footer: { position: null },
       }}
     />
   )

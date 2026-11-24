@@ -72,10 +72,7 @@ describe("Side-by-side Comparison", () => {
 
     const context = createStagePageContext("pilot", deck, comparison.id)
 
-    expect(context).toMatchObject({
-      position: { index: 1, total: 1 },
-      showPageNumber: true,
-    })
+    expect(context.footer).toEqual({ position: { index: 1, total: 1 } })
   })
 
   it("reports each missing visible field by path", () => {

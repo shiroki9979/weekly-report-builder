@@ -53,7 +53,7 @@ Editing Session 持有開啟中的 Deck、Metric Input、選取的 Page ID 與�
 
 ## Deck Theme 與 Stage context
 
-`createStagePageContext` 是 Preview、Copy 與 batch 共用的介面：回傳 Deck ID、Frame Label、hidden、Page Position、頁碼可見性，以及有效 Deck Theme 和 Deck Title。頁碼政策集中在 `stage-page-context.ts`；renderer 不再從 `"Hidden"` 或空字串推測狀態。預覽與 capture 都把同一 context 的 theme 傳入 `StageFrame`，由根節點的 `data-theme` 選擇樣式。
+`createStagePageContext` 是 Preview、Copy 與 batch 共用的介面：回傳 Deck ID、Frame Label、hidden、有效 Deck Theme，以及解析好的頁尾（Deck Title 與要顯示的 Page Position；沒有頁尾時為 `null`）。頁尾政策集中在 `stage-page-context.ts`：Editorial Frame 與 Cover 一律有頁尾，頁碼關閉時只少了 Page Position；HTML Page 只在顯示頁碼時才有頁尾。Editorial Frame、Cover 與 HTML Page 都只照 context 畫 `EditorialFooter`，Editorial Frame 標頭的 `§ nn` 也讀同一個 Page Position；Workshop 的頁碼選單以同一 module 的 `hasPageNumberSlot` 判斷。renderer 不再從 `"Hidden"` 或空字串推測狀態。預覽與 capture 都把同一 context 的 theme 傳入 `StageFrame`，由根節點的 `data-theme` 選擇樣式。
 
 `stage.css` 定義 default 語意角色與舊 `--blue*` 相容別名；`observatory-theme.css` 與 `ledger-theme.css` 覆寫角色並提供外框裝飾；自架 OFL 拉丁字型由 `observatory-theme.css`（Instrument Sans）與兩者共用的 `ibm-plex-mono.css` 宣告。既有版型維持構圖，不依主題名稱分支。Trend SVG 在主題改變時讀取 CSS 角色並寫入字面 SVG 顏色，因 `html-to-image` 深複製 SVG 時不處理其子元素的 computed style；色票仍由 CSS 單獨持有。
 

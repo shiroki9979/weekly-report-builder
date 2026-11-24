@@ -1,16 +1,11 @@
 import {
   formatPagePosition,
   padPageNumber,
-  type PagePosition,
+  type StageFooter,
 } from "@/lib/stage-page-context"
 
-type EditorialFooterProps = {
-  deckTitle?: string
-  position: PagePosition | null
-}
-
-/** Editorial Frame 與 HTML Page 共用同一份頁尾，主題樣式才會一次套到兩者 */
-export function EditorialFooter({ deckTitle, position }: EditorialFooterProps) {
+/** Editorial Frame、Cover 與 HTML Page 共用同一份頁尾，主題樣式才會一次套到三者 */
+export function EditorialFooter({ deckTitle, position }: StageFooter) {
   const paddedLabel = position
     ? `${padPageNumber(position.index)} / ${padPageNumber(position.total)}`
     : null
