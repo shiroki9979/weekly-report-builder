@@ -25,7 +25,7 @@ import {
 import { resetE2eDecks, e2eDecksDir } from "./decks-reset"
 import { fitAtCaptureSize, copyPng } from "./stage-capture"
 import { matchStageStyle, type StyleProbe } from "./stage-style"
-import { THEME_EXPECTATIONS } from "./theme-expectations"
+import { THEME_EXPECTATIONS, pageLabel } from "./theme-expectations"
 
 const demo = parseDeck(
   JSON.parse(
@@ -162,11 +162,7 @@ for (const theme of DECK_THEMES) {
             ? ".editorial-number-padded"
             : ".editorial-number-default"
         )
-      ).toHaveText(
-        expected.paddedPageNumbers
-          ? `0${index + 1} / 0${total}`
-          : `${index + 1} / ${total}`
-      )
+      ).toHaveText(pageLabel(expected, index + 1, total))
       await fitAtCaptureSize(page)
       await copyPng(page, `${theme}-${entry.layout}-${index}.png`)
       if (index === 0) {
@@ -596,8 +592,8 @@ for (const theme of DECK_THEMES) {
     const plexMono = (
       await htmlPageCaptureFaces(page, `${theme}-html-font`)
     ).filter((face) => /IBM Plex Mono/.test(face) && /data:.*base64/.test(face))
-    if (THEME_EXPECTATIONS[theme].hostsIbmPlexMono)
-      expect(plexMono).not.toEqual([])
+    const expected = THEME_EXPECTATIONS[theme]
+    if (expected.hostsIbmPlexMono) expect(plexMono).not.toEqual([])
     else expect(plexMono).toEqual([])
   })
 
@@ -646,9 +642,10 @@ test("HTML Page role and legacy tokens follow the theme while literal colours re
       ).ok()
     ).toBe(true)
     await page.goto("/?deck=html-theme")
-    const expected = THEME_EXPECTATIONS[theme].legend[0]
-    await expect(page.locator("#theme-legacy")).toHaveCSS("color", expected)
-    await expect(page.locator("#theme-role")).toHaveCSS("color", expected)
+    const expected = THEME_EXPECTATIONS[theme]
+    const accent = expected.legend[0]
+    await expect(page.locator("#theme-legacy")).toHaveCSS("color", accent)
+    await expect(page.locator("#theme-role")).toHaveCSS("color", accent)
     await expect(page.locator("#theme-literal")).toHaveCSS(
       "color",
       "rgb(161, 65, 136)"
