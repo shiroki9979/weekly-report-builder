@@ -1,7 +1,7 @@
 # Deck JSON 格式
 
 建立日期：2026-08-31  
-最後更新：2026-11-21
+最後更新：2026-11-23
 
 ---
 
@@ -56,12 +56,14 @@ HTML Page 設 `showPageNumber: true` 時，app 在片段上方畫出與 Editoria
 | ---------------- | --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`             | `string`  | 是   | 頁面識別，如 `p01`；同一 Deck 內必須唯一；匯出 PNG 檔名之一部分                                                                                                     |
 | `layout`         | `string`  | 是   | `"two-column"`、`"html"`、`"overview"`、`"evidence-decision"`、`"next-actions"`、`"trend-target"`、`"cover"`、`"closing"`、`"side-by-side"` 或 `"full-width-panel"` |
-| `title`          | `string`  | 是   | 投影片主標（可為空字串）                                                                                                                                            |
+| `title`          | `string`  | 是   | Structured Layout 的 Headline；HTML Page 只當工坊裡的頁面標籤（可為空字串）                                                                                         |
 | `hidden`         | `boolean` | 否   | `true` 時略過 PNG 批次匯出                                                                                                                                          |
-| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage                                                                                                                                       |
+| `notes`          | `string`  | 否   | Speaker notes，不渲染於 stage；只含空白時視同省略                                                                                                                   |
 | `showPageNumber` | `boolean` | 否   | 單頁覆蓋。Editorial 未提供時繼承 Deck 層級設定；HTML Page 未提供時不畫頁尾，需設為 `true` 才顯示。`cover` 忽略此欄                                                  |
 
 Parser 會拒絕同一 Deck 內重複的 `id`。自訂非 `pNN` 的非空 id 仍合法。空白字串仍是合法草稿：schema 接受未完成內容，匯出資格由獨立 readiness 判斷。
+
+存檔時共同欄位與 Editorial Frame 欄位的位置固定：`id`、`layout`、`title`、`eyebrow`、版型欄位、`hidden`、`notes`、`showPageNumber`、`boundary`；省略的欄位不寫出。編輯、建立 Deck Template 或新增頁面後重新載入再存檔，欄位不會換位置（[#84](https://github.com/shiroki9979/weekly-report-builder/issues/84)）。未知 layout 的頁面維持原檔順序。
 
 ### Eyebrow
 

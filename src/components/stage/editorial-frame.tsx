@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 
 import { EditorialFooter } from "@/components/stage/editorial-footer"
 import type { EditorialFramePage } from "@/lib/deck"
-import { resolveEyebrow } from "@/lib/eyebrow"
+import { resolveEyebrow } from "@/lib/page-chrome"
 import { padPageNumber, type StagePageContext } from "@/lib/stage-page-context"
 
 type EditorialFrameProps = {

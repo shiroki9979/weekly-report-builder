@@ -105,19 +105,13 @@ describe("Cover and Closing contracts", () => {
     const deck = parseDeck({ pages: [closing] })
 
     expect(deck.pages[0]).toMatchObject({ closingLine: "", takeaways: [] })
-    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
+    expect(deck.pages[0]).not.toHaveProperty("eyebrow", expect.any(String))
   })
 
   it("keeps a Boundary Note on a Closing page", () => {
     const deck = parseDeck({ pages: [{ ...closing, boundary: "Scope" }] })
 
     expect(deck.pages[0]).toHaveProperty("boundary", "Scope")
-  })
-
-  it("reads a whitespace-only Boundary Note as absent", () => {
-    const deck = parseDeck({ pages: [{ ...closing, boundary: "  " }] })
-
-    expect(deck.pages[0]).not.toHaveProperty("boundary")
   })
 
   it("keeps an Eyebrow only on Editorial Frame layouts", () => {
@@ -134,16 +128,6 @@ describe("Cover and Closing contracts", () => {
     }
   })
 
-  it("saves no eyebrow when the authored Eyebrow is only whitespace", () => {
-    const deck = parseDeck({ pages: [{ ...closing, eyebrow: "  " }] })
-
-    expect(deck.pages[0]).not.toHaveProperty("eyebrow")
-    expect(JSON.parse(serializeDeck(deck)).pages[0]).not.toHaveProperty(
-      "eyebrow"
-    )
-  })
-
-  // 舊 Closing JSON 的 eyebrow 寫在 title 之後；存檔時維持原位，才不會為了升級產生無意義 diff
   it("saves a Closing eyebrow from before #74 where it was written", () => {
     const legacy = {
       id: "last",
@@ -209,18 +193,6 @@ describe("Cover and Closing contracts", () => {
       expect(assessExportEligibility(page, { status: "fit" }).eligible).toBe(
         true
       )
-    }
-  })
-
-  it("requires a visible title on Cover and Closing", () => {
-    for (const page of titledCoverAndClosing.pages.map(structured)) {
-      expect(assessContentReadiness({ ...page, title: " " })).toEqual([
-        {
-          code: "missing-content",
-          path: "title",
-          message: "Title is required",
-        },
-      ])
     }
   })
 

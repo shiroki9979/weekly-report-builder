@@ -9,6 +9,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { absentWhenBlank } from "@/lib/optional-text"
 import { cn } from "@/lib/utils"
 
 type SpeakerNotesCueProps = {
@@ -21,10 +22,7 @@ type SpeakerNotesCueProps = {
 }
 
 function displayNotes(notes: string | undefined): string {
-  if (notes === undefined || notes.trim() === "") {
-    return "No speaker notes"
-  }
-  return notes
+  return absentWhenBlank(notes) ?? "No speaker notes"
 }
 
 export function SpeakerNotesCue({

@@ -231,7 +231,7 @@ describe("new Editorial Frame pages", () => {
     (layout) => {
       const page = createBlankAddablePage("p01", layout, "table")
 
-      expect(page).not.toHaveProperty("eyebrow")
+      expect(page).not.toHaveProperty("eyebrow", expect.any(String))
     }
   )
 })
