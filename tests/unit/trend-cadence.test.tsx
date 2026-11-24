@@ -214,8 +214,7 @@ describe("Trend & Target cadence", () => {
             documentId: "q1-review",
             frameLabel: null,
             hidden: false,
-            position: null,
-            showPageNumber: false,
+            footer: { position: null },
           }}
         />
       )

@@ -183,14 +183,8 @@ describe("Cover and Closing contracts", () => {
     )
     const last = createStagePageContext("pilot", titledCoverAndClosing, "last")
 
-    expect(cover).toMatchObject({
-      position: { index: 1, total: 2 },
-      showPageNumber: false,
-    })
-    expect(last).toMatchObject({
-      position: { index: 2, total: 2 },
-      showPageNumber: true,
-    })
+    expect(cover.footer?.position).toBeNull()
+    expect(last.footer?.position).toEqual({ index: 2, total: 2 })
   })
 
   it("treats a titled Cover or Closing as content-complete", () => {

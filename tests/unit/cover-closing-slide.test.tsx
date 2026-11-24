@@ -55,6 +55,27 @@ describe("Cover and Closing on the Stage", () => {
     expect(screen.getByText("Fictional sample only")).toBeInTheDocument()
     expect(screen.getByText("2 / 2")).toBeInTheDocument()
   })
+  it("draws the Deck Title on the Cover footer without its Page Position", () => {
+    const deck = parseDeck({
+      title: "Harbor pilot",
+      pages: [
+        { id: "cover", layout: "cover", title: "Pilot findings" },
+        { id: "closing", layout: "closing", title: "Continue", takeaways: [] },
+      ],
+    })
+
+    const { container } = render(
+      <StageSlide
+        page={deck.pages[0]}
+        context={createStagePageContext("pilot", deck, "cover")}
+      />
+    )
+
+    const footer = container.querySelector("footer")
+    expect(footer).toHaveTextContent("Harbor pilot")
+    expect(footer).not.toHaveAttribute("aria-hidden")
+    expect(footer).not.toHaveTextContent("1 / 2")
+  })
   it("renders Boundary Note on every existing Editorial Frame layout", () => {
     const demo = parseDeck(
       JSON.parse(

@@ -20,7 +20,7 @@ export function EditorialFrame({
   context,
   children,
 }: EditorialFrameProps) {
-  const position = context.showPageNumber ? context.position : null
+  const position = context.footer?.position ?? null
   const eyebrow = resolveEyebrow(page)
 
   return (
@@ -47,7 +47,7 @@ export function EditorialFrame({
       {page.boundary ? (
         <p className="editorial-boundary">{page.boundary}</p>
       ) : null}
-      <EditorialFooter deckTitle={context.deckTitle} position={position} />
+      {context.footer ? <EditorialFooter {...context.footer} /> : null}
     </article>
   )
 }

@@ -6,13 +6,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ContentReadinessSummary } from "@/components/workshop/content-readiness-summary"
 import { PageNumberSelect } from "@/components/workshop/page-number-select"
-import {
-  isCoverPage,
-  isEditorialFramePage,
-  type EditorialFramePage,
-} from "@/lib/deck"
+import { isEditorialFramePage, type EditorialFramePage } from "@/lib/deck"
 import type { ExportIssue } from "@/lib/export-readiness"
 import { defaultEyebrow } from "@/lib/page-chrome"
+import { hasPageNumberSlot } from "@/lib/stage-page-context"
 import {
   setPageBoundary,
   setPageEyebrow,
@@ -84,7 +81,7 @@ export function EditorialPageEditorChrome({
             }
           />
         </div>
-        {!isCoverPage(page) ? (
+        {hasPageNumberSlot(page) ? (
           <PageNumberSelect
             deck={deck}
             pageIndex={pageIndex}

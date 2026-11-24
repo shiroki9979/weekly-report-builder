@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { createStagePageContext, padPageNumber } from "@/lib/stage-page-context"
+import {
+  createStagePageContext,
+  getPagePosition,
+  padPageNumber,
+} from "@/lib/stage-page-context"
 import { parseDeck } from "@/lib/deck"
 
 function weekDocument() {
@@ -79,7 +83,10 @@ describe("createStagePageContext", () => {
         { ...deck, theme: "observatory", title: "Harbor Forecast" },
         "p01"
       )
-    ).toMatchObject({ theme: "observatory", deckTitle: "Harbor Forecast" })
+    ).toMatchObject({
+      theme: "observatory",
+      footer: { deckTitle: "Harbor Forecast" },
+    })
   })
 
   it("builds the frame label from the deck period", () => {
@@ -97,36 +104,31 @@ describe("createStagePageContext", () => {
     })
   })
 
+  it("marks a Hidden Page", () => {
+    const week = weekDocument()
+
+    expect(createStagePageContext("2026-08-24", week, "p01").hidden).toBe(false)
+    expect(createStagePageContext("2026-08-24", week, "p02").hidden).toBe(true)
+  })
+})
+
+describe("getPagePosition", () => {
   it("numbers supported non-hidden pages and ignores draft or overflowing content", () => {
     const week = weekDocument()
 
-    expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
-      hidden: false,
-      position: { index: 1, total: 2 },
-      showPageNumber: true,
-    })
-    expect(createStagePageContext("2026-08-24", week, "p03")).toMatchObject({
-      hidden: false,
-      position: { index: 2, total: 2 },
-      showPageNumber: false,
-    })
+    expect(getPagePosition(week.pages, "p01")).toEqual({ index: 1, total: 2 })
+    expect(getPagePosition(week.pages, "p03")).toEqual({ index: 2, total: 2 })
   })
 
-  it("labels hidden pages without giving them a page position", () => {
-    expect(
-      createStagePageContext("2026-08-24", weekDocument(), "p02").position
-    ).toBeNull()
+  it("gives a hidden page no page position", () => {
+    expect(getPagePosition(weekDocument().pages, "p02")).toBeNull()
   })
 
   it("does not assign a page position to unsupported layouts", () => {
     const week = weekDocument()
 
-    expect(
-      createStagePageContext("2026-08-24", week, "p04").position
-    ).toBeNull()
-    expect(
-      createStagePageContext("2026-08-24", week, "p05").position
-    ).toBeNull()
+    expect(getPagePosition(week.pages, "p04")).toBeNull()
+    expect(getPagePosition(week.pages, "p05")).toBeNull()
   })
 
   it("counts overview pages among supported page positions", () => {
@@ -156,11 +158,11 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext("2026-08-24", week, "p01").position).toEqual({
+    expect(getPagePosition(week.pages, "p01")).toEqual({
       index: 1,
       total: 2,
     })
-    expect(createStagePageContext("2026-08-24", week, "p02").position).toEqual({
+    expect(getPagePosition(week.pages, "p02")).toEqual({
       index: 2,
       total: 2,
     })
@@ -214,132 +216,125 @@ describe("createStagePageContext", () => {
       ],
     })
 
-    expect(createStagePageContext("2026-08-24", week, "p01").position).toEqual({
+    expect(getPagePosition(week.pages, "p01")).toEqual({
       index: 1,
       total: 3,
     })
-    expect(createStagePageContext("2026-08-24", week, "p02").position).toEqual({
+    expect(getPagePosition(week.pages, "p02")).toEqual({
       index: 2,
       total: 3,
     })
-    expect(createStagePageContext("2026-08-24", week, "p03").position).toEqual({
+    expect(getPagePosition(week.pages, "p03")).toEqual({
       index: 3,
       total: 3,
     })
   })
+})
 
-  it("lets an HTML Page opt in to a page number when the week hides them", () => {
-    const week = parseDeck({
-      period: { start: "2026-08-24", end: "2026-08-28" },
+describe("createStagePageContext footer", () => {
+  const framed = (id: string, extra: object = {}) => ({
+    id,
+    layout: "two-column",
+    title: "Framed",
+    items: [
+      { heading: "A", body: "1" },
+      { heading: "B", body: "2" },
+      { heading: "C", body: "3" },
+    ],
+    panel: {
+      kind: "table",
+      title: "Grid",
+      columns: ["A"],
+      rows: [{ cells: ["1"] }],
+    },
+    ...extra,
+  })
+  const html = (id: string, extra: object = {}) => ({
+    id,
+    layout: "html",
+    title: "Fragment",
+    htmlFile: `${id}.html`,
+    ...extra,
+  })
+  const cover = (id: string, extra: object = {}) => ({
+    id,
+    layout: "cover",
+    title: "Harbor",
+    ...extra,
+  })
+  // 可見且受支援的頁依序為 cover、framed、framed-off、html、html-on、html-off，共 6 頁
+  const pages = [
+    cover("cover", { showPageNumber: true }),
+    framed("framed"),
+    framed("framed-off", { showPageNumber: false }),
+    framed("framed-hidden", { hidden: true }),
+    html("html"),
+    html("html-on", { showPageNumber: true }),
+    html("html-hidden", { hidden: true, showPageNumber: true }),
+    cover("cover-hidden", { hidden: true }),
+    { id: "unknown", layout: "future-layout", title: "Unknown" },
+    html("html-off", { showPageNumber: false }),
+  ]
+  const footerOf = (deck: unknown, id: string) =>
+    createStagePageContext("harbor", parseDeck(deck), id).footer
+
+  it.each([
+    ["cover", { deckTitle: "Harbor Forecast", position: null }],
+    ["cover-hidden", { deckTitle: "Harbor Forecast", position: null }],
+    [
+      "framed",
+      { deckTitle: "Harbor Forecast", position: { index: 2, total: 6 } },
+    ],
+    ["framed-off", { deckTitle: "Harbor Forecast", position: null }],
+    ["framed-hidden", { deckTitle: "Harbor Forecast", position: null }],
+    ["html", null],
+    [
+      "html-on",
+      { deckTitle: "Harbor Forecast", position: { index: 5, total: 6 } },
+    ],
+    ["html-hidden", null],
+    ["html-off", null],
+    ["unknown", null],
+  ])("resolves the footer of the %s page", (id, footer) => {
+    expect(footerOf({ title: "Harbor Forecast", pages }, id)).toEqual(footer)
+  })
+
+  it.each([
+    ["cover", { position: null }],
+    ["framed", { position: { index: 2, total: 6 } }],
+    ["framed-off", { position: null }],
+    ["html-on", { position: { index: 5, total: 6 } }],
+    ["html", null],
+  ])(
+    "leaves the Deck Title out of the %s footer when the Deck has none",
+    (id, footer) => {
+      expect(footerOf({ pages }, id)).toEqual(footer)
+    }
+  )
+
+  it("lets the Deck default hide Editorial Frame page numbers but not an HTML Page footer", () => {
+    const deck = {
+      title: "Harbor Forecast",
       showPageNumbers: false,
       pages: [
-        {
-          id: "p01",
-          layout: "html",
-          title: "No override",
-          htmlFile: "p01.html",
-        },
-        {
-          id: "p02",
-          layout: "html",
-          title: "Override show",
-          htmlFile: "p02.html",
-          showPageNumber: true,
-        },
+        framed("framed"),
+        framed("framed-on", { showPageNumber: true }),
+        html("html-on", { showPageNumber: true }),
       ],
-    })
+    }
 
-    expect(
-      createStagePageContext("2026-08-24", week, "p01").showPageNumber
-    ).toBe(false)
-    expect(
-      createStagePageContext("2026-08-24", week, "p02").showPageNumber
-    ).toBe(true)
-  })
-
-  it("does not overlay a page number on an HTML Page without an override, even when the week shows them", () => {
-    const week = parseDeck({
-      period: { start: "2026-08-24", end: "2026-08-28" },
-      showPageNumbers: true,
-      pages: [
-        {
-          id: "p01",
-          layout: "html",
-          title: "No override",
-          htmlFile: "p01.html",
-        },
-        {
-          id: "p02",
-          layout: "html",
-          title: "Override hide",
-          htmlFile: "p02.html",
-          showPageNumber: false,
-        },
-      ],
-    })
-
-    expect(
-      createStagePageContext("2026-08-24", week, "p01").showPageNumber
-    ).toBe(false)
-    expect(
-      createStagePageContext("2026-08-24", week, "p02").showPageNumber
-    ).toBe(false)
-  })
-
-  it("does not show a page number on a hidden page", () => {
-    const week = parseDeck({
-      period: { start: "2026-08-24", end: "2026-08-28" },
-      pages: [
-        {
-          id: "p01",
-          layout: "html",
-          title: "Hidden override",
-          htmlFile: "p01.html",
-          hidden: true,
-          showPageNumber: true,
-        },
-      ],
-    })
-
-    expect(createStagePageContext("2026-08-24", week, "p01")).toMatchObject({
-      hidden: true,
+    expect(footerOf(deck, "framed")).toEqual({
+      deckTitle: "Harbor Forecast",
       position: null,
-      showPageNumber: false,
     })
-  })
-
-  it("lets a two-column page follow the deck default and its own override", () => {
-    const twoColumn = (id: string, showPageNumber?: boolean) => ({
-      id,
-      layout: "two-column",
-      title: "Two column",
-      ...(showPageNumber === undefined ? {} : { showPageNumber }),
-      items: [
-        { heading: "A", body: "1" },
-        { heading: "B", body: "2" },
-        { heading: "C", body: "3" },
-      ],
-      panel: {
-        kind: "table",
-        title: "Grid",
-        columns: ["A"],
-        rows: [{ cells: ["1"] }],
-      },
+    expect(footerOf(deck, "framed-on")).toEqual({
+      deckTitle: "Harbor Forecast",
+      position: { index: 2, total: 3 },
     })
-    const shown = parseDeck({
-      pages: [twoColumn("p01"), twoColumn("p02", false)],
+    expect(footerOf(deck, "html-on")).toEqual({
+      deckTitle: "Harbor Forecast",
+      position: { index: 3, total: 3 },
     })
-    const hidden = parseDeck({
-      showPageNumbers: false,
-      pages: [twoColumn("p01"), twoColumn("p02", true)],
-    })
-
-    const visibility = (deck: typeof shown, id: string) =>
-      createStagePageContext("deck", deck, id).showPageNumber
-    expect(visibility(shown, "p01")).toBe(true)
-    expect(visibility(shown, "p02")).toBe(false)
-    expect(visibility(hidden, "p01")).toBe(false)
-    expect(visibility(hidden, "p02")).toBe(true)
   })
 })
 
